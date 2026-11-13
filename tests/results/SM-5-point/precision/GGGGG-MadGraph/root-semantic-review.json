@@ -1,0 +1,45 @@
+{
+  "AllCoreObjects113Bit": true,
+  "AllRawComparisonsRequireIndependentRecomputation": true,
+  "CompilerSHA256": "4bc835b346e40c5968e3e6a7104cc7341094f9d9d8271bf7343bff6e2c71d25b",
+  "ContextSHA256": "47026bedc2844622616e46a05069c2682cc4306872799bbe8e02d4a01291cc04",
+  "EvidenceFiles": {
+    "build-same-source-quad.py": "f71301d91902c5382056a2453a1bc91abc06de0886b37fe4d16e1eb2e6f908be",
+    "generated-source-hashes.json": "b6a2543c91775a0a6802f555fb0ed44457b4fe056e03c09215435a4e6de9f19c",
+    "generated-source/madgraph_bridge.f90": "1ae0026e3c64bb435e27b020c2ee9de075e03b11a5570cc8e32a33266a8a8a3a",
+    "native-stream.cpp": "dc81d0bb0e70720c1b2f19c3b82177db1f8b437852da49eac14e894efb59b4de",
+    "project-file-hashes.json": "598a64765625e1e3906a83100dfbe71abca0eebc33f47d3341daa642084d6acd",
+    "quad-same-source-build.json": "d1bd6d06f2353057157d5645108c1cec5fa21d37ed4124074ea5766b0d925a6c",
+    "quad-stream.f90": "30a0f45efc68ca4c29f6c460edf3464a1ef08bffc0d07e4436ebaf85caf51380",
+    "raw-madgraph-original.json": "f4d739ebe417a21fd164b767076e91c1bc53f2e77c3bb61bd124a446cdd6ecf4",
+    "replay-instructions.txt": "c2b6f47937a937c4767b59e0b98886c96783194db314cc5dc80c7b44d4ba9d38",
+    "verify-packet.py": "511891dd380c83c8dd2ed72d8cf029262f7fe5b75d757a594c0795988ebf4fa3"
+  },
+  "ExportCapsuleSHA256": "e51f8b1fcb61051478155c96257ca3a62364915115118a60b83d3b72b5c0e398",
+  "Generated53And113SourcesAndCardIdentical": true,
+  "LinkCommandPath": "build/CMakeFiles/sm5GGGGG_validate_madgraph.dir/link.txt",
+  "LinkCommandSHA256": "2755cd84b2476391650d49ff01f458539664e754d1630069cfaea0ef8b70c7a3",
+  "LinkedLibrariesSHA256": {
+    "/Users/neil/code/hepcat/tests/results/spinas-output/SM-5-point/GGGGG/build/libsm5GGGGG_madgraph_validation.a": "5e909c67f788fe61593d5c80e79f6354139be45d9561e1942bf3bc7a9a01f893",
+    "/Users/neil/code/hepcat/tests/results/spinas-output/SM-5-point/GGGGG/build/libsm5GGGGG_process.a": "323103111416756ec3ee025e3c8bd370a59ad3ba6beab7958cc1ea17f0cc9072",
+    "/Users/neil/code/spinas/build/libspinas.a": "3c66dd4399f6c031d82342b9bacc9e650dd5ebb294e41a0e9d1fcca0981801b7"
+  },
+  "NoHistoricalFullStreamBitIdentityClaim": true,
+  "NoKinematicRepair": true,
+  "NoTolerancesEnlarged": true,
+  "Notes": [
+    "The explicitly typed driver is compiled without -freal-8-real-16 and reads real64 arrays before explicit conversion to kind selected_real_kind(33). Model, HELAS and MATRIX objects are all rebuilt at113 bits; the BIND(C) double bridge is excluded from the promoted call path. The driver precision header reports113/128/64.",
+    "Leg-major native binary64 stream layout agrees with Fortran p53(0:3,N). Outgoing helicity reversal and raw color-summed fixed-helicity MATRIX convention agree with the ordinary bridge. The same original binary64 averaging/symmetry factor is applied without fitting.",
+    "The new53 and113 reference builds use the same archived58 source/card files. The source-generating Make rule was bypassed after restoring its include, and every quad output remained byte-identical. The historical MG temporary library is unavailable, so no historical MG bit-identity is asserted.",
+    "All32000 new native/113-bit comparisons must be independently recomputed. All historical saved failed-point components and six saved native values must match exactly. The historical run did not save every native point value; this review does not assert such a comparison.",
+    "This is separate finite numerical evidence. It does not rewrite the original CH_PASS/MG_FAIL export or establish a symbolic identity at all kinematics.",
+    "The actual native MadGraph-validation link command and exact complete linked library set are bound separately: generated validation wrapper, generated process and SPINAS. No library is silently omitted from the finite provenance guard."
+  ],
+  "OriginalFixedBinary64NormalizationReviewed": true,
+  "RawStatusesRemainUnchanged": true,
+  "ReportSHA256": "904c2aa6bf1b599b06a039cbbf278e3e5bf35d09a0f789ba8e9ae0c37a13bd0f",
+  "ReviewedBy": "/root, independent source/ABI/normalization and raw-evidence review",
+  "ReviewedUTC": "2026-11-13T03:27:43.607698+00:00",
+  "Status": "REVIEWED_FULL_SAME_INPUT_MADGRAPH_PRECISION_REPLAY",
+  "UnpromotedDriverExplicitBinary64ToQuad": true
+}

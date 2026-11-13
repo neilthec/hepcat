@@ -281,14 +281,15 @@ actual inputs, checks and context have been admitted and checkpointed.
 
 ## Recorded C6 coverage
 
-The current C6 checkpoint uses source context
+The C6 checkpoint uses source context
 `47026bedc2844622616e46a05069c2682cc4306872799bbe8e02d4a01291cc04`.
-It contains 211 completed native case records. Of these, 203 have ordinary
-full-family CalcHEP and MadGraph passes, and two have separately verified
-CalcHEP precision qualifications, giving 205 validated cases. The ledger has
-140 ordinary PASS families and two precision-qualified families. These totals
-include checksum-bound historical records admitted by the finite reviewed
-compatibility chain; they do not claim 211 fresh C6 constructions.
+It contains 215 completed native case records. Of these, 207 have ordinary
+full-family CalcHEP and MadGraph passes. Two further cases have verified
+CalcHEP precision qualifications, and the six five-gluon helicity multisets
+have a separate MadGraph precision qualification. This gives 215 validated
+cases in 142 ordinary PASS families and three precision-qualified families.
+These totals include checksum-bound historical records admitted by the finite
+reviewed compatibility chain; they do not claim 215 fresh C6 constructions.
 
 C6 extends the source-certified current path to declared massless chiral
 fermion endpoints. The endpoint state comes from the model metadata, and the
@@ -298,24 +299,44 @@ the exact declared vertex transformation is checked before transport, and the
 target still receives its own factorization, high-energy, reference and
 Feynman checks. Neither relation marks an unrun process validated.
 
-The completed chiral cohort includes charged lepton/neutrino pairs with a W
-and two Higgs bosons, in both charge choices and all three generations, and
-neutrino pairs with either Z/h/h or Z/Z/h. Fresh runs and previously completed,
-checksum-bound records are distinguished in
-`tests/results/SM-5-point/cohort-chiral-C6-summary.json`. Every recorded family
-has both 1,000-point numerical comparisons passing.
+The completed twelve-family chiral cohort includes charged lepton/neutrino
+pairs with a W and two Higgs bosons, in both charge choices and all three
+generations, and neutrino pairs with either Z/h/h or Z/Z/h. Its summary separates
+six constructor dispatches, two already-current C6 public-call records and four
+prior compatible passes. Eight exports were freshly run at C6. Every family
+has both 1,000-point numerical comparisons passing. The muon and tau pair with
+one photon and two Higgs bosons also complete for both helicities and pass both
+1,000-point family comparisons. Exact capsule, context and timing bindings are
+in `cohort-chiral-C6-summary.json` and `cohort-muon-tau-Ahh-C6-summary.json` under
+`tests/results/SM-5-point/`.
 
-All six five-gluon helicity multisets now have completed native constructions.
-The grouped export passes CalcHEP at 1,000 points. Its exhaustive MadGraph
-comparison retains a raw FAIL: six of the 32 labeled helicity comparisons have
-one mismatch, all at point 719 of the same 1,000-point stream. Four analytically
-zero components have residuals about `3.08e-22`, and two small nonzero components
-of order `2.99e-11` differ by about `3.42e-7` relatively. The original values,
-point, seed and unchanged tolerances are retained under
-`diagnostics/c6-default-five-gluon-20261113/full-family-numerical-failure/`.
-Same-point numerical-precision investigations are separate diagnostics. The
-six gluon cases are not counted as fully validated while this comparison is
-open. There is no claim that the complete SM five-point inventory is finished.
+All six five-gluon helicity multisets have completed native constructions.
+The grouped export passes CalcHEP at 1,000 points. Its original exhaustive
+MadGraph comparison retains a raw FAIL: six of the 32 labeled helicity
+comparisons have one mismatch, all at point 719 of the same 1,000-point stream.
+Four analytically zero components have residuals about `3.08e-22`, and two small
+nonzero components of order `2.99e-11` differ by about `3.42e-7` relatively.
+The original values, point, seed and tolerances remain unchanged.
+
+A separately reviewed 113-bit replay passes all 32,000 point/helicity
+comparisons on the uncorrected binary64 inputs at the original tolerances.
+The independent verifier checks every retained file, current generated source
+and linked library, all saved failed-point momentum bits and native values,
+and every recomputed comparison. It does not claim that the original run
+saved every native value. Its maximum nonzero relative discrepancy is about
+`1.36e-8`; its maximum residual in proven-zero channels is about `2.25e-23`.
+The raw export stays FAIL, with a separate `PRECISION_QUALIFIED` record.
+Evidence and replay instructions are in
+`tests/results/SM-5-point/precision/GGGGG-MadGraph/`. The notebook offers a
+read-only recomputation of the archived comparisons. A complete reference
+rebuild is a separate procedure described in that packet's instructions.
+
+The optional MadGraph verifier is separate from the established CalcHEP
+precision path. Both reject stale evidence. Historical qualifications retain
+their actual source contexts and require explicit finite compatibility for
+later reviewed source changes; model or numerical-runtime changes are not
+silently admitted. No claim is made that the complete 1,422-case SM five-point
+inventory is finished.
 
 ## Construction and validation bottlenecks
 

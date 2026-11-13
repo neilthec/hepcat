@@ -1,0 +1,47 @@
+{
+  "Status": "UNREVIEWED_TEMPLATE",
+  "AnalysisSHA256": "515edbf494956825575fb62d7b75f0df73c1f28c5ff5bc34de5349fbd66ae2e8",
+  "SourceDiffsSHA256": "f98e977c5cb8d7cb94eae5236f9ded1883b12934e9d5137ad70c927e47402bbc",
+  "ExpectedChangedDefinitionFields": {
+    "ConstructiveDiagrams`ConstructAmplitude": [
+      "DownValues"
+    ],
+    "ConstructiveDiagrams`Private`colorConstructAmplitude": [
+      "DownValues"
+    ],
+    "ConstructiveDiagrams`Private`$amplitudeParallelLoadedSignature": [
+      "OwnValues"
+    ],
+    "HEPCATCovariantCurrentSources`Private`covariantCurrentSource": [
+      "DownValues"
+    ],
+    "HEPCATCovariantCurrentSources`Private`declaredExternalSpinWeights": [
+      "DownValues"
+    ]
+  },
+  "ExpectedNewDefinedPrivateSymbols": [
+    "ConstructiveDiagrams`Private`colorSpectatorPath",
+    "ConstructiveDiagrams`Private`colorSpectatorPrepare",
+    "ConstructiveDiagrams`Private`colorSpectatorProjection",
+    "ConstructiveDiagrams`Private`colorSpectatorReject",
+    "ConstructiveDiagrams`Private`colorSpectatorSource"
+  ],
+  "ReviewedBy": "",
+  "EvidenceFiles": {},
+  "ExistingCheckersReducersModelsAndNumericalRuntimeUnchanged": false,
+  "SourceClassAndFundamentalColourMetadataReviewed": false,
+  "ExactlyOneFundamentalDiracPairOnly": false,
+  "EveryUsedLocalVertexCertified": false,
+  "NoInternalNonAbelianGaugeCurrentIntroduced": false,
+  "ExternalColourMassSpinAndMomentumLabelsRetained": false,
+  "EveryOriginalOrderedGraphPoleAndFermionFlowRetained": false,
+  "ExistingLocalThreePointMatchersUnchanged": false,
+  "ExistingMetricContactCalibrationUnchanged": false,
+  "AllProposalsReceiveEveryIndependentCheck": false,
+  "NoAnswerOrIndependentBenchmarkForSourceConstruction": false,
+  "AllNewHelpersPrivateAndNoLoadTimeSideEffects": false,
+  "PrivateOptionsExactAndPublicOptionsUnchanged": false,
+  "SourceAndNegativeRegressionsReviewed": false,
+  "MechanicalLoaderSignatureReviewed": false,
+  "LiteralSourceAndDefinitionChangesReviewed": false
+}

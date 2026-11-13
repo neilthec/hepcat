@@ -1,0 +1,183 @@
+21:26:26 Generating diagrams: RUNNING; stage 0.0 s; total 0.1 s
+21:26:26 Generating diagrams: COMPLETE; stage 0.2 s; total 0.3 s
+21:26:26 Building diagram amplitudes: RUNNING; stage 0.0 s; total 0.3 s
+21:26:26 Building diagram amplitudes: COMPLETE; stage 0.0 s; total 0.3 s
+21:26:26 Preparing diagrams: RUNNING; stage 0.0 s; total 0.3 s
+21:26:27 Preparing diagrams: working; stage 1.0 s; total 1.3 s
+21:26:28 Preparing diagrams: working; stage 2.6 s; total 2.9 s
+21:26:30 Preparing diagrams: working; stage 4.3 s; total 4.6 s
+21:26:32 Preparing diagrams: working; stage 6.0 s; total 6.2 s
+21:26:33 Preparing diagrams: working; stage 7.4 s; total 7.7 s
+21:26:34 Preparing diagrams: working; stage 8.7 s; total 9.0 s
+21:26:36 Preparing diagrams: working; stage 10.3 s; total 10.6 s
+21:26:38 Preparing diagrams: working; stage 11.9 s; total 12.2 s
+21:26:39 Preparing diagrams: working; stage 13.2 s; total 13.4 s
+21:26:39 Preparing diagrams: PREPARED; stage 13.6 s; total 13.9 s
+21:26:39 Generating factorization channels: RUNNING; stage 0.0 s; total 13.9 s
+21:26:42 Generating factorization channels: COMPLETE; stage 2.6 s; total 16.5 s
+21:26:42 Preparing factorization channels: RUNNING; stage 0.0 s; total 16.5 s
+21:26:44 Preparing factorization channels: working; stage 1.7 s; total 18.2 s
+21:26:45 Preparing factorization channels: working; stage 2.7 s; total 19.2 s
+21:26:46 Preparing factorization channels: working; stage 4.2 s; total 20.7 s
+21:26:48 Preparing factorization channels: working; stage 5.7 s; total 22.2 s
+21:26:48 Preparing factorization channels: PREPARED; stage 6.1 s; total 22.6 s
+21:26:48 Completing factorization: RUNNING; stage 0.0 s; total 22.6 s
+21:26:49 Completing factorization: working; stage 1.0 s; total 23.6 s
+21:26:50 Completing factorization: working; stage 2.1 s; total 24.7 s
+21:26:51 Completing factorization: working; stage 3.1 s; total 25.7 s
+21:26:58 Completing factorization: working; stage 9.9 s; total 32.5 s
+21:26:59 Completing factorization: working; stage 10.9 s; total 33.6 s
+21:27:00 Completing factorization: working; stage 11.9 s; total 34.6 s
+21:27:02 Completing factorization: working; stage 13.7 s; total 36.4 s
+21:27:17 Completing factorization: working; stage 29.2 s; total 51.8 s
+21:27:18 Completing factorization: working; stage 30.2 s; total 52.9 s
+21:27:19 Completing factorization: working; stage 31.3 s; total 53.9 s
+21:27:20 Completing factorization: working; stage 32.3 s; total 55.0 s
+21:27:21 Completing factorization: working; stage 33.3 s; total 56.0 s
+21:27:24 Completing factorization: working; stage 36.2 s; total 58.8 s
+21:27:39 Completing factorization: working; stage 51.2 s; total 73.8 s
+21:27:41 Completing factorization: working; stage 52.6 s; total 75.2 s
+21:27:42 Completing factorization: working; stage 53.7 s; total 76.3 s
+21:27:43 Completing factorization: working; stage 54.8 s; total 77.4 s
+21:27:44 Completing factorization: working; stage 55.9 s; total 78.5 s
+21:27:45 Completing factorization: working; stage 57.0 s; total 79.6 s
+21:27:51 Completing factorization: working; stage 63.2 s; total 85.8 s
+21:27:53 Completing factorization: working; stage 64.4 s; total 87.1 s
+21:27:54 Completing factorization: working; stage 65.4 s; total 88.1 s
+21:27:58 Completing factorization: working; stage 70.0 s; total 92.6 s
+21:28:01 Completing factorization: working; stage 72.9 s; total 95.6 s
+21:28:02 Completing factorization: working; stage 74.1 s; total 96.7 s
+21:28:03 Completing factorization: working; stage 75.1 s; total 97.7 s
+21:28:04 Completing factorization: working; stage 76.3 s; total 98.9 s
+21:28:05 Completing factorization: working; stage 77.3 s; total 100.0 s
+21:28:06 Completing factorization: working; stage 78.4 s; total 101.0 s
+21:28:08 Completing factorization: working; stage 79.5 s; total 102.1 s
+21:28:09 Completing factorization: working; stage 80.6 s; total 103.3 s
+21:28:15 Completing factorization: working; stage 86.9 s; total 109.5 s
+21:28:17 Completing factorization: working; stage 89.3 s; total 111.9 s
+21:28:18 Completing factorization: working; stage 90.4 s; total 113.0 s
+21:28:20 Completing factorization: working; stage 91.4 s; total 114.0 s
+21:28:21 Completing factorization: working; stage 92.4 s; total 115.1 s
+21:28:22 Completing factorization: working; stage 93.4 s; total 116.1 s
+21:28:23 Completing factorization: working; stage 94.5 s; total 117.1 s
+21:28:29 Completing factorization: working; stage 101.0 s; total 123.6 s
+21:28:30 Completing factorization: working; stage 102.0 s; total 124.6 s
+21:28:31 Completing factorization: working; stage 103.0 s; total 125.6 s
+21:28:33 Completing factorization: working; stage 104.9 s; total 127.5 s
+21:28:47 Completing factorization: working; stage 119.1 s; total 141.7 s
+21:28:48 Completing factorization: working; stage 120.1 s; total 142.7 s
+21:28:49 Completing factorization: working; stage 121.1 s; total 143.8 s
+21:28:50 Completing factorization: working; stage 122.2 s; total 144.8 s
+21:28:54 Completing factorization: working; stage 126.0 s; total 148.6 s
+21:29:09 Completing factorization: working; stage 140.6 s; total 163.3 s
+21:29:10 Completing factorization: working; stage 142.0 s; total 164.7 s
+21:29:11 Completing factorization: working; stage 143.1 s; total 165.7 s
+21:29:12 Completing factorization: working; stage 144.2 s; total 166.8 s
+21:29:13 Completing factorization: working; stage 145.3 s; total 167.9 s
+21:29:14 Completing factorization: working; stage 146.3 s; total 168.9 s
+21:29:21 Completing factorization: working; stage 152.7 s; total 175.3 s
+21:29:22 Completing factorization: working; stage 154.0 s; total 176.6 s
+21:29:23 Completing factorization: working; stage 155.0 s; total 177.6 s
+21:29:28 Completing factorization: working; stage 159.7 s; total 182.3 s
+21:29:31 Completing factorization: working; stage 162.6 s; total 185.2 s
+21:29:32 Completing factorization: working; stage 163.8 s; total 186.4 s
+21:29:33 Completing factorization: working; stage 164.8 s; total 187.5 s
+21:29:34 Completing factorization: working; stage 165.9 s; total 188.5 s
+21:29:35 Completing factorization: working; stage 167.0 s; total 189.6 s
+21:29:36 Completing factorization: working; stage 168.0 s; total 190.6 s
+21:29:37 Completing factorization: working; stage 169.1 s; total 191.8 s
+21:29:38 Completing factorization: working; stage 170.2 s; total 192.9 s
+21:29:44 Completing factorization: working; stage 176.3 s; total 199.0 s
+21:29:47 Completing factorization: working; stage 178.8 s; total 201.4 s
+21:29:48 Completing factorization: working; stage 179.8 s; total 202.5 s
+21:29:49 Completing factorization: working; stage 180.8 s; total 203.5 s
+21:29:50 Completing factorization: working; stage 181.9 s; total 204.5 s
+21:29:51 Completing factorization: working; stage 182.9 s; total 205.5 s
+21:29:52 Completing factorization: working; stage 183.9 s; total 206.6 s
+21:29:59 Completing factorization: working; stage 190.6 s; total 213.2 s
+21:30:00 Completing factorization: working; stage 191.6 s; total 214.2 s
+21:30:01 Completing factorization: working; stage 192.6 s; total 215.2 s
+21:30:03 Completing factorization: working; stage 194.5 s; total 217.1 s
+21:30:20 Completing factorization: working; stage 211.6 s; total 234.2 s
+21:30:21 Completing factorization: working; stage 212.7 s; total 235.3 s
+21:30:22 Completing factorization: working; stage 213.7 s; total 236.3 s
+21:30:23 Completing factorization: working; stage 214.7 s; total 237.3 s
+21:30:24 Completing factorization: working; stage 215.7 s; total 238.3 s
+21:30:27 Completing factorization: working; stage 218.4 s; total 241.0 s
+21:30:28 Completing factorization: working; stage 219.6 s; total 242.2 s
+21:30:29 Completing factorization: working; stage 220.6 s; total 243.2 s
+21:30:30 Completing factorization: working; stage 221.7 s; total 244.4 s
+21:30:31 Completing factorization: working; stage 222.7 s; total 245.4 s
+21:30:32 Completing factorization: working; stage 223.8 s; total 246.4 s
+21:30:33 Completing factorization: working; stage 225.0 s; total 247.6 s
+21:30:34 Completing factorization: working; stage 226.1 s; total 248.7 s
+21:30:35 Completing factorization: working; stage 227.2 s; total 249.9 s
+21:30:36 Completing factorization: working; stage 228.3 s; total 250.9 s
+21:30:38 Completing factorization: working; stage 229.5 s; total 252.1 s
+21:30:39 Completing factorization: working; stage 230.5 s; total 253.2 s
+21:30:40 Completing factorization: working; stage 231.6 s; total 254.2 s
+21:30:41 Completing factorization: working; stage 232.7 s; total 255.4 s
+21:30:42 Completing factorization: working; stage 233.8 s; total 256.4 s
+21:30:48 Completing factorization: working; stage 240.1 s; total 262.7 s
+21:30:49 Completing factorization: working; stage 241.1 s; total 263.7 s
+21:30:50 Completing factorization: working; stage 242.3 s; total 264.9 s
+21:30:51 Completing factorization: working; stage 243.4 s; total 266.0 s
+21:30:52 Completing factorization: working; stage 244.4 s; total 267.0 s
+21:30:54 Completing factorization: working; stage 245.6 s; total 268.2 s
+21:30:55 Completing factorization: working; stage 246.7 s; total 269.4 s
+21:30:56 Completing factorization: working; stage 247.9 s; total 270.5 s
+21:30:57 Completing factorization: working; stage 249.1 s; total 271.7 s
+21:30:58 Completing factorization: working; stage 250.2 s; total 272.8 s
+21:30:59 Completing factorization: working; stage 251.3 s; total 273.9 s
+21:31:00 Completing factorization: working; stage 252.3 s; total 274.9 s
+21:31:01 Completing factorization: working; stage 253.3 s; total 276.0 s
+21:31:02 Completing factorization: working; stage 254.4 s; total 277.0 s
+21:31:04 Completing factorization: working; stage 255.5 s; total 278.1 s
+21:31:05 Completing factorization: working; stage 256.5 s; total 279.2 s
+21:31:06 Completing factorization: working; stage 257.7 s; total 280.3 s
+21:31:07 Completing factorization: working; stage 258.7 s; total 281.4 s
+21:31:08 Completing factorization: working; stage 259.8 s; total 282.5 s
+21:31:09 Completing factorization: working; stage 260.9 s; total 283.5 s
+21:31:10 Completing factorization: working; stage 262.0 s; total 284.6 s
+21:31:11 Completing factorization: working; stage 263.1 s; total 285.8 s
+21:31:12 Completing factorization: working; stage 264.3 s; total 287.0 s
+21:31:13 Completing factorization: working; stage 265.4 s; total 288.0 s
+21:31:15 Completing factorization: working; stage 266.4 s; total 289.0 s
+21:31:16 Completing factorization: working; stage 267.4 s; total 290.1 s
+21:31:17 Completing factorization: working; stage 268.6 s; total 291.2 s
+21:31:18 Completing factorization: working; stage 269.6 s; total 292.2 s
+21:31:19 Completing factorization: working; stage 270.6 s; total 293.3 s
+21:31:20 Completing factorization: working; stage 271.7 s; total 294.3 s
+21:31:22 Completing factorization: working; stage 273.7 s; total 296.4 s
+21:31:24 Completing factorization: working; stage 275.7 s; total 298.3 s
+21:31:26 Completing factorization: working; stage 277.5 s; total 300.1 s
+21:31:27 Completing factorization: working; stage 279.4 s; total 302.0 s
+21:31:28 Completing factorization: COMPLETE; stage 279.6 s; total 302.2 s
+21:31:28 Preparing factorization result: RUNNING; stage 0.0 s; total 302.2 s
+21:31:29 Preparing factorization result: working; stage 1.6 s; total 303.8 s
+21:31:32 Preparing factorization result: working; stage 4.5 s; total 306.7 s
+21:31:40 Preparing factorization result: working; stage 12.7 s; total 314.9 s
+21:31:43 Preparing factorization result: working; stage 14.9 s; total 317.0 s
+21:31:43 Preparing factorization result: COMPLETE; stage 14.9 s; total 317.0 s
+21:31:43 Generating Feynman diagrams: RUNNING; stage 0.0 s; total 317.1 s
+21:31:43 Generating Feynman diagrams: COMPLETE; stage 0.0 s; total 317.1 s
+21:31:43 Building Feynman amplitudes: RUNNING; stage 0.0 s; total 317.1 s
+21:31:43 Building Feynman amplitudes: COMPLETE; stage 0.0 s; total 317.1 s
+21:31:43 Preparing Feynman amplitudes: RUNNING; stage 0.0 s; total 317.1 s
+21:31:44 Preparing Feynman amplitudes: working; stage 1.7 s; total 318.7 s
+21:31:46 Preparing Feynman amplitudes: working; stage 3.8 s; total 320.9 s
+21:31:47 Preparing Feynman amplitudes: working; stage 4.8 s; total 321.9 s
+21:31:49 Preparing Feynman amplitudes: working; stage 6.0 s; total 323.1 s
+21:31:49 Preparing Feynman amplitudes: PREPARED; stage 6.5 s; total 323.6 s
+21:31:49 Validating factorization representative (1/3): RUNNING; stage 0.0 s; total 323.6 s
+21:31:52 Validating factorization representative (1/3): COMPLETE; stage 3.0 s; total 326.6 s
+21:31:52 Validating factorization representative (2/3): RUNNING; stage 0.0 s; total 326.6 s
+21:31:55 Validating factorization representative (2/3): COMPLETE; stage 2.9 s; total 329.5 s
+21:31:55 Validating factorization representative (3/3): RUNNING; stage 0.0 s; total 329.6 s
+21:31:58 Validating factorization representative (3/3): COMPLETE; stage 3.0 s; total 332.5 s
+21:31:58 Random seed: 97824556
+21:31:58 Total time: 332.5 s
+21:31:58 Complexity: 310
+21:31:58                                         2                                                                                                      2                                                                                                      2                                                                                                      2                                                                                                      2                                                                                                      2                                                                                                      2
+Dataset[{<|Type -> Physical, Test -> -Mm  + s   == 0, Status -> PASS, ObservedGrowth -> , ExpectedGrowth -> |>, <|Type -> Physical, Test -> -Mh  + s   == 0, Status -> PASS, ObservedGrowth -> , ExpectedGrowth -> |>, <|Type -> Physical, Test -> -Mm  + s   == 0, Status -> PASS, ObservedGrowth -> , ExpectedGrowth -> |>, <|Type -> Physical, Test -> -Mm  + s   == 0, Status -> PASS, ObservedGrowth -> , ExpectedGrowth -> |>, <|Type -> Physical, Test -> -Mm  + s   == 0, Status -> PASS, ObservedGrowth -> , ExpectedGrowth -> |>, <|Type -> Physical, Test -> -Mm  + s   == 0, Status -> PASS, ObservedGrowth -> , ExpectedGrowth -> |>, <|Type -> Physical, Test -> -Mm  + s   == 0, Status -> PASS, ObservedGrowth -> , ExpectedGrowth -> |>, <|Type -> HighEnergy, Test -> Fixed-angle high energy, Status -> PASS, ObservedGrowth -> At most E^(-1), ExpectedGrowth -> At most E^(-1)|>, <|Type -> Reference, Test -> No explicit Xi dependence, Status -> PASS, ObservedGrowth -> , ExpectedGrowth -> |>, <|Type -> Feynman, Test -> Full Feynman amplitude, Status -> PASS, ObservedGrowth -> , ExpectedGrowth -> |>}, TypeSystem`Vector[TypeSystem`Struct[{Type, Test, Status, ObservedGrowth, ExpectedGrowth}, {TypeSystem`Atom[TypeSystem`Enumeration[Feynman, HighEnergy, Physical, Reference]], TypeSystem`AnyType, TypeSystem`Atom[TypeSystem`Enumeration[PASS]], TypeSystem`Atom[TypeSystem`Enumeration[, At most E^(-1)]], TypeSystem`Atom[TypeSystem`Enumeration[, At most E^(-1)]]}], 10], <|MaxItems -> {All, All}|>]
+                                             23                                                                                                     45                                                                                                     13                                                                                                     25                                                                                                     24                                                                                                     15                                                                                                     14

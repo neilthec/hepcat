@@ -1,0 +1,504 @@
+{
+  "Status": "RAW_SAME_GENERATED_SOURCE_DOUBLE_CONTROL",
+  "Rows": [
+    {
+      "Helicities": [
+        -2,
+        -2,
+        -2,
+        -2,
+        -2
+      ],
+      "ComparedPoints": 1000,
+      "Mismatches": 0,
+      "EvaluationErrors": 0,
+      "MaximumRelativeError": 1.0,
+      "MaximumAbsoluteError": 2.3666124513260054e-23,
+      "FailedPoints": []
+    },
+    {
+      "Helicities": [
+        -2,
+        -2,
+        -2,
+        -2,
+        2
+      ],
+      "ComparedPoints": 1000,
+      "Mismatches": 1,
+      "EvaluationErrors": 0,
+      "MaximumRelativeError": 1.0,
+      "MaximumAbsoluteError": 3.075421529749026e-22,
+      "FailedPoints": [
+        719
+      ]
+    },
+    {
+      "Helicities": [
+        -2,
+        -2,
+        -2,
+        2,
+        -2
+      ],
+      "ComparedPoints": 1000,
+      "Mismatches": 0,
+      "EvaluationErrors": 0,
+      "MaximumRelativeError": 1.0,
+      "MaximumAbsoluteError": 1.746179352830398e-23,
+      "FailedPoints": []
+    },
+    {
+      "Helicities": [
+        -2,
+        -2,
+        -2,
+        2,
+        2
+      ],
+      "ComparedPoints": 1000,
+      "Mismatches": 0,
+      "EvaluationErrors": 0,
+      "MaximumRelativeError": 5.595448513292986e-12,
+      "MaximumAbsoluteError": 7.450580596923828e-09,
+      "FailedPoints": []
+    },
+    {
+      "Helicities": [
+        -2,
+        -2,
+        2,
+        -2,
+        -2
+      ],
+      "ComparedPoints": 1000,
+      "Mismatches": 1,
+      "EvaluationErrors": 0,
+      "MaximumRelativeError": 1.0,
+      "MaximumAbsoluteError": 3.0727619343542493e-22,
+      "FailedPoints": [
+        719
+      ]
+    },
+    {
+      "Helicities": [
+        -2,
+        -2,
+        2,
+        -2,
+        2
+      ],
+      "ComparedPoints": 1000,
+      "Mismatches": 1,
+      "EvaluationErrors": 0,
+      "MaximumRelativeError": 3.424027336801866e-07,
+      "MaximumAbsoluteError": 1.0040821507573128e-07,
+      "FailedPoints": [
+        719
+      ]
+    },
+    {
+      "Helicities": [
+        -2,
+        -2,
+        2,
+        2,
+        -2
+      ],
+      "ComparedPoints": 1000,
+      "Mismatches": 0,
+      "EvaluationErrors": 0,
+      "MaximumRelativeError": 2.55420817823203e-09,
+      "MaximumAbsoluteError": 2.3515895009040833e-07,
+      "FailedPoints": []
+    },
+    {
+      "Helicities": [
+        -2,
+        -2,
+        2,
+        2,
+        2
+      ],
+      "ComparedPoints": 1000,
+      "Mismatches": 0,
+      "EvaluationErrors": 0,
+      "MaximumRelativeError": 9.004411360493571e-13,
+      "MaximumAbsoluteError": 8.139759302139282e-07,
+      "FailedPoints": []
+    },
+    {
+      "Helicities": [
+        -2,
+        2,
+        -2,
+        -2,
+        -2
+      ],
+      "ComparedPoints": 1000,
+      "Mismatches": 0,
+      "EvaluationErrors": 0,
+      "MaximumRelativeError": 1.0,
+      "MaximumAbsoluteError": 1.1950027745021505e-23,
+      "FailedPoints": []
+    },
+    {
+      "Helicities": [
+        -2,
+        2,
+        -2,
+        -2,
+        2
+      ],
+      "ComparedPoints": 1000,
+      "Mismatches": 0,
+      "EvaluationErrors": 0,
+      "MaximumRelativeError": 4.1889436098196634e-11,
+      "MaximumAbsoluteError": 7.82310962677002e-08,
+      "FailedPoints": []
+    },
+    {
+      "Helicities": [
+        -2,
+        2,
+        -2,
+        2,
+        -2
+      ],
+      "ComparedPoints": 1000,
+      "Mismatches": 0,
+      "EvaluationErrors": 0,
+      "MaximumRelativeError": 2.753637294399635e-11,
+      "MaximumAbsoluteError": 2.8172507882118225e-07,
+      "FailedPoints": []
+    },
+    {
+      "Helicities": [
+        -2,
+        2,
+        -2,
+        2,
+        2
+      ],
+      "ComparedPoints": 1000,
+      "Mismatches": 0,
+      "EvaluationErrors": 0,
+      "MaximumRelativeError": 4.541108167617729e-12,
+      "MaximumAbsoluteError": 6.789341568946838e-07,
+      "FailedPoints": []
+    },
+    {
+      "Helicities": [
+        -2,
+        2,
+        2,
+        -2,
+        -2
+      ],
+      "ComparedPoints": 1000,
+      "Mismatches": 0,
+      "EvaluationErrors": 0,
+      "MaximumRelativeError": 1.2647461236181338e-10,
+      "MaximumAbsoluteError": 2.898741513490677e-08,
+      "FailedPoints": []
+    },
+    {
+      "Helicities": [
+        -2,
+        2,
+        2,
+        -2,
+        2
+      ],
+      "ComparedPoints": 1000,
+      "Mismatches": 0,
+      "EvaluationErrors": 0,
+      "MaximumRelativeError": 1.9032064663372477e-10,
+      "MaximumAbsoluteError": 7.450580596923828e-09,
+      "FailedPoints": []
+    },
+    {
+      "Helicities": [
+        -2,
+        2,
+        2,
+        2,
+        -2
+      ],
+      "ComparedPoints": 1000,
+      "Mismatches": 0,
+      "EvaluationErrors": 0,
+      "MaximumRelativeError": 3.223086329024353e-10,
+      "MaximumAbsoluteError": 7.59027898311615e-08,
+      "FailedPoints": []
+    },
+    {
+      "Helicities": [
+        -2,
+        2,
+        2,
+        2,
+        2
+      ],
+      "ComparedPoints": 1000,
+      "Mismatches": 0,
+      "EvaluationErrors": 0,
+      "MaximumRelativeError": 1.0,
+      "MaximumAbsoluteError": 2.4720815931613236e-24,
+      "FailedPoints": []
+    },
+    {
+      "Helicities": [
+        2,
+        -2,
+        -2,
+        -2,
+        -2
+      ],
+      "ComparedPoints": 1000,
+      "Mismatches": 0,
+      "EvaluationErrors": 0,
+      "MaximumRelativeError": 1.0,
+      "MaximumAbsoluteError": 2.4720815931613236e-24,
+      "FailedPoints": []
+    },
+    {
+      "Helicities": [
+        2,
+        -2,
+        -2,
+        -2,
+        2
+      ],
+      "ComparedPoints": 1000,
+      "Mismatches": 0,
+      "EvaluationErrors": 0,
+      "MaximumRelativeError": 3.2230920243583494e-10,
+      "MaximumAbsoluteError": 7.59027898311615e-08,
+      "FailedPoints": []
+    },
+    {
+      "Helicities": [
+        2,
+        -2,
+        -2,
+        2,
+        -2
+      ],
+      "ComparedPoints": 1000,
+      "Mismatches": 0,
+      "EvaluationErrors": 0,
+      "MaximumRelativeError": 1.9032064663372477e-10,
+      "MaximumAbsoluteError": 7.450580596923828e-09,
+      "FailedPoints": []
+    },
+    {
+      "Helicities": [
+        2,
+        -2,
+        -2,
+        2,
+        2
+      ],
+      "ComparedPoints": 1000,
+      "Mismatches": 0,
+      "EvaluationErrors": 0,
+      "MaximumRelativeError": 1.264743710153213e-10,
+      "MaximumAbsoluteError": 2.898741513490677e-08,
+      "FailedPoints": []
+    },
+    {
+      "Helicities": [
+        2,
+        -2,
+        2,
+        -2,
+        -2
+      ],
+      "ComparedPoints": 1000,
+      "Mismatches": 0,
+      "EvaluationErrors": 0,
+      "MaximumRelativeError": 4.540934703842658e-12,
+      "MaximumAbsoluteError": 6.780028343200684e-07,
+      "FailedPoints": []
+    },
+    {
+      "Helicities": [
+        2,
+        -2,
+        2,
+        -2,
+        2
+      ],
+      "ComparedPoints": 1000,
+      "Mismatches": 0,
+      "EvaluationErrors": 0,
+      "MaximumRelativeError": 2.753624068984212e-11,
+      "MaximumAbsoluteError": 2.8172507882118225e-07,
+      "FailedPoints": []
+    },
+    {
+      "Helicities": [
+        2,
+        -2,
+        2,
+        2,
+        -2
+      ],
+      "ComparedPoints": 1000,
+      "Mismatches": 0,
+      "EvaluationErrors": 0,
+      "MaximumRelativeError": 4.1889436098196634e-11,
+      "MaximumAbsoluteError": 7.450580596923828e-08,
+      "FailedPoints": []
+    },
+    {
+      "Helicities": [
+        2,
+        -2,
+        2,
+        2,
+        2
+      ],
+      "ComparedPoints": 1000,
+      "Mismatches": 0,
+      "EvaluationErrors": 0,
+      "MaximumRelativeError": 1.0,
+      "MaximumAbsoluteError": 1.1950027745021505e-23,
+      "FailedPoints": []
+    },
+    {
+      "Helicities": [
+        2,
+        2,
+        -2,
+        -2,
+        -2
+      ],
+      "ComparedPoints": 1000,
+      "Mismatches": 0,
+      "EvaluationErrors": 0,
+      "MaximumRelativeError": 9.004411360493571e-13,
+      "MaximumAbsoluteError": 8.139759302139282e-07,
+      "FailedPoints": []
+    },
+    {
+      "Helicities": [
+        2,
+        2,
+        -2,
+        -2,
+        2
+      ],
+      "ComparedPoints": 1000,
+      "Mismatches": 0,
+      "EvaluationErrors": 0,
+      "MaximumRelativeError": 2.55420817823203e-09,
+      "MaximumAbsoluteError": 2.3515895009040833e-07,
+      "FailedPoints": []
+    },
+    {
+      "Helicities": [
+        2,
+        2,
+        -2,
+        2,
+        -2
+      ],
+      "ComparedPoints": 1000,
+      "Mismatches": 1,
+      "EvaluationErrors": 0,
+      "MaximumRelativeError": 3.424027336801866e-07,
+      "MaximumAbsoluteError": 1.0040821507573128e-07,
+      "FailedPoints": [
+        719
+      ]
+    },
+    {
+      "Helicities": [
+        2,
+        2,
+        -2,
+        2,
+        2
+      ],
+      "ComparedPoints": 1000,
+      "Mismatches": 1,
+      "EvaluationErrors": 0,
+      "MaximumRelativeError": 1.0,
+      "MaximumAbsoluteError": 3.0727619343542493e-22,
+      "FailedPoints": [
+        719
+      ]
+    },
+    {
+      "Helicities": [
+        2,
+        2,
+        2,
+        -2,
+        -2
+      ],
+      "ComparedPoints": 1000,
+      "Mismatches": 0,
+      "EvaluationErrors": 0,
+      "MaximumRelativeError": 5.595448513292986e-12,
+      "MaximumAbsoluteError": 7.916241884231567e-09,
+      "FailedPoints": []
+    },
+    {
+      "Helicities": [
+        2,
+        2,
+        2,
+        -2,
+        2
+      ],
+      "ComparedPoints": 1000,
+      "Mismatches": 0,
+      "EvaluationErrors": 0,
+      "MaximumRelativeError": 1.0,
+      "MaximumAbsoluteError": 1.746179352830398e-23,
+      "FailedPoints": []
+    },
+    {
+      "Helicities": [
+        2,
+        2,
+        2,
+        2,
+        -2
+      ],
+      "ComparedPoints": 1000,
+      "Mismatches": 1,
+      "EvaluationErrors": 0,
+      "MaximumRelativeError": 1.0,
+      "MaximumAbsoluteError": 3.075421529749026e-22,
+      "FailedPoints": [
+        719
+      ]
+    },
+    {
+      "Helicities": [
+        2,
+        2,
+        2,
+        2,
+        2
+      ],
+      "ComparedPoints": 1000,
+      "Mismatches": 0,
+      "EvaluationErrors": 0,
+      "MaximumRelativeError": 1.0,
+      "MaximumAbsoluteError": 2.3666124513260054e-23,
+      "FailedPoints": []
+    }
+  ],
+  "Mismatches": 6,
+  "EvaluationErrors": 0,
+  "Seconds": 0.301964083,
+  "OriginalHistoricalMGAllValuesBitIdenticalClaimed": false,
+  "SameGeneratedFortranSourceUsedBy113BitBuild": true,
+  "Points": 1000,
+  "ComparedHelicityPoints": 32000
+}

@@ -519,6 +519,75 @@ sm5NotebookPrecisionCells[family_Association] := Module[
     sm5NotebookGroup[{sm5NotebookInput[code, "sm5-precision-replay-" <> id],
       sm5NotebookOutput[table, "Output"]}]}
 ];
+(* MadGraph precision evidence is separate from the CalcHEP replay above. *)
+sm5NotebookPrecisionDisplayNumber[value_String] := Quiet[Check[ImportString[value, "RawJSON"], value]];
+sm5NotebookPrecisionDisplayNumber[value_] := value;
+sm5NotebookMadGraphPrecisionRows[qualification_Association, raw_Association] := Module[
+  {rows, zero, nonzero, maximum},
+  If[Lookup[qualification, "Backend", None] =!= "MadGraph" ||
+      Lookup[qualification, "Status", None] =!= "PRECISION_QUALIFIED" ||
+      !ListQ[Lookup[raw, "Rows", None]], Return[{}]];
+  rows = raw["Rows"];
+  zero = Select[rows, TrueQ[Lookup[#, "ExpectedExactZero", False]] &];
+  nonzero = Select[rows, !TrueQ[Lookup[#, "ExpectedExactZero", False]] &];
+  maximum[data_, key_] := If[data === {}, 0, Max[Lookup[data, key, 0]]];
+  {<|"Evaluation" -> "Original MadGraph", "MantissaBits" -> 53,
+      "Points" -> qualification["Points"], "Helicity comparisons" -> qualification["ComparedHelicityPoints"],
+      "Mismatches" -> Total[Lookup[rows, "Mismatches", 0]],
+      "Errors" -> Total[Lookup[rows, "EvaluationErrors", 0]],
+      "Max nonzero relative difference" -> maximum[nonzero, "MaximumRelativeError"],
+      "Max zero absolute residual" -> maximum[zero, "MaximumAbsoluteError"], "Status" -> raw["Status"]|>,
+   <|"Evaluation" -> "113-bit replay (separate qualification)", "MantissaBits" -> qualification["MantissaBits"],
+      "Points" -> qualification["Points"], "Helicity comparisons" -> qualification["ComparedHelicityPoints"],
+      "Mismatches" -> 0, "Errors" -> 0,
+      "Max nonzero relative difference" -> sm5NotebookPrecisionDisplayNumber[qualification["MaximumNonzeroRelativeError"]],
+      "Max zero absolute residual" -> sm5NotebookPrecisionDisplayNumber[qualification["MaximumZeroAbsoluteError"]],
+      "Status" -> "PASS"|>}
+];
+sm5NotebookMadGraphReplayInput[variable_String, verifier_String] :=
+  variable <> "MadGraphPrecisionReplay = RunProcess[{\"python3\", " <> sm5NotebookPathSource[verifier] <> "}];\n" <>
+  "If[" <> variable <> "MadGraphPrecisionReplay[\"ExitCode\"] === 0,\n  ImportString[" <>
+    variable <> "MadGraphPrecisionReplay[\"StandardOutput\"], \"RawJSON\"],\n  " <>
+    variable <> "MadGraphPrecisionReplay]";
+sm5NotebookMadGraphPrecisionCells[family_Association] := Module[
+  {id, link, binding, verification, qualification, reportPath, report, rawPath, raw, verifier,
+   rows, table, note, variable},
+  id = family["ID"]; link = FileNameJoin[{sm5NotebookResultsPath, id <> "-precision.json"}];
+  If[!FileExistsQ[link], Return[{}]];
+  binding = Quiet[Check[Import[link, "RawJSON"], <||>]];
+  If[!AssociationQ[binding] || Lookup[binding, "Backend", None] =!= "MadGraph", Return[{}]];
+  verification = Quiet[Check[RunProcess[{
+    "python3", FileNameJoin[{sm5NotebookRoot, "tests", "SM-5-point", "precision_evidence.py"}],
+    "--family", id, "--results", sm5NotebookResultsPath,
+    "--export-root", FileNameJoin[{sm5NotebookRoot, "tests", "results", "spinas-output", "SM-5-point"}],
+    "--inventory", sm5NotebookInventoryPath}], $Failed]];
+  qualification = If[AssociationQ[verification] && Lookup[verification, "ExitCode", 1] === 0,
+    Quiet[Check[ImportString[verification["StandardOutput"], "RawJSON"], <||>]], <||>];
+  If[Lookup[qualification, "Backend", None] =!= "MadGraph" ||
+      Lookup[qualification, "Status", None] =!= "PRECISION_QUALIFIED", Return[{}]];
+  reportPath = FileNameJoin[{sm5NotebookResultsPath, qualification["Report"]}];
+  If[!FileExistsQ[reportPath] || sm5NotebookDisplayHash[reportPath] =!= qualification["ReportSHA256"], Return[{}]];
+  report = Import[reportPath, "RawJSON"];
+  rawPath = FileNameJoin[{DirectoryName[reportPath], report["RawReportFile"]}];
+  verifier = FileNameJoin[{DirectoryName[reportPath], "verify-packet.py"}];
+  If[sm5NotebookDisplayHash[rawPath] =!= Lookup[report["Files"], report["RawReportFile"], None] ||
+      sm5NotebookDisplayHash[verifier] =!= Lookup[report["Files"], "verify-packet.py", None], Return[{}]];
+  raw = Import[rawPath, "RawJSON"]; rows = sm5NotebookMadGraphPrecisionRows[qualification, raw];
+  If[rows === {}, Return[{}]];
+  variable = sm5NotebookVariable[id]; table = Dataset[rows, MaxItems -> {All, All}];
+  note = "The original MadGraph comparison above keeps its raw FAIL and residuals. " <>
+    "A separate verified replay uses the same uncorrected binary64 inputs, the same generated reference expressions, " <>
+    "and 113-bit reference arithmetic. All " <> ToString[qualification["ComparedHelicityPoints"]] <>
+    " point/helicity comparisons pass the unchanged tolerances. Saved failed-point momenta and native values were checked bit for bit. " <>
+    "This does not claim that every native value from the historical run was saved. " <>
+    "The optional cell below independently recomputes the archived comparisons; it does not rebuild MadGraph or generate new points. " <>
+    "The packet's replay-instructions.txt explains the separate full rebuild procedure.";
+  {Cell["MadGraph precision replay (optional)", "Subsubsection",
+      CellTags -> "sm5-madgraph-precision-section-" <> id], sm5NotebookText[note],
+    sm5NotebookOutput[table, "Output"],
+    sm5NotebookGroup[{sm5NotebookInput[sm5NotebookMadGraphReplayInput[variable, verifier],
+      "sm5-madgraph-precision-replay-" <> id]}]}
+];
 sm5NotebookSupplementalFamilyNote[family_Association] := Module[
   {entries, verified, failed, unavailable, note},
   entries = Select[sm5NotebookProbes, MemberQ[Lookup[family, "CaseIDs", {}], Lookup[#, "CaseID", None]] &];
@@ -569,7 +638,7 @@ sm5NotebookFamily[family_Association] := Module[
   record = sm5NotebookRecord[FileNameJoin[{sm5NotebookResultsPath, id <> "-export.wxf"}]];
   AppendTo[cells, sm5NotebookGroup[Prepend[sm5NotebookCaptured[record, "Export"],
     sm5NotebookInput[code, "sm5-export-" <> id]]]];
-  cells = Join[cells, sm5NotebookPrecisionCells[family]];
+  cells = Join[cells, sm5NotebookPrecisionCells[family], sm5NotebookMadGraphPrecisionCells[family]];
   sm5NotebookGroup[cells]
 ];
 

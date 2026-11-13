@@ -198,6 +198,21 @@ def qualification(family, export_summary, cases, context_sha, results_dir,
     Report paths are relative to results_dir. export_root is the common export
     directory containing family['ExportName'], or that specific export itself.
     """
+    if not isinstance(family, dict) or not _identifier(family.get('ID')):
+        return None
+    # A separate verifier handles MadGraph packets. The established CalcHEP
+    # verification below remains unchanged, including its failure controls.
+    try:
+        backend_link = _json(Path(results_dir) / (family['ID'] + '-precision.json'))
+        if backend_link.get('Backend') == 'MadGraph':
+            specification = importlib.util.spec_from_file_location(
+                'hepcat_sm5_madgraph_precision', Path(__file__).with_name('madgraph_precision_evidence.py'))
+            verifier = importlib.util.module_from_spec(specification)
+            specification.loader.exec_module(verifier)
+            return verifier.qualification(family, export_summary, cases, context_sha,
+                results_dir, export_root, required_points, context_compatibility)
+    except (OSError, ValueError, TypeError, KeyError, ImportError):
+        return None
     try:
         if (not _positive_integer(required_points) or not isinstance(family, dict)
                 or not isinstance(context_sha, str) or re.fullmatch('[0-9a-f]{64}', context_sha) is None):

@@ -1,0 +1,228 @@
+{
+  "Status": "SEALED",
+  "Kind": "ExactColourSpectatorSourceClassHistoricalValidationTransition",
+  "BeforeContextSHA256": "47026bedc2844622616e46a05069c2682cc4306872799bbe8e02d4a01291cc04",
+  "AfterContextSHA256": "4165f24c7d5501c40c03ea91f850a5cde77389a1236e3af397fb6d7e2344a167",
+  "ChangedExistingFiles": [
+    "source/HEPCAT-Model.wl",
+    "source/internal/HEPCAT-Color.wl",
+    "source/internal/HEPCAT-CovariantSources.wl"
+  ],
+  "ChangedDefinitionFields": {
+    "ConstructiveDiagrams`ConstructAmplitude": [
+      "DownValues"
+    ],
+    "ConstructiveDiagrams`Private`colorConstructAmplitude": [
+      "DownValues"
+    ],
+    "ConstructiveDiagrams`Private`$amplitudeParallelLoadedSignature": [
+      "OwnValues"
+    ],
+    "HEPCATCovariantCurrentSources`Private`covariantCurrentSource": [
+      "DownValues"
+    ],
+    "HEPCATCovariantCurrentSources`Private`declaredExternalSpinWeights": [
+      "DownValues"
+    ]
+  },
+  "ExistingSymbolsChecked": 8293,
+  "NewSymbolsChecked": 49,
+  "NewDefinedPrivateSymbols": [
+    "ConstructiveDiagrams`Private`colorSpectatorPath",
+    "ConstructiveDiagrams`Private`colorSpectatorPrepare",
+    "ConstructiveDiagrams`Private`colorSpectatorProjection",
+    "ConstructiveDiagrams`Private`colorSpectatorReject",
+    "ConstructiveDiagrams`Private`colorSpectatorSource"
+  ],
+  "NewPrivateOptions": {
+    "ConstructiveDiagrams`Private`colorSpectatorSource": {
+      "Options": "{\"TimeConstraint\" -> 90}",
+      "DefaultValues": "{HoldPattern[Options[ConstructiveDiagrams`Private`colorSpectatorSource]] :> {\"TimeConstraint\" -> 90}}"
+    }
+  },
+  "NewEmptyPrivateSymbols": [
+    "ConstructiveDiagrams`Private`allVectors",
+    "ConstructiveDiagrams`Private`childLimit",
+    "ConstructiveDiagrams`Private`coloredLegs",
+    "ConstructiveDiagrams`Private`liftedParts",
+    "ConstructiveDiagrams`Private`lowerBefore",
+    "ConstructiveDiagrams`Private`originalDiagrams",
+    "ConstructiveDiagrams`Private`originalSignatures",
+    "ConstructiveDiagrams`Private`pathGraph",
+    "ConstructiveDiagrams`Private`pathTag",
+    "ConstructiveDiagrams`Private`prepOptions",
+    "ConstructiveDiagrams`Private`rawTensor",
+    "ConstructiveDiagrams`Private`scalarExpression",
+    "ConstructiveDiagrams`Private`sourceClass",
+    "ConstructiveDiagrams`Private`spectatorAttempt",
+    "ConstructiveDiagrams`Private`spectatorProjection",
+    "ConstructiveDiagrams`Private`spectatorValidation",
+    "ConstructiveDiagrams`Private`stripParticles",
+    "ConstructiveDiagrams`Private`strippedLower",
+    "ConstructiveDiagrams`Private`tensorData",
+    "ConstructiveDiagrams`Private`usedColoredRows",
+    "HEPCATCovariantCurrentSources`Private`expected",
+    "HEPCATCovariantCurrentSources`Private`massiveDiracQ"
+  ],
+  "NewTemporaryPrivateSymbols": [
+    "ConstructiveDiagrams`Private`allVectors$",
+    "ConstructiveDiagrams`Private`childLimit$",
+    "ConstructiveDiagrams`Private`coloredLegs$",
+    "ConstructiveDiagrams`Private`liftedParts$",
+    "ConstructiveDiagrams`Private`lowerBefore$",
+    "ConstructiveDiagrams`Private`originalSignatures$",
+    "ConstructiveDiagrams`Private`pathGraph$",
+    "ConstructiveDiagrams`Private`pathTag$",
+    "ConstructiveDiagrams`Private`prepOptions$",
+    "ConstructiveDiagrams`Private`rawTensor$",
+    "ConstructiveDiagrams`Private`retain$",
+    "ConstructiveDiagrams`Private`scalarExpression$",
+    "ConstructiveDiagrams`Private`sourceClass$",
+    "ConstructiveDiagrams`Private`spectatorAttempt$",
+    "ConstructiveDiagrams`Private`spectatorProjection$",
+    "ConstructiveDiagrams`Private`spectatorValidation$",
+    "ConstructiveDiagrams`Private`stripParticles$",
+    "ConstructiveDiagrams`Private`strippedLower$",
+    "ConstructiveDiagrams`Private`tensorData$",
+    "ConstructiveDiagrams`Private`usedColoredRows$",
+    "HEPCATCovariantCurrentSources`Private`expected$",
+    "HEPCATCovariantCurrentSources`Private`massiveDiracQ$"
+  ],
+  "BeforeColdDefinitionsSHA256": "6ab34152b2b43b436cef9902178ba2ba74c1e01897d80dfffab8ca6632d73616",
+  "AfterColdDefinitionsSHA256": "c6c37f508c8e79bec8fdcc66db0f9530a09ad5b8385544d4284e12c3bff3786b",
+  "AllOtherTenFieldDefinitionsExactlyUnchanged": true,
+  "MechanicalLoaderSignatureEvidence": {
+    "Before": 6532644161142315233,
+    "After": 8286940166460921071,
+    "InputCount": 13,
+    "InputsSHA256": "3558b6faf8a5f45166d288f29a0fbdb6517009e08e16d42d0f0d786448a365eb",
+    "ValuesSHA256": "222a6e5a36db6c5f84d30c50e5c096897a301015d0e965937d57348adbeefc7a",
+    "ScriptSHA256": "fcb449eb70b6dd654d3bbc5245a8acfcd29f43f4f1c35af4e75bfd1a4af2ddd6"
+  },
+  "HistoricalEvidenceOnly": true,
+  "ConstructorRerunPerformed": false,
+  "ValidationRerunPerformed": false,
+  "CurrentConstructorSuccessClaimed": false,
+  "BaselineDirectory": "tests/results/SM-5-point/compatibility/constructor-C6-pre-C7-47026bedc2844622616e46a05069c2682cc4306872799bbe8e02d4a01291cc04-20261113T041543Z",
+  "BaselineSHA256": "0059b4666b31f2db9bf7ec3fe20fe980ccba2ada1d118b178ac9dedec941297c",
+  "PriorProofSHA256": "61b14df48792dc949d2b094b063bff3c472d7f677ecaf69195486fda4bed251d",
+  "RecursiveProofArchivesCopied": false,
+  "AfterManifestSHA256": "acd895e92c52c03e9e9b3fa7ff4c577382c523820fdfc7d9902f19f82b815256",
+  "AfterCaptureSHA256": [
+    "24e1e7adcad3b9014d59113273e85d440e054dac3266ac4236d2ff68cb052cd4",
+    "9e7a6545a000303a33c70c82749b320f1dfe872989984f45a080291c2178ce6d"
+  ],
+  "SourceDiffsSHA256": "f98e977c5cb8d7cb94eae5236f9ded1883b12934e9d5137ad70c927e47402bbc",
+  "AnalysisSHA256": "515edbf494956825575fb62d7b75f0df73c1f28c5ff5bc34de5349fbd66ae2e8",
+  "CodeReviewSHA256": "cef7b28ce810c7481a2871b1aa3116b63b8ef4f6f8a8e0879eb663e37a7f3de2",
+  "ReviewEvidenceSHA256": "abf52f9ae03b0268f6da21aaba64fdb78d22d2394427d0e232ec6e03e186633c",
+  "SupplementalCounterexampleChecksStillRequired": true,
+  "PrecisionQualificationUnchangedRequired": true,
+  "AfterManifest": "tests/results/SM-5-point/compatibility/constructor-C7-postpatch-4165f24c7d5501c40c03ea91f850a5cde77389a1236e3af397fb6d7e2344a167-20261113/after-manifest.json",
+  "AfterCaptures": [
+    "tests/results/SM-5-point/compatibility/constructor-C7-postpatch-4165f24c7d5501c40c03ea91f850a5cde77389a1236e3af397fb6d7e2344a167-20261113/definitions-1-raw.json",
+    "tests/results/SM-5-point/compatibility/constructor-C7-postpatch-4165f24c7d5501c40c03ea91f850a5cde77389a1236e3af397fb6d7e2344a167-20261113/definitions-2-raw.json"
+  ],
+  "CodeReview": "tests/results/SM-5-point/compatibility/constructor-C7-postpatch-4165f24c7d5501c40c03ea91f850a5cde77389a1236e3af397fb6d7e2344a167-20261113/root-code-review.json",
+  "CodeReviewFileSHA256": "7658e0742e19113c46838752693659ff8ed2e318ecf9d4705e5c5e8967cd7df5",
+  "ReviewEvidenceFiles": {
+    "ActualPublicCalls_construct.wl": {
+      "Path": "tests/results/SM-5-point/diagnostics/c7-default-source-pilots-20261113/construct.wl",
+      "SHA256": "f015721027fae6b654872e08b1dd0731169c204dd9fd094d81b286a3c8f5e799"
+    },
+    "ActualPublicCalls_control.py": {
+      "Path": "tests/results/SM-5-point/diagnostics/c7-default-source-pilots-20261113/control.py",
+      "SHA256": "52e8bcf0c6e432bc1d8703d73440ba1eb4f4debe977dce708ec1fe58bc0cfcb6"
+    },
+    "ActualPublicCalls_controller-summary.json": {
+      "Path": "tests/results/SM-5-point/diagnostics/c7-default-source-pilots-20261113/controller-summary.json",
+      "SHA256": "1270c5bc54b84e4307f34e5cb3c2014b397be129236f3cf31197b91d63bdc01f"
+    },
+    "ReviewedSource_HEPCAT-Color": {
+      "Path": "tests/results/SM-5-point/compatibility/constructor-C7-postpatch-4165f24c7d5501c40c03ea91f850a5cde77389a1236e3af397fb6d7e2344a167-20261113/immutable-controls/source/internal/HEPCAT-Color.wl",
+      "SHA256": "d6c8d37a2a1ea96abf93feb2e1ba0173a7afe6aa65175a43ffb0aeb2edca5768"
+    },
+    "ReviewedSource_HEPCAT-CovariantSources": {
+      "Path": "tests/results/SM-5-point/compatibility/constructor-C7-postpatch-4165f24c7d5501c40c03ea91f850a5cde77389a1236e3af397fb6d7e2344a167-20261113/immutable-controls/source/internal/HEPCAT-CovariantSources.wl",
+      "SHA256": "6b061d63fc485371208521dd91a9dcb0ade2d0cddd0b811dfda7d2b04f321ad1"
+    },
+    "ReviewedSource_HEPCAT-Model": {
+      "Path": "tests/results/SM-5-point/compatibility/constructor-C7-postpatch-4165f24c7d5501c40c03ea91f850a5cde77389a1236e3af397fb6d7e2344a167-20261113/immutable-controls/source/HEPCAT-Model.wl",
+      "SHA256": "08d4012f6c3c5827f5ffb90d52c81f1ab5c5d5be01288f9063d3528b74474fe7"
+    },
+    "StrictCounterexample_canonical-Mm-override.json": {
+      "Path": "tests/results/SM-5-point/diagnostics/constructive-covariant-lift/canonical-equal-mass-recheck-C7-20261113/canonical-Mm-override.json",
+      "SHA256": "d4c1e08dd9084e528371d4fa981ee06b2536c4bffb8fcf436647e74f27f67584"
+    },
+    "StrictCounterexample_canonical-Mm-override.wl": {
+      "Path": "tests/results/SM-5-point/diagnostics/constructive-covariant-lift/canonical-equal-mass-recheck-C7-20261113/canonical-Mm-override.wl",
+      "SHA256": "c50f5f554bc3e9e5dcc1868d665ac185dd361db31c892254fc2b5fe7be5441b1"
+    },
+    "StrictCounterexample_controller-summary.json": {
+      "Path": "tests/results/SM-5-point/diagnostics/constructive-covariant-lift/canonical-equal-mass-recheck-C7-20261113/controller-summary.json",
+      "SHA256": "c5d207cd06d28ceeb7bdaf9e88e0cbd17eceaf76f327775afa2d2062d38b8976"
+    },
+    "StrictCounterexample_fresh-feynman-conversion.wl": {
+      "Path": "tests/results/SM-5-point/diagnostics/constructive-covariant-lift/canonical-equal-mass-recheck-C7-20261113/fresh-feynman-conversion.wl",
+      "SHA256": "bc675712d6855c6b2c29ed430814a3053cb2071529a8e0ddd97dbe88c100450e"
+    },
+    "color-handedness-tests.wl.log": {
+      "Path": "tests/results/SM-5-point/regressions/C7-source-cross-area/color-handedness-tests.wl.log",
+      "SHA256": "f334f9a026fc7bcb0d2b9ac1476e941434c2fdcc52bd407ba7eec5dbcec2b828"
+    },
+    "color-spectator-source-tests.wl": {
+      "Path": "tests/results/SM-5-point/compatibility/constructor-C7-postpatch-4165f24c7d5501c40c03ea91f850a5cde77389a1236e3af397fb6d7e2344a167-20261113/immutable-controls/tests/checks/color-spectator-source-tests.wl",
+      "SHA256": "2a1889cf96210be31130c8d3b12eaa13bf2bf4b34942238c53413c7735598c4c"
+    },
+    "construct-amplitude-tests.wl.log": {
+      "Path": "tests/results/SM-5-point/regressions/C7-source-cross-area/construct-amplitude-tests.wl.log",
+      "SHA256": "fa63d4e699463c740d3540dc4cd9ba8657594523b8dfc757f0704aa7c837c004"
+    },
+    "covariant-constructor-tests.wl.log": {
+      "Path": "tests/results/SM-5-point/regressions/C7-source-cross-area/covariant-constructor-tests.wl.log",
+      "SHA256": "0b530b039e103fe3365dd7a5ad745973a20d71c7a0ebc752413bd19e2d401f07"
+    },
+    "covariant-contact-calibration-tests.wl.log": {
+      "Path": "tests/results/SM-5-point/regressions/C7-source-cross-area/covariant-contact-calibration-tests.wl.log",
+      "SHA256": "af5f6d8f78db72c79b80b1706bb9ce57e242da6a14914287e43dd41449ef9cb5"
+    },
+    "covariant-cubic-spectator-source-tests.wl": {
+      "Path": "tests/results/SM-5-point/compatibility/constructor-C7-postpatch-4165f24c7d5501c40c03ea91f850a5cde77389a1236e3af397fb6d7e2344a167-20261113/immutable-controls/tests/checks/covariant-cubic-spectator-source-tests.wl",
+      "SHA256": "e8e40c7948fa86ed49de34864df26f64e4936ed38f19d9edbcb30be41ae7b0b0"
+    },
+    "covariant-current-source-tests.wl.log": {
+      "Path": "tests/results/SM-5-point/regressions/C7-source-cross-area/covariant-current-source-tests.wl.log",
+      "SHA256": "1f1be0002cb7428746728ed2ff2f1036923f4cfd39adf46f909657883715eff2"
+    },
+    "new-controls.log": {
+      "Path": "tests/results/SM-5-point/regressions/C7-source-cross-area/new-controls.log",
+      "SHA256": "d13d042a2b7746872c65e6c4cfe60cb0a5a3211b8f6f184937ce42d2b27870b9"
+    },
+    "public-muAHH_construction.json": {
+      "Path": "tests/results/SM-5-point/diagnostics/c7-default-source-pilots-20261113/public-muAHH/construction.json",
+      "SHA256": "6b7771b8f538d3f03cfd863164862b43993d1edf6522906e5fcca93cd3aa3e0f"
+    },
+    "public-muAHH_controller.json": {
+      "Path": "tests/results/SM-5-point/diagnostics/c7-default-source-pilots-20261113/public-muAHH/controller.json",
+      "SHA256": "499d6ffaa6624ea6f34f50b71d2da70dc25c2a6b08a20454eb9ef0d47e1704b4"
+    },
+    "public-uUZhh_construction.json": {
+      "Path": "tests/results/SM-5-point/diagnostics/c7-default-source-pilots-20261113/public-uUZhh/construction.json",
+      "SHA256": "0512bfe3f8b31743ca1b39f34bb595ed5d0bf3da3bd2512d15b4a594e95b3b34"
+    },
+    "public-uUZhh_controller.json": {
+      "Path": "tests/results/SM-5-point/diagnostics/c7-default-source-pilots-20261113/public-uUZhh/controller.json",
+      "SHA256": "3a74aeb1ddd734a9c6948efb2f4d4d81b5db265e13d7ddd8ed7ef90f3555be75"
+    },
+    "test_sm_five_point_validation_context_c7.py": {
+      "Path": "tests/results/SM-5-point/compatibility/constructor-C7-postpatch-4165f24c7d5501c40c03ea91f850a5cde77389a1236e3af397fb6d7e2344a167-20261113/immutable-controls/tests/checks/test_sm_five_point_validation_context_c7.py",
+      "SHA256": "c25bd3b3bdd861d80630178b015a4d0107d856fc9012f8cf8fbf517e99c153c8"
+    }
+  },
+  "LoaderSignatureEvidenceDirectory": "tests/results/SM-5-point/compatibility/constructor-C7-postpatch-4165f24c7d5501c40c03ea91f850a5cde77389a1236e3af397fb6d7e2344a167-20261113",
+  "VerifierToolsSHA256": {
+    "tests/SM-5-point/validation_context_c7.py": "11bca15ff32d9442b18c22a2009411dd8d937160d80e4988a71bd5642f2eff26",
+    "tests/SM-5-point/constructor_context.py": "063bc7eb8c1edfe2492589e05db6462027124f798dea5b77b699c469312ab093",
+    "tests/SM-5-point/stage_context.py": "1b59c5d9fbd569e1092c2b10bf90a9ed30004641b30f312a0237e2dc3f47bf98"
+  }
+}

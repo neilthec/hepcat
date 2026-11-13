@@ -1,0 +1,120 @@
+{
+  "Status": "READY",
+  "Library": "/private/tmp/hepcat-five-gluon-replay/reference-53-retry-1/libhepcat_madgraph.dylib",
+  "ExternalCount": 5,
+  "Process": "g g > g g g",
+  "PhysicalPDGs": [
+    21,
+    21,
+    21,
+    21,
+    21
+  ],
+  "Masses": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "AllowedParticlePDGs": [],
+  "ExcludedParticles": [],
+  "DiagramCount": 45,
+  "MadGraphModel": "/Users/neil/code/hepcat/tests/reference-models/madgraph/sm",
+  "MadGraphVersion": {
+    "Version": "3.8.1",
+    "Date": "2026-10-09"
+  },
+  "MadGraphModelPath": "/Users/neil/code/hepcat/tests/reference-models/madgraph/sm",
+  "MadGraphRestriction": null,
+  "FortranCompiler": "/opt/homebrew/Cellar/gcc/16.1.0/bin/gfortran-16",
+  "ParameterMatching": [
+    {
+      "HEPCAT": "GG",
+      "MadGraph": "G",
+      "RequestedValue": 1.117,
+      "MadGraphValue": 1.117
+    }
+  ],
+  "MassMatching": [
+    {
+      "PDG": 21,
+      "MadGraph": "ZERO",
+      "RequestedMass": 0.0,
+      "DirectInput": false
+    },
+    {
+      "PDG": 21,
+      "MadGraph": "ZERO",
+      "RequestedMass": 0.0,
+      "DirectInput": false
+    },
+    {
+      "PDG": 21,
+      "MadGraph": "ZERO",
+      "RequestedMass": 0.0,
+      "DirectInput": false
+    },
+    {
+      "PDG": 21,
+      "MadGraph": "ZERO",
+      "RequestedMass": 0.0,
+      "DirectInput": false
+    },
+    {
+      "PDG": 21,
+      "MadGraph": "ZERO",
+      "RequestedMass": 0.0,
+      "DirectInput": false
+    }
+  ],
+  "WidthPolicy": "Bare tree validation: all widths disabled. External DECAY inputs and every declared particle width are zero in a private UFO copy, including explicit, matched and dependent widths.",
+  "ZeroedWidths": [
+    {
+      "Name": "WZ",
+      "Value": 0.0
+    },
+    {
+      "Name": "WW",
+      "Value": 0.0
+    },
+    {
+      "Name": "WT",
+      "Value": 0.0
+    },
+    {
+      "Name": "WH",
+      "Value": 0.0
+    },
+    {
+      "Name": "WTau",
+      "Value": 0.0
+    }
+  ],
+  "PreservedWidths": [],
+  "ParameterRules": {
+    "Gf": 1.19542477614741e-05,
+    "MZ": 91.29214308315318,
+    "aEWM1": 127.99880250556788,
+    "lamWS": 0.0,
+    "aS": 0.0992879358956919,
+    "WZ": 0.0,
+    "WW": 0.0,
+    "WT": 0.0,
+    "WH": 0.0,
+    "WTau": 0.0
+  },
+  "CouplingOrders": {
+    "QED": 6,
+    "QCD": 6
+  },
+  "Scope": "Complete tree amplitude within the supplied UFO expansion limits and declared allowed particle content.",
+  "Normalization": "Raw fixed-helicity, color-summed squared amplitude; no initial averages or final symmetry factor.",
+  "SpinSum": "Exhaustive generated helicity table; no pruning, sampling, initial average or final symmetry factor.",
+  "HelicityStates": 32,
+  "OptimizationLevel": 0,
+  "FortranFlags": "-w -fPIC -ffixed-line-length-none",
+  "JampSplit": 0,
+  "JampAccumulationPolicy": "NativeDefault",
+  "JampBootstrap": null
+}

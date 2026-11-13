@@ -1,0 +1,11 @@
+{
+  "Points": 1000,
+  "HelicitiesPerPoint": 32,
+  "Rows": 32000,
+  "OriginalSavedPoint719All20Binary64ComponentsMatch": true,
+  "All32SamePointNativeValuesMatchSinglePointControlBits": true,
+  "AllSixOriginallyStoredFailedNativeValuesMatchBits": true,
+  "HistoricalAllPointNativeValuesWereSaved": false,
+  "NoHistoricalAllPointBitIdentityClaim": true,
+  "Seed": 1794538767447593000
+}

@@ -1,0 +1,20 @@
+Scope
+This packet preserves a diagnostic replay of the original 1000 binary64 phase-space points at all 32 labeled five-gluon helicities. The canonical export remains CalcHEP PASS / MadGraph FAIL. The separate 113-bit replay passes the original 1e-7 relative tolerance and the existing 1e-22 absolute tolerance for analytically zero states. No kinematics were corrected and no tolerances were enlarged.
+
+Independent verification without compiling
+Run: python3 verify-packet.py
+It checks all packet file hashes, every binary64 point against the CSV, the exact saved point719 and six historically stored native values, all point/helicity keys, and independently recomputes all 32000 comparisons from the raw113-bit outputs and native53 baseline. It does not promote or qualify a canonical result.
+
+Rebuilding the numerical reference
+The generated-source directory contains the exact original standalone Fortran model, HELAS, MATRIX, include files and parameter card. generated-source-hashes.json binds all58 files. The original double and promoted quadruple source files were identical. Compile the explicit object list in quad-same-source-build.json with GNU Fortran16 and -w -fPIC -ffixed-line-length-none -freal-8-real-16. Compile quad-stream.f90 WITHOUT promotion flags, linking the promoted objects/archives. Its explicit selected_real_kind(33) MATRIX result and input conversion preserve ABI and precision; the driver reads the archived binary64 stream first, then promotes each value exactly. It prints actual precision113, storage128, input64. Relocate only the absolute parameter-card path in the diagnostic driver to the archived card. No expression, coupling, helicity, ordering, averaging or source tensor should be edited.
+
+Do not run make -B blindly: the standalone Makefile regenerates cuts.inc. The first diagnostic quad build encountered this; that preliminary output was not sealed. The include was restored exactly and all explicit object members recompiled. Every one of the32000 quad outputs was byte-for-byte unchanged by this restoration; only the exact-source replay is admitted in this packet.
+
+Native control
+native-stream.cpp calls the unchanged public validation-point generator with the recorded uint64 seed1794538767447593000 and energy range1.5..6, then evaluates the current generated SPINAS process. Native project/library hashes are in project-file-hashes.json and precision-summary.json. The regenerated point719 matches all20 historical binary64 momentum words. All six historically stored failing native values match bit-for-bit. The historical run did not retain every per-point value; the packet makes no claim that unrecorded historical32000 native values were directly compared bit-for-bit. The new full native baseline and same-source MG53 control are both preserved.
+
+Reference control
+capture-double-stream.py replays all32000 entries through the newly rebuilt, unchanged generated double-precision reference. It retains six failures at point719, as did the original report. Fresh MG53 values reproduce closely but are not asserted bit-identical to the original deleted temporary library. The53 and113 controls use the same newly generated source/card and precisely the same archived binary64 inputs. The original raw report remains separately preserved.
+
+Normalization
+MATRIX is raw color-summed fixed-helicity squared amplitude, IC=1. Both sides retain the actual generated binary64 factor1/(64 incoming colors *4 incoming spins *6 identical-final-state symmetry)=1/1536. No ratio or phase is fitted. Outgoing helicities are reversed for HELAS exactly as in the ordinary validator.

@@ -1,0 +1,314 @@
+[
+  {
+    "Command": [
+      "/opt/homebrew/bin/gfortran-16",
+      "-w",
+      "-fPIC",
+      "-ffixed-line-length-none",
+      "-freal-8-real-16",
+      "-c",
+      "-o",
+      "couplings.o",
+      "couplings.f"
+    ],
+    "Directory": "/private/tmp/hepcat-five-gluon-replay/reference-113/process/Source/MODEL"
+  },
+  {
+    "Command": [
+      "/opt/homebrew/bin/gfortran-16",
+      "-w",
+      "-fPIC",
+      "-ffixed-line-length-none",
+      "-freal-8-real-16",
+      "-c",
+      "-o",
+      "lha_read.o",
+      "lha_read.f"
+    ],
+    "Directory": "/private/tmp/hepcat-five-gluon-replay/reference-113/process/Source/MODEL"
+  },
+  {
+    "Command": [
+      "/opt/homebrew/bin/gfortran-16",
+      "-w",
+      "-fPIC",
+      "-ffixed-line-length-none",
+      "-freal-8-real-16",
+      "-c",
+      "-o",
+      "printout.o",
+      "printout.f"
+    ],
+    "Directory": "/private/tmp/hepcat-five-gluon-replay/reference-113/process/Source/MODEL"
+  },
+  {
+    "Command": [
+      "/opt/homebrew/bin/gfortran-16",
+      "-w",
+      "-fPIC",
+      "-ffixed-line-length-none",
+      "-freal-8-real-16",
+      "-c",
+      "-o",
+      "rw_para.o",
+      "rw_para.f"
+    ],
+    "Directory": "/private/tmp/hepcat-five-gluon-replay/reference-113/process/Source/MODEL"
+  },
+  {
+    "Command": [
+      "/opt/homebrew/bin/gfortran-16",
+      "-w",
+      "-fPIC",
+      "-ffixed-line-length-none",
+      "-freal-8-real-16",
+      "-c",
+      "-o",
+      "model_functions.o",
+      "model_functions.f"
+    ],
+    "Directory": "/private/tmp/hepcat-five-gluon-replay/reference-113/process/Source/MODEL"
+  },
+  {
+    "Command": [
+      "/opt/homebrew/bin/gfortran-16",
+      "-w",
+      "-fPIC",
+      "-ffixed-line-length-none",
+      "-freal-8-real-16",
+      "-c",
+      "-o",
+      "alfas_functions.o",
+      "alfas_functions.f"
+    ],
+    "Directory": "/private/tmp/hepcat-five-gluon-replay/reference-113/process/Source/MODEL"
+  },
+  {
+    "Command": [
+      "/opt/homebrew/bin/gfortran-16",
+      "-w",
+      "-fPIC",
+      "-ffixed-line-length-none",
+      "-freal-8-real-16",
+      "-c",
+      "-o",
+      "couplings1.o",
+      "couplings1.f"
+    ],
+    "Directory": "/private/tmp/hepcat-five-gluon-replay/reference-113/process/Source/MODEL"
+  },
+  {
+    "Command": [
+      "/opt/homebrew/bin/gfortran-16",
+      "-w",
+      "-fPIC",
+      "-ffixed-line-length-none",
+      "-freal-8-real-16",
+      "-c",
+      "-o",
+      "couplings2.o",
+      "couplings2.f"
+    ],
+    "Directory": "/private/tmp/hepcat-five-gluon-replay/reference-113/process/Source/MODEL"
+  },
+  {
+    "Command": [
+      "/opt/homebrew/bin/gfortran-16",
+      "-w",
+      "-fPIC",
+      "-ffixed-line-length-none",
+      "-freal-8-real-16",
+      "-c",
+      "-o",
+      "couplings3.o",
+      "couplings3.f"
+    ],
+    "Directory": "/private/tmp/hepcat-five-gluon-replay/reference-113/process/Source/MODEL"
+  },
+  {
+    "Command": [
+      "ar",
+      "rcs",
+      "/private/tmp/hepcat-five-gluon-replay/libmodel-113-same-source.a",
+      "/private/tmp/hepcat-five-gluon-replay/reference-113/process/Source/MODEL/couplings.o",
+      "/private/tmp/hepcat-five-gluon-replay/reference-113/process/Source/MODEL/lha_read.o",
+      "/private/tmp/hepcat-five-gluon-replay/reference-113/process/Source/MODEL/printout.o",
+      "/private/tmp/hepcat-five-gluon-replay/reference-113/process/Source/MODEL/rw_para.o",
+      "/private/tmp/hepcat-five-gluon-replay/reference-113/process/Source/MODEL/model_functions.o",
+      "/private/tmp/hepcat-five-gluon-replay/reference-113/process/Source/MODEL/alfas_functions.o",
+      "/private/tmp/hepcat-five-gluon-replay/reference-113/process/Source/MODEL/couplings1.o",
+      "/private/tmp/hepcat-five-gluon-replay/reference-113/process/Source/MODEL/couplings2.o",
+      "/private/tmp/hepcat-five-gluon-replay/reference-113/process/Source/MODEL/couplings3.o"
+    ],
+    "Directory": "/private/tmp/hepcat-five-gluon-replay"
+  },
+  {
+    "Command": [
+      "/opt/homebrew/bin/gfortran-16",
+      "-w",
+      "-fPIC",
+      "-ffixed-line-length-none",
+      "-freal-8-real-16",
+      "-c",
+      "-o",
+      "aloha_functions.o",
+      "aloha_functions.f"
+    ],
+    "Directory": "/private/tmp/hepcat-five-gluon-replay/reference-113/process/Source/DHELAS"
+  },
+  {
+    "Command": [
+      "/opt/homebrew/bin/gfortran-16",
+      "-w",
+      "-fPIC",
+      "-ffixed-line-length-none",
+      "-freal-8-real-16",
+      "-c",
+      "-o",
+      "VVV1P0_1.o",
+      "VVV1P0_1.f"
+    ],
+    "Directory": "/private/tmp/hepcat-five-gluon-replay/reference-113/process/Source/DHELAS"
+  },
+  {
+    "Command": [
+      "/opt/homebrew/bin/gfortran-16",
+      "-w",
+      "-fPIC",
+      "-ffixed-line-length-none",
+      "-freal-8-real-16",
+      "-c",
+      "-o",
+      "VVV1_0.o",
+      "VVV1_0.f"
+    ],
+    "Directory": "/private/tmp/hepcat-five-gluon-replay/reference-113/process/Source/DHELAS"
+  },
+  {
+    "Command": [
+      "/opt/homebrew/bin/gfortran-16",
+      "-w",
+      "-fPIC",
+      "-ffixed-line-length-none",
+      "-freal-8-real-16",
+      "-c",
+      "-o",
+      "VVVV1P0_1.o",
+      "VVVV1P0_1.f"
+    ],
+    "Directory": "/private/tmp/hepcat-five-gluon-replay/reference-113/process/Source/DHELAS"
+  },
+  {
+    "Command": [
+      "/opt/homebrew/bin/gfortran-16",
+      "-w",
+      "-fPIC",
+      "-ffixed-line-length-none",
+      "-freal-8-real-16",
+      "-c",
+      "-o",
+      "VVVV1_0.o",
+      "VVVV1_0.f"
+    ],
+    "Directory": "/private/tmp/hepcat-five-gluon-replay/reference-113/process/Source/DHELAS"
+  },
+  {
+    "Command": [
+      "/opt/homebrew/bin/gfortran-16",
+      "-w",
+      "-fPIC",
+      "-ffixed-line-length-none",
+      "-freal-8-real-16",
+      "-c",
+      "-o",
+      "VVVV3P0_1.o",
+      "VVVV3P0_1.f"
+    ],
+    "Directory": "/private/tmp/hepcat-five-gluon-replay/reference-113/process/Source/DHELAS"
+  },
+  {
+    "Command": [
+      "/opt/homebrew/bin/gfortran-16",
+      "-w",
+      "-fPIC",
+      "-ffixed-line-length-none",
+      "-freal-8-real-16",
+      "-c",
+      "-o",
+      "VVVV3_0.o",
+      "VVVV3_0.f"
+    ],
+    "Directory": "/private/tmp/hepcat-five-gluon-replay/reference-113/process/Source/DHELAS"
+  },
+  {
+    "Command": [
+      "/opt/homebrew/bin/gfortran-16",
+      "-w",
+      "-fPIC",
+      "-ffixed-line-length-none",
+      "-freal-8-real-16",
+      "-c",
+      "-o",
+      "VVVV4P0_1.o",
+      "VVVV4P0_1.f"
+    ],
+    "Directory": "/private/tmp/hepcat-five-gluon-replay/reference-113/process/Source/DHELAS"
+  },
+  {
+    "Command": [
+      "/opt/homebrew/bin/gfortran-16",
+      "-w",
+      "-fPIC",
+      "-ffixed-line-length-none",
+      "-freal-8-real-16",
+      "-c",
+      "-o",
+      "VVVV4_0.o",
+      "VVVV4_0.f"
+    ],
+    "Directory": "/private/tmp/hepcat-five-gluon-replay/reference-113/process/Source/DHELAS"
+  },
+  {
+    "Command": [
+      "ar",
+      "rcs",
+      "/private/tmp/hepcat-five-gluon-replay/libdhelas-113-same-source.a",
+      "/private/tmp/hepcat-five-gluon-replay/reference-113/process/Source/DHELAS/aloha_functions.o",
+      "/private/tmp/hepcat-five-gluon-replay/reference-113/process/Source/DHELAS/VVV1P0_1.o",
+      "/private/tmp/hepcat-five-gluon-replay/reference-113/process/Source/DHELAS/VVV1_0.o",
+      "/private/tmp/hepcat-five-gluon-replay/reference-113/process/Source/DHELAS/VVVV1P0_1.o",
+      "/private/tmp/hepcat-five-gluon-replay/reference-113/process/Source/DHELAS/VVVV1_0.o",
+      "/private/tmp/hepcat-five-gluon-replay/reference-113/process/Source/DHELAS/VVVV3P0_1.o",
+      "/private/tmp/hepcat-five-gluon-replay/reference-113/process/Source/DHELAS/VVVV3_0.o",
+      "/private/tmp/hepcat-five-gluon-replay/reference-113/process/Source/DHELAS/VVVV4P0_1.o",
+      "/private/tmp/hepcat-five-gluon-replay/reference-113/process/Source/DHELAS/VVVV4_0.o"
+    ],
+    "Directory": "/private/tmp/hepcat-five-gluon-replay"
+  },
+  {
+    "Command": [
+      "/opt/homebrew/bin/gfortran-16",
+      "-w",
+      "-fPIC",
+      "-ffixed-line-length-none",
+      "-freal-8-real-16",
+      "-c",
+      "-o",
+      "matrix.o",
+      "matrix.f"
+    ],
+    "Directory": "/private/tmp/hepcat-five-gluon-replay/reference-113/process/SubProcesses/P1_gg_ggg"
+  },
+  {
+    "Command": [
+      "/opt/homebrew/bin/gfortran-16",
+      "-o",
+      "/private/tmp/hepcat-five-gluon-replay/quad-stream-same-source",
+      "/private/tmp/hepcat-five-gluon-replay/quad-stream.f90",
+      "/private/tmp/hepcat-five-gluon-replay/reference-113/process/SubProcesses/P1_gg_ggg/matrix.o",
+      "/private/tmp/hepcat-five-gluon-replay/libmodel-113-same-source.a",
+      "/private/tmp/hepcat-five-gluon-replay/libdhelas-113-same-source.a"
+    ],
+    "Directory": "/private/tmp/hepcat-five-gluon-replay"
+  }
+]

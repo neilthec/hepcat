@@ -1,0 +1,26 @@
+{
+  "ContextSHA256": "47026bedc2844622616e46a05069c2682cc4306872799bbe8e02d4a01291cc04",
+  "EvaluationErrors": 0,
+  "ExportCapsuleSHA256": "e51f8b1fcb61051478155c96257ca3a62364915115118a60b83d3b72b5c0e398",
+  "FailedPoints": [
+    719
+  ],
+  "FailedRows": 6,
+  "FamilyPromoted": false,
+  "Files": {
+    "tests/results/SM-5-point/diagnostics/c6-default-five-gluon-20261113/full-family-numerical-failure/point-719.json": "badf699bd83eefd8850b95ae81e90a34235950e946a9bdcd51e18a6af5dd56de",
+    "tests/results/SM-5-point/diagnostics/c6-default-five-gluon-20261113/full-family-numerical-failure/raw-madgraph-report.json": "f4d739ebe417a21fd164b767076e91c1bc53f2e77c3bb61bd124a446cdd6ecf4",
+    "tests/results/SM-5-point/diagnostics/c6-default-five-gluon-20261113/full-family-numerical-failure/sm5f_3ca11bcd7f40-export.json": "36f6f3ed389ab400c80d55f17c7ef74da46f8c2654a89b6247f1645861998ca8",
+    "tests/results/SM-5-point/diagnostics/c6-default-five-gluon-20261113/full-family-numerical-failure/sm5f_3ca11bcd7f40-export.log": "86ea8b1410031f7d11e69700c700ab3b451732e83329c91f24cd5b366ed93e3b"
+  },
+  "HelicityRows": 32,
+  "Mismatches": 6,
+  "NonzeroRowsAboveExistingRelativeTolerance": 2,
+  "PassedRows": 26,
+  "RawReportSHA256": "f4d739ebe417a21fd164b767076e91c1bc53f2e77c3bb61bd124a446cdd6ecf4",
+  "RequestedPerHelicity": 1000,
+  "Seed": 1794538767447593000,
+  "Status": "RAW_MADGRAPH_FAIL_CALCHEP_PASS",
+  "ToleranceChanged": false,
+  "ZeroRowsAboveExisting1e22Bound": 4
+}

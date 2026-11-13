@@ -1,0 +1,12 @@
+{
+  "FamilyID": "sm5f_345126cb84c0",
+  "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+  "ExportCapsuleSHA256": "5b4bf5175953557785b2be2a257adc49ff7974d7c3a440cba0f39449e0bf3a78",
+  "CaseCapsulesSHA256": {
+    "sm5_345126cb84c0": "22b957a913fab083b3d35e37efbfff95a870fc703188068f9c4005efd224980b"
+  },
+  "Report": "precision/ZZhhh-43615-74b022/precision-summary.json",
+  "ReportSHA256": "c5b6b4b6c3bb9a884181a9d749a993d00c1c9572e663cff5bd4ce46ca4ec1174",
+  "CurrentFailureControl": "precision/ZZhhh-43615-74b022/current-failure-control.json",
+  "CurrentFailureControlSHA256": "e27e57c0a7a5cc802bfe43268a420b3072cfe8fa531a3b020f5147da0c8b5fbd"
+}

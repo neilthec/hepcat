@@ -409,6 +409,33 @@ sm5ntCheck["precision replay presentation preserves raw default failures and act
   Lookup[sm5ntPrecisionRows, "Status"] === {"FAIL", "FAIL", "PASS"} &&
     Lookup[sm5ntPrecisionRows, "Mismatches"] === {17, 18, 0} &&
     Lookup[sm5ntPrecisionRows, "MantissaBits"] === {53, 53, 113}];
+sm5ntMadGraphRaw = <|"Status" -> "FAIL", "Rows" -> {
+  <|"ExpectedExactZero" -> True, "Mismatches" -> 1, "EvaluationErrors" -> 0,
+    "MaximumAbsoluteError" -> 3.*^-22, "MaximumRelativeError" -> 1.|>,
+  <|"ExpectedExactZero" -> False, "Mismatches" -> 1, "EvaluationErrors" -> 0,
+    "MaximumAbsoluteError" -> 1.*^-17, "MaximumRelativeError" -> 3.*^-7|>}|>;
+sm5ntMadGraphQualification = <|"Backend" -> "MadGraph", "Status" -> "PRECISION_QUALIFIED",
+  "Points" -> 1000, "ComparedHelicityPoints" -> 2000, "MantissaBits" -> 113,
+  "MaximumNonzeroRelativeError" -> "1.3e-8", "MaximumZeroAbsoluteError" -> "2.2e-23"|>;
+sm5ntMadGraphRows = sm5NotebookMadGraphPrecisionRows[sm5ntMadGraphQualification, sm5ntMadGraphRaw];
+sm5ntCheck["MadGraph replay keeps the raw failure separate from verified extended precision",
+  Lookup[sm5ntMadGraphRows, "Status"] === {"FAIL", "PASS"} &&
+    Lookup[sm5ntMadGraphRows, "Mismatches"] === {2, 0} &&
+    Lookup[sm5ntMadGraphRows, "MantissaBits"] === {53, 113} &&
+    Lookup[sm5ntMadGraphRows, "Helicity comparisons"] === {2000, 2000}];
+sm5ntCheck["MadGraph replay retains separate near-zero and nonzero diagnostics",
+  First[sm5ntMadGraphRows]["Max nonzero relative difference"] === 3.*^-7 &&
+    First[sm5ntMadGraphRows]["Max zero absolute residual"] === 3.*^-22 &&
+    NumberQ[Last[sm5ntMadGraphRows]["Max nonzero relative difference"]]];
+sm5ntCheck["a nonqualified packet never generates a passing replay table",
+  sm5NotebookMadGraphPrecisionRows[Join[sm5ntMadGraphQualification, <|"Status" -> "UNQUALIFIED"|>], sm5ntMadGraphRaw] === {} &&
+    sm5NotebookMadGraphPrecisionRows[Join[sm5ntMadGraphQualification, <|"Backend" -> "CalcHEP"|>], sm5ntMadGraphRaw] === {}];
+sm5ntMadGraphCode = sm5NotebookMadGraphReplayInput["demo", FileNameJoin[{sm5ntTemporary, "verify-packet.py"}]];
+sm5ntMadGraphParsed = ToExpression[sm5ntMadGraphCode, InputForm, HoldComplete];
+sm5ntCheck["the optional MadGraph input recomputes the saved packet without constructing or rebuilding",
+  !FreeQ[sm5ntMadGraphParsed, _RunProcess] && StringContainsQ[sm5ntMadGraphCode, "verify-packet.py"] &&
+    FreeQ[sm5ntMadGraphParsed, _ConstructAmplitude | _WriteSPINASProcess] &&
+    !StringContainsQ[sm5ntMadGraphCode, "gfortran" | "cmake" | "generate_events"]];
 sm5ntCheck["repeated notebook replacement leaves a complete notebook and no temporary output",
   MatchQ[sm5ntRead[sm5ntFixtureNotebook], HoldComplete[_Notebook]] &&
     FileNames[".*.tmp", sm5ntTemporary] === {}];
