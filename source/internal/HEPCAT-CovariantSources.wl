@@ -76,12 +76,105 @@ HEPCATCovariantCurrentSources`Private`exactVertexMatch[target_,rawTemplates_List
   "NumericalParameterAssignments"->{},"InternalOnShellConditions"->{},
   "ContinuationAssumption"->"MinimalRenormalizableCovariantCurrent"|>
 ];
+(* Only this metadata class uses the exact three-point vector chart. *)
+HEPCATCovariantCurrentSources`Private`minimalVectorVertexOrder[row_List,model_List]:=Module[{parts,rows,null,massive,ordered},
+ parts=HEPCATCovariantCurrentSources`Private`rowParticles[row];rows=HEPCATCovariantCurrentSources`Private`particleRow[#,model]&/@parts;
+ If[Length[parts]=!=3||!AllTrue[rows,ListQ[#]&&Length[#]===11&&#[[5]]===2&&#[[8]]===1&],Return[Missing["NotThreeColorSingletVectors"]]];
+ null=Pick[parts,rows[[All,6]],0];massive=Pick[parts,Map[#=!=0&,rows[[All,6]]],True];
+ If[!MemberQ[{0,1},Length[null]],Return[Missing["UnsupportedVectorMassPattern"]]];
+ ordered=Join[Sort[massive],null];
+ If[Length[null]===1&&!TrueQ[Cancel[Together[ConstructiveDiagrams`Private`modelExpandParameterDefinitions[
+  HEPCATCovariantCurrentSources`Private`particleRow[ordered[[1]],model][[6]]-HEPCATCovariantCurrentSources`Private`particleRow[ordered[[2]],model][[6]],model]]]===0],Return[Missing["UnequalMassNullVectorCurrent"]]];
+ ordered
+];
+HEPCATCovariantCurrentSources`Private`minimalVectorVertexMatch[row_List,model_List,order_:Automatic]:=Module[
+ {vParts=If[order===Automatic,HEPCATCovariantCurrentSources`Private`rowParticles[row],order],vRows,vMasses,vPol,vMetric,vMomentum,vOperator,vRaw,vConverted,vTarget,vCoherent,
+ vE,vB=Unique["threePointPatch"],vMomenta,vAngleBasis,vSquareBasis,vSpins,vChart,vZero,vShells,vBases,vWeights,vTargetMap,vTemplateMap,
+ vTargetCoefficients,vTemplateCoefficients,vPowers,vActive,vCoefficient,vRemainders,vExpandedRemainders,vSupported,vExt,vIndices,vMonomials,vResult,
+ vMassive,vNull,vHel,vRefVariables,vRefLabels,vOverrides,vAngle,vSquare,vNullP,vPivot,vNullChecks,vReferenceIndependent},
+ vRows=HEPCATCovariantCurrentSources`Private`particleRow[#,model]&/@vParts;
+ If[Length[vParts]=!=3||Sort[vParts]=!=Sort[HEPCATCovariantCurrentSources`Private`rowParticles[row]]||!AllTrue[vRows,ListQ]||!AllTrue[vRows,#[[5]]===2&&#[[8]]===1&],Return[Failure["NotThreeColorSingletVectors",<||>]]];
+ vNull=Flatten[Position[vRows[[All,6]],0]];vMassive=Complement[Range[3],vNull];
+ If[!MemberQ[{0,1},Length[vNull]]||MemberQ[vNull,1],Return[Failure["UnsupportedThreePointMassPattern",<||>]]];
+ vMasses=vRows[[All,6]];vZero[x_]:=TrueQ[Cancel[Together[x]]===0];
+ If[vNull=!={}&&!vZero[ConstructiveDiagrams`Private`modelExpandParameterDefinitions[vMasses[[1]]-vMasses[[2]],model]],Return[Failure["MinimalNullCurrentRequiresEqualMasses",<||>]]];
+ vHel=If[vNull==={},0,If[vParts[[First[vNull]]]===vRows[[First[vNull],2]],1,-1]];
+ vPol[i_]:=PolarizationVector[i,LorentzIndex[i],vMasses[[i]],If[MemberQ[vNull,i],vHel,Automatic]];
+ vMetric[i_,j_]:=LorentzMetric[LorentzIndex[i],LorentzIndex[j]];
+ vMomentum[i_,j_,k_]:=LorentzMomentum[Mom[i]-Mom[j],LorentzIndex[k]];
+ vOperator=vMetric[1,2]vMomentum[1,2,3]+vMetric[2,3]vMomentum[2,3,1]+vMetric[3,1]vMomentum[3,1,2];
+ vRaw=vOperator (Times@@Table[vPol[i],{i,3}]);
+ vConverted=FeynmanToSpinorProducts[vRaw,"ReduceSpinorProducts"->False,"TimeConstraint"->45];
+ If[FailureQ[vConverted]||!FreeQ[vConverted,_LorentzMetric|_LorentzMomentum|_PolarizationVector],Return[Failure["MinimalVVVConversionIncomplete",<||>]]];
+ vIndices=Table[Unique["threePointVectorSlot"],{4}];
+ vTarget=Block[{ConstructiveDiagrams`Private`$colorFactorizationEnabled=False},
+  LookupAmplitude[MapIndexed[{#1,First[#2]}&,vParts],ReplacePart[model,2->{row}],False,vIndices]];
+ vCoherent=HEPCATCovariantContactCalibration`Private`coherent[vConverted];vExt=Thread[(Mass/@Range[3])->vMasses];
+ vTarget=ConstructiveDiagrams`expandExternalXFactors[vTarget,3]/.vExt;
+ vWeights=ConstructiveDiagrams`Private`completionExternalSpinWeights[#,vExt]&/@{vTarget,vCoherent};
+ If[vWeights=!=ConstantArray[If[vNull==={},{2,2,2},{2,2,-2vHel}],2],Return[Failure["UnexpectedThreeVectorSpinHomogeneity",<|"Weights"->vWeights|>]]];
+ vE=(vMasses[[3]]^2-vMasses[[1]]^2-vMasses[[2]]^2)/(2vMasses[[1]]);
+ vMomenta=<|1->vMasses[[1]]IdentityMatrix[2],2->{{vE,vB},{(vE^2-vMasses[[2]]^2)/vB,vE}}|>;
+ AssociateTo[vMomenta,3->(-vMomenta[1]-vMomenta[2])];
+ vAngleBasis=Association@Table[i->{{vMasses[[i]],0},{0,1}},{i,vMassive}];
+ vSquareBasis=Association@Table[i->{{0,1},{-1,0}}.ConstructiveDiagrams`Private`residueAdjugate[vMomenta[i]].vAngleBasis[i]/vMasses[[i]],{i,vMassive}];
+ vSpins=Table[Unique["threePointSpin"],{Length[vMassive]}];
+ vShells=Table[vZero[Det[vMomenta[i]]-vMasses[[i]]^2],{i,3}];
+ vBases=Table[vZero[Det[vAngleBasis[i]]-vMasses[[i]]]&&vZero[Det[vSquareBasis[i]]-vMasses[[i]]]&&
+  AllTrue[Flatten[vAngleBasis[i].{{0,1},{-1,0}}.Transpose[vSquareBasis[i]]-vMomenta[i]],vZero],{i,vMassive}];
+ If[!And@@Join[vShells,vBases]||!AllTrue[Flatten[Total[Values[vMomenta]]],vZero],Return[Failure["ThreePointChartNotCertified",<||>]]];
+ vAngle=Association@Table[vMassive[[k]]->vAngleBasis[vMassive[[k]]].{1,vSpins[[k]]},{k,Length[vMassive]}];
+ vSquare=Association@Table[vMassive[[k]]->vSquareBasis[vMassive[[k]]].{1,vSpins[[k]]},{k,Length[vMassive]}];vNullChecks={};
+ Do[vNullP=vMomenta[i];vPivot=First[Select[Tuples[Range[2],2],!vZero[Extract[vNullP,#]]&]];
+  AssociateTo[vAngle,i->vNullP[[All,Last[vPivot]]]];AssociateTo[vSquare,i->vNullP[[First[vPivot],All]]/Extract[vNullP,vPivot]];
+  AppendTo[vNullChecks,AllTrue[Flatten[Outer[Times,vAngle[i],vSquare[i]]-vNullP],vZero]],{i,vNull}];
+ vRefVariables=Table[Unique["genericPolarizationReference"],{4}];
+ vRefLabels=DeleteDuplicates[Cases[{vTarget,vCoherent},Spinor["Xi",_,index_,___]:>index,Infinity]];
+ vOverrides=<|"Angle"->Association@Table[i->Take[vRefVariables,2],{i,vRefLabels}],"Square"->Association@Table[i->Take[vRefVariables,-2],{i,vRefLabels}]|>;
+ vChart=<|"Momenta"->vMomenta,"Masses"->AssociationThread[Range[3],vMasses],"AngleBasis"->vAngleBasis,"SquareBasis"->vSquareBasis,
+ "Angle"->vAngle,"Square"->vSquare,"ReferenceOverrides"->vOverrides,
+ "PoleVariable"->Unique["unusedThreePointPole"],"ReferenceSeed"->0,"CoherentVectorSpinIndices"->True|>;
+ vTargetMap=ConstructiveDiagrams`Private`residueEvaluateChart[vTarget,vChart,{}];
+ vTemplateMap=ConstructiveDiagrams`Private`residueEvaluateChart[vCoherent,vChart,{}];
+ If[!FreeQ[{vTargetMap,vTemplateMap},_Missing|_Failure|_Spinor|_SpinorChain|_Mom|_MomProd|_PropDen|_Mandelstahm]||
+  !PolynomialQ[vTargetMap,vSpins]||!PolynomialQ[vTemplateMap,vSpins],Return[Failure["UnsupportedExactThreePointMap",<||>]]];
+ vPowers=Tuples[Range[0,2],Length[vMassive]];
+ vMonomials=Times@@MapThread[Power,{vSpins,#}]&/@vPowers;
+ vTargetCoefficients=Fold[Coefficient[#1,First[#2],Last[#2]]&,Expand[vTargetMap],Thread[vSpins->#]]&/@vPowers;
+ vTemplateCoefficients=Fold[Coefficient[#1,First[#2],Last[#2]]&,Expand[vTemplateMap],Thread[vSpins->#]]&/@vPowers;
+ If[!vZero[vTargetMap-vTargetCoefficients.vMonomials]||!vZero[vTemplateMap-vTemplateCoefficients.vMonomials],Return[Failure["IncompleteCoherentCoefficientCoverage",<||>]]];
+ vActive=Select[Range[Length[vPowers]],!vZero[vTemplateCoefficients[[#]]]&];
+ If[vActive==={},Return[Failure["ZeroMinimalVVVTemplate",<||>]]];
+ vCoefficient=Cancel[Together[vTargetCoefficients[[First[vActive]]]/vTemplateCoefficients[[First[vActive]]]]];
+ vCoefficient=Cancel[Together[ConstructiveDiagrams`Private`modelExpandParameterDefinitions[vCoefficient,model]]];
+ If[!HEPCATCovariantCurrentSources`Private`modelScalarQ[vCoefficient,model]||!FreeQ[vCoefficient,Alternatives@@Append[vSpins,vB]],
+  Return[Failure["ThreePointCoefficientNotModelScalar",<|"Coefficient"->vCoefficient|>]]];
+ vReferenceIndependent=AllTrue[Join[vTargetCoefficients,vTemplateCoefficients],Function[value,AllTrue[vRefVariables,vZero[D[value,#]]&]]];
+ vRemainders=Cancel[Together[#]]&/@(vTargetCoefficients-vCoefficient vTemplateCoefficients);
+ vExpandedRemainders=Cancel[Together[ConstructiveDiagrams`Private`modelExpandParameterDefinitions[#,model]]]&/@vRemainders;
+ <|"Status"->If[And@@(TrueQ[#===0]&/@vExpandedRemainders)&&And@@vNullChecks&&vReferenceIndependent,"EXACT_MINIMAL_VVV_MATCH","VVV_MATCH_NOT_PROVED"],"Particles"->vParts,
+ "Coefficient"->vCoefficient,"MinimalLorentzOperator"->vOperator,"ConvertedTemplate"->vConverted,"OriginalVertex"->vTarget,"OriginalModelRow"->row,
+ "SymbolicChart"->vChart,"DenseDomainNonzeroExpressions"->Join[vMasses[[vMassive]],{vB}],"ExternalMassShellChecks"->vShells,"SpinFrameChecks"->vBases,
+ "MomentumConservationVerified"->True,"CoherentPowers"->vPowers,"CoherentComponentCount"->Length[vPowers],"NullRankOneChecks"->vNullChecks,"GenericReferenceSpinors"->vRefVariables,"GenericReferenceIndependenceVerified"->vReferenceIndependent,"CoherentCoefficientCoverageVerified"->True,
+ "TargetCoefficients"->vTargetCoefficients,"TemplateCoefficients"->vTemplateCoefficients,"ExactRemainders"->vRemainders,"ModelDefinitionExpandedRemainders"->vExpandedRemainders,
+ "NumericalKinematicSamples"->0,"NumericalParameterAssignments"->{},"NumericalCoefficientFit"->False,"IndependentBenchmarkRead"->False,"CompleteAmplitudeRead"->False,
+ "InternalOnShellConditions"->{},"ContinuationAssumption"->"MinimalParityEvenOneDerivativeThreeVectorCovariantOperator","RequiresIndependentFinalValidation"->True|>
+];
+
 HEPCATCovariantCurrentSources`Private`liftVertex[row_List,model_List]:=Module[
  {parts=HEPCATCovariantCurrentSources`Private`rowParticles[row],rows,spins,fermions,vectors,scalars,canonical,masses,mu,word,axial,pol,raw,body,vectorLegs={},
   type,match,coefficients,liftedRow,particleNames,antiNames,target,hands},
  rows=HEPCATCovariantCurrentSources`Private`particleRow[#,model]&/@parts;
  If[!AllTrue[rows,ListQ]||!AllTrue[rows,#[[8]]===1&],Return[Missing["ColoredOrUnknownVertex"]]];
  spins=rows[[All,5]];fermions=Pick[parts,spins,1];vectors=Pick[parts,spins,2];scalars=Pick[parts,spins,0];
+ If[spins==={2,2,2},
+  canonical=HEPCATCovariantCurrentSources`Private`minimalVectorVertexOrder[row,model];If[!ListQ[canonical],Return[canonical]];
+  match=HEPCATCovariantCurrentSources`Private`minimalVectorVertexMatch[row,model,canonical];
+  If[!AssociationQ[match]||Lookup[match,"Status",None]=!="EXACT_MINIMAL_VVV_MATCH",Return[Missing["UncertifiedMinimalThreeVectorCurrent",match]]];
+  liftedRow=Join[canonical,{"",1,match["Coefficient"]match["MinimalLorentzOperator"]}];
+  Return[Join[match,<|"Status"->"EXACT_SYMBOLIC_MATCH","Class"->"MinimalVectorVectorVector","Particles"->canonical,
+   "SourceRows"->{row},"LiftedRow"->liftedRow,"Coefficients"->{match["Coefficient"]},"CanonicalParticleOrder"->canonical|>]]];
+
  Which[
  Length[parts]===3&&Length[fermions]===2&&Length[vectors]===1&&AllTrue[HEPCATCovariantCurrentSources`Private`particleRow[#,model]&/@vectors,#[[6]]=!=0&]&&AllTrue[HEPCATCovariantCurrentSources`Private`particleRow[#,model]&/@fermions,HEPCATCovariantCurrentSources`Private`supportedFermionRowQ],type="FermionFermionMassiveVector",
  Length[parts]===3&&Length[fermions]===2&&Length[scalars]===1&&AllTrue[HEPCATCovariantCurrentSources`Private`particleRow[#,model]&/@fermions,#[[6]]=!=0&],type="FermionFermionScalar",
@@ -125,6 +218,24 @@ HEPCATCovariantCurrentSources`Private`liftVertex[row_List,model_List]:=Module[
 HEPCATCovariantCurrentSources`Private`usedRows[diagrams_List] := DeleteDuplicates[Flatten[
   (Lookup[#, "ModelRow", Missing["MissingModelRow"]] & /@
     Flatten[Values[#["VertexStructures"]], 1]) & /@ diagrams, 1]];
+HEPCATCovariantCurrentSources`Private`minimalVectorAliasCertificate[match_Association,model_List,aliases_Association]:=Module[
+ {parts=match["Particles"],massless,declared,names,baseNames,pairedRows,matches,lifted,first,differences},
+ massless=Select[parts,KeyExistsQ[aliases,#]&];If[massless==={},Return[match]];
+ If[Length[massless]=!=1,Return[Missing["UnsupportedMinimalVectorAliasMultiplicity"]]];
+ declared=HEPCATCovariantCurrentSources`Private`particleRow[First[massless],model];names=declared[[{2,3}]];
+ baseNames=Lookup[aliases,#,#]&/@parts;
+ pairedRows=Select[model[[2]],Length[HEPCATCovariantCurrentSources`Private`rowParticles[#]]===3&&
+  Sort[(Function[particleName,Lookup[aliases,particleName,particleName]]/@HEPCATCovariantCurrentSources`Private`rowParticles[#]) ]===Sort[baseNames]&];
+ If[Sort[Intersection[Flatten[HEPCATCovariantCurrentSources`Private`rowParticles/@pairedRows],names]]=!=Sort[names],Return[Missing["MissingMinimalVectorHelicityPartner"]]];
+ matches=HEPCATCovariantCurrentSources`Private`liftVertex[#,model]&/@pairedRows;
+ If[!AllTrue[matches,AssociationQ[#]&&Lookup[#,"Class",None]==="MinimalVectorVectorVector"&],Return[Missing["UncertifiedMinimalVectorHelicityPartner"]]];
+ lifted=Function[certificate,MapIndexed[If[First[#2]<=4&&StringQ[#1],Lookup[aliases,#1,#1],#1]&,certificate["LiftedRow"]]]/@matches;
+ first=First[lifted];If[!AllTrue[lifted,Take[#,4]===Take[first,4]&],Return[Missing["MinimalVectorHelicityPortMismatch"]]];
+ differences=ConstructiveDiagrams`Private`modelExpandParameterDefinitions[Last[#]-Last[first],model]&/@lifted;
+ If[!AllTrue[differences,TrueQ[Cancel[Together[#]]===0]&],Return[Missing["MinimalVectorHelicityCoefficientMismatch"]]];
+ Join[match,<|"Particles"->baseNames,"SourceRows"->pairedRows,"LiftedRow"->first,"MasslessHelicityCertificates"->matches,
+  "BothDeclaredMasslessHelicitiesCertified"->True,"AliasedOperatorDifferences"->differences|>]
+];
 HEPCATCovariantCurrentSources`Private`sourceCatalog[model_List, rows_List] := Module[
  {certificates = {}, liftedRows = {}, aliases = <||>, used, match, row, vector,
   fermion, species, names, pairedRows, coupling, base, particles, needed, declared},
@@ -165,6 +276,8 @@ HEPCATCovariantCurrentSources`Private`sourceCatalog[model_List, rows_List] := Mo
  Do[
   If[MemberQ[Flatten[Lookup[certificates, "SourceRows", {}], 1], row], Continue[]];
   match = HEPCATCovariantCurrentSources`Private`liftVertex[row, model];
+  If[AssociationQ[match]&&Lookup[match,"Class",None]==="MinimalVectorVectorVector",
+    match=HEPCATCovariantCurrentSources`Private`minimalVectorAliasCertificate[match,model,aliases]];
   If[!AssociationQ[match], Return[HEPCATCovariantCurrentSources`Private`reject["UsedVertexNotExactlyMatched", <|"Row" -> row, "Reason" -> match|>]]];
   If[Length[HEPCATCovariantCurrentSources`Private`rowParticles[match["LiftedRow"]]] =!= 3,
     Return[HEPCATCovariantCurrentSources`Private`reject["UnsupportedUsedVertexArity"]]];
@@ -224,6 +337,13 @@ HEPCATCovariantCurrentSources`Private`diagramCertificate[diagram_Association, ca
  <|"OrderedVertices" -> Sort[Sort /@ vertices], "PhysicalPoles" -> Sort[poles],
    "OrientedFermionEndpoints" -> Sort[flows]|>
 ];
+
+HEPCATCovariantCurrentSources`Private`minimalVectorLowerContactRequiredQ[process_List,model_List,used_List]:=Module[{rows,tripleRows},
+ rows=HEPCATCovariantCurrentSources`Private`particleRow[#,model]&/@process;
+ If[Length[process]=!=5||!AllTrue[rows,ListQ[#]&&Length[#]===11&]||Sort[rows[[All,5]]]=!={1,1,2,2,2},Return[False]];
+ tripleRows=Select[used,Length[HEPCATCovariantCurrentSources`Private`rowParticles[#]]===3&];
+ AnyTrue[tripleRows,Function[vertex,AllTrue[HEPCATCovariantCurrentSources`Private`particleRow[#,model]&/@HEPCATCovariantCurrentSources`Private`rowParticles[vertex],ListQ[#]&&Length[#]===11&&#[[5]]===2&]]]
+];
 Options[HEPCATCovariantCurrentSources`Private`covariantCurrentSource] = {"TimeConstraint" -> 60};
 HEPCATCovariantCurrentSources`Private`covariantCurrentSource[process_List, model_List, OptionsPattern[]] := Module[
  {rows, fermions, vectors, scalars, diagrams, catalog, liftedDiagrams, sourceSignatures, liftedSignatures,
@@ -247,7 +367,9 @@ HEPCATCovariantCurrentSources`Private`covariantCurrentSource[process_List, model
  diagrams = CreateDiagrams[process, model];
  If[!ListQ[diagrams] || diagrams === {} || !AllTrue[diagrams, AssociationQ],
    Return[HEPCATCovariantCurrentSources`Private`reject["OriginalDiagramGenerationIncomplete"]]];
- used = HEPCATCovariantCurrentSources`Private`usedRows[diagrams]; catalog = HEPCATCovariantCurrentSources`Private`sourceCatalog[model, used];
+ used = HEPCATCovariantCurrentSources`Private`usedRows[diagrams];
+ If[HEPCATCovariantCurrentSources`Private`minimalVectorLowerContactRequiredQ[process,model,used],
+  Return[HEPCATCovariantCurrentSources`Private`reject["LowerAwareVectorContactSourceRequired",<|"ExternalParticles"->process,"UsedSourceRows"->used,"CubicOnlyCandidateReturned"->False|>]]]; catalog = HEPCATCovariantCurrentSources`Private`sourceCatalog[model, used];
  If[!AssociationQ[catalog], Return[catalog]];
  liftedDiagrams = CreateDiagrams[process, catalog["Model"]];
  If[!ListQ[liftedDiagrams] || !AllTrue[liftedDiagrams, AssociationQ],

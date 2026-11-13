@@ -5631,7 +5631,59 @@ highEnergyCertifiedScalarSeriesUncached[expression_, variable_Symbol, order_Inte
    child enough precision for later negative powers. In particular truncation
    never lowers a known leading valuation. No Normal is taken until every
    affine/spin coefficient strictly covers the requested order. *)
+SetAttributes[highEnergyJetCaptureZeroAssumptions,HoldAll];
+highEnergyJetCaptureZeroAssumptions[work_]:=Internal`InheritedBlock[{Message},Unprotect[Message];
+ Message[name:HoldPattern[MessageName[Series,"ztest"|"ztest1"]],args___]:=(AppendTo[$highEnergyJetZeroAssumptions,<|"Message"->HoldComplete[name],"Arguments"->{args}|>];Null);
+ Protect[Message];work];
+highEnergyJetCompactZeroArguments[numbers_]:=Module[{atoms,variables,forward,back,formal,compactFormal,compact,roundtrip,identity},
+ If[LeafCount[numbers]<=10000,Return[<|"Status"->"COMPLETE","Compact"->numbers,"ExactIndependentAtomIdentity"->True,"Preconditioned"->False|>]];
+ TimeConstrained[MemoryConstrained[
+  atoms=DeleteDuplicates[Cases[{numbers},atom:(Power[_,q_Rational]/;!IntegerQ[q])|_Root|_AlgebraicNumber:>atom,Infinity]];
+  variables=Table[Unique["zeroCertificateAtom"],{Length[atoms]}];forward=MapThread[Rule,{atoms,variables}];back=MapThread[Rule,{variables,atoms}];
+  formal=numbers/.forward;roundtrip=SameQ[formal/.back,numbers];If[!roundtrip,Return[Failure["ZeroAssumptionAtomRoundtrip",<||>]]];
+  compactFormal=Together/@formal;identity=And@@(Expand[Numerator[Together[#]]]===0&/@(formal-compactFormal));
+  If[!identity,Return[Failure["ZeroAssumptionFormalIdentity",<||>]]];compact=compactFormal/.back;
+  <|"Status"->"COMPLETE","Original"->numbers,"Compact"->compact,"OriginalFormal"->formal,"CompactFormal"->compactFormal,"Atoms"->atoms,"Variables"->variables,"ForwardRules"->forward,"BackRules"->back,"ExactAtomRoundtrip"->roundtrip,"ExactIndependentAtomIdentity"->identity,"Preconditioned"->True|>,
+  268435456,Failure["ZeroAssumptionCompactionMemory",<||>]],8,Failure["ZeroAssumptionCompactionClock",<||>]]];
+highEnergyJetCertifyZeroAssumptions[]:=Module[{record,arguments,numbers,compaction,compact,reduced,key,cacheHit,tag=Unique["wholeSeriesCertificate"]},Catch[
+ Do[record=$highEnergyJetZeroAssumptions[[index]];arguments=record["Arguments"]/.HoldPattern[System`HoldCompleteForm[item_]]:>item;numbers=Flatten[arguments];
+  If[numbers==={}||Length[numbers]>64||!AllTrue[numbers,NumericQ[#]&&FreeQ[#,_Real]&&ConstructiveDiagrams`Private`residueFiniteQ[#]&],Throw[Failure["UnsupportedSeriesZeroAssumption",<|"Event"->index,"Arguments"->numbers|>],tag]];
+  compaction=highEnergyJetCompactZeroArguments[numbers];If[FailureQ[compaction],Throw[compaction,tag]];compact=compaction["Compact"];
+  If[Length[compact]>64||LeafCount[compact]>10000||!AllTrue[compact,NumericQ[#]&&FreeQ[#,_Real]&&ConstructiveDiagrams`Private`residueFiniteQ[#]&],Throw[Failure["UnsupportedCompactedSeriesZeroAssumption",<|"Event"->index,"OriginalArguments"->numbers,"Compaction"->compaction|>],tag]];
+  key=Apply[HoldComplete,compact];cacheHit=KeyExistsQ[$highEnergyJetZeroProofCache,key];
+  reduced=If[cacheHit,$highEnergyJetZeroProofCache[[Key[key]]],TimeConstrained[MemoryConstrained[Quiet[Check[RootReduce[compact],$Failed]],67108864,$Failed],2,$TimedOut]];
+  If[!ListQ[reduced]||!AllTrue[reduced,#===0&],Throw[Failure["UnprovedSeriesZeroAssumption",<|"Event"->index,"Arguments"->numbers,"CompactArguments"->compact,"ExactValues"->reduced|>],tag]];
+  If[!cacheHit,AssociateTo[$highEnergyJetZeroProofCache,key->reduced]];
+  AppendTo[$highEnergyJetZeroCertificates,<|"Message"->record["Message"],"AssumedZeroArguments"->numbers,"ExactValues"->reduced,"Method"->"ExactAlgebraicRootReduction","NumericalTolerance"->None,"ExactIndependentAtomCompaction"->compaction,"Event"->index,"ReusedIdenticalExactArgumentProof"->cacheHit|>];$highEnergyJetProvedEvents=index,
+ {index,$highEnergyJetProvedEvents+1,Length[$highEnergyJetZeroAssumptions]}];True,tag]];
+highEnergyJetCertifiedCore[core_,mapped_,variable_Symbol,spins_List,unknowns_List,order_Integer,precision_Integer,seconds_]:=Module[{before=AbsoluteTime[],raw,certification,report,record},
+ Block[{$highEnergyJetZeroAssumptions={},$highEnergyJetZeroCertificates={},$highEnergyJetZeroProofCache=<||>,$highEnergyJetProvedEvents=0},
+  raw=highEnergyJetCaptureZeroAssumptions[core[mapped,variable,spins,unknowns,order,precision,seconds]];certification=highEnergyJetCertifyZeroAssumptions[];
+  report=Which[certification=!=True,Failure["JetUncertifiedWholeArithmeticAssumption",<|"Reason"->certification,"NativeJetResult"->raw|>],
+   AssociationQ[raw]&&$highEnergyJetZeroAssumptions==={},raw,
+   AssociationQ[raw],Join[raw,<|"ZeroAssumptionCertificates"->Join[Lookup[raw,"ZeroAssumptionCertificates",{}],$highEnergyJetZeroCertificates],"WholeJetZeroAssumptionCertificates"->$highEnergyJetZeroCertificates|>],
+   FailureQ[raw],Failure[First[raw],Join[raw[[2]],<|"WholeJetZeroAssumptionCertificates"->$highEnergyJetZeroCertificates|>]],True,raw];
+  report]];
+highEnergyJetRemainingTime[]:=If[$highEnergyJetExpansionDeadline===Infinity,Infinity,Max[0,$highEnergyJetExpansionDeadline-AbsoluteTime[]]];
+highEnergyJetRetryableResourceQ[report_]:=MatchQ[report,Failure["JetIncompleteCoverage",_Association]]||
+ (MatchQ[report,Failure["JetTimeConstraint",_Association]]&&MemberQ[{"JetSpinRing","Coverage"},Lookup[report[[2]],"Phase",None]]);
+
+(* A direct typed-atom caller retains its literal small allowance. Only the
+   bounded expansion wrapper shares a larger allowance across its two passes. *)
+highEnergyJetEffectiveParentDeadline[requested_] := Min[requested,
+  If[ValueQ[$highEnergyJetParentDeadline] &&
+    ($highEnergyJetParentDeadline===Infinity || NumericQ[$highEnergyJetParentDeadline]),
+    $highEnergyJetParentDeadline,Infinity]];
 highEnergyLaurentJetCoefficients[mapped_, variable_Symbol, spins_List, unknowns_List,
+    order_Integer, precision_Integer:12, seconds_:30] := Module[{deadline},
+  deadline=highEnergyJetEffectiveParentDeadline[AbsoluteTime[]+seconds];
+  Block[{$highEnergyJetExpansionDeadline=deadline},
+    TimeConstrained[highEnergyJetCertifiedCore[highEnergyLaurentJetCoefficientsNative,
+      mapped,variable,spins,unknowns,order,precision,Min[seconds,highEnergyJetRemainingTime[]]],
+      Max[0,highEnergyJetRemainingTime[]],Failure["JetCertificateTimeConstraint",<||>]]]
+];
+
+highEnergyLaurentJetCoefficientsNative[mapped_, variable_Symbol, spins_List, unknowns_List,
     order_Integer, precision_Integer:12, seconds_:30] := Module[
   {tag=Unique["laurentJet"],phase="Input",started=AbsoluteTime[],completed=0,
    products=0,cacheEntries=0,atom,walkMemo,polyMemo,fieldMemo,lowerMemo,result,work},
@@ -5823,16 +5875,14 @@ highEnergyLaurentJetEligibleQ[mapped_, spinVariables_List] := Module[{degrees,bo
 ];
 
 highEnergyLaurentJetExpansion[mapped_, variable_Symbol, spinVariables_List,
-    unknowns_List, order_Integer] := Module[{report, second, started = AbsoluteTime[]},
-  report = highEnergyLaurentJetCoefficients[mapped, variable, spinVariables, unknowns,
-    order, Max[12,order+8], 30];
-  (* A missed truncation order is never a zero coefficient. Retry the same
-     complete coefficient field once with more native scalar precision. *)
-  If[MatchQ[report,Failure["JetIncompleteCoverage",_Association]] &&
-      AbsoluteTime[]-started < 20,
-    second=highEnergyLaurentJetCoefficients[mapped,variable,spinVariables,unknowns,
-      order,Max[24,order+16],Max[1,30-(AbsoluteTime[]-started)]];report=second];
-  report
+    unknowns_List, order_Integer] := Module[{deadline=highEnergyJetEffectiveParentDeadline[AbsoluteTime[]+90],report},
+  Block[{$highEnergyJetExpansionDeadline=deadline},TimeConstrained[
+    report=highEnergyJetCertifiedCore[highEnergyLaurentJetCoefficientsNative,
+      mapped,variable,spinVariables,unknowns,order,Max[12,order+8],Min[30,highEnergyJetRemainingTime[]]];
+    If[highEnergyJetRetryableResourceQ[report] && highEnergyJetRemainingTime[]>0,
+      report=highEnergyJetCertifiedCore[highEnergyLaurentJetCoefficientsNative,
+        mapped,variable,spinVariables,unknowns,order,Max[24,order+16],Min[90,highEnergyJetRemainingTime[]]]];
+    report,Max[0,highEnergyJetRemainingTime[]],Failure["JetExpansionTimeConstraint",<||>]]]
 ];
 
 completionHELaurentJetRows[mapped_, variable_Symbol, spinVariables_List,
@@ -5885,7 +5935,7 @@ highEnergyScalarCoefficientSeries[mapped_, variable_Symbol, spinVariables_List,
         "CertifiedSeriesZeroAssumptions"->jet["ZeroAssumptionCertificates"],
         "LaurentJetCertificate"->jet["Certificate"],"NumericalSpinSamples"->0,
         "ElapsedTime"->AbsoluteTime[]-started|>]];
-    If[MatchQ[jet,Failure["JetUncertifiedAtomSeries",_Association]],
+    If[MatchQ[jet,Failure["JetUncertifiedAtomSeries"|"JetUncertifiedWholeArithmeticAssumption",_Association]],
       Return[<|"Status"->"UNRESOLVED","Reason"->"UncertifiedScalarJetSeries",
         "ScalarSeriesDiagnostic"->jet|>]]];
   polynomial = amplitudeCoherentPolynomialRules[mapped, spinVariables, 10];
@@ -6047,7 +6097,7 @@ highEnergyCheckPlan[expr_, metadata_Association, samples_Integer, seed_Integer,
 ];
 
 highEnergyCheckSample[expr_, metadata_Association, sample_Integer, seed_Integer,
-    parameterRules_List, bound_, deadline_] := Module[
+    parameterRules_List, bound_, deadline_] := Block[{$highEnergyJetParentDeadline=highEnergyJetEffectiveParentDeadline[deadline]},Module[
   {started = AbsoluteTime[], remaining, chart, result, completed = False},
   remaining = If[deadline === Infinity, Infinity, Max[0, deadline - started]];
   result = If[remaining > 0, TimeConstrained[
@@ -6064,7 +6114,7 @@ highEnergyCheckSample[expr_, metadata_Association, sample_Integer, seed_Integer,
       "CheckExecution" -> <|"KernelID" -> $KernelID, "ElapsedTime" -> AbsoluteTime[] - started|>|>,
     If[AssociationQ[chart] && KeyExistsQ[chart, "ConstraintBasisRescaling"],
       KeyTake[chart, "ConstraintBasisRescaling"], <||>], result]
-];
+]];
 
 highEnergyCheckReportFromPlan[plan_Association, sampleRows_List] := Module[
   {base = plan["Base"], samples = plan["RequestedSamples"], results, completed,
@@ -17076,7 +17126,7 @@ completionHELaurentRows[mapped_, variable_, spinVariables_List, unknowns_List,
   If[highEnergyLaurentJetEligibleQ[mapped,spinVariables],
     jets=completionHELaurentJetRows[mapped,variable,spinVariables,unknowns,threshold];
     If[AssociationQ[jets] && Lookup[jets,"Status",None]==="COMPLETE",Return[jets["Rows"]]];
-    If[MatchQ[jets,Failure["JetUncertifiedAtomSeries",_Association]],Return[jets]]];
+    If[MatchQ[jets,Failure["JetUncertifiedAtomSeries"|"JetUncertifiedWholeArithmeticAssumption",_Association]],Return[jets]]];
   If[spinVariables=!={} && unknowns=!={} && LeafCount[mapped]>=5000,
     componentBound=If[Length[spinVariables]>=4,16,
       completionHECoherentComponentBound[mapped,spinVariables]];
@@ -17258,7 +17308,7 @@ completionHEAffineAtomLaurentRows[trial_, chart_Association, rules_List,
       mapped = residueEvaluateChart[atom, chart, rules];
       report = highEnergyLaurentJetCoefficients[mapped, variable, spins, {}, order,
         Max[12,order+8], Min[5, Max[0.000001,remaining[]]]];
-      If[MatchQ[report, Failure["JetUncertifiedAtomSeries", _Association]], Throw[report, tag]];
+      If[MatchQ[report, Failure["JetUncertifiedAtomSeries"|"JetUncertifiedWholeArithmeticAssumption",_Association]], Throw[report, tag]];
       If[!highEnergyLaurentJetVerifiedQ[report, variable, spins, {}, order],
         Throw[Missing["UnverifiedTypedAtomJet"], tag]];
       AppendTo[atomJets, First[report["CoefficientJets"]]];
@@ -17459,7 +17509,7 @@ completionHEEnergyConstraints[trial_, unknowns_List, metadata_Association,
         "Diagnostics"->{Failure["FittingCoordinateCollision",<|"Cause"->atomic,
           "NoWholeFamilyMappingAttempted"->True,
           "OriginalCorrectionCoordinates"->unknowns|>]}|>]];
-    If[MatchQ[atomic,Failure["JetUncertifiedAtomSeries",_Association]],
+    If[MatchQ[atomic,Failure["JetUncertifiedAtomSeries"|"JetUncertifiedWholeArithmeticAssumption",_Association]],
       Throw[<|"Status"->"UNRESOLVED","Equations"->rows,"Samples"->charts,"Diagnostics"->{atomic}|>]];
     (* An exhausted guarded block fit must not repeat the known oversized
        whole-family route. Keep its cause and all original coordinates. *)
@@ -20419,7 +20469,7 @@ completionHEExactDerivativeClassification[family_, parameters_List] := Module[
 ];
 
 completionHighEnergyWork[input_, channels_List, model_List, settings_Association,
-    normalized_Association, retain_] := Module[
+    normalized_Association, retain_] := Block[{$highEnergyJetParentDeadline=highEnergyJetEffectiveParentDeadline[If[settings["TimeConstraint"]===Infinity,Infinity,AbsoluteTime[]+settings["TimeConstraint"]]]},Module[
   {original = normalized["Expression"], metadata, before, basis, inheritedBasis,
    inheritedParameters, unknowns, trial, extra, bound, physical, energy,
    physicalSolution, physicalCandidate, spurious, reference, groups,
@@ -20792,7 +20842,7 @@ completionHighEnergyWork[input_, channels_List, model_List, settings_Association
     "ValidationParameterRules" -> ruleSets,
     "Correction" -> candidate - original, "RetainedDirectionProofSummary" -> proofSummary,
     "Diagnostics" -> diagnostics|>]
-];
+]];
 
 (* A point-first fit may keep coordinates whose directions are exact zero.
    They must not permanently suppress the ordinary source family after an
@@ -22326,6 +22376,44 @@ constructVectorLineForm[diagrams_List, process_List, model_List, external_List,
     "Chirality" -> angle, "ReferenceLegs" -> {opposite, ref}|>
 ];
 
+
+constructCovariantGraphCoverageQ[proposal_Association,original_List] := Module[
+ {source=Lookup[proposal,"OrderedGraphCertificates",None],lifted=Lookup[proposal,"LiftedGraphCertificates",None],union,added,certificates,ids,contact,cubicIDs,contactProof},
+ If[!AllTrue[original,AssociationQ]||!ListQ[source]||!ListQ[lifted]||!AllTrue[Join[source,lifted],AssociationQ]||
+   Lookup[proposal,"OriginalDiagramCount",None]=!=Length[original]||Length[source]=!=Length[original]||
+   Lookup[proposal,"LiftedDiagramCount",None]=!=Length[lifted],Return[False]];
+ If[Sort[source]===Sort[lifted],Return[Length[source]===Length[lifted]]];
+ union=Lookup[proposal,"SourceGraphUnion",<||>];If[!AssociationQ[union],Return[False]];added=Lookup[union,"AddedLowerGraphCertificates",None];certificates=Lookup[proposal,"VertexCertificates",{}];
+ If[!AssociationQ[union]||Lookup[union,"Status",None]=!="COMPLETE"||!ListQ[added]||added==={}||!AllTrue[added,AssociationQ]||
+   !AllTrue[{"OriginalOrderedSubsetVerified","ExactOrderedUnionVerified","EveryAddedVertexCertified"},TrueQ[Lookup[union,#,False]]&]||
+   Lookup[union,"OriginalGraphCertificates",None]=!=source||Lookup[union,"LiftedGraphCertificates",None]=!=lifted||
+   Lookup[union,"AdditionalLowerDerivedGraphCount",None]=!=Length[added]||Length[lifted]=!=Length[source]+Length[added]||
+   Sort[lifted]=!=Sort[Join[source,Lookup[added,"GraphCertificate",{}]]],Return[False]];
+ ids=Lookup[certificates,"CertificateID",{}];
+ AllTrue[added,Function[entry,
+  contact=SelectFirst[certificates,Lookup[#,"CertificateID",None]===Lookup[entry,"ContactCertificateID",Missing[]]&,None];
+  cubicIDs=Lookup[entry,"CubicCertificateIDs",None];contactProof=If[AssociationQ[contact],Lookup[contact,"LowerAmplitudeCalibration",<||>],<||>];
+  AssociationQ[entry]&&AssociationQ[contact]&&Lookup[contact,"Class",None]==="VectorVectorVectorVector"&&
+  ListQ[cubicIDs]&&Length[cubicIDs]===1&&AllTrue[cubicIDs,MemberQ[ids,#]&]&&
+  AllTrue[cubicIDs,Function[id,AnyTrue[certificates,Lookup[#,"CertificateID",None]===id&&Length[HEPCATCovariantCurrentSources`Private`rowParticles[Lookup[#,"LiftedRow",{}]]]===3&]] ]&&
+  AssociationQ[contactProof]&&Lookup[contactProof,"NumericalCoefficientFit",None]===False&&Lookup[contactProof,"IndependentBenchmarkRead",None]===False&&
+  Sort[Lookup[Lookup[contactProof,"Checks",{}],"Component",{}]]===Range[81]&&
+  TrueQ[Lookup[entry,"EveryVertexExactlyCertified",False]]&&ContainsAll[ids,Lookup[entry,"CubicCertificateIDs",{}]]&&
+  TrueQ[Lookup[Lookup[contact,"LowerAmplitudeCalibration",<||>],"AllEightyOneComponentsProvedZero",False]]&&
+  Length[Lookup[Lookup[contact,"LowerAmplitudeCalibration",<||>],"Checks",{}]]===81&&
+  AllTrue[Lookup[Lookup[contact,"LowerAmplitudeCalibration",<||>],"Checks",{}],Lookup[#,"Status",None]==="PROVED_ZERO"&&Lookup[Lookup[#,"Proof",<||>],"Value",None]===0&]]]
+];
+constructCovariantGraphCoverageQ[___] := False;
+constructFourVectorSourceBudget[plan_Association,available_] := Min[available,600,
+ Max[60,6 Total[Lookup[Lookup[plan,"Quartets",{}],"CoherentComponents",{}]]]];
+constructBenchmarkVectorPreconditioningQ[process_List,model_List,requested_,raw_List] := Module[{rows},
+ If[Length[process]<5||Length[model]=!=4||!MemberQ[{<||>,{}},requested]||
+   raw==={}||!AllTrue[raw,MatchQ[#,{_List,_}]&]||Total[LeafCount[Last[#]]&/@raw]<4096,Return[False]];
+ rows=HEPCATCovariantCurrentSources`Private`particleRow[#,model]&/@process;
+ AllTrue[rows,ListQ[#]&&Length[#]===11&]&&AnyTrue[rows,#[[5]]===2&&#[[6]]=!=0&]
+];
+constructBenchmarkVectorPreconditioningQ[___] := False;
+
 ConstructAmplitude::usage = ConstructAmplitude::usage <>
   " With an independent FeynmanModel, supported five-leg color-singlet Dirac, declared chiral-fermion, vector and scalar processes can first propose covariant currents matched exactly to every used elementary vertex and ordered diagram. A supported existing metric quartic is calibrated only from the complete known lower amplitude. Internal lines stay off shell, masses and couplings remain symbolic, and no benchmark or sampled coefficient fit constructs the proposal. It is accepted only after the original channels and all independent checks pass at every requested validation assignment. Default distinct-fermion inputs also receive an equal-independent-mass probe; explicit parameter and validation choices remain authoritative. Rejected or unsupported proposals retain the ordinary completion path.";
 
@@ -22343,8 +22431,8 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
    save, emit, child, remaining, stageOptions, run, require, requirePreparation, prepareFinal, workflow,
    completed = False, resultStatus, totalTime, resourceResolution, requestedOptions,
    finalComplexity = Missing["NotValidated"],
-   prepareBenchmark, benchmarkReady = False, benchmarkRecovery = False,
-   validateRepresentative, tryRetainedFactorizationPoint, effectivePolePreference, tryCovariantSource, covariantExtraValidationSets,
+   prepareBenchmark, benchmarkReady = False, benchmarkRecovery = False, benchmarkConverted = Missing["NotConverted"], benchmarkPreparationInput, benchmarkPreconditioning,
+   validateRepresentative, tryRetainedFactorizationPoint, effectivePolePreference, tryCovariantSource, tryCovariantSourceCandidate, covariantExtraValidationSets,
    retainFinalReferences, resolveFinalReferences,
    completeEnergy, recoverReciprocalReferences, trySpuriousForms, tryCompactSpuriousResult,
    trySpuriousVectorLine, tryPhysicalVectorLine,
@@ -22449,6 +22537,8 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
       settings = amplitudeAutomaticSettings["Checks", settings,
         amplitudeResourceMetrics[If[MatchQ[finalPair, {_List, _}], finalPair, {}],
           If[ListQ[channels], channels, {}], process]]["Settings"];
+      If[AssociationQ[$constructFourVectorCheckPlan]&&Lookup[constructRuleOptions[options["CheckOptions"]],"TimeConstraint",Automatic]===Automatic,
+        settings["TimeConstraint"]=Max[settings["TimeConstraint"],constructFourVectorSourceBudget[$constructFourVectorCheckPlan,remaining[]]]];
       Do[If[Lookup[settings, name, None] === Automatic,
         settings[name] = Lookup[settings, "Samples", 4]],
         {name, {"HighEnergySamples", "ReferenceSamples", "FeynmanSamples"}}]];
@@ -22548,9 +22638,9 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
     If[raw === "SpinorProducts",
       benchmark = run[If[TrueQ[benchmarkRecovery], "Recovering complete Feynman benchmark",
         "Converting Feynman amplitudes"], Module[{converted},
-          converted = ConstructiveDiagrams`FeynmanToSpinorProducts[
-            feynmanPairs, "ReferenceSpinors" -> Automatic, "ReduceSpinorProducts" -> False,
-            "TimeConstraint" -> Max[0.000001, remaining[]]];
+          converted = If[constructBenchmarkConversionCompleteQ[feynmanPairs,benchmarkConverted],benchmarkConverted,
+            ConstructiveDiagrams`FeynmanToSpinorProducts[feynmanPairs,"ReferenceSpinors"->Automatic,"ReduceSpinorProducts"->False,
+              "TimeConstraint"->Max[0.000001,remaining[]]]];
           If[FailureQ[converted] || converted === $Failed || converted === $Aborted,
             converted,
             If[constructBenchmarkConversionCompleteQ[feynmanPairs, converted], converted,
@@ -22566,7 +22656,17 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
         "BenchmarkOnly" -> True, "TimeBudgetScope" -> "RemainingOverallConstructionBudget"|>]];
       benchmarkReady = True; Return[benchmark]];
 
-    feynmanPrepared = run["Preparing Feynman amplitudes", PrepareAmplitudes[feynmanPairs, feynmanModel,
+    benchmarkPreparationInput=feynmanPairs;
+    If[constructBenchmarkVectorPreconditioningQ[process,diagramModel,options["FeynmanPreparationOptions"],feynmanPairs],
+      benchmarkConverted=run["Converting complete coherent benchmark",ConstructiveDiagrams`FeynmanToSpinorProducts[
+        feynmanPairs,"ReferenceSpinors"->Automatic,"ReduceSpinorProducts"->False,"TimeConstraint"->Max[0.000001,remaining[]]]];
+      If[constructBenchmarkConversionCompleteQ[feynmanPairs,benchmarkConverted],
+        benchmarkPreconditioning=run["Preconditioning complete coherent benchmark",HEPCATCovariantContactCalibration`Private`preconditionCovariantPairs[
+          feynmanPairs,benchmarkConverted,process,diagramModel,Min[15,Max[0.000001,remaining[]]]]];
+        save["Exact coherent benchmark preconditioning",benchmarkPreconditioning];
+        benchmarkPreparationInput=If[AssociationQ[benchmarkPreconditioning]&&Lookup[benchmarkPreconditioning,"Status",None]==="COMPLETE",benchmarkPreconditioning["Pairs"],benchmarkConverted];
+        benchmarkConverted=benchmarkPreparationInput]];
+    feynmanPrepared = run["Preparing Feynman amplitudes", PrepareAmplitudes[benchmarkPreparationInput, feynmanModel,
       Sequence @@ stageOptions[PrepareAmplitudes, options["FeynmanPreparationOptions"],
         <|"ReturnDetails" -> True, "InternalOnShell" -> False, "ExternalParticles" -> Automatic|>]]];
     If[constructBenchmarkConversionRecoveryQ[feynmanPrepared, feynmanPairs,
@@ -22702,12 +22802,12 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
     resolved = residueParameterRules[factorizationModel, overrides];
     If[resolved === $Failed, {}, {resolved}]
   ];
-  tryCovariantSource[] := Module[
+  tryCovariantSourceCandidate[augmentVectors_:False,vectorPlan_:Automatic] := Module[
     {rows, fermions, vectors, scalars, class, proposal, candidate, extraSets = {}, checked,
      previousPair = finalPair, previousPrepared = lastPreparedPair,
      previousSelection = representativeSelection, previousReport = checkReport,
      previousBenchmark = benchmark, previousReady = benchmarkReady,
-     previousRecovery = benchmarkRecovery, certificates},
+     previousRecovery = benchmarkRecovery, certificates, sourceBudget, sourceLabel},
     If[feynmanModel === None || TrueQ[$colorConstructingProjection] ||
         !completionModelQ[diagramModel] || Length[process] =!= 5 || remaining[] <= 0.01,
       Return[False]];
@@ -22716,7 +22816,7 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
     fermions = Select[rows, #[[5]] === 1 &];
     vectors = Select[rows, #[[5]] === 2 &]; scalars = Select[rows, #[[5]] === 0 &];
     If[!AllTrue[fermions, HEPCATCovariantCurrentSources`Private`supportedFermionRowQ], Return[False]];
-    class = Which[
+    class = If[TrueQ[augmentVectors],"Calibrated metric currents",Which[
       Length[fermions] === 4 &&
         (Length[scalars] === 1 || (Length[vectors] === 1 && First[vectors][[6]] =!= 0)) &&
         AllTrue[fermions, #[[6]] =!= 0 &], "Cubic currents",
@@ -22730,15 +22830,17 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
         AllTrue[vectors, #[[6]] =!= 0 &], "Calibrated metric currents",
       Length[fermions] === 0 && Length[vectors] === 4 && Length[scalars] === 1 &&
         AllTrue[vectors, #[[6]] =!= 0 &], "Calibrated metric currents",
-      True, Return[False]];
-    proposal = run["Building certified covariant source",
+      True, Return[False]]];
+    sourceBudget=If[TrueQ[augmentVectors]&&AssociationQ[vectorPlan],constructFourVectorSourceBudget[vectorPlan,remaining[]],Min[60,Max[0.000001,remaining[]]]];
+    sourceLabel=If[TrueQ[augmentVectors],"Lower-derived vector source","Certified covariant source"];
+    proposal = run[If[TrueQ[augmentVectors],"Building lower-derived vector source","Building certified covariant source"],
       If[class === "Cubic currents",
         HEPCATCovariantCurrentSources`Private`covariantCurrentSource[process, diagramModel,
-          "TimeConstraint" -> Min[60, Max[0.000001, remaining[]]]],
+          "TimeConstraint" -> sourceBudget],
         HEPCATCovariantContactCalibration`Private`calibratedCovariantSource[
           process, diagramModel, factorizationModel,
-          "TimeConstraint" -> Min[60, Max[0.000001, remaining[]]]]]];
-    save["Covariant source proposal", proposal];
+          "TimeConstraint" -> sourceBudget,"AugmentFourVectorContacts"->TrueQ[augmentVectors]]]];
+    save[If[TrueQ[augmentVectors],"Lower-derived vector source proposal","Covariant source proposal"], proposal];
     If[!AssociationQ[proposal] || Lookup[proposal, "Status", None] =!= "UNVALIDATED_CANDIDATE" ||
         !AllTrue[{"EveryOriginalDiagramCovered", "EveryUsedOrderedVertexCertified",
           "CompleteOffShellConversionCoverage", "RequiresCheckAmplitudes"}, TrueQ[Lookup[proposal, #, False]] &] ||
@@ -22747,12 +22849,7 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
         Lookup[proposal, "InternalOnShellConditions", None] =!= {} ||
         Lookup[proposal, "NumericalParameterAssignments", None] =!= {} ||
         Lookup[proposal, "SourceModelSHA256", None] =!= HEPCATCovariantCurrentSources`Private`objectSHA[diagramModel] ||
-        Lookup[proposal, "OriginalDiagramCount", None] =!= Length[diagramData] ||
-        Lookup[proposal, "LiftedDiagramCount", None] =!= Length[diagramData] ||
-        !ListQ[Lookup[proposal, "OrderedGraphCertificates", None]] ||
-        !ListQ[Lookup[proposal, "LiftedGraphCertificates", None]] ||
-        Sort[Lookup[proposal, "OrderedGraphCertificates", {}]] =!=
-          Sort[Lookup[proposal, "LiftedGraphCertificates", None]] ||
+        !constructCovariantGraphCoverageQ[proposal,diagramData] ||
         !preparationPairQ[Lookup[proposal, "Amplitude", None]] ||
         First[proposal["Amplitude"]] =!= external ||
         Lookup[proposal, "Expression", None] =!= Last[proposal["Amplitude"]], Return[False]];
@@ -22762,19 +22859,26 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
           Lookup[proposal, "LowerModelSHA256", None] =!= HEPCATCovariantCurrentSources`Private`objectSHA[factorizationModel]),
       Return[False]];
     If[class === "Cubic currents", extraSets = covariantExtraValidationSets[fermions]];
-    save["Covariant source validation policy", <|"SourceClass" -> class,
+    save[If[TrueQ[augmentVectors],"Lower-derived vector source validation policy","Covariant source validation policy"], <|"SourceClass" -> class,"AdditionalFourVectorContactsRequested"->TrueQ[augmentVectors],"SourceBudget"->sourceBudget,
       "AdditionalResolvedParameterRules" -> extraSets,
       "BenchmarkUsedForConstruction" -> False, "OriginalTargetsRetained" -> True|>];
     candidate = Join[proposal, <|"Status" -> "COMPLETE", "Amplitude" -> proposal["Expression"],
       "FreeParameters" -> {}|>];
-    checked = validateRepresentative[candidate, "Certified covariant source",
-      remaining[], True, extraSets];
+    checked = Block[{$constructFourVectorCheckPlan=If[TrueQ[augmentVectors],vectorPlan,None]},
+      validateRepresentative[candidate,sourceLabel,remaining[],True,extraSets]];
     If[!TrueQ[checked],
       finalPair = previousPair; lastPreparedPair = previousPrepared;
       representativeSelection = previousSelection; checkReport = previousReport;
       benchmark = previousBenchmark; benchmarkReady = previousReady; benchmarkRecovery = previousRecovery;
       save["Representative selection", previousSelection]];
     TrueQ[checked]
+  ];
+  tryCovariantSource[] := Module[{selected,plan},
+    selected=tryCovariantSourceCandidate[False];If[TrueQ[selected],Return[True]];
+    If[feynmanModel===None||TrueQ[$colorConstructingProjection]||!completionModelQ[diagramModel]||Length[process]=!=5||remaining[]<=0.01,Return[False]];
+    plan=TimeConstrained[HEPCATCovariantContactCalibration`Private`fourVectorAugmentationPlan[process,diagramModel,factorizationModel,Min[3,remaining[]]],Min[3,remaining[]],Missing["FourVectorMetadataDeadline"]];
+    save["Lower four-vector augmentation plan",plan];
+    If[!AssociationQ[plan]||Lookup[plan,"Status",None]=!="AVAILABLE",False,tryCovariantSourceCandidate[True,plan]]
   ];
   completeEnergy[name_, overrides_: <||>, pointFirst_: Automatic] := run[name,
     Block[{$completionHighEnergyPointFirst = feynmanModel =!= None &&

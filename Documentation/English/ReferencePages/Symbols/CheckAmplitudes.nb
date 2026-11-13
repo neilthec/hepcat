@@ -203,7 +203,14 @@ not claim to have measured a leading power."}], "Notes"],
 be included in that bound only if its leading coefficient is exactly nonzero \
 along the sampled high-energy direction. Whether the corresponding spurious \
 pole cancels is checked separately."}], "Notes"],
-  Cell["Options", "NotesSection"],
+  Cell[TextData[{"An exact series expansion may report an assumption that an \
+algebraic coefficient is zero. The supported Laurent-jet path captures these \
+assumptions and must prove each one with exact algebraic arithmetic before \
+accepting the result. Details retain the zero certificates. A nonzero \
+argument, unsupported proof or exhausted time or memory allowance remains \
+unresolved. Increasing the internal expansion coverage does not relax the \
+numerical comparison tolerance or the requested high-energy bound."}],
+   "Notes"], Cell["Options", "NotesSection"],
   Cell[BoxData[GridBox[{{Cell["Option", "TableHeader"],
        Cell["Default", "TableHeader"], Cell["Meaning", "TableHeader"]},
       {Cell[TextData[{Cell[BoxData[RowBox[{"\"KinematicMap\""}]],

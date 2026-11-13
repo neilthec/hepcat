@@ -297,10 +297,11 @@ method."}], "Notes"], Cell[TextData[{"The same cubic-current construction can \
 handle a fermion pair with three vector bosons when at least one vector is \
 massive. It also admits declared chiral fermions and quark pairs whose color \
 dependence is proved to be a single fundamental delta. Examples include three \
-Z bosons, or a photon and two Z bosons. Every used elementary vertex must \
-match the available primitive catalog exactly; three-vector vertices and \
-quartic continuations require additional providers. The candidate receives \
-the complete validation described below."}], "Notes"],
+Z bosons, or a photon and two Z bosons. Available minimal three-vector \
+operators are matched exactly to the supplied elementary amplitudes. A used \
+interaction outside the supported operator catalog keeps the ordinary \
+completion path. Every accepted candidate receives the complete validation \
+described below."}], "Notes"],
   Cell[TextData[{"For supported five-point processes with four massive Dirac \
 fermions and a color-singlet scalar, the constructor can retain a separate \
 color tensor for each ordered graph. It certifies the local delta or \
@@ -319,9 +320,23 @@ rejected candidate retains its diagnostics and the original completion \
 inputs. A fast accepted form can still benefit from later simplification with \
 ", ButtonBox["PrepareAmplitudes", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/PrepareAmplitudes"], "."}], "Notes"],
-  Cell["What happens during a construction", "NotesSection"],
-  Cell[TextData[{"HEPCAT generates the diagrams and prepares their \
-expressions, then builds the known factorization channels. ",
+  Cell[TextData[{"For supported five-point processes with four massive vector \
+bosons and one scalar, a complete known lower four-vector amplitude can \
+determine metric contacts required by a covariant continuation of the cubic \
+vertices. The code subtracts the certified cubic exchanges and proves the \
+remaining tensor in all 81 coherent spin components before adding the \
+corresponding graphs. The graph certificate accounts for both the original \
+diagrams and the added lower-derived terms. These coefficients come from the \
+supplied factorization model; the independent Feynman model remains a \
+subsequent validation input."}], "Notes"],
+  Cell[TextData[{"Large massive-vector benchmarks can first be converted once \
+and reorganized by exact identities before ordinary external-only \
+preparation. This avoids repeatedly expanding equivalent spin tensors. \
+Explicit Feynman preparation choices remain authoritative, and both this work \
+and any additional vector-source checks stay inside the overall construction \
+deadline."}], "Notes"], Cell["What happens during a construction",
+   "NotesSection"], Cell[TextData[{"HEPCAT generates the diagrams and \
+prepares their expressions, then builds the known factorization channels. ",
      ButtonBox["CompleteFactorization", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/CompleteFactorization"],
      " solves any physical residue deficits. The usual route then uses ",

@@ -1318,6 +1318,14 @@ established path for small tensors and for tensors whose coherent legs all
 have degree one, including six-fermion QED. Higher-degree mixed-spin tensors
 are tested independently of particle names.
 
+`high-energy-whole-warning-tests.wl` injects exact zero and nonzero
+`Series::ztest`/`Series::ztest1` assumptions into actual small native Laurent
+expansions under normal, outer `Quiet`, inner `Quiet` and globally disabled
+message states. Only exact certified zeros may complete. Synthetic native-return
+controls cover the one bounded coverage/resource retry, terminal failures and
+shared parent clocks. System message state and replaced definitions must restore
+exactly. The suite reads no model, saved amplitude or research WXF fixture.
+
 `reference-affine-row-tests.wl` checks exact affine-first reference equations
 for large coherent-spin families. Every coefficient and the constant offset
 reconstructs exactly, while reference differences are recombined before any
