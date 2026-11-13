@@ -21,7 +21,7 @@ KERNEL=shutil.which('WolframKernel') or '/Applications/Wolfram.app/Contents/MacO
 
 @unittest.skipUnless(Path(KERNEL).is_file(),'A licensed Wolfram kernel is required.')
 class WorkerFinalizationTests(unittest.TestCase):
-    def run_export(self, *, mixed=False, break_json=False, schema="Particles", inventory_mismatch=False, rejected=False):
+    def run_export(self, *, mixed=False, break_json=False, schema="Particles", inventory_mismatch=False, rejected=False, corrupt_projection=False):
         with tempfile.TemporaryDirectory(prefix='hepcat-sm5-worker-finalization-') as directory:
             output=Path(directory)
             configuration={'ContextSHA256':'a'*64,'Points':1000,'MemoryGiB':4,
@@ -52,10 +52,16 @@ BinaryWrite[fixtureStream,Normal[BinarySerialize[fixtureEntry,PerformanceGoal->"
 Export[FileNameJoin[{fixtureDirectory,"native-before.sha256"}],IntegerString[FileHash[fixtureFile,"SHA256"],16,64],"Text"];
 fixtureAdmission=FIXTURE_ADMISSION;
 fixtureAdmission["CaseCapsulesSHA256"]=<|"synthetic_case"->IntegerString[FileHash[fixtureFile,"SHA256"],16,64]|>;
-Unprotect[RunProcess];Clear[RunProcess];
-RunProcess[_List]:=<|"ExitCode"->0,"StandardOutput"->ExportString[fixtureAdmission,"RawJSON"]|>;Protect[RunProcess];
 '''.replace('FIXTURE_DIRECTORY',json.dumps(str(output))).replace('FIXTURE_ADMISSION',literal(admission)).replace('FIXTURE_ENTRY',literal(fixture_entry))
-            worker=WORKER.read_text().replace('root=DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];',
+            # Stub only admission metadata. Leave the actual RunProcess primitive
+            # intact so projection invokes the real bounded Python/C++ helper.
+            admission_body='''readAdmission[]:=Module[{command=RunProcess[admissionCommand],value},
+    value=Quiet[Check[ImportString[command["StandardOutput"],"RawJSON"],$Failed]];
+    If[command["ExitCode"]===0&&AssociationQ[value]&&Lookup[value,"Status",None]==="APPROVED",value,$Failed]];'''
+            worker=WORKER.read_text()
+            self.assertEqual(worker.count(admission_body),1)
+            worker=worker.replace(admission_body,'readAdmission[]:=Global`fixtureAdmission;')
+            worker=worker.replace('root=DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];',
                                               'root='+json.dumps(str(ROOT))+';')
             worker=worker.replace('configuration=Import[Environment["HEPCAT_SM5_CONFIGURATION"],"RawJSON"];',
                                   'configuration='+literal(configuration)+';')
@@ -77,12 +83,18 @@ Protect[ReadModel,WriteSPINASProcess];
                 stubs+='summarySerializationFailure=indeterminateSyntheticSymbol;\n'
                 worker=worker.replace('summary=summary/._Missing->Null;',
                     'summary=summary/._Missing->Null;AssociateTo[summary,"SyntheticUnserializable"->summarySerializationFailure];')
+            if corrupt_projection:
+                worker=worker.replace('response=RunProcess[command];',
+                    'response=RunProcess[command];Export[FileNameJoin[{directory,"input.wxf"}],"corrupt copied payload","Text"];')
             worker=worker.replace('$HistoryLength=0;','$HistoryLength=0;\n'+stubs)
             script=output/'full-worker.wl';script.write_text(prelude+worker)
             process=subprocess.run([KERNEL,'-script',str(script)],cwd=ROOT,capture_output=True,text=True,
                 timeout=60,env=dict(os.environ,OMP_NUM_THREADS='1',OPENBLAS_NUM_THREADS='1'))
             self.assertEqual(hashlib.sha256((output/'synthetic_case.wxf').read_bytes()).hexdigest(),
                 (output/'native-before.sha256').read_text().strip())
+            projection_parent=output/'temporary'/'export-inputs'
+            if projection_parent.is_dir():
+                self.assertEqual(list(projection_parent.iterdir()),[],process.stdout+process.stderr)
             capsule=output/'synthetic_family-export.wxf'
             if rejected:
                 self.assertEqual(process.returncode,2,process.stdout+process.stderr)
@@ -128,6 +140,8 @@ Protect[ReadModel,WriteSPINASProcess];
         self.run_export(schema='Missing',rejected=True)
     def test_nonlist_particle_spelling_is_rejected(self):
         self.run_export(schema='Malformed',rejected=True)
+    def test_payload_checksum_failure_cleans_private_projection(self):
+        self.run_export(corrupt_projection=True,rejected=True)
     def test_inventory_particle_disagreement_is_rejected(self):
         self.run_export(schema='Process',inventory_mismatch=True,rejected=True)
 

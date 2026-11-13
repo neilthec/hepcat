@@ -38,6 +38,44 @@ recordParticlesForExport[checkpoint_,expected_]:=Module[{hasParticles,hasProcess
  If[hasParticles&&(!ListQ[particles]||particles=!=expected),Return[$Failed]];
  If[hasProcess&&(!ListQ[process]||process=!=expected),Return[$Failed]];
  If[hasParticles,particles,process]];
+(* Project exact export inputs before WXF Import; saved solver diagnostics are never loaded. *)
+exportInputProjections={};
+projectNativeForExport[caseID_String,expected_List,approved_Association]:=Module[
+ {source,expectedSHA,expectedContext,parent,directory,command,response,metadata,payload,payloadSHA,checkpoint,before,after},
+ source=FileNameJoin[{outputDirectory,caseID<>".wxf"}];
+ expectedSHA=Lookup[Lookup[approved,"CaseCapsulesSHA256",<||>],caseID,None];
+ expectedContext=Lookup[Lookup[approved,"NativeCaseContexts",<||>],caseID,None];
+ before=Quiet[Check[IntegerString[FileHash[source,"SHA256"],16,64],$Failed]];
+ If[!StringQ[expectedSHA]||before=!=expectedSHA,Return[$Failed]];
+ parent=FileNameJoin[{outputDirectory,"temporary","export-inputs"}];
+ If[!DirectoryQ[parent],CreateDirectory[parent,CreateIntermediateDirectories->True]];
+ directory=FileNameJoin[{parent,caseID<>"-"<>CreateUUID[]}];
+ Internal`WithLocalSettings[Null,Catch[
+ command={"python3",FileNameJoin[{root,"tests","SM-5-point","project-export-inputs.py"}],
+  "--capsule",source,"--output",directory,"--expected-sha",expectedSHA,"--case-id",caseID,
+  "--particles-json",ExportString[expected,"RawJSON"]};
+ If[StringQ[expectedContext],command=Join[command,{"--context",expectedContext}]];
+ response=RunProcess[command];
+ metadata=Quiet[Check[ImportString[Lookup[response,"StandardOutput",""],"RawJSON"],$Failed]];
+ If[!AssociationQ[response]||Lookup[response,"ExitCode",1]=!=0||!AssociationQ[metadata]||
+   Lookup[metadata,"Status",None]=!="PROJECTED"||Lookup[metadata,"CaseID",None]=!=caseID||
+   Lookup[metadata,"SourceSHA256",None]=!=expectedSHA||Lookup[metadata,"Particles",None]=!=expected||
+   !TrueQ[Lookup[metadata,"SourceUnchanged",False]]||
+   Lookup[metadata,"FullNativeCheckpointImported",True]=!=False||
+   Lookup[metadata,"ExpressionsEvaluated",True]=!=False,
+  Print["Native export input projection unavailable ",caseID," ",metadata];Throw[$Failed,"ExportInputProjection"]];
+ payload=FileNameJoin[{directory,"input.wxf"}];payloadSHA=Lookup[metadata,"PayloadSHA256",None];
+ If[Lookup[metadata,"Projection",None]=!=payload||!StringQ[payloadSHA]||
+   Quiet[Check[IntegerString[FileHash[payload,"SHA256"],16,64],$Failed]]=!=payloadSHA,Throw[$Failed,"ExportInputProjection"]];
+ checkpoint=Quiet[Check[Import[payload,"WXF"],$Failed]];
+ after=Quiet[Check[IntegerString[FileHash[source,"SHA256"],16,64],$Failed]];
+ If[after=!=expectedSHA||Quiet[Check[IntegerString[FileHash[payload,"SHA256"],16,64],$Failed]]=!=payloadSHA||
+   !AssociationQ[checkpoint]||Lookup[checkpoint,"Status",None]=!="COMPLETE"||
+   !KeyExistsQ[checkpoint,"Expression"]||recordParticlesForExport[checkpoint,expected]=!=expected,Throw[$Failed,"ExportInputProjection"]];
+ AppendTo[exportInputProjections,KeyTake[metadata,{"CaseID","SourceSHA256","PayloadSHA256","CopiedFields",
+  "ProjectorSHA256","ParserSourceSHA256","Limits","FullNativeCheckpointImported","ExpressionsEvaluated"}]];
+ checkpoint,"ExportInputProjection"],
+  If[DirectoryQ[directory],Quiet[DeleteDirectory[directory,DeleteContents->True]]]]];
 printed={};started=AbsoluteTime[];
 liveFile=FileNameJoin[{outputDirectory,id<>If[kind==="export","-export",""]<>".live.txt"}];
 live=OpenWrite[liveFile];
@@ -71,9 +109,11 @@ If[kind==="construct",
   family=SelectFirst[inventory["Families"],#["ID"]===id&];
   admission=readAdmission[];
   If[!AssociationQ[admission]||admission=!=launchAdmission,Print["Native export inputs changed during package load ",id];Quit[2]];
-  entries=Import[FileNameJoin[{outputDirectory,#<>".wxf"}],"WXF"]&/@family["CaseIDs"];
-  If[!AllTrue[entries,AssociationQ[#]&&Lookup[#,"Status",None]==="COMPLETE"&],Print["Incomplete family ",id];Quit[2]];
   expectedProcesses=Function[caseID,Lookup[SelectFirst[inventory["Cases"],Lookup[#,"ID",None]===caseID&,<||>],"Particles",Missing["AbsentInventoryCase"]]]/@family["CaseIDs"];
+  If[!AllTrue[expectedProcesses,ListQ],Print["Missing inventory external particles ",id];Quit[2]];
+  entries=MapThread[projectNativeForExport[#1,#2,admission]&,{family["CaseIDs"],expectedProcesses}];
+  If[!AllTrue[entries,AssociationQ[#]&&Lookup[#,"Status",None]==="COMPLETE"&],Print["Native record external particles disagree with inventory or projection unavailable ",id];Quit[2]];
+  If[readAdmission[]=!=admission,Print["Native export inputs changed during bounded projection ",id];Quit[2]];
   entryProcesses=MapThread[recordParticlesForExport,{entries,expectedProcesses}];
   If[!AllTrue[entryProcesses,ListQ],Print["Native record external particles disagree with inventory ",id];Quit[2]];
   exportName=Lookup[family,"ExportName",StringJoin[StringReplace[family["Particles"],{"W+"->"Wp","W-"->"Wm"}]]];
@@ -100,7 +140,8 @@ If[kind==="construct",
    "ExporterContextSHA256"->admission["ExporterContextSHA256"],
    "NativeCaseContexts"->admission["NativeCaseContexts"],
    "CaseIDs"->admission["CaseIDs"],"CaseCapsulesSHA256"->admission["CaseCapsulesSHA256"],
-   "NativeContextCompatibility"->Lookup[admission,"NativeContextCompatibility",Null]|>;
+   "NativeContextCompatibility"->Lookup[admission,"NativeContextCompatibility",Null],
+   "ExportInputProjections"->exportInputProjections|>;
   target=FileNameJoin[{outputDirectory,id<>"-export.wxf"}],
   Print["Unknown work kind ",kind];Quit[2]]];
 Close[live];
