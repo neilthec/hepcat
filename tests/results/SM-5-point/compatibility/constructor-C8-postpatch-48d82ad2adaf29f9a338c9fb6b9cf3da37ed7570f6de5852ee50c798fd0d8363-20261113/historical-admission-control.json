@@ -1,0 +1,38 @@
+{
+  "Status": "PASS",
+  "CurrentContextSHA256": "48d82ad2adaf29f9a338c9fb6b9cf3da37ed7570f6de5852ee50c798fd0d8363",
+  "RegistrySHA256": "e76b8976ca0c2a448aebc73819c12962b29e9b4442d9a05b573bf43fa8ef5fbe",
+  "NativeRecordsAdmitted": 245,
+  "ExportReportsAdmitted": 169,
+  "PrecisionQualifiedFamilies": [
+    {
+      "FamilyID": "sm5f_b80ee23ca123",
+      "Cases": 1,
+      "Backend": "CalcHEP",
+      "Status": "PRECISION_QUALIFIED",
+      "RawExportStatus": "FAIL",
+      "ActiveContext": "48d82ad2adaf29f9a338c9fb6b9cf3da37ed7570f6de5852ee50c798fd0d8363"
+    },
+    {
+      "FamilyID": "sm5f_345126cb84c0",
+      "Cases": 1,
+      "Backend": "CalcHEP",
+      "Status": "PRECISION_QUALIFIED",
+      "RawExportStatus": "FAIL",
+      "ActiveContext": "48d82ad2adaf29f9a338c9fb6b9cf3da37ed7570f6de5852ee50c798fd0d8363"
+    },
+    {
+      "FamilyID": "sm5f_3ca11bcd7f40",
+      "Cases": 6,
+      "Backend": "MadGraph",
+      "Status": "PRECISION_QUALIFIED",
+      "RawExportStatus": "FAIL",
+      "ActiveContext": "48d82ad2adaf29f9a338c9fb6b9cf3da37ed7570f6de5852ee50c798fd0d8363"
+    }
+  ],
+  "PrecisionQualifiedCases": 8,
+  "OriginalRecordedContextsRetained": true,
+  "RawExportFailureStatusesUnchanged": true,
+  "NewConstructOrValidationRerunClaimed": false,
+  "CanonicalOrConfigurationWritten": false
+}

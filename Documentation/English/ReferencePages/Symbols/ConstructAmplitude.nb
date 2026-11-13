@@ -195,34 +195,44 @@ preparation, the recovery stage and its complete diagram counts."}],
    "Notes"], Cell[TextData[{"With an independent ",
      Cell[BoxData[RowBox[{"\"FeynmanModel\""}]], "InlineFormula"], ", \
 supported five-leg color-singlet processes containing four massive Dirac \
-fermions and one scalar can try minimal covariant currents before numerical \
-completion. Every used elementary vertex, ordered graph, propagator and \
-fermion endpoint is certified symbolically from the diagram model. Supported \
-five-leg processes with two massive Dirac fermions can also try either one \
-massive vector and two identical scalars, or two massive vectors and one \
-scalar. The same certified metric-current route also supports four massive \
-vectors and one scalar when all used interactions belong to its supported \
-classes. When every used vertex belongs to a supported operator class, an \
-existing metric contact is calibrated symbolically from the complete lower \
-amplitude in the factorization model. Neither route reads the independent \
-benchmark to construct its candidate or fits sampled coefficients. Internal \
-lines remain off shell and all masses and couplings stay model-owned. The \
-candidate receives external-only ", ButtonBox["PrepareAmplitudes",
-      BaseStyle -> "Link", ButtonData ->
-       "paclet:HEPCAT/ref/PrepareAmplitudes"], " and all mandatory ",
-     ButtonBox["CheckAmplitudes", BaseStyle -> "Link",
+fermions and either one scalar or one massive vector can try minimal \
+covariant currents before numerical completion. Every used elementary vertex, \
+ordered graph, propagator and fermion endpoint is certified symbolically from \
+the diagram model. Supported five-leg processes with two massive Dirac \
+fermions can also try either one massive vector and two identical scalars, or \
+two massive vectors and one scalar. The same certified metric-current route \
+also supports four massive vectors and one scalar when all used interactions \
+belong to its supported classes. When every used vertex belongs to a \
+supported operator class, an existing metric contact is calibrated \
+symbolically from the complete lower amplitude in the factorization model. \
+Neither route reads the independent benchmark to construct its candidate or \
+fits sampled coefficients. Internal lines remain off shell and all masses and \
+couplings stay model-owned. The candidate receives external-only ",
+     ButtonBox["PrepareAmplitudes", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/PrepareAmplitudes"],
+     " and all mandatory ", ButtonBox["CheckAmplitudes", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/CheckAmplitudes"], " checks at the \
 requested validation assignments, including independent Feynman comparisons. \
 Default distinct-fermion inputs additionally probe equal independent masses, \
 with dependent functions recomputed normally. Explicit parameter and \
 validation choices stay authoritative. Failed or unsupported proposals are \
 retained in Details and continue through the original completion workflow."}]\
-, "Notes"], Cell[TextData[{"For a colored process with five or more legs, \
-identical external states may relate the scalar color coefficients. The \
-constructor can certify the exact color transformation under those exchanges \
-and construct only enough independent seed coefficients to span it. Identical \
-states include their declared helicities; opposite photon or gluon helicities \
-are separate groups. Odd twice-spin supplies the fermion exchange sign. Every \
+, "Notes"], Cell[TextData[{"The four-fermion massive-vector proposal uses the \
+same symmetric spin polynomial as other massive-vector amplitudes, keeping \
+both vector spinor slots and the complete fermion spin dependence. With ",
+     Cell[BoxData[RowBox[{"\"Output\"", " ", "->", " ", "\"Details\""}]],
+      "InlineFormula"], ", the source proposal also retains its raw indexed \
+tensor and the encoding correspondence. This route needs no extra user \
+options. Four-fermion photon processes keep their existing completion route. \
+As with every current proposal, the original channels and the complete \
+independent Feynman amplitude determine whether it is accepted; a rejected \
+proposal falls back to the usual construction."}], "Notes"],
+  Cell[TextData[{"For a colored process with five or more legs, identical \
+external states may relate the scalar color coefficients. The constructor can \
+certify the exact color transformation under those exchanges and construct \
+only enough independent seed coefficients to span it. Identical states \
+include their declared helicities; opposite photon or gluon helicities are \
+separate groups. Odd twice-spin supplies the fermion exchange sign. Every \
 reconstructed coefficient still receives all normal parameter-assignment \
 checks, including any requested independent Feynman comparison. Unsupported \
 transformations or rejected candidates return to the ordinary \

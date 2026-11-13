@@ -1,0 +1,30 @@
+{
+	"Status":"COMPLETE",
+	"Particles":[
+		"e",
+		"E",
+		"e",
+		"E",
+		"Z"
+	],
+	"FamilyID":"sm5f_15253344f741",
+	"Seconds":4.29423602e2,
+	"ShadowSourceContextSHA256":"48d82ad2adaf29f9a338c9fb6b9cf3da37ed7570f6de5852ee50c798fd0d8363",
+	"OriginalProductionContextSHA256":"4165f24c7d5501c40c03ea91f850a5cde77389a1236e3af397fb6d7e2344a167",
+	"PublicCall":"ConstructAmplitude[process, model1, model2, \"FeynmanModel\" -> reference1, \"Output\" -> \"Details\"]",
+	"PublicOptions":[
+		"FeynmanModel",
+		"Output"
+	],
+	"AllOtherOptionsDefault":true,
+	"RandomSeedChoice":"Automatic",
+	"ProductionSourceEdited":false,
+	"CanonicalPromotion":false,
+	"ActualPublicConstructorExecuted":true,
+	"Rows":19,
+	"RowStatuses":{
+		"PASS":19
+	},
+	"FeynmanRows":1,
+	"Complexity":6112
+}

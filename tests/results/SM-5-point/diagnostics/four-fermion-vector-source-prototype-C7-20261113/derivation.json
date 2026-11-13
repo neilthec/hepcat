@@ -1,0 +1,19 @@
+{
+  "Status": "PREPARED_NOT_RUN",
+  "OriginalSource": "source/internal/HEPCAT-CovariantSources.wl",
+  "OriginalSourceSHA256": "6b061d63fc485371208521dd91a9dcb0ade2d0cddd0b811dfda7d2b04f321ad1",
+  "PrototypeSourceSHA256": "16d516c0a7906ab21139550680024940ac3e09e996385919334e7f36e1a85ed9",
+  "NamespaceFrom": "HEPCATCovariantCurrentSources`Private`",
+  "NamespaceTo": "HEPCATFourFermionVectorPrototype`Private`",
+  "NamespaceReplacementCount": 77,
+  "OnlyClassGateReplacement": {
+    "Before": "Length[fermions] === 4 && Length[scalars] === 1",
+    "After": "Length[fermions] === 4 && (Length[scalars] === 1 || (Length[vectors] === 1 && First[vectors][[6]] =!= 0))",
+    "Count": 1
+  },
+  "MassiveVectorOnly": true,
+  "FourMassiveDiracGateUnchanged": true,
+  "AllVertexMatchersAndOtherFunctionBodiesUnchanged": true,
+  "ProductionSourceEdited": false,
+  "NoKnownAmplitudeOrBenchmarkUsedForConstruction": true
+}

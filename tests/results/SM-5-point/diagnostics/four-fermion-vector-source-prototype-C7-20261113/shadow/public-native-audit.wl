@@ -1,0 +1,26 @@
+base="/Users/neil/code/hepcat/tests/results/SM-5-point/diagnostics/four-fermion-vector-source-prototype-C7-20261113";
+sha[path_]:=IntegerString[FileHash[path,"SHA256"],16,64];
+records=Table[
+ p=FileNameJoin[{base,"shadow",case<>"-public","result.wxf"}];r=Import[p,"WXF"];d=r["Details"];rep=Lookup[d,"RepresentativeSelection",<||>];groups=Lookup[rep,"ValidationReports",{}];
+ proto=Import[FileNameJoin[{base,case<>"-coherent","result.wxf"}],"WXF"];
+ stages=Lookup[d,"Stages",<||>];
+ groupSummaries=Map[Function[g,q=g["Report"];table=Normal[q["Table"]];
+ <|"Rows"->Length[table],"Statuses"->Counts[Lookup[table,"Status",{}]],
+ "PhysicalRows"->Count[Lookup[table,"Type",{}],"Physical"],"FeynmanRows"->Count[Lookup[table,"Type",{}],"Feynman"],
+ "HighEnergyStatus"->Lookup[Lookup[q,"HighEnergyCheck",<||>],"Status",Null],
+ "ReferenceStatus"->Lookup[Lookup[q,"ReferenceCheck",<||>],"Status",Null],
+ "FeynmanStatus"->Lookup[Lookup[q,"FeynmanCheck",<||>],"Status",Null],
+ "FeynmanCompletedSamples"->Lookup[Lookup[q,"FeynmanCheck",<||>],"CompletedSamples",Null],
+ "RandomSeed"->Lookup[q,"RandomSeed",Null],
+ "ElectronMass"->ToString[Cases[g["ParameterRules"],Rule[ConstructiveDiagrams`ModelParameter["Me",___],x_]:>x],InputForm],
+ "MuonMass"->ToString[Cases[g["ParameterRules"],Rule[ConstructiveDiagrams`ModelParameter["Mm",___],x_]:>x],InputForm]|>],groups];
+ <|"Case"->case,"Status"->r["Status"],"Seconds"->r["Seconds"],"Complexity"->Lookup[d,"Complexity",Null],
+ "AutomaticSeed"->Lookup[d,"RandomSeed",Null],"PublicOptions"->r["PublicOptions"],"ShadowContext"->r["ShadowSourceContextSHA256"],
+ "RepresentativeSelected"->Lookup[rep,"Selected",False],"SourceStage"->Lookup[rep,"SourceStage",Null],
+ "BenchmarkUsedForConstruction"->Lookup[rep,"BenchmarkUsedForConstruction",Null],
+ "ValidationParameterGroups"->Length[groups],"Groups"->groupSummaries,
+ "PublicExpressionSameQPriorPrototypePreparedExpression"->SameQ[r["Expression"],Last[proto["PreparedPair"]]],
+ "ResultCapsuleSHA256"->sha[p],"PriorPrototypeCapsuleSHA256"->sha[FileNameJoin[{base,case<>"-coherent","result.wxf"}]]|>,
+ {case,{"distinct-z","identical-z"}}];
+Export[FileNameJoin[{base,"shadow","public-native-audit.json"}],<|"Status"->If[AllTrue[records,#["Status"]==="COMPLETE"&&TrueQ[#["RepresentativeSelected"]]&&AllTrue[#["Groups"],Lookup[#["Statuses"],"PASS",0]===#["Rows"]&]&],"PASS","NOT_PASS"],"PrototypeBackendReportsNotRerunByPublicShadow"->True,"Records"->records|>,"RawJSON"];
+Print[<|"Status"->"METADATA_AUDIT_WRITTEN","ParameterGroups"->Lookup[records,"ValidationParameterGroups"],"CapsuleHashes"->Lookup[records,"ResultCapsuleSHA256"]|>];Quit[];

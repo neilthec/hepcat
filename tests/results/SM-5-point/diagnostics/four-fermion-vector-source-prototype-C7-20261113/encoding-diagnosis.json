@@ -1,0 +1,18 @@
+{
+  "Status": "FIRST_ATTEMPT_UNRESOLVED_ENCODING",
+  "OriginalSummarySHA256": "e704f57ba5b849e79941c75c0b959fd3c2f48763c3c6654f57ad64b4939a5f1a",
+  "MissingTypes": {
+    "IncompleteKinematicMap": 480,
+    "NotCompared": 240,
+    "NotRequested": 80
+  },
+  "PhysicalRowsUnresolved": 10,
+  "HighEnergyUnresolved": true,
+  "ReferenceStatus": "PASS",
+  "FeynmanStatus": "PASS",
+  "UnderlyingCause": "Raw and prepared candidate retain explicit VectorSpinIndex external slots, unsupported by ordinary cut/high-energy chart encoding.",
+  "RepresentationAdapter": "Reuse exact production Contacts coherent map, preserve raw tensor and full spin degree, no coefficient/graph changes.",
+  "NewWorker": "worker-coherent.wl",
+  "NewWorkerSHA256": "c40644b0222db13947c98247544e1dd9b6f040efb559b8a51729d7efba565167",
+  "PriorArtifactsPreserved": true
+}

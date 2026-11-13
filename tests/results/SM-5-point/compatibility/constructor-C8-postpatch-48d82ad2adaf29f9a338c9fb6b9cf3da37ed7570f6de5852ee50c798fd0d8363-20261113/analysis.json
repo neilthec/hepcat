@@ -1,0 +1,56 @@
+{
+  "Status": "ANALYZED_NOT_SEALED",
+  "Kind": "ExactMassiveFourFermionVectorSourceClassHistoricalValidationTransition",
+  "BeforeContextSHA256": "4165f24c7d5501c40c03ea91f850a5cde77389a1236e3af397fb6d7e2344a167",
+  "AfterContextSHA256": "48d82ad2adaf29f9a338c9fb6b9cf3da37ed7570f6de5852ee50c798fd0d8363",
+  "ChangedExistingFiles": [
+    "source/HEPCAT-Model.wl",
+    "source/internal/HEPCAT-CovariantSources.wl"
+  ],
+  "ChangedDefinitionFields": {
+    "ConstructiveDiagrams`ConstructAmplitude": [
+      "DownValues"
+    ],
+    "ConstructiveDiagrams`Private`$amplitudeParallelLoadedSignature": [
+      "OwnValues"
+    ],
+    "HEPCATCovariantCurrentSources`Private`covariantCurrentSource": [
+      "DownValues"
+    ]
+  },
+  "ExistingSymbolsChecked": 8342,
+  "NewSymbolsChecked": 2,
+  "NewDefinedPrivateSymbols": [],
+  "NoNewDefinedHelpers": true,
+  "NewEmptyPrivateSymbols": [
+    "HEPCATCovariantCurrentSources`Private`rawExpression"
+  ],
+  "NewTemporaryPrivateSymbols": [
+    "HEPCATCovariantCurrentSources`Private`rawExpression$"
+  ],
+  "BeforeColdDefinitionsSHA256": "c6c37f508c8e79bec8fdcc66db0f9530a09ad5b8385544d4284e12c3bff3786b",
+  "AfterColdDefinitionsSHA256": "43218e88020cef3cb44a9bb33b8f65b8fc5094f7bde27ee018abe54d9480a85f",
+  "AllOtherTenFieldDefinitionsExactlyUnchanged": true,
+  "MechanicalLoaderSignatureEvidence": {
+    "Before": 8286940166460921071,
+    "After": 6356440838245487211,
+    "InputCount": 13,
+    "InputsSHA256": "822c2d79da7d862cf43af46a9af7d7c44b0f8b884d4becd26c55350d98e198ee",
+    "ValuesSHA256": "ef6239858a6813244ac3ff16e0a94cc6895bcf9029f9c7c694af230ed3e5a570",
+    "ScriptSHA256": "e89ee22f90bdbeba3e273598e5619a6d8f4f3179b793f43400d503e8f395909e"
+  },
+  "HistoricalEvidenceOnly": true,
+  "ConstructorRerunPerformed": false,
+  "ValidationRerunPerformed": false,
+  "CurrentConstructorSuccessClaimed": false,
+  "BaselineDirectory": "tests/results/SM-5-point/compatibility/constructor-C7-pre-C8-4165f24c7d5501c40c03ea91f850a5cde77389a1236e3af397fb6d7e2344a167-20261113T060245Z",
+  "BaselineSHA256": "c997583548288d6e27d099a8694662b4021a44d88d867f714997266804bb69dc",
+  "PriorProofSHA256": "5056ae60a8a14d898a1d0203e3f35e20194d3f57a08b3e91f0ebbb218fb58291",
+  "RecursiveProofArchivesCopied": false,
+  "AfterManifestSHA256": "38414b5b40bea12102a14940b4ae4bd25adc836c9784ba2b70ccae62fa9c0578",
+  "AfterCaptureSHA256": [
+    "912ccad2d829bf8b9d79d4fa04c41b6f53f30b7698e1591891797c51874ba86f",
+    "a6639931a2af2c8632ff84e81aa3408b105bfb0167ef8b077e14e687d1495743"
+  ],
+  "SourceDiffsSHA256": "d7af4379689231572eadc99d8c55120d11185d55c840a320e636db565cf73143"
+}

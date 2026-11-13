@@ -1,0 +1,37 @@
+{
+  "Status": "PENDING_INDEPENDENT_ROOT_REVIEW",
+  "ReviewedBy": "",
+  "AnalysisSHA256": "a36f1cbe7b1b6086579a52b9a62d804e8747aa910c1491a8bb82d036cd2e33da",
+  "SourceDiffsSHA256": "d7af4379689231572eadc99d8c55120d11185d55c840a320e636db565cf73143",
+  "ExpectedChangedDefinitionFields": {
+    "ConstructiveDiagrams`ConstructAmplitude": [
+      "DownValues"
+    ],
+    "ConstructiveDiagrams`Private`$amplitudeParallelLoadedSignature": [
+      "OwnValues"
+    ],
+    "HEPCATCovariantCurrentSources`Private`covariantCurrentSource": [
+      "DownValues"
+    ]
+  },
+  "ExpectedNewDefinedPrivateSymbols": [],
+  "ExistingCheckersReducersModelsAndNumericalRuntimeUnchanged": false,
+  "FourMassiveColourSingletDiracFermionsAndOneMassiveVectorOnly": false,
+  "MasslessFourFermionVectorClassStillExcluded": false,
+  "ExistingSupportedSourceAmplitudeOutputsLiterallyUnchanged": false,
+  "ExactExistingCoherentVectorMapAndRawTensorRetained": false,
+  "UnknownSlotsWrongLegsAndWrongSpinDegreesRejected": false,
+  "EveryUsedLocalVertexCertified": false,
+  "EveryOriginalOrderedGraphPoleAndFermionFlowRetained": false,
+  "ExistingLocalThreePointMatchersUnchanged": false,
+  "ExistingMetricContactCalibrationUnchanged": false,
+  "AllProposalsReceiveEveryIndependentCheck": false,
+  "NoAnswerOrIndependentBenchmarkForSourceConstruction": false,
+  "NoNewDefinedHelpersOrLoadTimeSideEffects": false,
+  "PublicOptionsDefaultsAndMessagesUnchanged": false,
+  "ActualPublicDefaultNativeControlsReviewed": false,
+  "SeparatePrototypeBackendReportsNotAttributedToDifferentPublicExpressions": false,
+  "MechanicalLoaderSignatureReviewed": false,
+  "LiteralSourceAndDefinitionChangesReviewed": false,
+  "EvidenceFiles": {}
+}

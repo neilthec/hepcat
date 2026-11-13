@@ -1,0 +1,12 @@
+--- C7/source/HEPCAT-Model.wl
++++ candidate/source/HEPCAT-Model.wl
+@@ -22715,7 +22715,8 @@
+     vectors = Select[rows, #[[5]] === 2 &]; scalars = Select[rows, #[[5]] === 0 &];
+     If[!AllTrue[fermions, HEPCATCovariantCurrentSources`Private`supportedFermionRowQ], Return[False]];
+     class = Which[
+-      Length[fermions] === 4 && Length[scalars] === 1 &&
++      Length[fermions] === 4 &&
++        (Length[scalars] === 1 || (Length[vectors] === 1 && First[vectors][[6]] =!= 0)) &&
+         AllTrue[fermions, #[[6]] =!= 0 &], "Cubic currents",
+       Length[fermions] === 2 && Length[vectors] === 1 && Length[scalars] === 2 &&
+         First[vectors][[6]] === 0 && AllTrue[fermions, #[[6]] =!= 0 &], "Cubic currents",

@@ -104,6 +104,7 @@ TEST_SUITES = (
 # These execute full expensive notebook constructions rather than component
 # regressions. Select them explicitly and give the external runner enough time.
 INTEGRATION_TEST_SUITES = ("covariant-current-source-tests.wl",
+                          "covariant-four-fermion-vector-source-tests.wl",
                           "covariant-contact-calibration-tests.wl",
                           "covariant-constructor-integration-tests.wl",
                           "sm-generation-transport-tests.wl",

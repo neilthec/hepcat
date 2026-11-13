@@ -1,0 +1,37 @@
+{
+  "ExpectedContextSHA256": "48d82ad2adaf29f9a338c9fb6b9cf3da37ed7570f6de5852ee50c798fd0d8363",
+  "Records": [
+    {
+      "ContextUnchanged": true,
+      "ExitCode": 0,
+      "ExternalSeconds": 120,
+      "LoadedToolSHA256": {
+        "tests/SM-5-point/capture-constructor-definitions.py": "5dcbb8fb048115bd38a347e2cefdc3e344f6a317830c0a824f0143d6965963dd",
+        "tests/SM-5-point/capture-constructor-definitions.wl": "45d1737a33d6f9538404afa9b40beea7e4d80c3b1ed3fa94e9b0f0a585f3ab56"
+      },
+      "OutputExists": true,
+      "Pass": 1,
+      "RawBytes": 6199871,
+      "RawSHA256": "912ccad2d829bf8b9d79d4fa04c41b6f53f30b7698e1591891797c51874ba86f",
+      "Seconds": 3.928130625,
+      "StartedUTC": "2026-11-13T06:09:58.676747+00:00",
+      "ToolBytesUnchanged": true
+    },
+    {
+      "ContextUnchanged": true,
+      "ExitCode": 0,
+      "ExternalSeconds": 120,
+      "LoadedToolSHA256": {
+        "tests/SM-5-point/capture-constructor-definitions.py": "5dcbb8fb048115bd38a347e2cefdc3e344f6a317830c0a824f0143d6965963dd",
+        "tests/SM-5-point/capture-constructor-definitions.wl": "45d1737a33d6f9538404afa9b40beea7e4d80c3b1ed3fa94e9b0f0a585f3ab56"
+      },
+      "OutputExists": true,
+      "Pass": 2,
+      "RawBytes": 6199871,
+      "RawSHA256": "a6639931a2af2c8632ff84e81aa3408b105bfb0167ef8b077e14e687d1495743",
+      "Seconds": 3.9808537910000004,
+      "StartedUTC": "2026-11-13T06:10:02.661038+00:00",
+      "ToolBytesUnchanged": true
+    }
+  ]
+}

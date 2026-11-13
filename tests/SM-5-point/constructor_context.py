@@ -474,6 +474,14 @@ def verified_proof(root, here, configuration, current_context, proof_path):
         return None
 
 
+def c8_module():
+    spec = importlib.util.spec_from_file_location('hepcat_constructor_context_c8',
+                                                 Path(__file__).with_name('validation_context_c8.py'))
+    value = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(value)
+    return value
+
+
 def c7_module():
     spec = importlib.util.spec_from_file_location('hepcat_constructor_context_c7',
                                                  Path(__file__).with_name('validation_context_c7.py'))
@@ -507,6 +515,8 @@ def c4_module():
 
 
 def public_proof(proof, stage=None):
+    if proof.get('_C8VerifiedCurrentContext') is True:
+        return c8_module().public_proof(proof, stage)
     if proof.get('_C7VerifiedCurrentContext') is True:
         return c7_module().public_proof(proof, stage)
     """Describe the actual provenance without repeating cached definition tables."""
@@ -535,6 +545,10 @@ def public_proof(proof, stage=None):
 
 def resolve(root, here, configuration, current_context):
     """Resolve one exact reviewed historical transition; never infer a migration."""
+    current = c8_module().verified_proof(root, here, configuration, current_context,
+                                        Path(here) / 'constructor-C7-C8-context-bridge.json')
+    if current is not None:
+        return current
     current = c7_module().verified_proof(root, here, configuration, current_context,
                                         Path(here) / 'constructor-C6-C7-context-bridge.json')
     if current is not None:
@@ -562,6 +576,8 @@ def record_evidence(summary_path, summary, current_context, proof):
         return None
     if not isinstance(proof, dict):
         return None
+    if proof.get('_C8VerifiedCurrentContext') is True:
+        return c8_module().record_evidence(summary_path, summary, current_context, proof)
     if proof.get('_C7VerifiedCurrentContext') is True:
         return c7_module().record_evidence(summary_path, summary, current_context, proof)
     if proof.get('_C6VerifiedCurrentContext') is True:

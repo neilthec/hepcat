@@ -1,0 +1,20 @@
+{
+  "Status": "SHADOW_CANDIDATE_NOT_PRODUCTION",
+  "OriginalContext": "4165f24c7d5501c40c03ea91f850a5cde77389a1236e3af397fb6d7e2344a167",
+  "ChangedFiles": [
+    {
+      "Path": "source/HEPCAT-Model.wl",
+      "BeforeSHA256": "08d4012f6c3c5827f5ffb90d52c81f1ab5c5d5be01288f9063d3528b74474fe7",
+      "CandidateSHA256": "f7beb266244d4ded9124c74f1fafd649f15f1c01a93e5813d354d64429dd0e9b"
+    },
+    {
+      "Path": "source/internal/HEPCAT-CovariantSources.wl",
+      "BeforeSHA256": "6b061d63fc485371208521dd91a9dcb0ade2d0cddd0b811dfda7d2b04f321ad1",
+      "CandidateSHA256": "838607455d5e9323eb8f8a09bacaae0265ea0be7e39de1c1e18e9d55bd0fcea6"
+    }
+  ],
+  "Gate": "Four massive color-singlet Dirac fermions plus exactly one massive vector; photons excluded",
+  "Encoding": "Exact existing Contacts coherent map, raw tensor retained, no residual VectorSpinIndex and declared spin weights required",
+  "Unchanged": "Every vertex matcher, graph certificate, contact source, numerical checker, models and runtimes",
+  "ProductionSourceEdited": false
+}

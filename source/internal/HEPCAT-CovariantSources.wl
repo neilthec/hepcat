@@ -227,7 +227,7 @@ HEPCATCovariantCurrentSources`Private`diagramCertificate[diagram_Association, ca
 Options[HEPCATCovariantCurrentSources`Private`covariantCurrentSource] = {"TimeConstraint" -> 60};
 HEPCATCovariantCurrentSources`Private`covariantCurrentSource[process_List, model_List, OptionsPattern[]] := Module[
  {rows, fermions, vectors, scalars, diagrams, catalog, liftedDiagrams, sourceSignatures, liftedSignatures,
-  pairs, converted, expression, external, used, coverage, expected, weights, massiveDiracQ,
+  pairs, converted, expression, rawExpression, vectorLegs, external, used, coverage, expected, weights, massiveDiracQ,
   seconds = OptionValue["TimeConstraint"], before},
  before = HEPCATCovariantCurrentSources`Private`objectSHA[model];
  If[Length[model] =!= 4 || !AllTrue[model, ListQ] || Length[process] =!= 5 ||
@@ -237,7 +237,8 @@ HEPCATCovariantCurrentSources`Private`covariantCurrentSource[process_List, model
  fermions = Select[rows, #[[5]] === 1 &]; vectors = Select[rows, #[[5]] === 2 &]; scalars = Select[rows, #[[5]] === 0 &];
  massiveDiracQ=AllTrue[fermions, #[[6]] =!= 0 && #[[2]] =!= #[[3]] && !MemberQ[{"L", "R"}, #[[9]]] &];
  If[!AllTrue[rows, #[[8]] === 1 &] || !massiveDiracQ ||
-   !((Length[fermions] === 4 && Length[scalars] === 1) ||
+   !((Length[fermions] === 4 && (Length[scalars] === 1 ||
+     (Length[vectors] === 1 && First[vectors][[6]] =!= 0))) ||
      (Length[fermions] === 2 && Length[vectors] === 1 && Length[scalars] === 2 && First[vectors][[6]] === 0)),
    Return[HEPCATCovariantCurrentSources`Private`reject["UnsupportedExternalCurrentClass"]]];
  diagrams = CreateDiagrams[process, model];
@@ -260,13 +261,19 @@ HEPCATCovariantCurrentSources`Private`covariantCurrentSource[process_List, model
    Return[HEPCATCovariantCurrentSources`Private`reject["OffShellConversionIncomplete"]]];
  external = First[First[converted]];
  If[!AllTrue[converted, First[#] === external &], Return[HEPCATCovariantCurrentSources`Private`reject["ExternalMassOrderingMismatch"]]];
- expression = Total[Last /@ converted];
+ rawExpression = Total[Last /@ converted];
+ vectorLegs = Flatten[Position[rows[[All, 5]], 2]];
+ expression = If[AnyTrue[vectors, #[[6]] =!= 0 &], rawExpression /.
+   Spinor["Spin", "Upper", kind : ("Angle" | "Square"), leg_Integer,
+     VectorSpinIndex[leg_Integer, 1 | 2]] :> Spinor["Spin", kind, leg], rawExpression];
+ If[!FreeQ[expression, _VectorSpinIndex],
+   Return[HEPCATCovariantCurrentSources`Private`reject["UnsupportedCoherentExternalTensorEncoding"]]];
  expected=HEPCATCovariantCurrentSources`Private`declaredExternalSpinWeights[process,model];
  If[FailureQ[expected],Return[HEPCATCovariantCurrentSources`Private`reject["UnsupportedDeclaredExternalSpinWeights",<|"Reason"->expected|>]]];
  weights=ConstructiveDiagrams`Private`completionExternalSpinWeights[expression,external];
  If[weights=!=expected,Return[HEPCATCovariantCurrentSources`Private`reject["UnsupportedCoherentExternalTensorEncoding"]]];
  If[before =!= HEPCATCovariantCurrentSources`Private`objectSHA[model], Return[HEPCATCovariantCurrentSources`Private`reject["SourceModelChanged"]]];
- <|"Status" -> "UNVALIDATED_CANDIDATE", "Amplitude" -> {external, expression},
+ Join[<|"Status" -> "UNVALIDATED_CANDIDATE", "Amplitude" -> {external, expression},
   "Expression" -> expression, "ExternalMassRules" -> external, "ExternalParticles" -> process,
   "CompleteSpinDegrees" -> Abs[weights], "CompleteSpinWeights" -> weights,
   "VertexCertificates" -> catalog["Certificates"], "SourceUsedRows" -> used,
@@ -278,7 +285,11 @@ HEPCATCovariantCurrentSources`Private`covariantCurrentSource[process_List, model
   "NumericalCoefficientFit" -> False, "NumericalParameterAssignments" -> {},
   "InternalOnShellConditions" -> {}, "NewIndependentContacts" -> False,
   "RequiresCheckAmplitudes" -> True,
-  "ContinuationAssumption" -> "MinimalRenormalizableCovariantCurrentsOfExactlyMatchedElementaryVertices"|>
+  "ContinuationAssumption" -> "MinimalRenormalizableCovariantCurrentsOfExactlyMatchedElementaryVertices"|>,
+  If[AnyTrue[vectors, #[[6]] =!= 0 &], <|"RawTensorExpression" -> rawExpression,
+    "CoherentExternalVectorEncoding" -> <|"Method" -> "InjectiveHomogeneousSymmetricSpinPolynomial",
+      "VectorLegs" -> vectorLegs, "RawTensorRetained" -> True, "CompleteSpinDegrees" -> Abs[weights],
+      "CompleteSpinWeights" -> weights, "OffShellKinematicsChanged" -> False|>|>, <||>]]
 ];
 HEPCATCovariantCurrentSources`Private`covariantCurrentSource[___] := HEPCATCovariantCurrentSources`Private`reject["UnsupportedCurrentSourceInput"];
 End[];

@@ -1,0 +1,23 @@
+----------HEPCAT----------
+
+Version: 
+Authors: N. Christensen
+Please cite: ...
+Contributions by: ...
+Instructions can be found...
+
+We welcome contributors.  Please contact Neil if interested.
+------------------------------------
+4FV_SOURCE_BEGIN {e, E, e, E, Z}
+4FV_SOURCE_SEALED 28 diagrams; leaves 56323
+4FV_VALIDATION_BEGIN 1/3 seed=1913572897
+4FV_VALIDATION_END 1 pass=True
+4FV_VALIDATION_BEGIN 2/3 seed=1902716072
+4FV_VALIDATION_END 2 pass=True
+4FV_VALIDATION_BEGIN 3/3 seed=1830782762
+4FV_VALIDATION_END 3 pass=True
+Dataset[{<|Reference -> CalcHEP, Status -> PASS, RequestedPoints -> 1000|>}, TypeSystem`Vector[TypeSystem`Struct[{Reference, Status, RequestedPoints}, {TypeSystem`Atom[String], TypeSystem`Atom[String], TypeSystem`Atom[Integer]}], 1], <||>]
+Comparing HEPCAT with independent MadGraph: 1000 common points for each requested massless-helicity combination.
+MadGraph random seed: 1794547966537333000
+Dataset[{<|Helicities -> No massless helicities, Status -> PASS, Points -> 1000, MaximumRelativeError -> 2.4517963882002866*^-13, MaximumAbsoluteError -> 2.9021923753091983*^-15, ZeroAbsoluteTolerance -> None|>}, TypeSystem`Vector[TypeSystem`Struct[{Helicities, Status, Points, MaximumRelativeError, MaximumAbsoluteError, ZeroAbsoluteTolerance}, {TypeSystem`Atom[String], TypeSystem`Atom[String], TypeSystem`Atom[Integer], TypeSystem`Atom[Real], TypeSystem`Atom[Real], TypeSystem`AnyType}], 1], <|MaxItems -> {All, All}|>]
+4FV_DONE PROTOTYPE_NATIVE_AND_EXTERNAL_PASS

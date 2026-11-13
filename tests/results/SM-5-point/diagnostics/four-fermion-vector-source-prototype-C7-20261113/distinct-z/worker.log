@@ -1,0 +1,15 @@
+----------HEPCAT----------
+
+Version: 
+Authors: N. Christensen
+Please cite: ...
+Contributions by: ...
+Instructions can be found...
+
+We welcome contributors.  Please contact Neil if interested.
+------------------------------------
+4FV_SOURCE_BEGIN {e, E, m, M, Z}
+4FV_SOURCE_SEALED 14 diagrams; leaves 28357
+4FV_VALIDATION_BEGIN 1/3 seed=1527228802
+4FV_VALIDATION_END 1 pass=False
+4FV_DONE NATIVE_NOT_ALL_PASS

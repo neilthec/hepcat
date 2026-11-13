@@ -1,0 +1,200 @@
+{
+  "Status": "SEALED",
+  "Kind": "ExactMassiveFourFermionVectorSourceClassHistoricalValidationTransition",
+  "BeforeContextSHA256": "4165f24c7d5501c40c03ea91f850a5cde77389a1236e3af397fb6d7e2344a167",
+  "AfterContextSHA256": "48d82ad2adaf29f9a338c9fb6b9cf3da37ed7570f6de5852ee50c798fd0d8363",
+  "ChangedExistingFiles": [
+    "source/HEPCAT-Model.wl",
+    "source/internal/HEPCAT-CovariantSources.wl"
+  ],
+  "ChangedDefinitionFields": {
+    "ConstructiveDiagrams`ConstructAmplitude": [
+      "DownValues"
+    ],
+    "ConstructiveDiagrams`Private`$amplitudeParallelLoadedSignature": [
+      "OwnValues"
+    ],
+    "HEPCATCovariantCurrentSources`Private`covariantCurrentSource": [
+      "DownValues"
+    ]
+  },
+  "ExistingSymbolsChecked": 8342,
+  "NewSymbolsChecked": 2,
+  "NewDefinedPrivateSymbols": [],
+  "NoNewDefinedHelpers": true,
+  "NewEmptyPrivateSymbols": [
+    "HEPCATCovariantCurrentSources`Private`rawExpression"
+  ],
+  "NewTemporaryPrivateSymbols": [
+    "HEPCATCovariantCurrentSources`Private`rawExpression$"
+  ],
+  "BeforeColdDefinitionsSHA256": "c6c37f508c8e79bec8fdcc66db0f9530a09ad5b8385544d4284e12c3bff3786b",
+  "AfterColdDefinitionsSHA256": "43218e88020cef3cb44a9bb33b8f65b8fc5094f7bde27ee018abe54d9480a85f",
+  "AllOtherTenFieldDefinitionsExactlyUnchanged": true,
+  "MechanicalLoaderSignatureEvidence": {
+    "Before": 8286940166460921071,
+    "After": 6356440838245487211,
+    "InputCount": 13,
+    "InputsSHA256": "822c2d79da7d862cf43af46a9af7d7c44b0f8b884d4becd26c55350d98e198ee",
+    "ValuesSHA256": "ef6239858a6813244ac3ff16e0a94cc6895bcf9029f9c7c694af230ed3e5a570",
+    "ScriptSHA256": "e89ee22f90bdbeba3e273598e5619a6d8f4f3179b793f43400d503e8f395909e"
+  },
+  "HistoricalEvidenceOnly": true,
+  "ConstructorRerunPerformed": false,
+  "ValidationRerunPerformed": false,
+  "CurrentConstructorSuccessClaimed": false,
+  "BaselineDirectory": "tests/results/SM-5-point/compatibility/constructor-C7-pre-C8-4165f24c7d5501c40c03ea91f850a5cde77389a1236e3af397fb6d7e2344a167-20261113T060245Z",
+  "BaselineSHA256": "c997583548288d6e27d099a8694662b4021a44d88d867f714997266804bb69dc",
+  "PriorProofSHA256": "5056ae60a8a14d898a1d0203e3f35e20194d3f57a08b3e91f0ebbb218fb58291",
+  "RecursiveProofArchivesCopied": false,
+  "AfterManifestSHA256": "38414b5b40bea12102a14940b4ae4bd25adc836c9784ba2b70ccae62fa9c0578",
+  "AfterCaptureSHA256": [
+    "912ccad2d829bf8b9d79d4fa04c41b6f53f30b7698e1591891797c51874ba86f",
+    "a6639931a2af2c8632ff84e81aa3408b105bfb0167ef8b077e14e687d1495743"
+  ],
+  "SourceDiffsSHA256": "d7af4379689231572eadc99d8c55120d11185d55c840a320e636db565cf73143",
+  "AnalysisSHA256": "a36f1cbe7b1b6086579a52b9a62d804e8747aa910c1491a8bb82d036cd2e33da",
+  "CodeReviewSHA256": "2cdf75113ab21f484c3b93cd8641d3ccbc1ac36d46c7735b3e59cf980aac52c8",
+  "ReviewEvidenceSHA256": "d56bb47714de071e8770b5fb63e87d9a3da0b7a71a956aca2dd9917164053f4c",
+  "SupplementalCounterexampleChecksStillRequired": true,
+  "PrecisionQualificationUnchangedRequired": true,
+  "AfterManifest": "tests/results/SM-5-point/compatibility/constructor-C8-postpatch-48d82ad2adaf29f9a338c9fb6b9cf3da37ed7570f6de5852ee50c798fd0d8363-20261113/after-manifest.json",
+  "AfterCaptures": [
+    "tests/results/SM-5-point/compatibility/constructor-C8-postpatch-48d82ad2adaf29f9a338c9fb6b9cf3da37ed7570f6de5852ee50c798fd0d8363-20261113/definitions-1-raw.json",
+    "tests/results/SM-5-point/compatibility/constructor-C8-postpatch-48d82ad2adaf29f9a338c9fb6b9cf3da37ed7570f6de5852ee50c798fd0d8363-20261113/definitions-2-raw.json"
+  ],
+  "CodeReview": "tests/results/SM-5-point/compatibility/constructor-C8-postpatch-48d82ad2adaf29f9a338c9fb6b9cf3da37ed7570f6de5852ee50c798fd0d8363-20261113/root-code-review.json",
+  "CodeReviewFileSHA256": "f15845a4552a6e9a3f4212323ebcb2a36691b2d721e09d327973e8b5c7666fb0",
+  "ReviewEvidenceFiles": {
+    "Regression_all-context-tests.log": {
+      "Path": "tests/results/SM-5-point/compatibility/constructor-C8-postpatch-48d82ad2adaf29f9a338c9fb6b9cf3da37ed7570f6de5852ee50c798fd0d8363-20261113/all-context-tests.log",
+      "SHA256": "66f332c51b6544eec8f3a045149d2a5bf4f32f9fc6f8a58ecba826ead0c6069d"
+    },
+    "Regression_help-tests.log": {
+      "Path": "tests/results/SM-5-point/compatibility/constructor-C8-postpatch-48d82ad2adaf29f9a338c9fb6b9cf3da37ed7570f6de5852ee50c798fd0d8363-20261113/help-tests.log",
+      "SHA256": "f32836cfda5f9b365cdb48a0e583972c2bc8ef596af1fdc9ba8d74d86a47039f"
+    },
+    "Regression_metadata-tests.log": {
+      "Path": "tests/results/SM-5-point/compatibility/constructor-C8-postpatch-48d82ad2adaf29f9a338c9fb6b9cf3da37ed7570f6de5852ee50c798fd0d8363-20261113/metadata-tests.log",
+      "SHA256": "8ab6a92d348b11e1020d76ba719bbf896ef6c003f3b2e026520546a545443153"
+    },
+    "Regression_targeted-regressions-summary.json": {
+      "Path": "tests/results/SM-5-point/compatibility/constructor-C8-postpatch-48d82ad2adaf29f9a338c9fb6b9cf3da37ed7570f6de5852ee50c798fd0d8363-20261113/targeted-regressions-summary.json",
+      "SHA256": "d7cae9f8b3472ad7f7769c0abf5d2458fdc47142061207eb74a94ada504c99b6"
+    },
+    "Regression_targeted-regressions.log": {
+      "Path": "tests/results/SM-5-point/compatibility/constructor-C8-postpatch-48d82ad2adaf29f9a338c9fb6b9cf3da37ed7570f6de5852ee50c798fd0d8363-20261113/targeted-regressions.log",
+      "SHA256": "0d34294c9d0774eb0e00915a766ee21d29924727a393332d428e7af433692767"
+    },
+    "Reviewed_HEPCAT-CovariantSources": {
+      "Path": "tests/results/SM-5-point/compatibility/constructor-C8-postpatch-48d82ad2adaf29f9a338c9fb6b9cf3da37ed7570f6de5852ee50c798fd0d8363-20261113/immutable-controls/source/internal/HEPCAT-CovariantSources.wl",
+      "SHA256": "838607455d5e9323eb8f8a09bacaae0265ea0be7e39de1c1e18e9d55bd0fcea6"
+    },
+    "Reviewed_HEPCAT-Model": {
+      "Path": "tests/results/SM-5-point/compatibility/constructor-C8-postpatch-48d82ad2adaf29f9a338c9fb6b9cf3da37ed7570f6de5852ee50c798fd0d8363-20261113/immutable-controls/source/HEPCAT-Model.wl",
+      "SHA256": "f7beb266244d4ded9124c74f1fafd649f15f1c01a93e5813d354d64429dd0e9b"
+    },
+    "Reviewed_covariant-four-fermion-vector-source-tests": {
+      "Path": "tests/results/SM-5-point/compatibility/constructor-C8-postpatch-48d82ad2adaf29f9a338c9fb6b9cf3da37ed7570f6de5852ee50c798fd0d8363-20261113/immutable-controls/tests/checks/covariant-four-fermion-vector-source-tests.wl",
+      "SHA256": "882c437ed00fc288cc29f432a478d92f7f0e6dd7396396c817e3974509f4ba32"
+    },
+    "Shadow_candidate-manifest.json": {
+      "Path": "tests/results/SM-5-point/diagnostics/four-fermion-vector-source-prototype-C7-20261113/shadow/candidate-manifest.json",
+      "SHA256": "9dfe4e1740eaa89224b72f5d800adb5ec363e1aa90d2e43c271db142367598d0"
+    },
+    "Shadow_portable-controls-summary.json": {
+      "Path": "tests/results/SM-5-point/diagnostics/four-fermion-vector-source-prototype-C7-20261113/shadow/portable-controls-summary.json",
+      "SHA256": "f119311ac1ff74486ec6cebc7eb531dbb891813b5b5e9224c467eb4ab2b7e920"
+    },
+    "Shadow_portable-controls.log": {
+      "Path": "tests/results/SM-5-point/diagnostics/four-fermion-vector-source-prototype-C7-20261113/shadow/portable-controls.log",
+      "SHA256": "fc894797f3a9d92b11c7b653a807359fe5b31106afc91f66a7d7fd88e98f6c19"
+    },
+    "Shadow_public-controller.py": {
+      "Path": "tests/results/SM-5-point/diagnostics/four-fermion-vector-source-prototype-C7-20261113/shadow/public-controller.py",
+      "SHA256": "3fcdc2e30bb8982e5a724b6c98dfd8c3a61b9b1ae95702a3b414378575c5ca78"
+    },
+    "Shadow_public-native-audit.json": {
+      "Path": "tests/results/SM-5-point/diagnostics/four-fermion-vector-source-prototype-C7-20261113/shadow/public-native-audit.json",
+      "SHA256": "9789622175c67d3984c4e556631e30792782224698cd89f05945fd8c7895d08d"
+    },
+    "Shadow_public-native-audit.wl": {
+      "Path": "tests/results/SM-5-point/diagnostics/four-fermion-vector-source-prototype-C7-20261113/shadow/public-native-audit.wl",
+      "SHA256": "497229a3f95221cb2becb868185652f4dab71af8ea2a89bc291c047aac51b7ef"
+    },
+    "Shadow_public-worker.wl": {
+      "Path": "tests/results/SM-5-point/diagnostics/four-fermion-vector-source-prototype-C7-20261113/shadow/public-worker.wl",
+      "SHA256": "a278ab8b891553d462e16d2c4acd0e7e8a5ce6bb065e4d060e76dc66e04a9b64"
+    },
+    "StrictProbe_canonical-Mm-override.json": {
+      "Path": "tests/results/SM-5-point/diagnostics/constructive-covariant-lift/canonical-equal-mass-recheck-C8-20261113/canonical-Mm-override.json",
+      "SHA256": "241914e2cc8c6b519ee6f61f772587c97f5b4afe9b6388a08cf45fb577c38b53"
+    },
+    "StrictProbe_canonical-Mm-override.wl": {
+      "Path": "tests/results/SM-5-point/diagnostics/constructive-covariant-lift/canonical-equal-mass-recheck-C8-20261113/canonical-Mm-override.wl",
+      "SHA256": "e614b2a93380628533efafd02c4ad7c27fdbe7d31d53590ec0b951121be78e77"
+    },
+    "StrictProbe_canonical-Mm-override.wxf": {
+      "Path": "tests/results/SM-5-point/diagnostics/constructive-covariant-lift/canonical-equal-mass-recheck-C8-20261113/canonical-Mm-override.wxf",
+      "SHA256": "119e5d5febb2d683977f56020e82da383316cd377ad3eda237172220b823da00"
+    },
+    "StrictProbe_check.log": {
+      "Path": "tests/results/SM-5-point/diagnostics/constructive-covariant-lift/canonical-equal-mass-recheck-C8-20261113/check.log",
+      "SHA256": "34c87fd71f3c8446bca36872393feb70fa959bf2f718705b045d697c72f1ad3a"
+    },
+    "StrictProbe_controller-summary.json": {
+      "Path": "tests/results/SM-5-point/diagnostics/constructive-covariant-lift/canonical-equal-mass-recheck-C8-20261113/controller-summary.json",
+      "SHA256": "4213548283d450bd45b81016aa9ae4b3354d7e431aad185a5fd102136e3ce2e0"
+    },
+    "StrictProbe_fresh-feynman-conversion.wl": {
+      "Path": "tests/results/SM-5-point/diagnostics/constructive-covariant-lift/canonical-equal-mass-recheck-C8-20261113/fresh-feynman-conversion.wl",
+      "SHA256": "bc675712d6855c6b2c29ed430814a3053cb2071529a8e0ddd97dbe88c100450e"
+    },
+    "distinct-z_controller.json": {
+      "Path": "tests/results/SM-5-point/diagnostics/four-fermion-vector-source-prototype-C7-20261113/shadow/distinct-z-public/controller.json",
+      "SHA256": "e478904b454573a1df274ab82494c303b2391d53e198da189a8c654b56966293"
+    },
+    "distinct-z_result.wxf": {
+      "Path": "tests/results/SM-5-point/diagnostics/four-fermion-vector-source-prototype-C7-20261113/shadow/distinct-z-public/result.wxf",
+      "SHA256": "9af6bb6f8d6be0e674d43ea1354929847be24bbc03cc26e9ebbdfa813e97ac2b"
+    },
+    "distinct-z_shadow-runtime-manifest.json": {
+      "Path": "tests/results/SM-5-point/diagnostics/four-fermion-vector-source-prototype-C7-20261113/shadow/distinct-z-public/shadow-runtime-manifest.json",
+      "SHA256": "f42589e9e087e85c31f0ec9198b07b9cbedec52c4b81803c0daf55964cd128c1"
+    },
+    "distinct-z_summary.json": {
+      "Path": "tests/results/SM-5-point/diagnostics/four-fermion-vector-source-prototype-C7-20261113/shadow/distinct-z-public/summary.json",
+      "SHA256": "d3e672e17f29941b184ad6286ba0e54c6e59c5d57d3138de18986599df50cc84"
+    },
+    "distinct-z_worker.live.txt": {
+      "Path": "tests/results/SM-5-point/diagnostics/four-fermion-vector-source-prototype-C7-20261113/shadow/distinct-z-public/worker.live.txt",
+      "SHA256": "f284e3f3cd0ebca925e4343e453f2aef3c074011ceb1e18458e8b5476cb456f9"
+    },
+    "identical-z_controller.json": {
+      "Path": "tests/results/SM-5-point/diagnostics/four-fermion-vector-source-prototype-C7-20261113/shadow/identical-z-public/controller.json",
+      "SHA256": "ffa6cb13347fe24430e0d15fbd4d778cf8d8443b4d8ec079283781894fcc208c"
+    },
+    "identical-z_result.wxf": {
+      "Path": "tests/results/SM-5-point/diagnostics/four-fermion-vector-source-prototype-C7-20261113/shadow/identical-z-public/result.wxf",
+      "SHA256": "5ac84f1c153af08a547bccc30c7e1b2510b471bf8fe30247a612c7146df00021"
+    },
+    "identical-z_shadow-runtime-manifest.json": {
+      "Path": "tests/results/SM-5-point/diagnostics/four-fermion-vector-source-prototype-C7-20261113/shadow/identical-z-public/shadow-runtime-manifest.json",
+      "SHA256": "f42589e9e087e85c31f0ec9198b07b9cbedec52c4b81803c0daf55964cd128c1"
+    },
+    "identical-z_summary.json": {
+      "Path": "tests/results/SM-5-point/diagnostics/four-fermion-vector-source-prototype-C7-20261113/shadow/identical-z-public/summary.json",
+      "SHA256": "e220282d3c759d3b96e6a3978f3441ba217d2c04c1e706cf65a08c427507f7a8"
+    },
+    "identical-z_worker.live.txt": {
+      "Path": "tests/results/SM-5-point/diagnostics/four-fermion-vector-source-prototype-C7-20261113/shadow/identical-z-public/worker.live.txt",
+      "SHA256": "1e248797ad473bbc8e5dede5c72fd3f0c96250019a4aa91d0df36ab21118f492"
+    }
+  },
+  "LoaderSignatureEvidenceDirectory": "tests/results/SM-5-point/compatibility/constructor-C8-postpatch-48d82ad2adaf29f9a338c9fb6b9cf3da37ed7570f6de5852ee50c798fd0d8363-20261113",
+  "VerifierToolsSHA256": {
+    "tests/SM-5-point/validation_context_c8.py": "ac37ac9b2e4fbf37d119f74b6e10b1e7410769bf158b6b5515528a6b709b198a",
+    "tests/SM-5-point/constructor_context.py": "8944b03d0861f2ce49f7c88184882ea8c975cf8f8401ebb3709c8491b3429779",
+    "tests/SM-5-point/stage_context.py": "1b59c5d9fbd569e1092c2b10bf90a9ed30004641b30f312a0237e2dc3f47bf98"
+  }
+}

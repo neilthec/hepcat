@@ -1,0 +1,29 @@
+{
+  "Status": "PASS",
+  "ContextSHA256": "48d82ad2adaf29f9a338c9fb6b9cf3da37ed7570f6de5852ee50c798fd0d8363",
+  "Checks": 260,
+  "Suites": [
+    {
+      "Suite": "covariant-four-fermion-vector-source-tests.wl",
+      "Checks": 20,
+      "Failures": 0
+    },
+    {
+      "Suite": "covariant-constructor-tests.wl",
+      "Checks": 20,
+      "Failures": 0
+    },
+    {
+      "Suite": "construct-amplitude-tests.wl",
+      "Checks": 82,
+      "Failures": 0
+    },
+    {
+      "Suite": "qed-five-point-simplification-tests.wl",
+      "Checks": 138,
+      "Failures": 0
+    }
+  ],
+  "LogSHA256": "0d34294c9d0774eb0e00915a766ee21d29924727a393332d428e7af433692767",
+  "Scope": "Source/class/encoding controls, actual existing source outputs, constructor dispatch and exact/sample QED-five-point identities; no full-catalog reconstruction"
+}
