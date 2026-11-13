@@ -127,6 +127,12 @@ input is model 2. The separate matched Feynman model is used for the native
 comparison. The export uses the full SM in CalcHEP and MadGraph, with diagonal
 flavor mixing and widths disabled by the normal validation adapters.
 
+When the captured notebook exceeds 64 MiB, its main file becomes a setup and
+sector index. Linked notebooks beside it retain every calculation and captured
+output, and each includes its own simple Setup. Keep the notebook files together
+when moving them. This avoids an oversized single file as the catalog grows;
+it changes neither the calculations nor their validation evidence.
+
 The notebook begins with the starter families and adds each attempted family
 when refreshed. The inventory retains the complete work list, including the
 sectors not yet attempted. A missing output or a failed construction is never

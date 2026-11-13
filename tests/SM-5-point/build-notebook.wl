@@ -2,6 +2,7 @@
    captured runs. This script never evaluates a construction or validation.
    Run explicitly: WolframKernel -script tests/SM-5-point/build-notebook.wl
    Options: --inventory FILE --results DIRECTORY --output FILE --families IDS
+   --max-notebook-bytes N splits large output into linked sector notebooks;
    --probes FILE selects the optional supplemental-check registry;
    --progress FILE selects an optional recorded-count summary. *)
 
@@ -31,7 +32,7 @@ sm5NotebookRoot = DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];
 sm5NotebookArguments = If[$ScriptCommandLine =!= {}, Rest[$ScriptCommandLine], {}];
 If[OddQ[Length[sm5NotebookArguments]], Print["Expected option/value pairs."]; Quit[1]];
 sm5NotebookOptions = Association[Rule @@@ Partition[sm5NotebookArguments, 2]];
-If[Complement[Keys[sm5NotebookOptions], {"--inventory", "--results", "--output", "--families", "--probes", "--progress"}] =!= {},
+If[Complement[Keys[sm5NotebookOptions], {"--inventory", "--results", "--output", "--families", "--probes", "--progress", "--max-notebook-bytes"}] =!= {},
   Print["Unknown notebook option."]; Quit[1]];
 sm5NotebookInventoryPath = ExpandFileName[Lookup[sm5NotebookOptions, "--inventory",
   FileNameJoin[{sm5NotebookRoot, "tests", "SM-5-point", "inventory.json"}]]];
@@ -39,6 +40,12 @@ sm5NotebookResultsPath = ExpandFileName[Lookup[sm5NotebookOptions, "--results",
   FileNameJoin[{sm5NotebookRoot, "tests", "results", "SM-5-point"}]]];
 sm5NotebookOutputPath = ExpandFileName[Lookup[sm5NotebookOptions, "--output",
   FileNameJoin[{sm5NotebookRoot, "tests", "SM-5-point-construction.nb"}]]];
+sm5NotebookMaximumBytesText = Lookup[sm5NotebookOptions, "--max-notebook-bytes", "67108864"];
+If[!StringQ[sm5NotebookMaximumBytesText] ||
+    !StringMatchQ[sm5NotebookMaximumBytesText, DigitCharacter ..] ||
+    FromDigits[sm5NotebookMaximumBytesText] < 1,
+  Print["The notebook size limit must be a positive integer in bytes."]; Quit[1]];
+sm5NotebookMaximumBytes = FromDigits[sm5NotebookMaximumBytesText];
 If[!FileExistsQ[sm5NotebookInventoryPath],
   Print["Generate the SM five-point inventory first: ", sm5NotebookInventoryPath]; Quit[1]];
 Get[FileNameJoin[{sm5NotebookRoot, "source", "HEPCAT.wl"}]];
@@ -716,12 +723,14 @@ sm5NotebookOverview = sm5NotebookGroup[Join[{
     sm5NotebookCount[Count[Lookup[sm5NotebookFamilies, "Sector"], sector], "export family", "export families"] <> ", " <>
     sm5NotebookCount[Count[Lookup[sm5NotebookCases, "Sector"], sector], "construction case", "construction cases"] <> "."],
     {sector, sm5NotebookSectors}]]];
-sm5NotebookSectorGroups = Table[With[
-  {families = Select[sm5NotebookSelectedFamilies, #["Sector"] === sector &]},
-  If[families === {}, Nothing, sm5NotebookGroup[Join[
-    {Cell[Lookup[sm5NotebookSectorTitles, sector, sector], "Section", CellTags -> "sm5-sector-" <> sector]},
-    sm5NotebookFamily /@ families]]]], {sector, sm5NotebookSectors}];
-sm5NotebookDocument = Notebook[{sm5NotebookGroup[Join[{
+sm5NotebookSectorData = Select[Table[<|"Sector" -> sector,
+  "Families" -> Select[sm5NotebookSelectedFamilies, #["Sector"] === sector &]|>,
+  {sector, sm5NotebookSectors}], #["Families"] =!= {} &];
+sm5NotebookSectorGroup[data_Association] := sm5NotebookGroup[Join[
+  {Cell[Lookup[sm5NotebookSectorTitles, data["Sector"], data["Sector"]], "Section",
+    CellTags -> "sm5-sector-" <> data["Sector"]]}, sm5NotebookFamily /@ data["Families"]]];
+sm5NotebookSectorGroups = sm5NotebookSectorGroup /@ sm5NotebookSectorData;
+sm5NotebookIntroduction = {
   Cell["SM Five-Point Construction and Independent Validation", "Title"],
   sm5NotebookText["Construct the five-point SM amplitudes from elementary diagrams and " <>
     "complete lower-point factorization amplitudes. Each construction checks physical poles, " <>
@@ -729,22 +738,61 @@ sm5NotebookDocument = Notebook[{sm5NotebookGroup[Join[{
     "Feynman diagrams. Each process family has its own SPINAS export with CalcHEP and MadGraph comparisons."],
   sm5NotebookText["All construction momenta are ingoing. The export states a physical " <>
     "two-to-three process and crosses the outgoing particles consistently. Photon and gluon " <>
-    "helicities remain explicit; the numerical comparisons perform the required spin and color sums."],
-  sm5NotebookSetup, sm5NotebookOverview}, sm5NotebookSectorGroups]]},
+    "helicities remain explicit; the numerical comparisons perform the required spin and color sums."]};
+sm5NotebookMake[cells_List, extraRules_: <||>] := Notebook[{sm5NotebookGroup[cells]},
   WindowTitle -> "SM Five-Point Construction and Validation", StyleDefinitions -> "Default.nb",
-  TaggingRules -> <|"GeneratedBy" -> "tests/SM-5-point/build-notebook.wl",
-    "Inventory" -> "tests/SM-5-point/inventory.json"|>];
-If[!DirectoryQ[DirectoryName[sm5NotebookOutputPath]],
-  CreateDirectory[DirectoryName[sm5NotebookOutputPath], CreateIntermediateDirectories -> True]];
-sm5NotebookTemporaryPath = FileNameJoin[{DirectoryName[sm5NotebookOutputPath],
-  "." <> FileNameTake[sm5NotebookOutputPath] <> "." <> CreateUUID[] <> ".tmp"}];
-sm5NotebookWriteResult = CheckAbort[
-  Check[
-    Put[sm5NotebookDocument, sm5NotebookTemporaryPath];
-    Export[sm5NotebookTemporaryPath,
-      sm5NotebookTrimSyntaxWhitespace[Import[sm5NotebookTemporaryPath, "Text"]], "Text"];
-    RenameFile[sm5NotebookTemporaryPath, sm5NotebookOutputPath, OverwriteTarget -> True]; True,
-    If[FileExistsQ[sm5NotebookTemporaryPath], DeleteFile[sm5NotebookTemporaryPath]]; $Failed],
-  If[FileExistsQ[sm5NotebookTemporaryPath], DeleteFile[sm5NotebookTemporaryPath]]; Abort[]];
+  TaggingRules -> Join[<|"GeneratedBy" -> "tests/SM-5-point/build-notebook.wl",
+    "Inventory" -> "tests/SM-5-point/inventory.json"|>, extraRules]];
+sm5NotebookDocument = sm5NotebookMake[Join[sm5NotebookIntroduction,
+  {sm5NotebookSetup, sm5NotebookOverview}, sm5NotebookSectorGroups]];
+(* Publish the index last. Every linked sector is a complete, independently
+   runnable notebook, retaining the captured cells exactly as in the single file. *)
+sm5NotebookStage[document_Notebook, path_String] := Module[{temporary, result},
+  If[!DirectoryQ[DirectoryName[path]],
+    CreateDirectory[DirectoryName[path], CreateIntermediateDirectories -> True]];
+  temporary = FileNameJoin[{DirectoryName[path], "." <> FileNameTake[path] <> "." <> CreateUUID[] <> ".tmp"}];
+  result = CheckAbort[Check[
+    Put[document, temporary];
+    Export[temporary, sm5NotebookTrimSyntaxWhitespace[Import[temporary, "Text"]], "Text"];
+    temporary,
+    If[FileExistsQ[temporary], DeleteFile[temporary]]; $Failed],
+    If[FileExistsQ[temporary], DeleteFile[temporary]]; Abort[]];
+  result
+];
+sm5NotebookPublish[document_Notebook, path_String] := Module[{temporary = sm5NotebookStage[document, path]},
+  If[temporary === $Failed, Return[$Failed]];
+  RenameFile[temporary, path, OverwriteTarget -> True]; True
+];
+sm5NotebookTemporaryPath = sm5NotebookStage[sm5NotebookDocument, sm5NotebookOutputPath];
+If[sm5NotebookTemporaryPath === $Failed, Print["The notebook replacement did not complete."]; Quit[1]];
+sm5NotebookSplitOutput = FileByteCount[sm5NotebookTemporaryPath] > sm5NotebookMaximumBytes;
+sm5NotebookSectorFiles = {};
+If[sm5NotebookSplitOutput,
+  DeleteFile[sm5NotebookTemporaryPath];
+  sm5NotebookSectorFiles = (FileBaseName[sm5NotebookOutputPath] <> "-" <> #["Sector"] <> ".nb" &) /@ sm5NotebookSectorData;
+  Do[sm5NotebookSectorDocument = sm5NotebookMake[Join[
+      {Cell[Lookup[sm5NotebookSectorTitles, sm5NotebookSectorData[[i]]["Sector"]], "Title"],
+       sm5NotebookText["This sector contains the same ordinary construction and validation calls as the main catalog. " <>
+         "Evaluate Setup before running a calculation. Saved outputs come only from the captured runs."], sm5NotebookSetup},
+      {sm5NotebookSectorGroups[[i]]}], <|"Sector" -> sm5NotebookSectorData[[i]]["Sector"]|>];
+    If[sm5NotebookPublish[sm5NotebookSectorDocument,
+        FileNameJoin[{DirectoryName[sm5NotebookOutputPath], sm5NotebookSectorFiles[[i]]}]] =!= True,
+      Print["A sector notebook replacement did not complete."]; Quit[1]],
+    {i, Length[sm5NotebookSectorData]}];
+  sm5NotebookSectorLinks = MapThread[Function[{data, filename},
+    Cell[TextData[{ButtonBox[Lookup[sm5NotebookSectorTitles, data["Sector"], data["Sector"]],
+      BaseStyle -> "Hyperlink", ButtonData -> {filename, None}], " (" <>
+      ToString[Length[data["Families"]]] <> " recorded families)"}], "Text"]],
+    {sm5NotebookSectorData, sm5NotebookSectorFiles}];
+  sm5NotebookDocument = sm5NotebookMake[Join[sm5NotebookIntroduction,
+    {sm5NotebookSetup, sm5NotebookOverview,
+     sm5NotebookGroup[Join[{Cell["Sector notebooks", "Section"],
+       sm5NotebookText["The complete calculations and captured outputs are in the linked notebooks below. " <>
+         "Each has its own Setup and can be run independently. Keep these files together when moving the catalog."]},
+       sm5NotebookSectorLinks]]}], <|"SectorNotebooks" -> sm5NotebookSectorFiles|>];
+  sm5NotebookWriteResult = sm5NotebookPublish[sm5NotebookDocument, sm5NotebookOutputPath],
+  sm5NotebookWriteResult = (RenameFile[sm5NotebookTemporaryPath, sm5NotebookOutputPath, OverwriteTarget -> True]; True)
+];
 If[!TrueQ[sm5NotebookWriteResult], Print["The notebook replacement did not complete."]; Quit[1]];
-Print["Wrote ", sm5NotebookOutputPath, " with ", Length[sm5NotebookSelectedFamilies], " families."];
+Print["Wrote ", sm5NotebookOutputPath, " with ", Length[sm5NotebookSelectedFamilies], " families",
+  If[sm5NotebookSplitOutput, " in " <> ToString[Length[sm5NotebookSectorFiles]] <> " linked sector notebooks.", "."]];

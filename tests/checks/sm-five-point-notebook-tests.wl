@@ -35,7 +35,17 @@ sm5ntContains[expression_, fragment_String] := !FreeQ[expression, text_String /;
 sm5ntRead[path_] := DeleteCases[
   Quiet[Check[ToExpression[Import[path, "Text"], InputForm, HoldComplete], $Failed]], Null, {1}];
 sm5ntPath = FileNameJoin[{sm5ntRoot, "tests", "SM-5-point-construction.nb"}];
-sm5ntNotebook = sm5ntRead[sm5ntPath];
+sm5ntMainNotebook = sm5ntRead[sm5ntPath];
+sm5ntSectorFiles = Flatten[Cases[sm5ntMainNotebook,
+  HoldPattern["SectorNotebooks" -> files_List] :> files, Infinity], 1];
+sm5ntSectorPaths = FileNameJoin[{DirectoryName[sm5ntPath], #}] & /@ sm5ntSectorFiles;
+sm5ntSectorNotebooks = sm5ntRead /@ sm5ntSectorPaths;
+sm5ntNotebook = If[sm5ntSectorFiles === {}, sm5ntMainNotebook,
+  With[{cells = Flatten[Replace[#, HoldComplete[Notebook[c_List, ___]] :> c] & /@
+      Prepend[sm5ntSectorNotebooks, sm5ntMainNotebook], 1]}, HoldComplete[Notebook[cells]]]];
+sm5ntCheck["sector links stay beside the main notebook and all linked files parse",
+  AllTrue[sm5ntSectorFiles, StringQ[#] && FileNameTake[#] === # && FileExtension[#] === "nb" &] &&
+    DuplicateFreeQ[sm5ntSectorFiles] && AllTrue[sm5ntSectorNotebooks, MatchQ[#, HoldComplete[_Notebook]] &]];
 sm5ntInventory = Import[FileNameJoin[{sm5ntRoot, "tests", "SM-5-point", "inventory.json"}], "RawJSON"];
 sm5ntInputs = Cases[sm5ntNotebook, Cell[text_String, "Input", ___] :> text, Infinity];
 sm5ntParsed = ToExpression[#, InputForm, HoldComplete] & /@ sm5ntInputs;
@@ -640,6 +650,32 @@ sm5ntCheck["a zero-failure progress summary adds no parameter-failure claim",
   FreeQ[sm5NotebookProgressCells[Join[sm5ntProgressCounts,
       <|"SupplementalParameterProbeFailedCases" -> 0|>]],
     text_String /; StringContainsQ[text, "parameter probe failed"]]];
+(* Force splitting on a tiny synthetic capture. This exercises the real writer
+   and proves that relocation does not replace or omit the captured result. *)
+Export[FileNameJoin[{sm5ntTemporary, sm5ntSampleID <> ".wxf"}],
+  <|"Prints" -> {"synthetic split capture"}, "Expression" -> 3/7|>, "WXF"];
+sm5ntSplitPath = FileNameJoin[{sm5ntTemporary, "split.nb"}];
+Block[{$ScriptCommandLine = {sm5ntBuilder, "--inventory", sm5ntFixtureInventory,
+    "--results", sm5ntTemporary, "--output", sm5ntSplitPath,
+    "--families", sm5ntSampleFamilyID, "--max-notebook-bytes", "1"}}, Get[sm5ntBuilder]];
+sm5ntSplitMaster = sm5ntRead[sm5ntSplitPath];
+sm5ntSplitFiles = Flatten[Cases[sm5ntSplitMaster,
+  HoldPattern["SectorNotebooks" -> files_List] :> files, Infinity], 1];
+sm5ntSplitSectors = sm5ntRead[FileNameJoin[{sm5ntTemporary, #}]] & /@ sm5ntSplitFiles;
+sm5ntCheck["a small size bound creates an index and a linked sector notebook",
+  MatchQ[sm5ntSplitMaster, HoldComplete[_Notebook]] &&
+    sm5ntSplitFiles === {"split-" <> sm5ntSampleFamily["Sector"] <> ".nb"} &&
+    AllTrue[sm5ntSplitSectors, MatchQ[#, HoldComplete[_Notebook]] &] &&
+    !FreeQ[sm5ntSplitMaster, HoldPattern[ButtonData -> {file_String, None}] /; MemberQ[sm5ntSplitFiles, file]]];
+sm5ntCheck["split output retains actual captured results and moves process calls out of the index",
+  sm5ntContains[sm5ntSplitSectors, "synthetic split capture"] &&
+    !FreeQ[sm5ntSplitSectors, FractionBox["3", "7"]] &&
+    FreeQ[sm5ntSplitMaster, text_String /; StringContainsQ[text, " = ConstructAmplitude["]] &&
+    Count[sm5ntSplitSectors, Cell[_, "Input", ___], Infinity] >= 4];
+sm5ntCheck["each sector retains its own simple setup and original process tags",
+  !FreeQ[sm5ntSplitSectors, "sm5-setup-load"] &&
+    !FreeQ[sm5ntSplitSectors, "sm5-construction-" <> sm5ntSampleID] &&
+    !FreeQ[sm5ntSplitSectors, "sm5-family-" <> sm5ntSampleFamilyID]];
 DeleteDirectory[sm5ntTemporary, DeleteContents -> True];
 Print["SM FIVE-POINT NOTEBOOK CHECKS: ", sm5ntChecks, "; FAILURES: ", Length[sm5ntFailures]];
 If[sm5ntFailures === {}, Print["HEPCAT_TEST_COMPLETED:sm-five-point-notebook-tests.wl"], Print[sm5ntFailures]];
