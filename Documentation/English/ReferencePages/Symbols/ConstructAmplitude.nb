@@ -293,15 +293,24 @@ also proves that the complete color dependence is a single fundamental delta \
 before reusing a colorless current calculation. That proof checks the actual \
 color path and every diagram tensor, rather than assuming a color \
 multiplicity. Unsupported color flows continue through the usual completion \
-method."}], "Notes"], Cell[TextData[{"A successful current candidate is \
-prepared with external identities only, then checked against every \
-factorization channel, automatic spurious-pole test, high-energy bound, \
-reference test and the complete independent Feynman amplitude at all \
-validation parameter sets. A rejected candidate retains its diagnostics and \
-the original completion inputs. A fast accepted form can still benefit from \
-later simplification with ", ButtonBox["PrepareAmplitudes",
-      BaseStyle -> "Link", ButtonData ->
-       "paclet:HEPCAT/ref/PrepareAmplitudes"], "."}], "Notes"],
+method."}], "Notes"], Cell[TextData[{"For supported five-point processes with \
+four massive Dirac fermions and a color-singlet scalar, the constructor can \
+retain a separate color tensor for each ordered graph. It certifies the local \
+delta or generator operators, graph correspondence and fermion exchange signs \
+before assembling a candidate. The complete candidate then receives the \
+normal parameter, residue, high-energy, reference and independent Feynman \
+checks through ", ButtonBox["CheckAmplitudes", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/CheckAmplitudes"], ". Unsupported \
+color flows or rejected proposals continue through ordinary completion. This \
+route uses the supplied elementary vertices and adds no user option."}],
+   "Notes"], Cell[TextData[{"A successful current candidate is prepared with \
+external identities only, then checked against every factorization channel, \
+automatic spurious-pole test, high-energy bound, reference test and the \
+complete independent Feynman amplitude at all validation parameter sets. A \
+rejected candidate retains its diagnostics and the original completion \
+inputs. A fast accepted form can still benefit from later simplification with \
+", ButtonBox["PrepareAmplitudes", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/PrepareAmplitudes"], "."}], "Notes"],
   Cell["What happens during a construction", "NotesSection"],
   Cell[TextData[{"HEPCAT generates the diagrams and prepares their \
 expressions, then builds the known factorization channels. ",

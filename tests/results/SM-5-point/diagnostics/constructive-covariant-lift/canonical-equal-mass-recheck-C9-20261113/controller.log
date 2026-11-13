@@ -1,0 +1,27 @@
+{
+  "ActualStatusCounts": {
+    "PASS": 13
+  },
+  "AllSourceModelRuntimeFilesUnchanged": true,
+  "ConfigurationWritten": false,
+  "ContextSHA256": "15ec8a88eaca261d3fd071c79b159b819abe70303f4c2024fbd7d8dc51ba4c9f",
+  "ExitCode": 0,
+  "GuardedFilesUnchanged": true,
+  "GuardedSHA256": {
+    "/Users/neil/code/hepcat/tests/SM-5-point/supplemental-probes.json": "20dcf2070619272027bbd3ff50f4318ef07611242162b255fdd4457010647ab8",
+    "/Users/neil/code/hepcat/tests/results/SM-5-point/configuration.json": "800b0109cd185406619e3b634405319e3bf255e5193bd836ecdd14eeae5e8079",
+    "/Users/neil/code/hepcat/tests/results/SM-5-point/diagnostics/constructive-covariant-lift/canonical-equal-mass-recheck-C9-20261113/canonical-Mm-override.wl": "c0625fc7ac2fd3c263d38664bfd6114a97a137d57dd67f3f5c1f84b2af9b8431",
+    "/Users/neil/code/hepcat/tests/results/SM-5-point/diagnostics/constructive-covariant-lift/canonical-equal-mass-recheck-C9-20261113/fresh-feynman-conversion.wl": "bc675712d6855c6b2c29ed430814a3053cb2071529a8e0ddd97dbe88c100450e",
+    "/Users/neil/code/hepcat/tests/results/SM-5-point/sm5_46dff720d04e.wxf": "33b43a0075b17bd081d1fa8123ca09007e1cf3becef9c861c6771069c5b1afde"
+  },
+  "NoExpressionMassSlotOrFlavorTransport": true,
+  "OriginalSourceNativeContext": "55701e7a9f6d674b7f37aa1ced637de0e9e1934badd54be9dce03244084725f9",
+  "ProbeCapsuleSHA256": "dfcb4a88b4d24525b39c35b33f06ed845c7129af2c881a0a44424f0cc23e6f82",
+  "ProbeSummarySHA256": "49cbd6bbbf1be6469158e25d1bd13689fe62f99038c5f1ae82debf8e4677989f",
+  "RegistryWritten": false,
+  "Seconds": 35.469054333,
+  "SharedProgressWritten": false,
+  "SourceAmplitudeUnchanged": true,
+  "SourceCapsuleSHA256": "33b43a0075b17bd081d1fa8123ca09007e1cf3becef9c861c6771069c5b1afde",
+  "Status": "PASS"
+}

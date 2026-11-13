@@ -1,0 +1,34 @@
+{
+  "ContextSHA256": "15ec8a88eaca261d3fd071c79b159b819abe70303f4c2024fbd7d8dc51ba4c9f",
+  "Counts": {
+    "Constructed": 251,
+    "FailedOrTimedOut": 0,
+    "FullyValidatedCases": 243,
+    "PrecisionQualifiedCases": 8,
+    "PrecisionQualifiedFamilies": 3,
+    "RecordedInputPassCases": 251,
+    "SupplementalParameterProbeFailedCases": 0,
+    "SupplementalParameterProbeUnavailableCases": 0,
+    "TotalCases": 1422,
+    "TotalFamilies": 869,
+    "ValidatedFamilies": 172,
+    "ValidatedIncludingPrecisionQualifiedCases": 251
+  },
+  "FilesSHA256": {
+    "tests/SM-5-point/constructor-C8-C9-context-bridge.json": "866ad859b0b32c281b149ebe9a0db2dac17a05f5e1d3c3bdd8bf82b55367173a",
+    "tests/SM-5-point/supplemental-probes.json": "584ca7d2403865dda754f42577670778ad048af6e40ec880db0d09284d8d4cfb",
+    "tests/results/SM-5-point/compatibility/constructor-C9-postpatch-15ec8a88eaca261d3fd071c79b159b819abe70303f4c2024fbd7d8dc51ba4c9f-20261113/activation-progress.json": "0994a1e7dddcbd034e76155167d76bb673e156e42a47c46620d83468a78ec8ac",
+    "tests/results/SM-5-point/compatibility/constructor-C9-postpatch-15ec8a88eaca261d3fd071c79b159b819abe70303f4c2024fbd7d8dc51ba4c9f-20261113/admission-before-activation.json": "4908d332ab37d2ba46d7deefbf1278af2a887db88aaaa3bc0443d89a36689beb",
+    "tests/results/SM-5-point/configuration.json": "f80865467ebe813431ab8d2b01a0ed65778a9d423d788b082d908aab803d85f4",
+    "tests/results/SM-5-point/diagnostics/constructive-covariant-lift/canonical-equal-mass-recheck-C9-20261113/controller-summary.json": "64adacf2717e6793a1fbdd94c591bcdbe8a58a5e521ef998d965dbcec54923f4"
+  },
+  "FreshSupplementalProbePerformed": true,
+  "FreshSupplementalProbeStatusCounts": {
+    "PASS": 13
+  },
+  "HistoricalNativeAndExportBindings": 426,
+  "HistoricalValidationRerunClaimed": false,
+  "OriginalContextsTimingsAndOptionsPreserved": true,
+  "PrecisionRawFailuresPreserved": true,
+  "Status": "C9_ACTIVATED_ALL_PRIOR_COVERAGE_RETAINED"
+}

@@ -1,0 +1,160 @@
+{
+  "SchemaVersion": 1,
+  "Status": "SEALED_C8_BASELINE_BEFORE_C9",
+  "CapturedUTC": "2026-11-13T07:44:42.507697+00:00",
+  "ContextSHA256": "48d82ad2adaf29f9a338c9fb6b9cf3da37ed7570f6de5852ee50c798fd0d8363",
+  "GitRevisionObserved": "1c475d68a9b0eca539a470d22ae58c570990b0ab",
+  "CountsObserved": {
+    "TotalCases": 1422,
+    "TotalFamilies": 869,
+    "Constructed": 251,
+    "FullyValidatedCases": 243,
+    "PrecisionQualifiedCases": 8,
+    "ValidatedIncludingPrecisionQualifiedCases": 251,
+    "PrecisionQualifiedFamilies": 3,
+    "ValidatedFamilies": 172,
+    "RecordedInputPassCases": 251,
+    "SupplementalParameterProbeFailedCases": 0,
+    "SupplementalParameterProbeUnavailableCases": 0,
+    "FailedOrTimedOut": 0
+  },
+  "SourceFiles": {
+    "source/HEPCAT-Model.wl": {
+      "Path": "tests/results/SM-5-point/compatibility/constructor-C8-pre-C9-48d82ad2adaf29f9a338c9fb6b9cf3da37ed7570f6de5852ee50c798fd0d8363-20261113T074426Z/source-before/source/HEPCAT-Model.wl",
+      "SHA256": "f7beb266244d4ded9124c74f1fafd649f15f1c01a93e5813d354d64429dd0e9b",
+      "OriginalSHA256": "f7beb266244d4ded9124c74f1fafd649f15f1c01a93e5813d354d64429dd0e9b"
+    },
+    "source/internal/HEPCAT-Color.wl": {
+      "Path": "tests/results/SM-5-point/compatibility/constructor-C8-pre-C9-48d82ad2adaf29f9a338c9fb6b9cf3da37ed7570f6de5852ee50c798fd0d8363-20261113T074426Z/source-before/source/internal/HEPCAT-Color.wl",
+      "SHA256": "d6c8d37a2a1ea96abf93feb2e1ba0173a7afe6aa65175a43ffb0aeb2edca5768",
+      "OriginalSHA256": "d6c8d37a2a1ea96abf93feb2e1ba0173a7afe6aa65175a43ffb0aeb2edca5768"
+    },
+    "source/HEPCAT.wl": {
+      "Path": "tests/results/SM-5-point/compatibility/constructor-C8-pre-C9-48d82ad2adaf29f9a338c9fb6b9cf3da37ed7570f6de5852ee50c798fd0d8363-20261113T074426Z/source-before/source/HEPCAT.wl",
+      "SHA256": "345d4a49267b73b6c33f8d484df65af259584cac0402007f17ac955e535cbfd4",
+      "OriginalSHA256": "345d4a49267b73b6c33f8d484df65af259584cac0402007f17ac955e535cbfd4"
+    }
+  },
+  "PlannedChangedSourceFiles": [
+    "source/HEPCAT-Model.wl",
+    "source/internal/HEPCAT-Color.wl",
+    "source/HEPCAT.wl"
+  ],
+  "PlannedAddedSourceFiles": [
+    "source/internal/HEPCAT-ColoredCurrents.wl"
+  ],
+  "ExistingSignatureRequired": [
+    "HEPCAT.wl",
+    "HEPCAT-Base.wl",
+    "internal/HEPCAT-Parameters.wl",
+    "HEPCAT-Model.wl",
+    "internal/HEPCAT-Feynman.wl",
+    "internal/HEPCAT-Color.wl",
+    "internal/HEPCAT-SPINAS.wl",
+    "internal/HEPCAT-SPINAS-Optimize.wl",
+    "internal/export/spinas-runtime.hpp"
+  ],
+  "ExistingSignatureOptional": [
+    "internal/proofs/laurent-proof-runtime.cpp",
+    "internal/proofs/laurent-proof-runtime.py",
+    "internal/proofs/laurent-proof-factor.py",
+    "internal/proofs/laurent-proof-verify.py"
+  ],
+  "PlannedSignatureRequiredAdditions": [
+    "internal/HEPCAT-MadGraph.wl",
+    "internal/HEPCAT-CovariantSources.wl",
+    "internal/HEPCAT-CovariantContacts.wl",
+    "internal/HEPCAT-ColoredCurrents.wl"
+  ],
+  "ExistingSignatureRequiredCount": 9,
+  "PlannedSignatureRequiredCount": 13,
+  "SignatureOptionalCount": 4,
+  "PlannedChangedExistingDownValues": [
+    "ConstructiveDiagrams`Private`colorConstructAmplitude",
+    "ConstructiveDiagrams`Private`amplitudeParallelSignature"
+  ],
+  "NewDefinitionsRequireSeparateReview": true,
+  "ColdDefinitionReferences": {
+    "tests/results/SM-5-point/compatibility/constructor-C8-postpatch-48d82ad2adaf29f9a338c9fb6b9cf3da37ed7570f6de5852ee50c798fd0d8363-20261113/definitions-1-raw.json": "912ccad2d829bf8b9d79d4fa04c41b6f53f30b7698e1591891797c51874ba86f",
+    "tests/results/SM-5-point/compatibility/constructor-C8-postpatch-48d82ad2adaf29f9a338c9fb6b9cf3da37ed7570f6de5852ee50c798fd0d8363-20261113/definitions-2-raw.json": "a6639931a2af2c8632ff84e81aa3408b105bfb0167ef8b077e14e687d1495743"
+  },
+  "ColdDefinitionCount": 8344,
+  "ColdDefinitionsExactlyEqual": true,
+  "CapturedNamePatterns": [
+    "ConstructiveDiagrams`*",
+    "ConstructiveDiagrams`Private`*",
+    "HEPCATCovariantCurrentSources`*",
+    "HEPCATCovariantCurrentSources`Private`*",
+    "HEPCATCovariantContactCalibration`*",
+    "HEPCATCovariantContactCalibration`Private`*"
+  ],
+  "NativeBindings": 251,
+  "ExportBindings": 175,
+  "CheckpointBindingsPath": "tests/results/SM-5-point/compatibility/constructor-C8-pre-C9-48d82ad2adaf29f9a338c9fb6b9cf3da37ed7570f6de5852ee50c798fd0d8363-20261113T074426Z/checkpoint-bindings.json",
+  "CheckpointBindingsSHA256": "eff3b0c0461864ea42f4eeba4e7392511cb068acfc6c041911c963eebc5a62d9",
+  "BeforeManifestPath": "tests/results/SM-5-point/compatibility/constructor-C8-pre-C9-48d82ad2adaf29f9a338c9fb6b9cf3da37ed7570f6de5852ee50c798fd0d8363-20261113T074426Z/before-manifest.json",
+  "BeforeManifestSHA256": "f42589e9e087e85c31f0ec9198b07b9cbedec52c4b81803c0daf55964cd128c1",
+  "FrozenVerifierFiles": {
+    "tests/SM-5-point/stage_context.py": {
+      "Path": "tests/results/SM-5-point/compatibility/constructor-C8-pre-C9-48d82ad2adaf29f9a338c9fb6b9cf3da37ed7570f6de5852ee50c798fd0d8363-20261113T074426Z/frozen-verifiers/stage_context.py",
+      "SHA256": "1b59c5d9fbd569e1092c2b10bf90a9ed30004641b30f312a0237e2dc3f47bf98",
+      "OriginalSHA256": "1b59c5d9fbd569e1092c2b10bf90a9ed30004641b30f312a0237e2dc3f47bf98"
+    },
+    "tests/SM-5-point/constructor_context.py": {
+      "Path": "tests/results/SM-5-point/compatibility/constructor-C8-pre-C9-48d82ad2adaf29f9a338c9fb6b9cf3da37ed7570f6de5852ee50c798fd0d8363-20261113T074426Z/frozen-verifiers/constructor_context.py",
+      "SHA256": "8944b03d0861f2ce49f7c88184882ea8c975cf8f8401ebb3709c8491b3429779",
+      "OriginalSHA256": "8944b03d0861f2ce49f7c88184882ea8c975cf8f8401ebb3709c8491b3429779"
+    },
+    "tests/SM-5-point/validation_context_c4.py": {
+      "Path": "tests/results/SM-5-point/compatibility/constructor-C8-pre-C9-48d82ad2adaf29f9a338c9fb6b9cf3da37ed7570f6de5852ee50c798fd0d8363-20261113T074426Z/frozen-verifiers/validation_context_c4.py",
+      "SHA256": "d062668c2524f770f9bdea7d042031dc9240dd9388bef9d9c9828136a71e52f1",
+      "OriginalSHA256": "d062668c2524f770f9bdea7d042031dc9240dd9388bef9d9c9828136a71e52f1"
+    },
+    "tests/SM-5-point/validation_context_c5.py": {
+      "Path": "tests/results/SM-5-point/compatibility/constructor-C8-pre-C9-48d82ad2adaf29f9a338c9fb6b9cf3da37ed7570f6de5852ee50c798fd0d8363-20261113T074426Z/frozen-verifiers/validation_context_c5.py",
+      "SHA256": "0eb53ebba4cdcf6f4805242afe5bd24c6ba3bfd3a958ae4ab31b1d97916cb0db",
+      "OriginalSHA256": "0eb53ebba4cdcf6f4805242afe5bd24c6ba3bfd3a958ae4ab31b1d97916cb0db"
+    },
+    "tests/SM-5-point/validation_context_c6.py": {
+      "Path": "tests/results/SM-5-point/compatibility/constructor-C8-pre-C9-48d82ad2adaf29f9a338c9fb6b9cf3da37ed7570f6de5852ee50c798fd0d8363-20261113T074426Z/frozen-verifiers/validation_context_c6.py",
+      "SHA256": "6ae2f9b201a3192ad4073a9bba6ddbcfb1dafa953666f461cf4e92f00362ce4a",
+      "OriginalSHA256": "6ae2f9b201a3192ad4073a9bba6ddbcfb1dafa953666f461cf4e92f00362ce4a"
+    },
+    "tests/SM-5-point/validation_context_c7.py": {
+      "Path": "tests/results/SM-5-point/compatibility/constructor-C8-pre-C9-48d82ad2adaf29f9a338c9fb6b9cf3da37ed7570f6de5852ee50c798fd0d8363-20261113T074426Z/frozen-verifiers/validation_context_c7.py",
+      "SHA256": "11bca15ff32d9442b18c22a2009411dd8d937160d80e4988a71bd5642f2eff26",
+      "OriginalSHA256": "11bca15ff32d9442b18c22a2009411dd8d937160d80e4988a71bd5642f2eff26"
+    },
+    "tests/SM-5-point/validation_context_c8.py": {
+      "Path": "tests/results/SM-5-point/compatibility/constructor-C8-pre-C9-48d82ad2adaf29f9a338c9fb6b9cf3da37ed7570f6de5852ee50c798fd0d8363-20261113T074426Z/frozen-verifiers/validation_context_c8.py",
+      "SHA256": "ac37ac9b2e4fbf37d119f74b6e10b1e7410769bf158b6b5515528a6b709b198a",
+      "OriginalSHA256": "ac37ac9b2e4fbf37d119f74b6e10b1e7410769bf158b6b5515528a6b709b198a"
+    },
+    "tests/SM-5-point/precision_evidence.py": {
+      "Path": "tests/results/SM-5-point/compatibility/constructor-C8-pre-C9-48d82ad2adaf29f9a338c9fb6b9cf3da37ed7570f6de5852ee50c798fd0d8363-20261113T074426Z/frozen-verifiers/precision_evidence.py",
+      "SHA256": "ec3b3f7464a1d1d162ede76828f483bc3331849c3f53c9c1f1059a7ceee86dac",
+      "OriginalSHA256": "ec3b3f7464a1d1d162ede76828f483bc3331849c3f53c9c1f1059a7ceee86dac"
+    },
+    "tests/SM-5-point/madgraph_precision_evidence.py": {
+      "Path": "tests/results/SM-5-point/compatibility/constructor-C8-pre-C9-48d82ad2adaf29f9a338c9fb6b9cf3da37ed7570f6de5852ee50c798fd0d8363-20261113T074426Z/frozen-verifiers/madgraph_precision_evidence.py",
+      "SHA256": "f4bce866627cd6540cdff2f14ef8cbdd6ff76eacdaf5a437921a7f2cace6afb6",
+      "OriginalSHA256": "f4bce866627cd6540cdff2f14ef8cbdd6ff76eacdaf5a437921a7f2cace6afb6"
+    },
+    "tests/SM-5-point/supplemental_probes.py": {
+      "Path": "tests/results/SM-5-point/compatibility/constructor-C8-pre-C9-48d82ad2adaf29f9a338c9fb6b9cf3da37ed7570f6de5852ee50c798fd0d8363-20261113T074426Z/frozen-verifiers/supplemental_probes.py",
+      "SHA256": "144db450a57a8b2879c80d28e81aaf5cecbf19cda2fca46bb51dd1cdebdeb46a",
+      "OriginalSHA256": "144db450a57a8b2879c80d28e81aaf5cecbf19cda2fca46bb51dd1cdebdeb46a"
+    },
+    "tests/SM-5-point/run.py": {
+      "Path": "tests/results/SM-5-point/compatibility/constructor-C8-pre-C9-48d82ad2adaf29f9a338c9fb6b9cf3da37ed7570f6de5852ee50c798fd0d8363-20261113T074426Z/frozen-verifiers/run.py",
+      "SHA256": "1d8b0c6056d5117ada50c19d938eaa7385fd96c3d3f5a795aa9f0ad0682cf0dc",
+      "OriginalSHA256": "1d8b0c6056d5117ada50c19d938eaa7385fd96c3d3f5a795aa9f0ad0682cf0dc"
+    }
+  },
+  "FrozenReferenceFilesPath": "tests/results/SM-5-point/compatibility/constructor-C8-pre-C9-48d82ad2adaf29f9a338c9fb6b9cf3da37ed7570f6de5852ee50c798fd0d8363-20261113T074426Z/frozen-reference-files.json",
+  "FrozenReferenceFilesSHA256": "4c501efb536eb1c13e99f2fafcc33e7c3344b48a4daa08ed092e4688a968e332",
+  "ExistingProofArchivesReferencedNotRecursivelyCopied": true,
+  "CapsulesChecksumBoundNotCopied": true,
+  "NoConstructionOrValidationRerun": true,
+  "NoSourceMutation": true
+}

@@ -1,0 +1,42 @@
+{
+  "ContextSHA256": "15ec8a88eaca261d3fd071c79b159b819abe70303f4c2024fbd7d8dc51ba4c9f",
+  "NativeAndExportRecordsChecked": 426,
+  "NativeCases": 251,
+  "OriginalRecordsRewritten": false,
+  "Precision": {
+    "sm5f_345126cb84c0": {
+      "CaseIDs": [
+        "sm5_345126cb84c0"
+      ],
+      "RawStatus": "FAIL",
+      "RecordedContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Status": "PRECISION_QUALIFIED"
+    },
+    "sm5f_3ca11bcd7f40": {
+      "CaseIDs": [
+        "sm5_c4885d0a4a7e",
+        "sm5_1ecaa96b9e0a",
+        "sm5_7b4f5da14469",
+        "sm5_7e2e9f69dd9c",
+        "sm5_00d6634687d5",
+        "sm5_83fbb268bbf3"
+      ],
+      "RawStatus": "FAIL",
+      "RecordedContextSHA256": "47026bedc2844622616e46a05069c2682cc4306872799bbe8e02d4a01291cc04",
+      "Status": "PRECISION_QUALIFIED"
+    },
+    "sm5f_b80ee23ca123": {
+      "CaseIDs": [
+        "sm5_b80ee23ca123"
+      ],
+      "RawStatus": "FAIL",
+      "RecordedContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Status": "PRECISION_QUALIFIED"
+    }
+  },
+  "PrecisionCases": 8,
+  "PrecisionFamilies": 3,
+  "ProofSHA256": "866ad859b0b32c281b149ebe9a0db2dac17a05f5e1d3c3bdd8bf82b55367173a",
+  "Status": "ALL_426_RECORDS_AND_8_PRECISION_CASES_ADMITTED",
+  "ValidationRerunClaimed": false
+}
