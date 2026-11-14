@@ -21,8 +21,9 @@ import zlib
 
 HERE = Path(__file__).resolve().parent
 DEFAULT_BUILDER = HERE / 'build-notebook.wl'
-PROJECTION_SHA256 = '4503fbda293083440d026670f70cec8a75488e9273737bf9ea5606437195d6ee'
+PROJECTION_SHA256 = '18797cea3252329779b98f981a9229d474110d712a80f8d6498636ff2aa0a3a9'
 FIELDS = ('ID', 'Status', 'Seconds', 'Expression', 'Prints', 'NotebookCells',
+          'RecordKind', 'ValidationAdoptionDisplay', 'AdoptionValidationTables',
           'RevalidationPrints', 'RevalidationSeconds', 'RevalidationCheckTimeConstraint')
 _spec = importlib.util.spec_from_file_location('hepcat_display_wxf_subtree', HERE / 'wxf-subtree.py')
 WIRE = importlib.util.module_from_spec(_spec)

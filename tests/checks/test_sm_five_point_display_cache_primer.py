@@ -92,6 +92,19 @@ class ProjectionTests(unittest.TestCase):
     def prime(self,source,**options):
         return PRIMER.prime_record(source,self.cache,executable=self.tool,seconds=10,**options)
 
+    def test_adoption_scope_and_actual_rows_copy_exactly(self):
+        self.fields.extend([
+            ('RecordKind', S('ValidatedFormulaAdoption')),
+            ('ValidationAdoptionDisplay', A([('FreshHighEnergyReplayExecuted', b's\4True')])),
+            ('AdoptionValidationTables', L([A([
+                ('Rows', L([A([('Status', S('PASS'))])])),
+                ('EvidenceScopes', L([S('Original native row; unchanged validator')]))])]))])
+        source = self.source()
+        self.assertEqual(self.prime(source)['Status'], 'PRIMED')
+        expected = A([(key, value) for key, value in self.fields if key in PRIMER.FIELDS] +
+                     [('Details', A([('RequestedOptions', self.options)]))])
+        self.assertEqual(PRIMER.small_payload(self.cache / 'fixture.wxf', 1 << 20), expected)
+
     def test_native_exact_tokens_and_large_integer_seed(self):
         source=self.source();old=source.read_bytes();row=self.prime(source)
         self.assertEqual(row['Status'],'PRIMED');self.assertEqual(row['RecordedRandomSeed'],self.seed)

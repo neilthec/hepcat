@@ -174,6 +174,7 @@ sm5NotebookDisplayProjection[record_Association] := Module[{projection, details,
     Return[projection]];
   If[!MemberQ[{"COMPLETE", "PASS"}, Lookup[record, "Status", None]], Return[$Failed]];
   projection = KeyTake[record, {"ID", "Status", "Seconds", "Expression", "Prints", "NotebookCells",
+    "RecordKind", "ValidationAdoptionDisplay", "AdoptionValidationTables",
     "RevalidationPrints", "RevalidationSeconds", "RevalidationCheckTimeConstraint"}];
   details = Lookup[record, "Details", <||>];
   If[AssociationQ[details] && KeyExistsQ[details, "RequestedOptions"],
@@ -455,15 +456,52 @@ sm5NotebookSupplementalProbeCells[case_Association] := Flatten[Map[Function[entr
       sm5NotebookGroup[{sm5NotebookInput[code, tag],
         sm5NotebookOutput[verified["Table"], "Output"]}]}
   ]], Select[sm5NotebookProbes, Lookup[#, "CaseID", None] === case["ID"] &]], 1];
-sm5NotebookCalculation[case_Association] := Module[{id, variable, code, record, cells, controls},
+(* Adopted formulas retain a normal cache-independent input for a new run.
+   Their saved validation rows are explicitly scoped and never called a new run. *)
+sm5NotebookAdoptionNote[record_Association] := Module[{display, scope},
+  display = Lookup[record, "ValidationAdoptionDisplay", <||>];
+  scope = If[AssociationQ[display], Lookup[display, "FreshHighEnergyReplayExecuted", Missing["Unknown"]],
+    Missing["Unknown"]];
+  "Saved output: this formula was constructed in an earlier private run. " <>
+    Which[scope === True,
+      "Its validation record combines original native rows with fresh high-energy checks; the other validators were verified unchanged. ",
+      scope === False,
+      "Its original native checks are retained under verified unchanged validators. ",
+      True, "The source of its validation evidence is recorded in the saved file. "] <>
+    "The input above was not executed to produce this adopted record. Evaluating it requests a new construction with the current package."
+];
+sm5NotebookAdoptionGroupCells[group_Association] := Module[
+  {rows = Lookup[group, "Rows", {}], scopes = Lookup[group, "EvidenceScopes", {}], values},
+  If[!ListQ[rows] || rows === {} || !AllTrue[rows, AssociationQ] ||
+      !ListQ[scopes] || Length[rows] =!= Length[scopes] || !AllTrue[scopes, StringQ] ||
+      !IntegerQ[Lookup[group, "ParameterSetIndex", None]] || !IntegerQ[Lookup[group, "ColorCoefficient", None]],
+    Return[{sm5NotebookText["An adopted validation table is unavailable; no check rows are inferred."]}]];
+  values = MapThread[Join[#1, <|"Evidence" -> #2|>] &, {rows, scopes}];
+  {sm5NotebookText["Parameter assignment " <> ToString[group["ParameterSetIndex"]] <>
+      "; color coefficient " <> ToString[group["ColorCoefficient"]]],
+   sm5NotebookOutput[Dataset[values, MaxItems -> {All, All}], "Print"]}
+];
+sm5NotebookAdoptionGroupCells[_] :=
+  {sm5NotebookText["An adopted validation table is unavailable; no check rows are inferred."]};
+sm5NotebookAdoptionCells[record_Association] := Module[{tables},
+  tables = Lookup[record, "AdoptionValidationTables", {}];
+  If[!ListQ[tables] || tables === {},
+    Return[{sm5NotebookText["The adopted validation tables are unavailable; no check table is inferred."]}]];
+  Flatten[sm5NotebookAdoptionGroupCells /@ tables, 1]
+];
+sm5NotebookCalculation[case_Association] := Module[{id, variable, code, record, cells, controls, adopted},
   id = case["ID"]; variable = sm5NotebookVariable[id];
   record = sm5NotebookRecord[FileNameJoin[{sm5NotebookResultsPath, id <> ".wxf"}]];
   controls = sm5NotebookConstructionControls[record];
+  adopted = Lookup[record, "RecordKind", None] === "ValidatedFormulaAdoption";
   code = variable <> "Particles = " <> sm5NotebookSource[case["Particles"]] <> ";\n" <>
     variable <> "Amplitude = ConstructAmplitude[" <> variable <>
     "Particles, sm, smFactorization,\n  \"FeynmanModel\" -> smFeynman" <>
     If[controls === {}, "", ",\n  " <> StringRiffle[sm5NotebookSource /@ controls, ",\n  "]] <> "]";
-  cells = sm5NotebookCaptured[record, "Construction"];
+  cells = If[adopted, Join[{sm5NotebookText[sm5NotebookAdoptionNote[record]]},
+    sm5NotebookAdoptionCells[record],
+    {sm5NotebookOutput[Lookup[record, "Expression", Missing["NoSavedFormula"]], "Output"]}],
+    sm5NotebookCaptured[record, "Construction"]];
   If[controls =!= {}, cells = Prepend[cells, Cell[
     "This saved run used explicit construction controls, retained in the input above.",
     "Text", GeneratedCell -> True, CellAutoOverwrite -> True,
