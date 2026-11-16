@@ -67,7 +67,7 @@ feynmanModel = ReadModel[FileNameJoin[{root, "tests", "reference-models", "calch
 writeRecord[file_String, value_] := Module[{temporary = file <> ".tmp", stream, bytes},
   bytes = BinarySerialize[value, PerformanceGoal -> "Size"];
   stream = OpenWrite[temporary, BinaryFormat -> True];
-  BinaryWrite[stream, Normal[bytes], "Byte"]; Close[stream];
+  BinaryWrite[stream, bytes, "Byte"]; Close[stream];
   RenameFile[temporary, file, OverwriteTarget -> True]
 ];
 writeSummary[file_String, value_Association] := Module[{temporary = file <> ".tmp"},

@@ -765,3 +765,9 @@ in `tests/results/SM-5-point/controller/`. A clock discrepancy can indicate host
 suspension or a wall-clock adjustment. It is a diagnostic, never an amplitude
 validation result, and it does not alter a check's samples, time limits or status.
 These records are disposable along with the rest of `tests/results/`.
+
+Checkpoint writers send the serialized `ByteArray` directly to `BinaryWrite`.
+They do not expand its bytes into a Wolfram integer list, which would create an
+unnecessary temporary object when retaining large validation reports. The stored
+WXF bytes, checksum, round-trip expression and atomic replacement behavior are
+unchanged. This removes a copy; it is not a measured whole-calculation speedup.

@@ -26,7 +26,7 @@ factorizationModel=ReadModel[FileNameJoin[{root,"models"}],2];
 feynmanModel=ReadModel[FileNameJoin[{root,"tests","reference-models","calchep"}],1];
 writeRecord[file_,value_]:=Module[{temporary=file<>".tmp",stream,bytes},
  bytes=BinarySerialize[value,PerformanceGoal->"Size"];
- stream=OpenWrite[temporary,BinaryFormat->True];BinaryWrite[stream,Normal[bytes],"Byte"];Close[stream];
+ stream=OpenWrite[temporary,BinaryFormat->True];BinaryWrite[stream,bytes,"Byte"];Close[stream];
  RenameFile[temporary,file,OverwriteTarget->True]];
 (* Public-call captures may spell the exact all-incoming list Process.  Keep
    the source WXF byte-for-byte and verify both spellings against inventory. *)
