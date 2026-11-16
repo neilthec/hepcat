@@ -751,3 +751,17 @@ exact capsules without importing solver diagnostics or claiming a new validation
 Cleanup skips expensive campaign admission when the exact generated `ExportName`
 path is already absent. Any existing path, broken symlink, or symlink ancestor
 still goes through all normal ownership and validation guards.
+
+### Long-running worker lifecycle
+
+On macOS the batch runner starts a temporary `caffeinate -i -w` guard for the
+actual owned Wolfram worker. It ends with that worker and is also reaped after
+normal completion, interruption or timeout. It prevents idle sleep during the
+calculation without changing system settings. Other platforms, or hosts without
+that utility, continue with an explicitly recorded unavailable/not-needed state.
+
+Each attempt records its seed, worker identity and wall/monotonic elapsed times
+in `tests/results/SM-5-point/controller/`. A clock discrepancy can indicate host
+suspension or a wall-clock adjustment. It is a diagnostic, never an amplitude
+validation result, and it does not alter a check's samples, time limits or status.
+These records are disposable along with the rest of `tests/results/`.

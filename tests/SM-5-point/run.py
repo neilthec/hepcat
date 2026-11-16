@@ -20,6 +20,7 @@ import shutil
 import signal
 import subprocess
 import sys
+import time
 
 ROOT = Path(__file__).resolve().parents[2]
 HERE = Path(__file__).resolve().parent
@@ -283,6 +284,60 @@ def stop_process(process):
         pass
 
 
+def start_worker_sleep_guard(process):
+    """Inhibit idle sleep only while this owned worker is alive, when available."""
+    if sys.platform != 'darwin':
+        return None, {'Status': 'NOT_NEEDED', 'Reason': 'NonMacOSHost'}
+    program = shutil.which('caffeinate')
+    if not program:
+        return None, {'Status': 'UNAVAILABLE', 'Reason': 'CaffeinateNotFound'}
+    command = [program, '-i', '-w', str(process.pid)]
+    try:
+        guard = subprocess.Popen(command, stdin=subprocess.DEVNULL,
+                                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                                 start_new_session=True)
+    except OSError as error:
+        return None, {'Status': 'UNAVAILABLE', 'Reason': str(error)}
+    return guard, {'Status': 'STARTED', 'PID': guard.pid,
+                   'WorkerPID': process.pid, 'Command': command}
+
+
+def stop_worker_sleep_guard(guard):
+    """Reap only the guard started for this attempt, including interrupted runs."""
+    if guard is None:
+        return
+    try:
+        if guard.poll() is None:
+            guard.terminate()
+        try:
+            guard.wait(timeout=2)
+        except subprocess.TimeoutExpired:
+            guard.kill()
+            guard.wait(timeout=2)
+    except (OSError, subprocess.TimeoutExpired):
+        # A failed monitoring helper must not replace the worker's outcome.
+        pass
+
+
+def record_worker_controller(path, descriptor, wall_started, monotonic_started, guard_info):
+    """Keep host-clock diagnostics separate from native physics checkpoints."""
+    wall_elapsed = time.time() - wall_started
+    monotonic_elapsed = time.monotonic() - monotonic_started
+    discrepancy = wall_elapsed - monotonic_elapsed
+    record = dict(descriptor, Status='WORKER_CONTROLLER', FinishedUTC=timestamp(),
+                  WallElapsedSeconds=wall_elapsed,
+                  MonotonicElapsedSeconds=monotonic_elapsed,
+                  WallMinusMonotonicSeconds=discrepancy,
+                  ClockDiscrepancyDetected=abs(discrepancy) > 5,
+                  ClockDiscrepancyMeaning='Possible host suspend or wall-clock adjustment; not a physics result.',
+                  IdleSleepGuard=guard_info)
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        atomic_json(path, record)
+    except OSError as error:
+        print(f'Could not save worker controller diagnostics: {error}', file=sys.stderr)
+
+
 def run_worker(args, kind, identifier, config_path):
     suffix = '-export' if kind == 'export' else ''
     summary_path = RESULTS / (identifier + suffix + '.json')
@@ -304,28 +359,42 @@ def run_worker(args, kind, identifier, config_path):
                        HEPCAT_SM5_SEED=str(seed), OMP_NUM_THREADS='1',
                        OPENBLAS_NUM_THREADS='1', MKL_NUM_THREADS='1')
     print(f'{timestamp()} {kind} {identifier}', flush=True)
+    stamp = dt.datetime.now(dt.timezone.utc).strftime('%Y%m%dT%H%M%S%f')
+    controller_path = RESULTS / 'controller' / (identifier + suffix + '-' + stamp + '.json')
+    controller = {'Kind': kind, 'Identifier': identifier, 'RandomSeed': seed,
+                  'ContextSHA256': context_sha, 'StartedUTC': timestamp()}
+    wall_started, monotonic_started = time.time(), time.monotonic()
+    process, guard, guard_info = None, None, {'Status': 'NOT_STARTED'}
     with log_path.open('w') as log:
         try:
-            process = subprocess.Popen([args.kernel, '-script', str(HERE / 'evaluate.wl')],
-                                       cwd=ROOT, env=environment, stdout=log,
-                                       stderr=subprocess.STDOUT, start_new_session=True)
-        except OSError as error:
-            summary = {'ID' if kind == 'construct' else 'FamilyID': identifier,
-                       'Status': 'ERROR', 'ContextSHA256': context_sha, 'RandomSeed': seed,
-                       'Message': str(error), 'Log': str(log_path.relative_to(ROOT))}
-            atomic_json(summary_path, summary)
-            return summary
-        try:
-            process.wait(timeout=args.export_timeout if kind == 'export' else args.timeout)
-        except subprocess.TimeoutExpired:
-            stop_process(process)
-            atomic_json(summary_path, {'ID' if kind == 'construct' else 'FamilyID': identifier,
-                                      'Status': 'TIMEOUT', 'RandomSeed': seed, 'ContextSHA256': context_sha,
-                                      'Log': str(log_path.relative_to(ROOT)),
-                                      'Message': 'External deadline reached; not validated.'})
+            try:
+                process = subprocess.Popen([args.kernel, '-script', str(HERE / 'evaluate.wl')],
+                                           cwd=ROOT, env=environment, stdout=log,
+                                           stderr=subprocess.STDOUT, start_new_session=True)
+            except OSError as error:
+                summary = {'ID' if kind == 'construct' else 'FamilyID': identifier,
+                           'Status': 'ERROR', 'ContextSHA256': context_sha, 'RandomSeed': seed,
+                           'Message': str(error), 'Log': str(log_path.relative_to(ROOT))}
+                atomic_json(summary_path, summary)
+                return summary
+            controller['WorkerPID'] = process.pid
+            guard, guard_info = start_worker_sleep_guard(process)
+            try:
+                process.wait(timeout=args.export_timeout if kind == 'export' else args.timeout)
+            except subprocess.TimeoutExpired:
+                stop_process(process)
+                atomic_json(summary_path, {'ID' if kind == 'construct' else 'FamilyID': identifier,
+                                          'Status': 'TIMEOUT', 'RandomSeed': seed, 'ContextSHA256': context_sha,
+                                          'Log': str(log_path.relative_to(ROOT)),
+                                          'Message': 'External deadline reached; not validated.'})
         except KeyboardInterrupt:
-            stop_process(process)
+            if process is not None:
+                stop_process(process)
             raise
+        finally:
+            stop_worker_sleep_guard(guard)
+            record_worker_controller(controller_path, controller, wall_started,
+                                     monotonic_started, guard_info)
     summary = read_json(summary_path)
     if process.returncode != 0 and isinstance(summary, dict) and summary.get('Status') in ('COMPLETE', 'PASS'):
         summary = None
@@ -374,11 +443,15 @@ def main():
     inventory = read_json(HERE / 'inventory.json')
     if not inventory:
         parser.error('Run inventory.py first.')
-    lock = (RESULTS / 'run.lock').open('w')
-    try:
-        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-    except BlockingIOError:
-        parser.error('Another SM five-point runner is already active.')
+    with (RESULTS / 'run.lock').open('w') as lock:
+        try:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            parser.error('Another SM five-point runner is already active.')
+        run_locked_batch(args, inventory, lock)
+
+
+def run_locked_batch(args, inventory, lock):
     configuration = {'SPINASDirectory': str(args.spinas.resolve()),
                      'CalcHEPDirectory': str(args.calchep.resolve()),
                      'MadGraphDirectory': str(args.madgraph.resolve()),

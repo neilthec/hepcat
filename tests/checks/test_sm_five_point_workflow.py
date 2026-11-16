@@ -97,7 +97,9 @@ class FivePointWorkflowTests(unittest.TestCase):
         self.assertEqual(state['Counts']['ValidatedFamilies'], 0)
 
     def worker(self, kind='construct', identifier='case_a'):
-        with redirect_stdout(io.StringIO()):
+        with redirect_stdout(io.StringIO()), \
+                mock.patch.object(WORKFLOW, 'start_worker_sleep_guard',
+                                  return_value=(None, {'Status': 'SYNTHETIC_TEST'})):
             return WORKFLOW.run_worker(self.args, kind, identifier, self.configuration)
 
     @staticmethod
@@ -375,6 +377,28 @@ class FivePointWorkflowTests(unittest.TestCase):
         state = self.refresh()
         self.assertEqual(state['Counts']['Constructed'], 2)
         self.assert_not_fully_validated(state)
+
+    def test_runner_closes_lock_after_a_completed_batch(self):
+        locks = []
+        def batch(args, inventory, lock):
+            self.assertFalse(lock.closed)
+            locks.append(lock)
+        with mock.patch.object(sys, 'argv', ['run.py', '--refresh-only']), \
+                mock.patch.object(WORKFLOW, 'run_locked_batch', side_effect=batch):
+            WORKFLOW.main()
+        self.assertEqual(len(locks), 1)
+        self.assertTrue(locks[0].closed)
+
+    def test_runner_closes_lock_when_batch_setup_raises(self):
+        locks = []
+        def batch(args, inventory, lock):
+            locks.append(lock)
+            raise RuntimeError('synthetic setup failure')
+        with mock.patch.object(sys, 'argv', ['run.py', '--refresh-only']), \
+                mock.patch.object(WORKFLOW, 'run_locked_batch', side_effect=batch):
+            with self.assertRaisesRegex(RuntimeError, 'synthetic setup failure'):
+                WORKFLOW.main()
+        self.assertTrue(locks[0].closed)
 
     def test_read_json_uses_default_for_missing_or_truncated_files(self):
         missing = self.results / 'missing.json'
