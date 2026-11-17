@@ -193,40 +193,24 @@ comparison. Explicit FeynmanPreparationOptions are honored instead of \
 triggering this automatic recovery. Details retain the original PARTIAL \
 preparation, the recovery stage and its complete diagram counts."}],
    "Notes"], Cell[TextData[{"With an independent ",
-     Cell[BoxData[RowBox[{"\"FeynmanModel\""}]], "InlineFormula"], ", \
-supported five-leg color-singlet processes containing four massive Dirac \
-fermions and either one scalar or one massive vector can try minimal \
-covariant currents before numerical completion. Every used elementary vertex, \
-ordered graph, propagator and fermion endpoint is certified symbolically from \
-the diagram model. Supported five-leg processes with two massive Dirac \
-fermions can also try either one massive vector and two identical scalars, or \
-two massive vectors and one scalar. The same certified metric-current route \
-also supports four massive vectors and one scalar when all used interactions \
-belong to its supported classes. When every used vertex belongs to a \
-supported operator class, an existing metric contact is calibrated \
-symbolically from the complete lower amplitude in the factorization model. \
-Neither route reads the independent benchmark to construct its candidate or \
-fits sampled coefficients. Internal lines remain off shell and all masses and \
-couplings stay model-owned. The candidate receives external-only ",
-     ButtonBox["PrepareAmplitudes", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/PrepareAmplitudes"],
-     " and all mandatory ", ButtonBox["CheckAmplitudes", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/CheckAmplitudes"], " checks at the \
-requested validation assignments, including independent Feynman comparisons. \
-Default distinct-fermion inputs additionally probe equal independent masses, \
-with dependent functions recomputed normally. Explicit parameter and \
-validation choices stay authoritative. Failed or unsupported proposals are \
-retained in Details and continue through the original completion workflow."}]\
-, "Notes"], Cell[TextData[{"The four-fermion massive-vector proposal uses the \
-same symmetric spin polynomial as other massive-vector amplitudes, keeping \
-both vector spinor slots and the complete fermion spin dependence. With ",
-     Cell[BoxData[RowBox[{"\"Output\"", " ", "->", " ", "\"Details\""}]],
-      "InlineFormula"], ", the source proposal also retains its raw indexed \
-tensor and the encoding correspondence. This route needs no extra user \
-options. Four-fermion photon processes keep their existing completion route. \
-As with every current proposal, the original channels and the complete \
-independent Feynman amplitude determine whether it is accepted; a rejected \
-proposal falls back to the usual construction."}], "Notes"],
+     Cell[BoxData[RowBox[{"\"FeynmanModel\""}]], "InlineFormula"], ", a \
+supported five-point calculation can first try a model-derived \
+covariant-current candidate. This is another way to organize the elementary \
+amplitudes you supplied: every used vertex must match a supported local \
+operator, and every ordered graph, physical propagator and fermion endpoint \
+must be certified. Its masses and couplings remain in the model. The \
+independent Feynman model checks the candidate afterward; it supplies neither \
+the expression nor fitted coefficients. Internal propagators stay off shell. \
+Unsupported operators or rejected candidates retain the ordinary completion \
+method."}], "Notes"], Cell[TextData[{"For four fermions and one vector, \
+supported currents include massive Dirac and declared chiral fermions. \
+Massive vector states retain both spinor slots and the complete fermion spin \
+dependence. Pure Abelian radiation from four massive colorless Dirac fermions \
+keeps its established QED route. More general photon, weak-vector and gluon \
+processes can use a certified current when their actual model vertices and \
+color tensors are supported. Routing follows these properties, not particle \
+names. Detailed output retains the indexed tensor and its spin-polynomial \
+correspondence; no extra option is required."}], "Notes"],
   Cell[TextData[{"For a colored process with five or more legs, identical \
 external states may relate the scalar color coefficients. The constructor can \
 certify the exact color transformation under those exchanges and construct \
@@ -280,45 +264,50 @@ diagrams. The transformation preserves the complex scalar coefficients \
 specified by its certificate; it is not a numerical phase adjustment. A \
 missing certificate or any failed target check returns to the ordinary \
 construction within the remaining clock. No stored answer is read by this \
-route."}], "Notes"], Cell[TextData[{"For supported fermion, scalar and vector \
-combinations, the constructor can build a covariant-current candidate \
-directly from the elementary amplitudes in your diagram model. Every used \
-vertex must match an available operator exactly, and every original ordered \
-diagram and physical propagator must be accounted for. The independent \
-Feynman model checks this candidate afterward; it does not supply the \
-candidate or its coefficients."}], "Notes"],
-  Cell[TextData[{"This route includes a massive Dirac pair with one \
-photon-like massless vector and two scalars. For some quark processes, it \
-also proves that the complete color dependence is a single fundamental delta \
-before reusing a colorless current calculation. That proof checks the actual \
-color path and every diagram tensor, rather than assuming a color \
-multiplicity. Unsupported color flows continue through the usual completion \
-method."}], "Notes"], Cell[TextData[{"The same cubic-current construction can \
-handle a fermion pair with three vector bosons when at least one vector is \
-massive. It also admits declared chiral fermions and quark pairs whose color \
-dependence is proved to be a single fundamental delta. Examples include three \
-Z bosons, or a photon and two Z bosons. Available minimal three-vector \
-operators are matched exactly to the supplied elementary amplitudes. A used \
-interaction outside the supported operator catalog keeps the ordinary \
-completion path. Every accepted candidate receives the complete validation \
-described below."}], "Notes"],
-  Cell[TextData[{"For supported five-point processes with four massive Dirac \
-fermions and a color-singlet scalar, the constructor can retain a separate \
-color tensor for each ordered graph. It certifies the local delta or \
-generator operators, graph correspondence and fermion exchange signs before \
-assembling a candidate. The complete candidate then receives the normal \
-parameter, residue, high-energy, reference and independent Feynman checks \
-through ", ButtonBox["CheckAmplitudes", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/CheckAmplitudes"], ". Unsupported \
-color flows or rejected proposals continue through ordinary completion. This \
-route uses the supplied elementary vertices and adds no user option."}],
+route."}], "Notes"], Cell[TextData[{"A supported certified candidate is \
+tested before ordinary diagram and factorization-channel preparation. This \
+avoids constructing large intermediate simplifications that an accepted \
+candidate would never use. The original graphs, raw amplitudes and complete \
+physical channels are still retained. If the candidate is unavailable or \
+fails a required check, construction returns to preparation and completion \
+with those original inputs. Reordering this work does not remove a graph, \
+pole, validation sample or parameter assignment."}], "Notes"],
+  Cell[TextData[{"Supported fermion/scalar combinations include a fermion \
+pair with one massless vector and two scalars, and a pair with two vectors \
+and one scalar. The latter can contain photons as well as massive vectors. \
+For some quark processes, an exact proof shows that the entire color \
+dependence is a single fundamental delta, allowing the same current algebra \
+to be reused. That proof checks the color path and every diagram tensor. \
+Other supported colored processes retain their separate ordered tensors."}],
+   "Notes"], Cell[TextData[{"The same cubic-current construction can handle a \
+fermion pair with three vector bosons when at least one vector is massive. It \
+also admits declared chiral fermions and quark pairs whose color dependence \
+is proved to be a single fundamental delta. Examples include three Z bosons, \
+or a photon and two Z bosons. Available minimal three-vector operators are \
+matched exactly to the supplied elementary amplitudes. A used interaction \
+outside the supported operator catalog keeps the ordinary completion path. \
+Every accepted candidate receives the complete validation described below."}]\
+, "Notes"], Cell[TextData[{"For supported five-point processes with four \
+fermions and a scalar or vector, the current source can keep a separate color \
+tensor for each ordered graph. It certifies the local color operators, graph \
+correspondence and fermion exchange signs before assembling a candidate. The \
+same principle includes a fundamental fermion pair and up to two adjoint \
+vectors with supported additional bosons. An unsupported color flow or \
+missing contact certificate keeps the ordinary completion method. Acceptance \
+still requires every normal ", ButtonBox["CheckAmplitudes",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/CheckAmplitudes"],
+     " condition and the requested independent Feynman comparison."}],
    "Notes"], Cell[TextData[{"A successful current candidate is prepared with \
 external identities only, then checked against every factorization channel, \
 automatic spurious-pole test, high-energy bound, reference test and the \
-complete independent Feynman amplitude at all validation parameter sets. A \
-rejected candidate retains its diagnostics and the original completion \
-inputs. A fast accepted form can still benefit from later simplification with \
-", ButtonBox["PrepareAmplitudes", BaseStyle -> "Link",
+complete independent Feynman amplitude at all validation parameter sets. \
+Default distinct-fermion inputs also receive an equal-independent-mass probe, \
+with dependent functions recomputed from those masses; explicit parameter and \
+validation choices remain authoritative. A rejected candidate retains its \
+diagnostics and the original completion inputs. A fast accepted form can \
+still benefit from later simplification with ",
+     ButtonBox["PrepareAmplitudes", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/PrepareAmplitudes"], "."}], "Notes"],
   Cell[TextData[{"For supported five-point processes with four massive vector \
 bosons and one scalar, a complete known lower four-vector amplitude can \
@@ -328,7 +317,11 @@ remaining tensor in all 81 coherent spin components before adding the \
 corresponding graphs. The graph certificate accounts for both the original \
 diagrams and the added lower-derived terms. These coefficients come from the \
 supplied factorization model; the independent Feynman model remains a \
-subsequent validation input."}], "Notes"],
+subsequent validation input. The metric-current route also admits three \
+massive vectors and two identical scalars when all used interactions can be \
+certified. Existing two-vector/two-scalar contacts are fixed from the \
+complete known lower amplitudes. These are model-derived continuations, not \
+new independent interactions supplied to make a check pass."}], "Notes"],
   Cell[TextData[{"Large massive-vector benchmarks can first be converted once \
 and reorganized by exact identities before ordinary external-only \
 preparation. This avoids repeatedly expanding equivalent spin tensors. \

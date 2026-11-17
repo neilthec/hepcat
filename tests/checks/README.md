@@ -1494,3 +1494,48 @@ and private namespace isolation. Ambient symbol sentinels test full package
 loading and direct internal-module reloading. These are local symbolic and
 controlled acceptance tests; full five-point constructions and the independent
 CalcHEP/MadGraph comparisons remain separate integration calculations.
+
+## Typed five-point current-source controls
+
+The focused current-source tests check model-driven admission, rejection,
+namespace isolation, diagram-metadata boundaries and preservation of established
+source routes. They cover the two-fermion adjoint extension, four-fermion vector
+routing and the pure Abelian radiation guard. The renamed-model fixture changes
+every particle and parameter label, then checks the same routing and local
+numerical values without generating amplitudes. Namespace assertions check actual
+private binders and caller-owned sentinels. Temporary unassigned parser/catch tags
+must not acquire definitions or escape into returned model data.
+
+Run `sm5-current-namespace-tests.wl`,
+`sm5-current-metadata-dispatch-tests.wl`,
+`sm5-current-vector-metadata-tests.wl` and
+`sm5-renamed-model-metadata-tests.wl` as ordinary kernel scripts. Each test loads
+the source from its own checkout. `HEPCAT_TEST_DATA_ROOT` can point to unchanged
+repository model/inventory data when testing a private source copy.
+`HEPCAT_TEST_OUTPUT` optionally writes compact JSON reports in disposable scratch
+space. These tests contain no stored amplitude answers or implementation hashes.
+
+These inexpensive metadata controls do not replace actual public constructor
+calls, full native factorization/Feynman checks or complete-family CalcHEP and
+MadGraph validation. A new source must cover every used ordered vertex and graph,
+fail closed on unsupported operators, preserve the old four-quark/scalar and
+pure Abelian routes, and pass the unchanged validators. A larger validated source
+is correctness evidence, not evidence of a simpler representation. New five-leg
+gates exclude existing four-point and QED six-point paths; focused public
+preservation calls still verify that exclusion.
+
+The early-source ordering fixtures verify that an accepted certified proposal
+uses the original graph and channel metadata before ordinary preparation. A
+rejected proposal resumes ordinary preparation/completion, retaining its failed
+validation evidence. Pure Abelian radiation remains on its established route
+using the supplied used-row graph provenance. The fixtures also cover unchanged
+four-point/QED exclusions, independent benchmark handling, parameter probes and
+state restoration. Their small integer source/checker fixtures test dispatch and
+control flow, and are not amplitude answers or native physics validation.
+
+The updated `covariant-constructor-tests.wl` keeps all original acceptance and
+certificate guards, positively tests the newly admitted massless-vector 2V1S
+class, and checks the early-source/fallback order with actual providers stubbed.
+Separate controls retain unsupported used-quartic and used-operator provider
+refusals and the SM4/QED6 exclusions. These are dispatch controls; the existing
+real operator/catalogue rejection suites and full native tests remain necessary.

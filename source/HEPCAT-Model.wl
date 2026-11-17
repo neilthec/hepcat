@@ -22415,6 +22415,65 @@ constructBenchmarkVectorPreconditioningQ[process_List,model_List,requested_,raw_
 ];
 constructBenchmarkVectorPreconditioningQ[___] := False;
 
+
+ConstructiveDiagrams`Private`constructPureAbelianFermionRadiationQ[
+ ConstructiveDiagrams`Private`process_List,ConstructiveDiagrams`Private`model_List,ConstructiveDiagrams`Private`diagrams_List] := Module[
+ {ConstructiveDiagrams`Private`rows,ConstructiveDiagrams`Private`fermions,ConstructiveDiagrams`Private`vectors,ConstructiveDiagrams`Private`used,ConstructiveDiagrams`Private`particles,ConstructiveDiagrams`Private`classes},
+ If[Length[ConstructiveDiagrams`Private`process]=!=5||ConstructiveDiagrams`Private`diagrams==={}||
+  !AllTrue[ConstructiveDiagrams`Private`diagrams,AssociationQ[#]&&AssociationQ[Lookup[#,"VertexStructures",None]]&],Return[False]];
+ ConstructiveDiagrams`Private`rows=HEPCATCovariantCurrentSources`Private`particleRow[#,ConstructiveDiagrams`Private`model]&/@ConstructiveDiagrams`Private`process;
+ If[!AllTrue[ConstructiveDiagrams`Private`rows,ListQ[#]&&Length[#]===11&],Return[False]];
+ ConstructiveDiagrams`Private`fermions=Select[ConstructiveDiagrams`Private`rows,#[[5]]===1&];
+ ConstructiveDiagrams`Private`vectors=Select[ConstructiveDiagrams`Private`rows,#[[5]]===2&];
+ If[Length[ConstructiveDiagrams`Private`fermions]=!=4||Length[ConstructiveDiagrams`Private`vectors]=!=1||
+  First[ConstructiveDiagrams`Private`vectors][[6]]=!=0||!AllTrue[ConstructiveDiagrams`Private`rows,#[[8]]===1&]||
+  !AllTrue[ConstructiveDiagrams`Private`fermions,#[[6]]=!=0&&#[[2]]=!=#[[3]]&&!MemberQ[{"L","R"},#[[9]]]&],Return[False]];
+ ConstructiveDiagrams`Private`used=HEPCATCovariantCurrentSources`Private`usedRows[ConstructiveDiagrams`Private`diagrams];
+ If[!ListQ[ConstructiveDiagrams`Private`used]||ConstructiveDiagrams`Private`used==={}||!AllTrue[ConstructiveDiagrams`Private`used,ListQ[#]&&Length[#]>=5&],Return[False]];
+ AllTrue[ConstructiveDiagrams`Private`used,Function[ConstructiveDiagrams`Private`vertex,
+  ConstructiveDiagrams`Private`particles=HEPCATCovariantCurrentSources`Private`rowParticles[ConstructiveDiagrams`Private`vertex];
+  ConstructiveDiagrams`Private`classes=HEPCATCovariantCurrentSources`Private`particleRow[#,ConstructiveDiagrams`Private`model]&/@ConstructiveDiagrams`Private`particles;
+  Length[ConstructiveDiagrams`Private`particles]===3&&AllTrue[ConstructiveDiagrams`Private`classes,ListQ[#]&&Length[#]===11&]&&
+  Sort[ConstructiveDiagrams`Private`classes[[All,5]]]==={1,1,2}&&
+  AllTrue[ConstructiveDiagrams`Private`classes,#[[8]]===1&]&&
+  AllTrue[Select[ConstructiveDiagrams`Private`classes,#[[5]]===2&],#[[6]]===0&]]]
+];
+ConstructiveDiagrams`Private`constructPureAbelianFermionRadiationQ[___] := False;
+
+ConstructiveDiagrams`Private`constructCovariantSourceMetadata[
+ ConstructiveDiagrams`Private`metadataProcess_List,ConstructiveDiagrams`Private`metadataModel_List,
+ ConstructiveDiagrams`Private`metadataDiagrams_List,ConstructiveDiagrams`Private`metadataAugment_:False] := Module[
+ {ConstructiveDiagrams`Private`metadataRows,ConstructiveDiagrams`Private`metadataFermions,ConstructiveDiagrams`Private`metadataVectors,ConstructiveDiagrams`Private`metadataScalars,ConstructiveDiagrams`Private`metadataClass},
+    ConstructiveDiagrams`Private`metadataRows = HEPCATCovariantCurrentSources`Private`particleRow[#, ConstructiveDiagrams`Private`metadataModel] & /@ ConstructiveDiagrams`Private`metadataProcess;
+    If[!AllTrue[ConstructiveDiagrams`Private`metadataRows, ListQ] || !AllTrue[ConstructiveDiagrams`Private`metadataRows, #[[8]] === 1 &], Return[False]];
+    ConstructiveDiagrams`Private`metadataFermions = Select[ConstructiveDiagrams`Private`metadataRows, #[[5]] === 1 &];
+    ConstructiveDiagrams`Private`metadataVectors = Select[ConstructiveDiagrams`Private`metadataRows, #[[5]] === 2 &]; ConstructiveDiagrams`Private`metadataScalars = Select[ConstructiveDiagrams`Private`metadataRows, #[[5]] === 0 &];
+    If[!AllTrue[ConstructiveDiagrams`Private`metadataFermions, HEPCATCovariantCurrentSources`Private`supportedFermionRowQ], Return[False]];
+    ConstructiveDiagrams`Private`metadataClass = If[TrueQ[ConstructiveDiagrams`Private`metadataAugment],"Calibrated metric currents",Which[
+      Length[ConstructiveDiagrams`Private`metadataFermions] === 4 &&
+        (Length[ConstructiveDiagrams`Private`metadataScalars] === 1 || (Length[ConstructiveDiagrams`Private`metadataVectors] === 1 && First[ConstructiveDiagrams`Private`metadataVectors][[6]] =!= 0)) &&
+        AllTrue[ConstructiveDiagrams`Private`metadataFermions, #[[6]] =!= 0 &], "Cubic currents",
+      Length[ConstructiveDiagrams`Private`metadataFermions] === 4 && Length[ConstructiveDiagrams`Private`metadataVectors] === 1 && ConstructiveDiagrams`Private`metadataScalars === {} &&
+        !ConstructiveDiagrams`Private`constructPureAbelianFermionRadiationQ[ConstructiveDiagrams`Private`metadataProcess,ConstructiveDiagrams`Private`metadataModel,ConstructiveDiagrams`Private`metadataDiagrams], "Cubic currents",
+      Length[ConstructiveDiagrams`Private`metadataFermions] === 2 && Length[ConstructiveDiagrams`Private`metadataVectors] === 1 && Length[ConstructiveDiagrams`Private`metadataScalars] === 2 &&
+        First[ConstructiveDiagrams`Private`metadataVectors][[6]] === 0 && AllTrue[ConstructiveDiagrams`Private`metadataFermions, #[[6]] =!= 0 &], "Cubic currents",
+      Length[ConstructiveDiagrams`Private`metadataFermions] === 2 && Length[ConstructiveDiagrams`Private`metadataVectors] === 3 && ConstructiveDiagrams`Private`metadataScalars === {} &&
+        AnyTrue[ConstructiveDiagrams`Private`metadataVectors, #[[6]] =!= 0 &], "Cubic currents",
+      Length[ConstructiveDiagrams`Private`metadataFermions] === 2 && Length[ConstructiveDiagrams`Private`metadataVectors] === 1 && Length[ConstructiveDiagrams`Private`metadataScalars] === 2 &&
+        First[ConstructiveDiagrams`Private`metadataVectors][[6]] =!= 0 && SameQ @@ ConstructiveDiagrams`Private`metadataScalars[[All, 6]], "Calibrated metric currents",
+      Length[ConstructiveDiagrams`Private`metadataFermions] === 2 && Length[ConstructiveDiagrams`Private`metadataVectors] === 2 && Length[ConstructiveDiagrams`Private`metadataScalars] === 1 &&
+        AnyTrue[ConstructiveDiagrams`Private`metadataVectors, #[[6]] === 0 &], "Cubic currents",
+      Length[ConstructiveDiagrams`Private`metadataFermions] === 2 && Length[ConstructiveDiagrams`Private`metadataVectors] === 2 && Length[ConstructiveDiagrams`Private`metadataScalars] === 1 &&
+        AllTrue[ConstructiveDiagrams`Private`metadataVectors, #[[6]] =!= 0 &], "Calibrated metric currents",
+      Length[ConstructiveDiagrams`Private`metadataFermions] === 0 && Length[ConstructiveDiagrams`Private`metadataVectors] === 3 && Length[ConstructiveDiagrams`Private`metadataScalars] === 2 &&
+        AllTrue[ConstructiveDiagrams`Private`metadataVectors, #[[6]] =!= 0 &] && SameQ @@ ConstructiveDiagrams`Private`metadataScalars[[All, 6]], "Calibrated metric currents",
+      Length[ConstructiveDiagrams`Private`metadataFermions] === 0 && Length[ConstructiveDiagrams`Private`metadataVectors] === 4 && Length[ConstructiveDiagrams`Private`metadataScalars] === 1 &&
+        AllTrue[ConstructiveDiagrams`Private`metadataVectors, #[[6]] =!= 0 &], "Calibrated metric currents",
+      True, Return[False]]];
+ <|"Rows"->ConstructiveDiagrams`Private`metadataRows,"Fermions"->ConstructiveDiagrams`Private`metadataFermions,"Vectors"->ConstructiveDiagrams`Private`metadataVectors,"Scalars"->ConstructiveDiagrams`Private`metadataScalars,"SourceClass"->ConstructiveDiagrams`Private`metadataClass|>
+];
+ConstructiveDiagrams`Private`constructCovariantSourceMetadata[___] := False;
+
 ConstructAmplitude::usage = ConstructAmplitude::usage <>
   " With an independent FeynmanModel, supported five-leg color-singlet Dirac, declared chiral-fermion, vector and scalar processes can first propose covariant currents matched exactly to every used elementary vertex and ordered diagram. A supported existing metric quartic is calibrated only from the complete known lower amplitude. Internal lines stay off shell, masses and couplings remain symbolic, and no benchmark or sampled coefficient fit constructs the proposal. It is accepted only after the original channels and all independent checks pass at every requested validation assignment. Default distinct-fermion inputs also receive an equal-independent-mass probe; explicit parameter and validation choices remain authoritative. Rejected or unsupported proposals retain the ordinary completion path.";
 
@@ -22440,7 +22499,7 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
    finishConstruction,
    representativeSelection = <|"Attempted" -> False, "Selected" -> False|>,
    representativeAttempts = {},
-   representationInputs, physicalRepresentation = Missing["NotValidated"], representationReason = None},
+   representationInputs, physicalRepresentation = Missing["NotValidated"], representationReason = None, ConstructiveDiagrams`Private`earlyCovariantAttempted = False},
   output = options["Output"]; enabled = options["ProgressReporting"];
   callback = options["ProgressFunction"]; printReport = options["PrintReport"];
   feynmanModel = options["FeynmanModel"];
@@ -22804,7 +22863,7 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
     If[resolved === $Failed, {}, {resolved}]
   ];
   tryCovariantSourceCandidate[augmentVectors_:False,vectorPlan_:Automatic] := Module[
-    {rows, fermions, vectors, scalars, class, proposal, candidate, extraSets = {}, checked,
+    {rows, fermions, vectors, scalars, class, ConstructiveDiagrams`Private`sourceMetadata, proposal, candidate, extraSets = {}, checked,
      previousPair = finalPair, previousPrepared = lastPreparedPair,
      previousSelection = representativeSelection, previousReport = checkReport,
      previousBenchmark = benchmark, previousReady = benchmarkReady,
@@ -22812,26 +22871,9 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
     If[feynmanModel === None || TrueQ[$colorConstructingProjection] ||
         !completionModelQ[diagramModel] || Length[process] =!= 5 || remaining[] <= 0.01,
       Return[False]];
-    rows = HEPCATCovariantCurrentSources`Private`particleRow[#, diagramModel] & /@ process;
-    If[!AllTrue[rows, ListQ] || !AllTrue[rows, #[[8]] === 1 &], Return[False]];
-    fermions = Select[rows, #[[5]] === 1 &];
-    vectors = Select[rows, #[[5]] === 2 &]; scalars = Select[rows, #[[5]] === 0 &];
-    If[!AllTrue[fermions, HEPCATCovariantCurrentSources`Private`supportedFermionRowQ], Return[False]];
-    class = If[TrueQ[augmentVectors],"Calibrated metric currents",Which[
-      Length[fermions] === 4 &&
-        (Length[scalars] === 1 || (Length[vectors] === 1 && First[vectors][[6]] =!= 0)) &&
-        AllTrue[fermions, #[[6]] =!= 0 &], "Cubic currents",
-      Length[fermions] === 2 && Length[vectors] === 1 && Length[scalars] === 2 &&
-        First[vectors][[6]] === 0 && AllTrue[fermions, #[[6]] =!= 0 &], "Cubic currents",
-      Length[fermions] === 2 && Length[vectors] === 3 && scalars === {} &&
-        AnyTrue[vectors, #[[6]] =!= 0 &], "Cubic currents",
-      Length[fermions] === 2 && Length[vectors] === 1 && Length[scalars] === 2 &&
-        First[vectors][[6]] =!= 0 && SameQ @@ scalars[[All, 6]], "Calibrated metric currents",
-      Length[fermions] === 2 && Length[vectors] === 2 && Length[scalars] === 1 &&
-        AllTrue[vectors, #[[6]] =!= 0 &], "Calibrated metric currents",
-      Length[fermions] === 0 && Length[vectors] === 4 && Length[scalars] === 1 &&
-        AllTrue[vectors, #[[6]] =!= 0 &], "Calibrated metric currents",
-      True, Return[False]]];
+    ConstructiveDiagrams`Private`sourceMetadata = constructCovariantSourceMetadata[process, diagramModel, diagramData, augmentVectors];
+    If[!AssociationQ[ConstructiveDiagrams`Private`sourceMetadata], Return[False]];
+    rows=ConstructiveDiagrams`Private`sourceMetadata["Rows"];fermions=ConstructiveDiagrams`Private`sourceMetadata["Fermions"];vectors=ConstructiveDiagrams`Private`sourceMetadata["Vectors"];scalars=ConstructiveDiagrams`Private`sourceMetadata["Scalars"];class=ConstructiveDiagrams`Private`sourceMetadata["SourceClass"];
     sourceBudget=If[TrueQ[augmentVectors]&&AssociationQ[vectorPlan],constructFourVectorSourceBudget[vectorPlan,remaining[]],Min[60,Max[0.000001,remaining[]]]];
     sourceLabel=If[TrueQ[augmentVectors],"Lower-derived vector source","Certified covariant source"];
     proposal = run[If[TrueQ[augmentVectors],"Building lower-derived vector source","Building certified covariant source"],
@@ -23074,6 +23116,16 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
         tryPhysicalVectorLine[], completed = True; Throw[finalPair, tag]];
     If[options["PolePreference"] === "AllSpurious" && Length[process] >= 6 &&
         trySpuriousVectorLine[], completed = True; Throw[finalPair, tag]];
+    (* Certified proposals need the original graph and residue metadata.
+       Prepare ordinary sources only when this bounded proposal is rejected. *)
+    If[feynmanModel =!= None && !TrueQ[$colorConstructingProjection] &&
+        completionModelQ[diagramModel] && Length[process] === 5 &&
+        AssociationQ[constructCovariantSourceMetadata[process, diagramModel, diagramData, False]],
+      ConstructiveDiagrams`Private`earlyCovariantAttempted = True;
+      If[!ListQ[channels],
+        channels = run["Generating factorization channels", FactorizationAmplitudeChannels[process, factorizationModel]];
+        require[channels]];
+      If[tryCovariantSource[], completed = True; Throw[finalPair, tag]]];
     diagramPreparation = run["Preparing diagrams", PrepareAmplitudes[diagramPairs, diagramModel,
       Sequence @@ stageOptions[PrepareAmplitudes, options["PreparationOptions"],
         <|"ReturnDetails" -> True, "ExternalParticles" ->
@@ -23087,7 +23139,7 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
       Sequence @@ stageOptions[PrepareAmplitudes, options["ChannelPreparationOptions"],
         Join[<|"ReturnDetails" -> True|>, If[channels === {}, <|"ExternalParticles" -> Automatic|>, <||>]]]]];
     requirePreparation[channelPreparation];
-    If[tryCovariantSource[], completed = True; Throw[finalPair, tag]];
+    If[!TrueQ[ConstructiveDiagrams`Private`earlyCovariantAttempted] && tryCovariantSource[], completed = True; Throw[finalPair, tag]];
     If[trySpuriousForms[], completed = True; Throw[finalPair, tag]];
     factorization = run["Completing factorization", CompleteFactorization[diagramPreparation,
       channelPreparation, factorizationModel, Sequence @@ stageOptions[CompleteFactorization,

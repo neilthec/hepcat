@@ -1,6 +1,6 @@
 (* Dispatch/acceptance controls only. Native integration is a separate opt-in suite. *)
-root=DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];
-Get[FileNameJoin[{root,"source","HEPCAT.wl"}]];
+root=Replace[Environment["HEPCAT_TEST_DATA_ROOT"],Except[_String?(StringLength[#]>0&)]->DirectoryName[DirectoryName[DirectoryName[$InputFileName]]]];
+Get[FileNameJoin[{DirectoryName[DirectoryName[DirectoryName[$InputFileName]]],"source","HEPCAT.wl"}]];
 checks=0;failures={};SetAttributes[check,HoldRest];
 check[name_,test_]:=(checks++;If[!TrueQ[test],AppendTo[failures,name];Print["FAIL: ",name]]);
 cvModel=ReadModel[FileNameJoin[{root,"models"}],1];
@@ -47,7 +47,7 @@ cvRun[process_,kind_,extra_:<||>,benchmark_:True]:=Module[{answer,external=cvRul
   pair=Which[MatchQ[input,{{__Rule},_}],input,MatchQ[input,{{{__Rule},_}}],First[input],True,{external,13}];
   <|"Status"->"PREPARED","OriginalAmplitudes"->input,"PreparedAmplitudes"->{pair}|>];
  ConstructiveDiagrams`Private`constructPreparationUsableQ[_]:=True;
- HEPCATCovariantCurrentSources`Private`covariantCurrentSource[___]:=(cvSources++;If[kind==="unsupported",Failure["unsupported",<||>],proposal]);
+ HEPCATCovariantCurrentSources`Private`covariantCurrentSource[___]:=(cvSources++;If[MemberQ[{"unsupported","unsupported used quartic","unsupported used operator"},kind],Failure[Switch[kind,"unsupported used quartic","UnsupportedUsedQuartic","unsupported used operator","UnsupportedUsedOperator",_,"unsupported"],<|"FixtureScope"->"StubbedProviderRefusal"|>],proposal]);
  HEPCATCovariantContactCalibration`Private`calibratedCovariantSource[___]:=(cvSources++;proposal);
  CompleteFactorization[args___]:=(cvFits++;cvFitInput=First[{args}];Failure["OriginalCompletionPath",<||>]);
  CheckAmplitudes[pair_,channels_,model_,opts___Rule]:=Module[{oo=Association[{opts}],status},
@@ -87,10 +87,13 @@ cvFourVectors=cvRun[{"Z","Z","Z","Z","h"},"good"];
 check["four massive vectors and one scalar use the same certified metric-current route",
  cvFourVectors["Result"]["Status"]==="COMPLETE"&&cvFourVectors["Sources"]===1&&cvFourVectors["Fits"]===0&&Length[cvFourVectors["Checks"]]===3];
 cvMasslessVector=cvRun[{"e","E","Z","A.+","h"},"good"];
-check["a massless vector cannot enter the two-massive-vector source class",
- cvMasslessVector["Sources"]===0&&cvMasslessVector["Fits"]===1];
+check["the C13 mixed massless-vector 2V1S class uses its certified cubic provider",
+ cvMasslessVector["Sources"]===1&&cvMasslessVector["Fits"]===0&&cvMasslessVector["Result"]["Status"]==="COMPLETE"];
 cvPhotons=cvRun[{"e","E","A.+","A.+","A.+"},"good"];
 check["QED photon processes retain the old completion path",cvPhotons["Sources"]===0&&cvPhotons["Fits"]===1];
+cvSix=cvRun[{"e","E","A.+","A.+","A.+","A.-"},"good"];
+check["QED six-point input never enters the five-point source provider",
+ cvSix["Sources"]===0&&cvSix["Fits"]===1&&cvSix["FitInput"]["PreparedAmplitudes"]==={{cvRules[{"e","E","A.+","A.+","A.+","A.-"}],11}}];
 cvBad=cvRun[cvCase,"bad certificate"];
 check["a numerical-fit certificate cannot authorize source validation",cvBad["Sources"]===1&&cvBad["Fits"]===1&&cvBad["Checks"]==={}];
 cvForeign=cvRun[cvCase,"wrong scope"];
@@ -98,6 +101,16 @@ check["a foreign model hash cannot authorize source validation",cvForeign["Fits"
 cvUnsupported=cvRun[cvCase,"unsupported"];
 check["unsupported sources fall through to the original prepared diagrams",
  cvUnsupported["Fits"]===1&&cvUnsupported["FitInput"]["PreparedAmplitudes"]==={{cvRules[cvCase],11}}];
+cvUnsupportedQuartic=cvRun[cvCase,"unsupported used quartic"];
+check["a provider refusal for an unsupported used quartic preserves the ordinary fallback and original targets",
+ cvUnsupportedQuartic["Sources"]===1&&cvUnsupportedQuartic["Fits"]===1&&cvUnsupportedQuartic["Checks"]==={}&&
+ cvUnsupportedQuartic["FitInput"]["PreparedAmplitudes"]==={{cvRules[cvCase],11}}&&
+ cvUnsupportedQuartic["Result"]["Stages"]["Generating factorization channels"]===cvChannels];
+cvUnsupportedOperator=cvRun[cvCase,"unsupported used operator"];
+check["a provider refusal for an unsupported used operator preserves the ordinary fallback and original targets",
+ cvUnsupportedOperator["Sources"]===1&&cvUnsupportedOperator["Fits"]===1&&cvUnsupportedOperator["Checks"]==={}&&
+ cvUnsupportedOperator["FitInput"]["PreparedAmplitudes"]==={{cvRules[cvCase],11}}&&
+ cvUnsupportedOperator["Result"]["Stages"]["Generating factorization channels"]===cvChannels];
 cvRejected=cvRun[cvCase,"failed validation"];
 check["a failed source restores the previous pair selection and check report",
  cvRejected["Fits"]===1&&cvRejected["Result"]["CandidateAmplitude"]===Missing["NotConstructed"]&&
@@ -121,7 +134,32 @@ check["the calibrated-contact class uses the same independent three-assignment a
 check["controlled dispatch probes restore all existing production and source definitions",
  cvOriginalDefinitions==={DownValues[ConstructAmplitude],DownValues[CheckAmplitudes],DownValues[CompleteFactorization],
  DownValues[PrepareAmplitudes],DownValues[HEPCATCovariantCurrentSources`Private`covariantCurrentSource]}];
-If[checks=!=20,AppendTo[failures,"Not every constructor-source assertion executed"]];
+
+check["accepted early sources never prepare unused ordinary diagrams or channels",
+ !AnyTrue[cvGood["Preparations"],MemberQ[{ {{cvRules[cvCase],11}}, cvChannels}, #["Input"]]&]];
+check["early source starts only after original raw diagrams and channels exist",
+ With[{stages=Lookup[cvGood["Result"]["StageTimings"],"Stage",{}]},
+  FirstPosition[stages,"Generating diagrams"][[1]]<FirstPosition[stages,"Generating factorization channels"][[1]]<
+  FirstPosition[stages,"Building certified covariant source"][[1]]]];
+check["rejected early source resumes ordinary diagram and channel preparation",
+ KeyExistsQ[cvRejected["Result"]["Stages"],"Preparing diagrams"]&&KeyExistsQ[cvRejected["Result"]["Stages"],"Preparing factorization channels"]&&cvRejected["Fits"]===1];
+check["existing QED5 guard preserves preparation before channels",
+ With[{stages=Lookup[cvPhotons["Result"]["StageTimings"],"Stage",{}]},
+  FirstPosition[stages,"Preparing diagrams"][[1]]<FirstPosition[stages,"Generating factorization channels"][[1]]]];
+cvQED=ReadModel[FileNameJoin[{root,"models"}],3];
+cvQEDRows=Select[cvQED[[2]],Length[HEPCATCovariantCurrentSources`Private`rowParticles[#]]===3&];
+cvQEDGraphs={<|"VertexStructures"-><|0->(<|"ModelRow"->#|>&/@cvQEDRows)|>|>};
+check["early metadata excludes three-photon QED and used-row pure-Abelian four-fermion radiation",
+ !AssociationQ[ConstructiveDiagrams`Private`constructCovariantSourceMetadata[{"e","E","A.+","A.+","A.+"},cvQED,cvQEDGraphs,False]]&&
+ !AssociationQ[ConstructiveDiagrams`Private`constructCovariantSourceMetadata[{"e","E","E","e","A.+"},cvQED,cvQEDGraphs,False]]];
+
+If[checks=!=28,AppendTo[failures,"Not every constructor-source assertion executed"]];
+cvTestOutput=Environment["HEPCAT_TEST_OUTPUT"];
+If[StringQ[cvTestOutput]&&StringLength[cvTestOutput]>0,
+ If[!DirectoryQ[cvTestOutput],CreateDirectory[cvTestOutput,CreateIntermediateDirectories->True]];
+ Export[FileNameJoin[{cvTestOutput,"covariant-constructor-controls.json"}],<|"Status"->If[failures==={},"PASS","FAIL"],
+ "Checks"->checks,"Failures"->failures,"Source"->ConstructiveDiagrams`Private`$amplitudeParallelSourceDirectory,
+ "ActualCovariantAndContactProvidersStubbed"->True,"FixtureScope"->"ConstructorDispatchAcceptanceAndFallbackOnly"|>,"RawJSON"]];
 Print["COVARIANT CONSTRUCTOR CHECKS: ",checks,"; FAILURES: ",Length[failures]];
 If[failures=!={},Print[failures]];
 If[failures==={},Print["HEPCAT_TEST_COMPLETED:covariant-constructor-tests.wl"]];

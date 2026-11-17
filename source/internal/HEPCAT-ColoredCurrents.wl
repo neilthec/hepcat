@@ -219,4 +219,230 @@ ConstructiveDiagrams`Private`colorCurrentProjection[attempt_Association,pairs_Li
   "AllIndependentFeynmanPairsIncluded"->Length[benchmarkPairs],"CandidatePairIncluded"->True,
   "FullUnionRank"->Length[data["Basis"]],"ExactCommonUnionGramReconstruction"->True|>|>
 ];
+
+(* Additional typed four-fermion/vector proposals. Legacy scalar rules above remain literal. *)
+ConstructiveDiagrams`Private`colorCurrentVectorSourceClass[ConstructiveDiagrams`Private`process_List,ConstructiveDiagrams`Private`model_List]:=Module[
+ {ConstructiveDiagrams`Private`rows,ConstructiveDiagrams`Private`fermions,ConstructiveDiagrams`Private`vectors,ConstructiveDiagrams`Private`reps,ConstructiveDiagrams`Private`colored},
+ If[Length[ConstructiveDiagrams`Private`process]=!=5||!AllTrue[ConstructiveDiagrams`Private`process,StringQ]||Length[ConstructiveDiagrams`Private`model]=!=4||!AllTrue[ConstructiveDiagrams`Private`model,ListQ],Return[False]];
+ ConstructiveDiagrams`Private`rows=HEPCATCovariantCurrentSources`Private`particleRow[#,ConstructiveDiagrams`Private`model]&/@ConstructiveDiagrams`Private`process;
+ If[!AllTrue[ConstructiveDiagrams`Private`rows,ListQ[#]&&Length[#]===11&],Return[False]];
+ ConstructiveDiagrams`Private`fermions=Select[ConstructiveDiagrams`Private`rows,#[[5]]===1&];ConstructiveDiagrams`Private`vectors=Select[ConstructiveDiagrams`Private`rows,#[[5]]===2&];
+ If[Length[ConstructiveDiagrams`Private`fermions]=!=4||Length[ConstructiveDiagrams`Private`vectors]=!=1||!MemberQ[{1,8},First[ConstructiveDiagrams`Private`vectors][[8]]]||
+  !AllTrue[ConstructiveDiagrams`Private`fermions,HEPCATCovariantCurrentSources`Private`supportedFermionRowQ[#]&&MemberQ[{1,3},Abs[#[[8]]]]&],Return[False]];
+ ConstructiveDiagrams`Private`reps=ConstructiveDiagrams`Private`colorParticleRepresentation[#,ConstructiveDiagrams`Private`model]&/@ConstructiveDiagrams`Private`process;
+ If[AnyTrue[ConstructiveDiagrams`Private`reps,FailureQ],Return[False]];ConstructiveDiagrams`Private`colored=DeleteCases[ConstructiveDiagrams`Private`reps,1];
+ Which[First[ConstructiveDiagrams`Private`vectors][[8]]===1, MemberQ[{2,4},Length[ConstructiveDiagrams`Private`colored]]&&Count[ConstructiveDiagrams`Private`colored,3]===Count[ConstructiveDiagrams`Private`colored,-3],
+  First[ConstructiveDiagrams`Private`vectors][[8]]===8, First[ConstructiveDiagrams`Private`vectors][[6]]===0&&Sort[ConstructiveDiagrams`Private`reps]==={-3,1,1,3,8}, True,False]
+];
+ConstructiveDiagrams`Private`colorCurrentVectorSourceClass[___]:=False;
+
+ConstructiveDiagrams`Private`colorCurrentEncodeVector[ConstructiveDiagrams`Private`expression_,ConstructiveDiagrams`Private`process_List,ConstructiveDiagrams`Private`model_List]:=Module[{ConstructiveDiagrams`Private`rows,ConstructiveDiagrams`Private`legs},
+ ConstructiveDiagrams`Private`rows=HEPCATCovariantCurrentSources`Private`particleRow[#,ConstructiveDiagrams`Private`model]&/@ConstructiveDiagrams`Private`process;
+ If[!AllTrue[ConstructiveDiagrams`Private`rows,ListQ[#]&&Length[#]===11&],Return[Failure["UnknownExternalVectorMetadata",<||>]]];
+ ConstructiveDiagrams`Private`legs=Select[Range[Length[ConstructiveDiagrams`Private`process]],ConstructiveDiagrams`Private`rows[[#,5]]===2&&ConstructiveDiagrams`Private`rows[[#,6]]=!=0&];
+ ConstructiveDiagrams`Private`expression/.((HoldPattern[ConstructiveDiagrams`Spinor["Spin","Upper",ConstructiveDiagrams`Private`kind:("Angle"|"Square"),ConstructiveDiagrams`Private`leg_Integer,
+   ConstructiveDiagrams`VectorSpinIndex[ConstructiveDiagrams`Private`leg_Integer,1|2]]]/;MemberQ[ConstructiveDiagrams`Private`legs,ConstructiveDiagrams`Private`leg]):>ConstructiveDiagrams`Spinor["Spin",ConstructiveDiagrams`Private`kind,ConstructiveDiagrams`Private`leg])
+];
+(* Source flow comes from the model-owned ordered endpoint certificate. Actual
+   differentiated Feynman paths are read only from genuine lifted diagrams. *)
+
+ConstructiveDiagrams`Private`colorCurrentWickWitness[ConstructiveDiagrams`Private`certificates_List,ConstructiveDiagrams`Private`diagrams_:None]:=Module[
+ {ConstructiveDiagrams`Private`pairs,ConstructiveDiagrams`Private`paths,ConstructiveDiagrams`Private`actual,ConstructiveDiagrams`Private`signs,ConstructiveDiagrams`Private`required={"Graph","ExternalParticles","CanonicalExternalParticles","Spin2","FermionRole","Propagators","LeafVertices"}},
+ If[!AllTrue[ConstructiveDiagrams`Private`certificates,AssociationQ[#]&&ListQ[Lookup[#,"OrientedFermionEndpoints",None]]&],
+  Return[Failure["MissingOrderedSourceFermionEndpoints",<||>]]];
+ ConstructiveDiagrams`Private`pairs=(Reverse/@#["OrientedFermionEndpoints"]&/@ConstructiveDiagrams`Private`certificates);
+ If[!AllTrue[ConstructiveDiagrams`Private`pairs,Function[ConstructiveDiagrams`Private`lines,ConstructiveDiagrams`Private`lines=!={}&&AllTrue[ConstructiveDiagrams`Private`lines,MatchQ[#,{_Integer?Positive,_Integer?Positive}]&&First[#]=!=Last[#]&]&&DuplicateFreeQ[Flatten[ConstructiveDiagrams`Private`lines]]]],
+  Return[Failure["MalformedOrderedSourceFermionEndpoints",<||>]]];
+ ConstructiveDiagrams`Private`signs=ConstructiveDiagrams`Private`feynmanFermionPairSign/@ConstructiveDiagrams`Private`pairs;
+ If[!AllTrue[ConstructiveDiagrams`Private`signs,MemberQ[{-1,1},#]&],Return[Failure["UnresolvedSourcePairingWickParity",<||>]]];
+ If[ConstructiveDiagrams`Private`diagrams=!=None,
+  If[!ListQ[ConstructiveDiagrams`Private`diagrams]||Length[ConstructiveDiagrams`Private`diagrams]=!=Length[ConstructiveDiagrams`Private`certificates]||!AllTrue[ConstructiveDiagrams`Private`diagrams,AssociationQ[#]&&ContainsAll[Keys[#],ConstructiveDiagrams`Private`required]&],
+   Return[Failure["MissingDifferentiatedFeynmanDiagramMetadata",<||>]]];
+  ConstructiveDiagrams`Private`paths=ConstructiveDiagrams`Private`feynmanFermionPaths/@ConstructiveDiagrams`Private`diagrams;
+  If[!AllTrue[ConstructiveDiagrams`Private`paths,ListQ]||!FreeQ[ConstructiveDiagrams`Private`paths,_Failure],Return[Failure["UnresolvedDifferentiatedFermionFlow",<||>]]];
+  ConstructiveDiagrams`Private`actual=Map[({First[#],Last[#]}&),ConstructiveDiagrams`Private`paths,{2}];
+  If[!And@@MapThread[Sort[#1]===Sort[#2]&,{ConstructiveDiagrams`Private`actual,ConstructiveDiagrams`Private`pairs}]||
+    (ConstructiveDiagrams`Private`feynmanFermionPairSign/@ConstructiveDiagrams`Private`actual)=!=ConstructiveDiagrams`Private`signs,
+   Return[Failure["ActualFeynmanEndpointsOrWickParityDifferFromSource",<||>]]]];
+ MapThread[<|"BarToKetEndpoints"->Sort[#1],"WickParity"->#2|>&,{ConstructiveDiagrams`Private`pairs,ConstructiveDiagrams`Private`signs}]
+];
+
+
+ConstructiveDiagrams`Private`colorVectorCurrentSource[ConstructiveDiagrams`Private`ccsProcess_List,ConstructiveDiagrams`Private`ccsModel_List]:=Module[
+ {ConstructiveDiagrams`Private`ccsTag=Unique["coloredCurrent"],ConstructiveDiagrams`Private`ccsAbort,ConstructiveDiagrams`Private`ccsRows,ConstructiveDiagrams`Private`ccsFermions,ConstructiveDiagrams`Private`ccsScalars,ConstructiveDiagrams`Private`ccsBefore,ConstructiveDiagrams`Private`ccsOriginal,ConstructiveDiagrams`Private`ccsData,ConstructiveDiagrams`Private`ccsDiagrams,
+ ConstructiveDiagrams`Private`ccsUsed,ConstructiveDiagrams`Private`ccsNeeded,ConstructiveDiagrams`Private`ccsTemporary,ConstructiveDiagrams`Private`ccsCatalog,ConstructiveDiagrams`Private`ccsLifted,ConstructiveDiagrams`Private`ccsOriginalCertificates,ConstructiveDiagrams`Private`ccsLiftedCertificates,ConstructiveDiagrams`Private`ccsOriginalSigns,
+ ConstructiveDiagrams`Private`ccsLiftedSigns,ConstructiveDiagrams`Private`ccsRepresentations,ConstructiveDiagrams`Private`ccsColoredRepresentations,ConstructiveDiagrams`Private`ccsCandidates,ConstructiveDiagrams`Private`ccsCoordinates,ConstructiveDiagrams`Private`ccsMappedCoordinates,ConstructiveDiagrams`Private`ccsMapping={},ConstructiveDiagrams`Private`ccsMatches,ConstructiveDiagrams`Private`ccsUnmatched,ConstructiveDiagrams`Private`ccsOriginalPairs,
+ ConstructiveDiagrams`Private`ccsConverted,ConstructiveDiagrams`Private`ccsExternal,ConstructiveDiagrams`Private`ccsTerms,ConstructiveDiagrams`Private`ccsExpression,ConstructiveDiagrams`Private`ccsExpected,ConstructiveDiagrams`Private`ccsWeights,ConstructiveDiagrams`Private`ccsLocal={},ConstructiveDiagrams`Private`ccsStructure,ConstructiveDiagrams`Private`ccsLegs,ConstructiveDiagrams`Private`ccsTensor,
+ ConstructiveDiagrams`Private`ccsRow,ConstructiveDiagrams`Private`ccsVertex,ConstructiveDiagrams`Private`ccsI,ConstructiveDiagrams`Private`ccsJ,ConstructiveDiagrams`Private`ccsKind,ConstructiveDiagrams`Private`ccsRowsByName,ConstructiveDiagrams`Private`ccsAlias,ConstructiveDiagrams`Private`ccsReconstructed,ConstructiveDiagrams`Private`ccsRawExpression,ConstructiveDiagrams`Private`ccsVectorQ,ConstructiveDiagrams`Private`ccsOriginalWick,ConstructiveDiagrams`Private`ccsLiftedWick},
+ Catch[
+ ConstructiveDiagrams`Private`ccsAbort[ConstructiveDiagrams`Private`ccsReason_,ConstructiveDiagrams`Private`ccsDetails_:<||>]:=Throw[Failure[ConstructiveDiagrams`Private`ccsReason,ConstructiveDiagrams`Private`ccsDetails],ConstructiveDiagrams`Private`ccsTag];
+ ConstructiveDiagrams`Private`ccsBefore=HEPCATCovariantCurrentSources`Private`objectSHA[ConstructiveDiagrams`Private`ccsModel];
+ ConstructiveDiagrams`Private`ccsVectorQ=ConstructiveDiagrams`Private`colorCurrentVectorSourceClass[ConstructiveDiagrams`Private`ccsProcess,ConstructiveDiagrams`Private`ccsModel];
+ If[!ConstructiveDiagrams`Private`colorCurrentSourceClass[ConstructiveDiagrams`Private`ccsProcess,ConstructiveDiagrams`Private`ccsModel],
+  ConstructiveDiagrams`Private`ccsAbort["UnsupportedExternalMassiveColoredFourFermionScalarClass"]];
+ ConstructiveDiagrams`Private`ccsOriginal=ConstructiveDiagrams`CreateDiagrams[ConstructiveDiagrams`Private`ccsProcess,ConstructiveDiagrams`Private`ccsModel];
+ If[!ListQ[ConstructiveDiagrams`Private`ccsOriginal]||ConstructiveDiagrams`Private`ccsOriginal==={}||!AllTrue[ConstructiveDiagrams`Private`ccsOriginal,AssociationQ],ConstructiveDiagrams`Private`ccsAbort["OriginalDiagramGenerationIncomplete"]];
+ ConstructiveDiagrams`Private`ccsData=ConstructiveDiagrams`Private`colorDiagramBasis[ConstructiveDiagrams`Private`ccsOriginal,ConstructiveDiagrams`Private`ccsModel];
+ If[!AssociationQ[ConstructiveDiagrams`Private`ccsData],ConstructiveDiagrams`Private`ccsAbort["OriginalColorProjectionIncomplete",<|"Reason"->ConstructiveDiagrams`Private`ccsData|>]];
+ ConstructiveDiagrams`Private`ccsDiagrams=ConstructiveDiagrams`Private`ccsData["Diagrams"];
+ If[Sort[DeleteDuplicates[ConstructiveDiagrams`Private`ccsData["DiagramOrigins"]]]=!=Range[Length[ConstructiveDiagrams`Private`ccsOriginal]],ConstructiveDiagrams`Private`ccsAbort["IncompleteOriginalHelicityBlockCoverage"]];
+ ConstructiveDiagrams`Private`ccsUsed=HEPCATCovariantCurrentSources`Private`usedRows[ConstructiveDiagrams`Private`ccsDiagrams];
+ If[ConstructiveDiagrams`Private`ccsUsed==={}||!AllTrue[ConstructiveDiagrams`Private`ccsUsed,Length[HEPCATCovariantCurrentSources`Private`rowParticles[#]]===3&],ConstructiveDiagrams`Private`ccsAbort["UnsupportedUsedArity"]];
+ If[!FreeQ[ConstructiveDiagrams`Private`ccsUsed,_ConstructiveDiagrams`ColorIndex|_ConstructiveDiagrams`ColorDelta|_ConstructiveDiagrams`ColorGenerator|_ConstructiveDiagrams`ColorStructure|_ConstructiveDiagrams`ColorTrace],ConstructiveDiagrams`Private`ccsAbort["ExplicitStoredColorNeedsSeparateFactorizationProof"]];
+ ConstructiveDiagrams`Private`ccsNeeded=DeleteDuplicates[Flatten[HEPCATCovariantCurrentSources`Private`rowParticles/@ConstructiveDiagrams`Private`ccsUsed]];
+ If[!AllTrue[HEPCATCovariantCurrentSources`Private`particleRow[#,ConstructiveDiagrams`Private`ccsModel]&/@ConstructiveDiagrams`Private`ccsNeeded,
+  ListQ[#]&&MemberQ[{1,3,-3,8},#[[8]]]&],ConstructiveDiagrams`Private`ccsAbort["UnsupportedUsedRepresentation"]];
+ Do[
+  ConstructiveDiagrams`Private`ccsStructure=Last[ConstructiveDiagrams`Private`ccsDiagrams[[ConstructiveDiagrams`Private`ccsI]]["VertexStructures"][ConstructiveDiagrams`Private`ccsVertex]];
+  ConstructiveDiagrams`Private`ccsLegs=MapIndexed[Join[#1,<|"ColorIndex"->ConstructiveDiagrams`ColorIndex[First[#2]]|>]&,ConstructiveDiagrams`Private`ccsStructure["IncidentLegs"]];
+  ConstructiveDiagrams`Private`ccsTensor=ConstructiveDiagrams`Private`colorVertexTensor[ConstructiveDiagrams`Private`ccsLegs,ConstructiveDiagrams`Private`ccsModel,ConstructiveDiagrams`Private`ccsStructure["ModelRow"]];
+  If[!MatchQ[ConstructiveDiagrams`Private`ccsTensor,1|_ConstructiveDiagrams`ColorDelta|_ConstructiveDiagrams`ColorGenerator],ConstructiveDiagrams`Private`ccsAbort["UnsupportedLocalColorOperator",<|"Tensor"->ConstructiveDiagrams`Private`ccsTensor|>]];
+  AppendTo[ConstructiveDiagrams`Private`ccsLocal,<|"Diagram"->ConstructiveDiagrams`Private`ccsI,"Vertex"->ConstructiveDiagrams`Private`ccsVertex,"OrderedParticles"->Lookup[ConstructiveDiagrams`Private`ccsLegs,"Particle"],
+   "SourceModelRow"->ConstructiveDiagrams`Private`ccsStructure["ModelRow"],"LocalColorOperator"->ConstructiveDiagrams`Private`ccsTensor,"KinematicsIndependent"->True|>],
+  {ConstructiveDiagrams`Private`ccsI,Length[ConstructiveDiagrams`Private`ccsDiagrams]},{ConstructiveDiagrams`Private`ccsVertex,ConstructiveDiagrams`Private`ccsDiagrams[[ConstructiveDiagrams`Private`ccsI]]["InternalVertices"]}];
+ ConstructiveDiagrams`Private`ccsTemporary=ReplacePart[ConstructiveDiagrams`Private`ccsModel,1->(ReplacePart[#,8->1]&/@ConstructiveDiagrams`Private`ccsModel[[1]])];
+ ConstructiveDiagrams`Private`ccsCatalog=HEPCATCovariantCurrentSources`Private`sourceCatalog[ConstructiveDiagrams`Private`ccsTemporary,ConstructiveDiagrams`Private`ccsUsed];
+ If[!AssociationQ[ConstructiveDiagrams`Private`ccsCatalog],ConstructiveDiagrams`Private`ccsAbort["ExactLorentzCatalogUnavailable",<|"Reason"->ConstructiveDiagrams`Private`ccsCatalog|>]];
+ ConstructiveDiagrams`Private`ccsLifted=ConstructiveDiagrams`CreateDiagrams[ConstructiveDiagrams`Private`ccsProcess,ConstructiveDiagrams`Private`ccsCatalog["Model"]];
+ If[!ListQ[ConstructiveDiagrams`Private`ccsLifted]||ConstructiveDiagrams`Private`ccsLifted==={}||!AllTrue[ConstructiveDiagrams`Private`ccsLifted,AssociationQ],ConstructiveDiagrams`Private`ccsAbort["LiftedDiagramGenerationIncomplete"]];
+ ConstructiveDiagrams`Private`ccsOriginalCertificates=HEPCATCovariantCurrentSources`Private`diagramCertificate[#,ConstructiveDiagrams`Private`ccsCatalog,ConstructiveDiagrams`Private`ccsTemporary,False]&/@ConstructiveDiagrams`Private`ccsDiagrams;
+ ConstructiveDiagrams`Private`ccsLiftedCertificates=HEPCATCovariantCurrentSources`Private`diagramCertificate[#,ConstructiveDiagrams`Private`ccsCatalog,ConstructiveDiagrams`Private`ccsTemporary,True]&/@ConstructiveDiagrams`Private`ccsLifted;
+ If[!AllTrue[Join[ConstructiveDiagrams`Private`ccsOriginalCertificates,ConstructiveDiagrams`Private`ccsLiftedCertificates],AssociationQ],ConstructiveDiagrams`Private`ccsAbort["IncompleteOrderedGraphCertificate"]];
+ ConstructiveDiagrams`Private`ccsOriginalSigns=ConstructiveDiagrams`diagramFermionSign/@ConstructiveDiagrams`Private`ccsDiagrams;
+ ConstructiveDiagrams`Private`ccsLiftedSigns=ConstructiveDiagrams`diagramFermionSign/@ConstructiveDiagrams`Private`ccsLifted;
+ If[!AllTrue[Join[ConstructiveDiagrams`Private`ccsOriginalSigns,ConstructiveDiagrams`Private`ccsLiftedSigns],MemberQ[{-1,1},#]&],ConstructiveDiagrams`Private`ccsAbort["UnresolvedGraphFermionSign"]];
+ If[ConstructiveDiagrams`Private`ccsVectorQ,
+  ConstructiveDiagrams`Private`ccsOriginalWick=ConstructiveDiagrams`Private`colorCurrentWickWitness[ConstructiveDiagrams`Private`ccsOriginalCertificates];
+  ConstructiveDiagrams`Private`ccsLiftedWick=ConstructiveDiagrams`Private`colorCurrentWickWitness[ConstructiveDiagrams`Private`ccsLiftedCertificates,ConstructiveDiagrams`Private`ccsLifted];
+  If[FailureQ[ConstructiveDiagrams`Private`ccsOriginalWick]||FailureQ[ConstructiveDiagrams`Private`ccsLiftedWick],ConstructiveDiagrams`Private`ccsAbort["UnresolvedDifferentiatedFermionFlow"]]];
+ ConstructiveDiagrams`Private`ccsCoordinates=ConstructiveDiagrams`Private`ccsData["DiagramCoordinates"];ConstructiveDiagrams`Private`ccsUnmatched=Range[Length[ConstructiveDiagrams`Private`ccsDiagrams]];
+ Do[
+  ConstructiveDiagrams`Private`ccsMatches=Select[ConstructiveDiagrams`Private`ccsUnmatched,SameQ[ConstructiveDiagrams`Private`ccsOriginalCertificates[[#]],ConstructiveDiagrams`Private`ccsLiftedCertificates[[ConstructiveDiagrams`Private`ccsJ]]]&&ConstructiveDiagrams`Private`ccsOriginalSigns[[#]]===ConstructiveDiagrams`Private`ccsLiftedSigns[[ConstructiveDiagrams`Private`ccsJ]]&&
+   (!ConstructiveDiagrams`Private`ccsVectorQ||ConstructiveDiagrams`Private`ccsOriginalWick[[#]]===ConstructiveDiagrams`Private`ccsLiftedWick[[ConstructiveDiagrams`Private`ccsJ]])&];
+  If[ConstructiveDiagrams`Private`ccsMatches==={},ConstructiveDiagrams`Private`ccsAbort["NoOrderedGraphColorCorrespondence",<|"LiftedIndex"->ConstructiveDiagrams`Private`ccsJ|>]];
+  If[Length[ConstructiveDiagrams`Private`ccsMatches]>1&&!TrueQ[SameQ@@ConstructiveDiagrams`Private`ccsCoordinates[[ConstructiveDiagrams`Private`ccsMatches]]],ConstructiveDiagrams`Private`ccsAbort["AmbiguousGraphColorCorrespondence"]];
+  ConstructiveDiagrams`Private`ccsI=First[ConstructiveDiagrams`Private`ccsMatches];AppendTo[ConstructiveDiagrams`Private`ccsMapping,<|"LiftedIndex"->ConstructiveDiagrams`Private`ccsJ,"OriginalIndex"->ConstructiveDiagrams`Private`ccsI,"OriginalOrigin"->ConstructiveDiagrams`Private`ccsData["DiagramOrigins"][[ConstructiveDiagrams`Private`ccsI]],
+   "OrderedGraphCertificate"->ConstructiveDiagrams`Private`ccsLiftedCertificates[[ConstructiveDiagrams`Private`ccsJ]],"OriginalFermionSign"->ConstructiveDiagrams`Private`ccsOriginalSigns[[ConstructiveDiagrams`Private`ccsI]],
+   "LiftedFermionSign"->ConstructiveDiagrams`Private`ccsLiftedSigns[[ConstructiveDiagrams`Private`ccsJ]],"ColorCoordinates"->ConstructiveDiagrams`Private`ccsCoordinates[[ConstructiveDiagrams`Private`ccsI]],"EquivalentColorBucket"->ConstructiveDiagrams`Private`ccsMatches|>];
+  ConstructiveDiagrams`Private`ccsUnmatched=DeleteCases[ConstructiveDiagrams`Private`ccsUnmatched,ConstructiveDiagrams`Private`ccsI],{ConstructiveDiagrams`Private`ccsJ,Length[ConstructiveDiagrams`Private`ccsLifted]}];
+ If[ConstructiveDiagrams`Private`ccsUnmatched=!={}||Length[ConstructiveDiagrams`Private`ccsMapping]=!=Length[ConstructiveDiagrams`Private`ccsDiagrams],ConstructiveDiagrams`Private`ccsAbort["IncompletePerGraphCoverage"]];
+ ConstructiveDiagrams`Private`ccsOriginalPairs=ConstructiveDiagrams`DiagramAmplitudes[ConstructiveDiagrams`Private`ccsLifted];
+ ConstructiveDiagrams`Private`ccsConverted=ConstructiveDiagrams`FeynmanToSpinorProducts[ConstructiveDiagrams`Private`ccsOriginalPairs,"ReferenceSpinors"->Automatic,"ReduceSpinorProducts"->False,"TimeConstraint"->90];
+ If[!TrueQ[ConstructiveDiagrams`Private`constructBenchmarkConversionCompleteQ[ConstructiveDiagrams`Private`ccsOriginalPairs,ConstructiveDiagrams`Private`ccsConverted]],ConstructiveDiagrams`Private`ccsAbort["IncompleteOffShellConversion"]];
+ ConstructiveDiagrams`Private`ccsExternal=First[First[ConstructiveDiagrams`Private`ccsConverted]];
+ If[!AllTrue[ConstructiveDiagrams`Private`ccsConverted,First[#]===ConstructiveDiagrams`Private`ccsExternal&],ConstructiveDiagrams`Private`ccsAbort["ExternalMassOrderingMismatch"]];
+ ConstructiveDiagrams`Private`ccsMappedCoordinates=Lookup[ConstructiveDiagrams`Private`ccsMapping,"ColorCoordinates"];
+ ConstructiveDiagrams`Private`ccsTerms=MapThread[Times,{Last/@ConstructiveDiagrams`Private`ccsConverted,(#.ConstructiveDiagrams`Private`ccsData["Basis"]&/@ConstructiveDiagrams`Private`ccsMappedCoordinates)}];
+ ConstructiveDiagrams`Private`ccsRawExpression=Total[ConstructiveDiagrams`Private`ccsTerms];
+ ConstructiveDiagrams`Private`ccsExpression=If[ConstructiveDiagrams`Private`ccsVectorQ,ConstructiveDiagrams`Private`colorCurrentEncodeVector[ConstructiveDiagrams`Private`ccsRawExpression,ConstructiveDiagrams`Private`ccsProcess,ConstructiveDiagrams`Private`ccsTemporary],ConstructiveDiagrams`Private`ccsRawExpression];
+ If[!FreeQ[ConstructiveDiagrams`Private`ccsExpression,_ConstructiveDiagrams`VectorSpinIndex],ConstructiveDiagrams`Private`ccsAbort["UnencodedCoherentVectorSlot"]];
+ ConstructiveDiagrams`Private`ccsExpected=HEPCATCovariantCurrentSources`Private`declaredExternalSpinWeights[ConstructiveDiagrams`Private`ccsProcess,ConstructiveDiagrams`Private`ccsTemporary];
+ ConstructiveDiagrams`Private`ccsWeights=ConstructiveDiagrams`Private`completionExternalSpinWeights[ConstructiveDiagrams`Private`ccsExpression,ConstructiveDiagrams`Private`ccsExternal];
+ If[ConstructiveDiagrams`Private`ccsWeights=!=ConstructiveDiagrams`Private`ccsExpected,ConstructiveDiagrams`Private`ccsAbort["ExternalSpinWeightMismatch",<|"Expected"->ConstructiveDiagrams`Private`ccsExpected,"Actual"->ConstructiveDiagrams`Private`ccsWeights|>]];
+ If[ConstructiveDiagrams`Private`ccsBefore=!=HEPCATCovariantCurrentSources`Private`objectSHA[ConstructiveDiagrams`Private`ccsModel],ConstructiveDiagrams`Private`ccsAbort["OriginalModelChanged"]];
+ Join[<|"Status"->"UNVALIDATED_CANDIDATE","Amplitude"->{ConstructiveDiagrams`Private`ccsExternal,ConstructiveDiagrams`Private`ccsExpression},"Expression"->ConstructiveDiagrams`Private`ccsExpression,
+ "ExternalMassRules"->ConstructiveDiagrams`Private`ccsExternal,"ExternalParticles"->ConstructiveDiagrams`Private`ccsProcess,"CompleteSpinWeights"->ConstructiveDiagrams`Private`ccsWeights,
+ "NumericalParameterAssignments"->{},"NewIndependentContacts"->False,
+ "EveryOriginalDiagramCovered"->True,"EveryUsedOrderedVertexCertified"->True,
+ "Method"->"ExactPerGraphColoredMinimalCurrents",
+ "ContinuationAssumption"->"MinimalRenormalizableCovariantCurrentsOfExactlyMatchedElementaryVertices",
+ "Process"->ConstructiveDiagrams`Private`ccsProcess,"OriginalDiagramCount"->Length[ConstructiveDiagrams`Private`ccsOriginal],"ResolvedOriginalDiagramCount"->Length[ConstructiveDiagrams`Private`ccsDiagrams],
+ "LiftedDiagramCount"->Length[ConstructiveDiagrams`Private`ccsLifted],"PerGraphCorrespondence"->ConstructiveDiagrams`Private`ccsMapping,"LocalColorCertificates"->ConstructiveDiagrams`Private`ccsLocal,
+ "VertexCertificates"->ConstructiveDiagrams`Private`ccsCatalog["Certificates"],"OriginalColorProjection"->ConstructiveDiagrams`Private`ccsData,
+ "OriginalGraphCertificates"->ConstructiveDiagrams`Private`ccsOriginalCertificates,"LiftedGraphCertificates"->ConstructiveDiagrams`Private`ccsLiftedCertificates,
+ "ConvertedLorentzPairs"->ConstructiveDiagrams`Private`ccsConverted,"ColoredGraphTerms"->ConstructiveDiagrams`Private`ccsTerms,"ModelParametersUnchanged"->SameQ[ConstructiveDiagrams`Private`ccsModel[[3;;4]],ConstructiveDiagrams`Private`ccsTemporary[[3;;4]]],
+ "SourceModelSHA256"->ConstructiveDiagrams`Private`ccsBefore,"TemporaryModelSHA256"->HEPCATCovariantCurrentSources`Private`objectSHA[ConstructiveDiagrams`Private`ccsTemporary],
+ "EveryOriginalOrderedGraphAndFermionSignMatched"->True,"CompleteOffShellConversionCoverage"->True,
+ "NumericalCoefficientFit"->False,"IndependentBenchmarkRead"->False,"NativeValidationPerformed"->False,
+ "InternalOnShellConditions"->{},"RequiresCheckAmplitudes"->True|>,
+ If[ConstructiveDiagrams`Private`ccsVectorQ,<|"RawTensorExpression"->ConstructiveDiagrams`Private`ccsRawExpression,
+  "CoherentExternalVectorEncoding"-><|"Method"->"InjectiveHomogeneousSymmetricSpinPolynomial",
+   "VectorLegs"->Select[Range[Length[ConstructiveDiagrams`Private`ccsProcess]],With[{ConstructiveDiagrams`Private`r=HEPCATCovariantCurrentSources`Private`particleRow[ConstructiveDiagrams`Private`ccsProcess[[#]],ConstructiveDiagrams`Private`ccsTemporary]},ConstructiveDiagrams`Private`r[[5]]===2&&ConstructiveDiagrams`Private`r[[6]]=!=0]&],
+   "RawTensorRetained"->True,"CompleteSpinWeights"->ConstructiveDiagrams`Private`ccsWeights,"OffShellKinematicsChanged"->False|>,
+  "OriginalOrderedEndpointWickWitnesses"->ConstructiveDiagrams`Private`ccsOriginalWick,"LiftedDifferentiatedWickWitnesses"->ConstructiveDiagrams`Private`ccsLiftedWick|>,<||>]]
+ ,ConstructiveDiagrams`Private`ccsTag]
+];
+
+
+ConstructiveDiagrams`Private`colorVectorCurrentSourceCertificate[ConstructiveDiagrams`Private`cvSource_Association,ConstructiveDiagrams`Private`cvModel_List]:=Module[
+ {ConstructiveDiagrams`Private`cvTag=Unique["replay"],ConstructiveDiagrams`Private`cvRequire,ConstructiveDiagrams`Private`cvData,ConstructiveDiagrams`Private`cvResolvedData,ConstructiveDiagrams`Private`cvDiagrams,ConstructiveDiagrams`Private`cvUsed,ConstructiveDiagrams`Private`cvTemporary,ConstructiveDiagrams`Private`cvCatalog,ConstructiveDiagrams`Private`cvLifted,
+ ConstructiveDiagrams`Private`cvOriginalCertificates,ConstructiveDiagrams`Private`cvLiftedCertificates,ConstructiveDiagrams`Private`cvOriginalSigns,ConstructiveDiagrams`Private`cvLiftedSigns,ConstructiveDiagrams`Private`cvRepresentations,
+ ConstructiveDiagrams`Private`cvOriginalTensors,ConstructiveDiagrams`Private`cvBasisVectors,ConstructiveDiagrams`Private`cvOriginalVectors,ConstructiveDiagrams`Private`cvGram,ConstructiveDiagrams`Private`cvCoordinates,ConstructiveDiagrams`Private`cvMap,ConstructiveDiagrams`Private`cvPairs,ConstructiveDiagrams`Private`cvExpectedPairs,
+ ConstructiveDiagrams`Private`cvTerms,ConstructiveDiagrams`Private`cvExpression,ConstructiveDiagrams`Private`cvLocalExpected={},ConstructiveDiagrams`Private`cvStructure,ConstructiveDiagrams`Private`cvLegs,ConstructiveDiagrams`Private`cvOperator,ConstructiveDiagrams`Private`cvI,ConstructiveDiagrams`Private`cvJ,ConstructiveDiagrams`Private`cvVertex,ConstructiveDiagrams`Private`cvEntry},
+ Catch[
+ ConstructiveDiagrams`Private`cvRequire[ConstructiveDiagrams`Private`cvValue_,ConstructiveDiagrams`Private`cvReason_]:=If[!TrueQ[ConstructiveDiagrams`Private`cvValue],Throw[Failure[ConstructiveDiagrams`Private`cvReason,<||>],ConstructiveDiagrams`Private`cvTag]];
+ ConstructiveDiagrams`Private`cvRequire[Lookup[ConstructiveDiagrams`Private`cvSource,"Status",None]==="UNVALIDATED_CANDIDATE","ProposalStatusMustRemainUnvalidated"];
+ ConstructiveDiagrams`Private`cvRequire[ConstructiveDiagrams`Private`cvSource["SourceModelSHA256"]===HEPCATCovariantCurrentSources`Private`objectSHA[ConstructiveDiagrams`Private`cvModel],"SourceModelOwnership"];
+ ConstructiveDiagrams`Private`cvData=ConstructiveDiagrams`Private`cvSource["OriginalColorProjection"];ConstructiveDiagrams`Private`cvDiagrams=ConstructiveDiagrams`Private`cvData["Diagrams"];
+ ConstructiveDiagrams`Private`cvUsed=HEPCATCovariantCurrentSources`Private`usedRows[ConstructiveDiagrams`Private`cvDiagrams];
+ ConstructiveDiagrams`Private`cvRequire[AllTrue[ConstructiveDiagrams`Private`cvUsed,MemberQ[ConstructiveDiagrams`Private`cvModel[[2]],#]&],"StoredVertexRowNotOwnedByModel"];
+ ConstructiveDiagrams`Private`cvTemporary=ReplacePart[ConstructiveDiagrams`Private`cvModel,1->(ReplacePart[#,8->1]&/@ConstructiveDiagrams`Private`cvModel[[1]])];
+ ConstructiveDiagrams`Private`cvRequire[ConstructiveDiagrams`Private`cvSource["TemporaryModelSHA256"]===HEPCATCovariantCurrentSources`Private`objectSHA[ConstructiveDiagrams`Private`cvTemporary],"TemporaryModelOwnership"];
+ ConstructiveDiagrams`Private`cvCatalog=HEPCATCovariantCurrentSources`Private`sourceCatalog[ConstructiveDiagrams`Private`cvTemporary,ConstructiveDiagrams`Private`cvUsed];ConstructiveDiagrams`Private`cvRequire[AssociationQ[ConstructiveDiagrams`Private`cvCatalog],"ExactLocalVertexCatalog"];
+ ConstructiveDiagrams`Private`cvRequire[Sort[Lookup[ConstructiveDiagrams`Private`cvSource["VertexCertificates"],"CertificateID"]]===Sort[Lookup[ConstructiveDiagrams`Private`cvCatalog["Certificates"],"CertificateID"]],"LocalVertexCertificateBinding"];
+ ConstructiveDiagrams`Private`cvLifted=ConstructiveDiagrams`CreateDiagrams[ConstructiveDiagrams`Private`cvSource["Process"],ConstructiveDiagrams`Private`cvCatalog["Model"]];ConstructiveDiagrams`Private`cvRequire[ListQ[ConstructiveDiagrams`Private`cvLifted]&&ConstructiveDiagrams`Private`cvLifted=!={},"LiftedGraphsAvailable"];
+ ConstructiveDiagrams`Private`cvOriginalCertificates=HEPCATCovariantCurrentSources`Private`diagramCertificate[#,ConstructiveDiagrams`Private`cvCatalog,ConstructiveDiagrams`Private`cvTemporary,False]&/@ConstructiveDiagrams`Private`cvDiagrams;
+ ConstructiveDiagrams`Private`cvLiftedCertificates=HEPCATCovariantCurrentSources`Private`diagramCertificate[#,ConstructiveDiagrams`Private`cvCatalog,ConstructiveDiagrams`Private`cvTemporary,True]&/@ConstructiveDiagrams`Private`cvLifted;
+ ConstructiveDiagrams`Private`cvRequire[ConstructiveDiagrams`Private`cvOriginalCertificates===ConstructiveDiagrams`Private`cvSource["OriginalGraphCertificates"]&&ConstructiveDiagrams`Private`cvLiftedCertificates===ConstructiveDiagrams`Private`cvSource["LiftedGraphCertificates"],"OrderedGraphLedgerBinding"];
+ ConstructiveDiagrams`Private`cvOriginalSigns=ConstructiveDiagrams`diagramFermionSign/@ConstructiveDiagrams`Private`cvDiagrams;ConstructiveDiagrams`Private`cvLiftedSigns=ConstructiveDiagrams`diagramFermionSign/@ConstructiveDiagrams`Private`cvLifted;
+ ConstructiveDiagrams`Private`cvRepresentations=ConstructiveDiagrams`Private`colorParticleRepresentation[#,ConstructiveDiagrams`Private`cvModel]&/@ConstructiveDiagrams`Private`cvSource["Process"];
+ ConstructiveDiagrams`Private`cvRequire[ConstructiveDiagrams`Private`cvRepresentations===ConstructiveDiagrams`Private`cvData["Representations"],"ColorRepresentationBinding"];
+ ConstructiveDiagrams`Private`cvResolvedData=ConstructiveDiagrams`Private`colorDiagramBasis[ConstructiveDiagrams`Private`cvDiagrams,ConstructiveDiagrams`Private`cvModel];
+ ConstructiveDiagrams`Private`cvRequire[AssociationQ[ConstructiveDiagrams`Private`cvResolvedData]&&ConstructiveDiagrams`Private`cvResolvedData["DiagramOrigins"]===Range[Length[ConstructiveDiagrams`Private`cvDiagrams]],"ResolvedHelicityColorCoverage"];
+ ConstructiveDiagrams`Private`cvOriginalTensors=ConstructiveDiagrams`Private`cvResolvedData["DiagramTensors"];
+ ConstructiveDiagrams`Private`cvRequire[ConstructiveDiagrams`Private`cvOriginalTensors===ConstructiveDiagrams`Private`cvData["DiagramTensors"],"OriginalColorTensorBinding"];
+ ConstructiveDiagrams`Private`cvBasisVectors=Normal[ConstructiveDiagrams`Private`colorTensorVectorSparse[#,ConstructiveDiagrams`Private`cvRepresentations]]&/@ConstructiveDiagrams`Private`cvData["Basis"];
+ ConstructiveDiagrams`Private`cvOriginalVectors=Normal[ConstructiveDiagrams`Private`colorTensorVectorSparse[#,ConstructiveDiagrams`Private`cvRepresentations]]&/@ConstructiveDiagrams`Private`cvOriginalTensors;
+ ConstructiveDiagrams`Private`cvGram=Simplify[Conjugate[ConstructiveDiagrams`Private`cvBasisVectors].Transpose[ConstructiveDiagrams`Private`cvBasisVectors]];
+ ConstructiveDiagrams`Private`cvRequire[ConstructiveDiagrams`Private`cvGram===ConstructiveDiagrams`Private`cvData["GramMatrix"]&&MatrixRank[ConstructiveDiagrams`Private`cvGram]===Length[ConstructiveDiagrams`Private`cvBasisVectors],"ExactColorGramBinding"];
+ ConstructiveDiagrams`Private`cvCoordinates=ConstructiveDiagrams`Private`cvData["DiagramCoordinates"];
+ ConstructiveDiagrams`Private`cvRequire[ConstructiveDiagrams`Private`cvCoordinates.ConstructiveDiagrams`Private`cvBasisVectors===ConstructiveDiagrams`Private`cvOriginalVectors,"EveryGraphColorCoordinateReconstruction"];
+ Do[ConstructiveDiagrams`Private`cvStructure=Last[ConstructiveDiagrams`Private`cvDiagrams[[ConstructiveDiagrams`Private`cvI]]["VertexStructures"][ConstructiveDiagrams`Private`cvVertex]];
+  ConstructiveDiagrams`Private`cvLegs=MapIndexed[Join[#1,<|"ColorIndex"->ConstructiveDiagrams`ColorIndex[First[#2]]|>]&,ConstructiveDiagrams`Private`cvStructure["IncidentLegs"]];
+  ConstructiveDiagrams`Private`cvOperator=ConstructiveDiagrams`Private`colorVertexTensor[ConstructiveDiagrams`Private`cvLegs,ConstructiveDiagrams`Private`cvModel,ConstructiveDiagrams`Private`cvStructure["ModelRow"]];
+  AppendTo[ConstructiveDiagrams`Private`cvLocalExpected,<|"Diagram"->ConstructiveDiagrams`Private`cvI,"Vertex"->ConstructiveDiagrams`Private`cvVertex,"OrderedParticles"->Lookup[ConstructiveDiagrams`Private`cvLegs,"Particle"],"SourceModelRow"->ConstructiveDiagrams`Private`cvStructure["ModelRow"],"LocalColorOperator"->ConstructiveDiagrams`Private`cvOperator,"KinematicsIndependent"->True|>],
+  {ConstructiveDiagrams`Private`cvI,Length[ConstructiveDiagrams`Private`cvDiagrams]},{ConstructiveDiagrams`Private`cvVertex,ConstructiveDiagrams`Private`cvDiagrams[[ConstructiveDiagrams`Private`cvI]]["InternalVertices"]}];
+ ConstructiveDiagrams`Private`cvRequire[ConstructiveDiagrams`Private`cvLocalExpected===ConstructiveDiagrams`Private`cvSource["LocalColorCertificates"],"EveryLocalColorOperatorAndRowBinding"];
+ ConstructiveDiagrams`Private`cvMap=ConstructiveDiagrams`Private`cvSource["PerGraphCorrespondence"];
+ ConstructiveDiagrams`Private`cvRequire[Length[ConstructiveDiagrams`Private`cvMap]===Length[ConstructiveDiagrams`Private`cvDiagrams]===Length[ConstructiveDiagrams`Private`cvLifted]&&Sort[Lookup[ConstructiveDiagrams`Private`cvMap,"OriginalIndex"]]===Range[Length[ConstructiveDiagrams`Private`cvDiagrams]]&&Lookup[ConstructiveDiagrams`Private`cvMap,"LiftedIndex"]===Range[Length[ConstructiveDiagrams`Private`cvLifted]],"PerGraphBijection"];
+ Do[ConstructiveDiagrams`Private`cvEntry=ConstructiveDiagrams`Private`cvMap[[ConstructiveDiagrams`Private`cvJ]];ConstructiveDiagrams`Private`cvI=ConstructiveDiagrams`Private`cvEntry["OriginalIndex"];
+  ConstructiveDiagrams`Private`cvRequire[ConstructiveDiagrams`Private`cvEntry["OrderedGraphCertificate"]===ConstructiveDiagrams`Private`cvOriginalCertificates[[ConstructiveDiagrams`Private`cvI]]===ConstructiveDiagrams`Private`cvLiftedCertificates[[ConstructiveDiagrams`Private`cvJ]],"PerGraphOrderedPortAndCutMatch"];
+  ConstructiveDiagrams`Private`cvRequire[ConstructiveDiagrams`Private`cvEntry["OriginalFermionSign"]===ConstructiveDiagrams`Private`cvOriginalSigns[[ConstructiveDiagrams`Private`cvI]]===ConstructiveDiagrams`Private`cvEntry["LiftedFermionSign"]===ConstructiveDiagrams`Private`cvLiftedSigns[[ConstructiveDiagrams`Private`cvJ]],"PerGraphWickSignMatch"];
+  ConstructiveDiagrams`Private`cvRequire[ConstructiveDiagrams`Private`cvEntry["ColorCoordinates"]===ConstructiveDiagrams`Private`cvCoordinates[[ConstructiveDiagrams`Private`cvI]],"PerGraphColorCoordinateMatch"],{ConstructiveDiagrams`Private`cvJ,Length[ConstructiveDiagrams`Private`cvMap]}];
+ ConstructiveDiagrams`Private`cvPairs=ConstructiveDiagrams`Private`cvSource["ConvertedLorentzPairs"];
+ ConstructiveDiagrams`Private`cvExpectedPairs=ConstructiveDiagrams`FeynmanToSpinorProducts[ConstructiveDiagrams`DiagramAmplitudes[ConstructiveDiagrams`Private`cvLifted],"ReferenceSpinors"->Automatic,"ReduceSpinorProducts"->False,"TimeConstraint"->60];
+ ConstructiveDiagrams`Private`cvRequire[ConstructiveDiagrams`Private`cvPairs===ConstructiveDiagrams`Private`cvExpectedPairs,"OffShellLorentzConversionReplay"];
+ ConstructiveDiagrams`Private`cvTerms=MapThread[#1(#2.ConstructiveDiagrams`Private`cvData["Basis"])&,{Last/@ConstructiveDiagrams`Private`cvPairs,Lookup[ConstructiveDiagrams`Private`cvMap,"ColorCoordinates"]}];
+ ConstructiveDiagrams`Private`cvRequire[ConstructiveDiagrams`Private`cvTerms===ConstructiveDiagrams`Private`cvSource["ColoredGraphTerms"],"PerGraphColorLorentzAssembly"];
+ ConstructiveDiagrams`Private`cvExpression=If[ConstructiveDiagrams`Private`colorCurrentVectorSourceClass[ConstructiveDiagrams`Private`cvSource["Process"],ConstructiveDiagrams`Private`cvModel],
+  ConstructiveDiagrams`Private`cvRequire[ConstructiveDiagrams`Private`cvSource["RawTensorExpression"]===Total[ConstructiveDiagrams`Private`cvTerms],"RawVectorTensorRetained"];
+  ConstructiveDiagrams`Private`cvRequire[ConstructiveDiagrams`Private`cvSource["CoherentExternalVectorEncoding"]===<|"Method"->"InjectiveHomogeneousSymmetricSpinPolynomial",
+   "VectorLegs"->Select[Range[Length[ConstructiveDiagrams`Private`cvSource["Process"]]],With[{ConstructiveDiagrams`Private`r=HEPCATCovariantCurrentSources`Private`particleRow[ConstructiveDiagrams`Private`cvSource["Process"][[#]],ConstructiveDiagrams`Private`cvTemporary]},ConstructiveDiagrams`Private`r[[5]]===2&&ConstructiveDiagrams`Private`r[[6]]=!=0]&],
+   "RawTensorRetained"->True,"CompleteSpinWeights"->HEPCATCovariantCurrentSources`Private`declaredExternalSpinWeights[ConstructiveDiagrams`Private`cvSource["Process"],ConstructiveDiagrams`Private`cvTemporary],"OffShellKinematicsChanged"->False|>,"CompleteCoherentEncodingCertificateBinding"];
+  ConstructiveDiagrams`Private`cvRequire[AllTrue[Range[Length[ConstructiveDiagrams`Private`cvMap]],ConstructiveDiagrams`Private`cvSource["OriginalOrderedEndpointWickWitnesses"][[ConstructiveDiagrams`Private`cvMap[[#]]["OriginalIndex"]]]===ConstructiveDiagrams`Private`cvSource["LiftedDifferentiatedWickWitnesses"][[#]]&],"MappedActualWickSignBinding"];
+  ConstructiveDiagrams`Private`cvRequire[ConstructiveDiagrams`Private`cvSource["OriginalOrderedEndpointWickWitnesses"]===ConstructiveDiagrams`Private`colorCurrentWickWitness[ConstructiveDiagrams`Private`cvOriginalCertificates]&&
+   ConstructiveDiagrams`Private`cvSource["LiftedDifferentiatedWickWitnesses"]===ConstructiveDiagrams`Private`colorCurrentWickWitness[ConstructiveDiagrams`Private`cvLiftedCertificates,ConstructiveDiagrams`Private`cvLifted],"ActualDifferentiatedWickWitnessBinding"];
+  ConstructiveDiagrams`Private`colorCurrentEncodeVector[Total[ConstructiveDiagrams`Private`cvTerms],ConstructiveDiagrams`Private`cvSource["Process"],ConstructiveDiagrams`Private`cvTemporary],Total[ConstructiveDiagrams`Private`cvTerms]];
+ ConstructiveDiagrams`Private`cvRequire[FreeQ[ConstructiveDiagrams`Private`cvExpression,_ConstructiveDiagrams`VectorSpinIndex],"NoUnencodedExternalVectorSlot"];
+ ConstructiveDiagrams`Private`cvRequire[ConstructiveDiagrams`Private`completionExternalSpinWeights[ConstructiveDiagrams`Private`cvExpression,First[First[ConstructiveDiagrams`Private`cvPairs]]]===
+  HEPCATCovariantCurrentSources`Private`declaredExternalSpinWeights[ConstructiveDiagrams`Private`cvSource["Process"],ConstructiveDiagrams`Private`cvTemporary],"CompleteDeclaredSpinWeightReplay"];
+ ConstructiveDiagrams`Private`cvRequire[ConstructiveDiagrams`Private`cvExpression===ConstructiveDiagrams`Private`cvSource["Expression"]&&ConstructiveDiagrams`Private`cvSource["Amplitude"]==={First[First[ConstructiveDiagrams`Private`cvPairs]],ConstructiveDiagrams`Private`cvExpression},"CompleteAmplitudeAssembly"];
+ <|"Status"->"CERTIFICATE_VERIFIED","Graphs"->Length[ConstructiveDiagrams`Private`cvDiagrams],"ColorRank"->Length[ConstructiveDiagrams`Private`cvBasisVectors],
+  "ColorStates"->Length[First[ConstructiveDiagrams`Private`cvBasisVectors]],"EveryGraphColorVectorExactlyReconstructed"->True,
+  "EveryWickSignAndOrderedPortRecomputed"->True,"CompleteLorentzConversionRecomputed"->True,
+  "ReferenceBenchmarkRead"->False,"NativeAmplitudeValidationClaimed"->False|>
+ ,ConstructiveDiagrams`Private`cvTag]
+];
+
+
+
+ConstructiveDiagrams`Private`colorCurrentSourceClass[ConstructiveDiagrams`Private`process_List,ConstructiveDiagrams`Private`model_List]/;
+ TrueQ[ConstructiveDiagrams`Private`colorCurrentVectorSourceClass[ConstructiveDiagrams`Private`process,ConstructiveDiagrams`Private`model]]:=True;
+ConstructiveDiagrams`Private`colorCurrentSource[ConstructiveDiagrams`Private`process_List,ConstructiveDiagrams`Private`model_List]/;
+ TrueQ[ConstructiveDiagrams`Private`colorCurrentVectorSourceClass[ConstructiveDiagrams`Private`process,ConstructiveDiagrams`Private`model]]:=
+ ConstructiveDiagrams`Private`colorVectorCurrentSource[ConstructiveDiagrams`Private`process,ConstructiveDiagrams`Private`model];
+ConstructiveDiagrams`Private`colorCurrentSourceCertificate[ConstructiveDiagrams`Private`proposal_Association,ConstructiveDiagrams`Private`model_List]/;
+ TrueQ[ConstructiveDiagrams`Private`colorCurrentVectorSourceClass[Lookup[ConstructiveDiagrams`Private`proposal,"Process",{}],ConstructiveDiagrams`Private`model]]:=
+ ConstructiveDiagrams`Private`colorVectorCurrentSourceCertificate[ConstructiveDiagrams`Private`proposal,ConstructiveDiagrams`Private`model];
+
 End[];

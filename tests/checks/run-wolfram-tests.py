@@ -102,6 +102,8 @@ TEST_SUITES = (
     "construct-amplitude-tests.wl", "construction-failure-display-tests.wl", "factorization-fitted-point-tests.wl", "covariant-chiral-source-tests.wl", "covariant-cubic-spectator-source-tests.wl", "color-spectator-source-tests.wl", "covariant-constructor-tests.wl", "construct-benchmark-recovery-tests.wl", "revalidation-benchmark-tests.wl",
     "qcd-three-adjoint-primitive-tests.wl", "qcd-local-library-tests.wl",
     "qcd-metadata-cold-tests.wl", "qcd-source-admission-tests.wl",
+    "sm5-current-namespace-tests.wl", "sm5-current-metadata-dispatch-tests.wl",
+    "sm5-current-vector-metadata-tests.wl", "sm5-renamed-model-metadata-tests.wl",
     "qcd-namespace-hygiene-tests.wl",
     "automatic-resource-tests.wl", "random-seed-tests.wl",
 )
