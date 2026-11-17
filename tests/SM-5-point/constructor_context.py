@@ -547,6 +547,8 @@ def c4_module():
 
 
 def public_proof(proof, stage=None):
+    if isinstance(proof, dict) and proof.get('_FiniteRetentionV3Verified') is True:
+        return receipt_v3_module().public_proof(proof, stage)
     if isinstance(proof, dict) and proof.get('_ScopedV2ReceiptVerified') is True:
         return receipt_v2_module().public_proof(proof, stage)
     if isinstance(proof, dict) and proof.get('_FiniteConstructorReceiptVerified') is True:
@@ -615,8 +617,25 @@ def finite_receipt_v2_status(root, here, configuration, current_context):
         core=SimpleNamespace(cold_pair=cold_pair, _loader_value=_loader_value))
 
 
+def receipt_v3_module():
+    spec = importlib.util.spec_from_file_location('hepcat_exact_policy_finite_retention',
+        Path(__file__).with_name('finite_retention.py'))
+    value = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(value)
+    return value
+
+
+def finite_receipt_v3_status(root, here, configuration, current_context):
+    from types import SimpleNamespace
+    return receipt_v3_module().receipt_status(root, here, configuration, current_context,
+        core=SimpleNamespace(cold_pair=cold_pair, _loader_value=_loader_value))
+
+
 def resolve(root, here, configuration, current_context):
     """Resolve one exact reviewed historical transition; never infer a migration."""
+    exact = finite_receipt_v3_status(root, here, configuration, current_context)
+    if exact['Registered']:
+        return exact['Proof']
     versioned = finite_receipt_v2_status(root, here, configuration, current_context)
     if versioned['Registered']:
         # A failed explicit versioned entry cannot fall through to another policy.
@@ -669,6 +688,8 @@ def record_evidence(summary_path, summary, current_context, proof):
         return None
     if not isinstance(proof, dict):
         return None
+    if proof.get('_FiniteRetentionV3Verified') is True:
+        return receipt_v3_module().record_evidence(summary_path, summary, current_context, proof)
     if proof.get('_ScopedV2ReceiptVerified') is True:
         return receipt_v2_module().record_evidence(summary_path, summary, current_context, proof)
     if proof.get('_FiniteConstructorReceiptVerified') is True:

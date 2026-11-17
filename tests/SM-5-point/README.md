@@ -795,3 +795,26 @@ The focused controls are `test_constructor_receipts.py`. The explicit bounded
 all current namespaces with a tiny synthetic package and performs no physics.
 The current capture controller checks the expanded namespace inventory without
 changing the older readers used by previously reviewed evidence.
+
+
+### Exact data-policy historical retention
+
+`finite_retention.py` handles explicitly registered schema-3 finite snapshots. A
+reviewed policy pins the complete source/model/runtime manifests, the exact
+private helper definition fields, unchanged Usage loading input, full symbol
+inventory, and actual same-checkout cold captures plus independent loader
+recomputation. A mechanical source-inventory OwnValue is eligible only when its
+entire ordered path-to-digest association is reconstructed independently on both
+sides; the other nine definition fields remain literal. Snapshot counts and
+producer identities are policy data. The schema-1 and schema-2 verifiers and
+their original fixture remain unchanged.
+
+The committed `constructor-receipts-v3.json` starts empty. Private copies, incomplete
+policies, and unsealed packets cannot admit records. A malformed present registry
+fails closed. Explicit older schema entries delegate to their original reader;
+a valid empty or unregistered schema-3 registry preserves the existing fallbacks.
+
+Historical retention preserves each original producer, raw status, precision
+qualification, and supplemental condition. It does not claim a new construction
+or validation pass. Per-record capsule and export-input checks, precision
+dependencies, and current supplemental failures remain authoritative and lazy.
