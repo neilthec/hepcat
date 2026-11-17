@@ -525,7 +525,20 @@ run checks or mark another process validated. A campaign worker must bind the
 saved source capsule, then run fresh target factorization, high-energy,
 reference and independent Feynman checks, followed by CalcHEP and MadGraph
 comparisons. The notebook must show that transport and its actual checks rather
-than attach reused output to a default `ConstructAmplitude` call. The focused
+than attach reused output to a default `ConstructAmplitude` call. To try this path for a family, use the transport launcher with the usual runner
+options. For example, from the repository root run
+
+```sh
+python3 tests/SM-5-point/transport-generation.py --family sm5f_372833478a39
+```
+
+Use a family ID from `inventory.json`. The launcher uses a distinct representative
+only after verifying its native checkpoint, both independent comparisons, and
+any supplemental parameter checks. The target still gets its own physical and
+spurious pole, high-energy, reference and Feynman checks, plus the ordinary
+CalcHEP and MadGraph export. If transport is unavailable or fails its checks,
+the worker uses ordinary construction. The ordinary runner keeps its usual
+behavior. The focused
 `sm-generation-transport-tests.wl` suite checks all 36 elementary maps and five
 strict-phase four-point examples without relying on saved five-point capsules.
 

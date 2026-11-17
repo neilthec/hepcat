@@ -76,6 +76,66 @@ projectNativeForExport[caseID_String,expected_List,approved_Association]:=Module
   "ProjectorSHA256","ParserSourceSHA256","Limits","FullNativeCheckpointImported","ExpressionsEvaluated"}]];
  checkpoint,"ExportInputProjection"],
   If[DirectoryQ[directory],Quiet[DeleteDirectory[directory,DeleteContents->True]]]]];
+(* Verify a representative through the same exact admission and bounded input
+   projection used by the numerical exporter. Only the target's fresh checks
+   can turn the transported expression into a COMPLETE native record. *)
+readTransportSourceAdmission[familyID_String, caseID_String] := Module[{command, value},
+ command=RunProcess[{"python3",FileNameJoin[{root,"tests","SM-5-point","transport-generation.py"}],
+   "--check-source",familyID,"--case-id",caseID,
+   "--configuration",Environment["HEPCAT_SM5_CONFIGURATION"]}];
+ value=Quiet[Check[ImportString[command["StandardOutput"],"RawJSON"],$Failed]];
+ If[command["ExitCode"]===0&&AssociationQ[value]&&Lookup[value,"Status",None]==="APPROVED",value,$Failed]
+];
+generationTransportAttempt[entry_Association] := Module[
+ {sourceID, source, permit, projected, candidate, checked, transportFiles, directory, codeHashes},
+ sourceID=entry["RepresentativeID"];
+ If[!StringQ[sourceID] || sourceID===entry["ID"],Return[Failure["NoDistinctRepresentative",<||>]]];
+ source=SelectFirst[inventory["Cases"],#["ID"]===sourceID&,Missing["NoRepresentative"]];
+ If[MissingQ[source],Return[Failure["MissingRepresentative",<||>]]];
+ permit=readTransportSourceAdmission[source["FamilyID"],sourceID];
+ If[!AssociationQ[permit],Return[Failure["RepresentativeAdmissionUnavailable",<||>]]];
+ projected=projectNativeForExport[sourceID,source["Particles"],permit];
+ If[!AssociationQ[projected],Return[Failure["RepresentativeProjectionUnavailable",<||>]]];
+ directory=FileNameJoin[{root,"tests","SM-5-point"}];
+ transportFiles=FileNameJoin[{directory,#}]& /@
+   {"generation-transport.wl","validate-generation-transport.wl","transport-generation.py"};
+ codeHashes=FileHash[#,"SHA256"]& /@ transportFiles;
+ Scan[Get,Take[transportFiles,2]];
+ candidate=SMFivePointGenerationTransport`Private`generationTransportCandidate[
+   projected["Expression"],source["Particles"],entry["Particles"],factorizationModel,
+   inventory["FlavorMaps"][[entry["FlavorMap"]+1]],entry["RepresentativePermutation"],
+   model,{FileNameJoin[{root,"models"}],1}];
+ If[!AssociationQ[candidate] || candidate["Status"]=!="CANDIDATE",Return[candidate]];
+ checked=SMFivePointGenerationTransport`Private`validateTargetCandidate[
+   candidate,model,factorizationModel,feynmanModel,seed,225];
+ If[!AssociationQ[checked] || checked["Status"]=!="COMPLETE",Return[checked]];
+ If[readTransportSourceAdmission[source["FamilyID"],sourceID]=!=permit || (FileHash[#,"SHA256"]& /@ transportFiles)=!=codeHashes,
+  Return[Failure["TransportInputsChanged",<||>]]];
+ Join[checked,<|"TransportSourceCaseID"->sourceID,"TransportSourceParticles"->source["Particles"],
+   "TransportSourceCapsuleSHA256"->permit["CaseCapsulesSHA256"][sourceID],
+   "TransportSourceFamilyQualification"->KeyTake[permit,{"FamilyID","GenerationSourceCaseID",
+     "GenerationSourceExportCapsuleSHA256","GenerationSourceExportSummarySHA256",
+     "GenerationSourceExportContextSHA256","GenerationSourceExportContextCompatibility",
+     "GenerationSourceQualification","GenerationSourceSupplementalChecks"}],
+   "TransportProducerScriptSHA256"->AssociationThread[FileNameTake /@ transportFiles,IntegerString[#,16,64]& /@ codeHashes],
+   "TransportInputProjection"->Last[exportInputProjections]|>]
+];
+constructCase[entry_Association] := Module[{attempt=Missing["NotRequested"]},
+ If[Environment["HEPCAT_SM5_TRANSPORT_GENERATION"]==="1",
+   Print["Trying exact generation transport from a validated representative."];
+   attempt=TimeConstrained[MemoryConstrained[generationTransportAttempt[entry],
+     Min[2^31, configuration["MemoryGiB"]2^29],Failure["TransportMemoryLimit",<||>]],
+     240,Failure["TransportTimeConstraint",<||>]];
+   If[AssociationQ[attempt]&&attempt["Status"]==="COMPLETE",
+     Print["Transport and native checks: ",NumberForm[N[AbsoluteTime[]-started],{Infinity,2}]," s"];
+     Print["Complexity: ",attempt["Complexity"]];
+     Print[attempt["Checks"]]; Return[attempt]];
+   Print["Generation transport did not complete its fresh checks. Using ordinary construction."]];
+ With[{constructed=ConstructAmplitude[entry["Particles"],model,factorizationModel,
+    "FeynmanModel"->feynmanModel,"RandomSeed"->seed,"Output"->"Details"]},
+   If[AssociationQ[constructed]&&!MissingQ[attempt],
+    Append[constructed,"UnselectedGenerationTransport"->attempt],constructed]]
+];
 printed={};started=AbsoluteTime[];
 liveFile=FileNameJoin[{outputDirectory,id<>If[kind==="export","-export",""]<>".live.txt"}];
 live=OpenWrite[liveFile];
@@ -91,8 +151,7 @@ If[kind==="construct",
  process=entry["Particles"];
  details=capture[MemoryConstrained[
   Block[{ConstructiveDiagrams`Private`$amplitudeParallelActive=True},
-   ConstructAmplitude[process,model,factorizationModel,"FeynmanModel"->feynmanModel,
-     "RandomSeed"->seed,"Output"->"Details"]],
+   constructCase[entry]],
   configuration["MemoryGiB"]2^30,Failure["ConstructionMemoryLimit",<||>]]];
  tables=Cases[printed,_Dataset,{1}];rows=Flatten[Normal/@tables,1];
  expression=If[AssociationQ[details],Lookup[details,"Amplitude",Missing["NotValidated"]],details];
@@ -104,6 +163,10 @@ If[kind==="construct",
    "Status"->If[ok,"COMPLETE","FAIL"],"Seconds"->N[AbsoluteTime[]-started],
    "Details"->details,"RandomSeed"->seed,
    "Complexity"->If[AssociationQ[details],Lookup[details,"Complexity",Missing["NotMeasured"]],Missing["NotMeasured"]]|>;
+ If[ok&&Lookup[details,"Method",None]==="ExactModelGenerationTransport",
+  AssociateTo[record,{"RecordKind"->"ValidatedGenerationTransport",
+   "ValidationAdoptionDisplay"->KeyTake[details,{"TransportSourceCaseID","TransportSourceParticles",
+     "TransportSourceCapsuleSHA256"}]}]];
  target=FileNameJoin[{outputDirectory,id<>".wxf"}],
  If[kind==="export",
   family=SelectFirst[inventory["Families"],#["ID"]===id&];

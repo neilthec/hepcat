@@ -489,7 +489,54 @@ sm5NotebookAdoptionCells[record_Association] := Module[{tables},
     Return[{sm5NotebookText["The adopted validation tables are unavailable; no check table is inferred."]}]];
   Flatten[sm5NotebookAdoptionGroupCells /@ tables, 1]
 ];
-sm5NotebookCalculation[case_Association] := Module[{id, variable, code, record, cells, controls, adopted},
+(* Transport records show the actual resumable campaign call. The existing
+   bounded exporter projection loads only the admitted target expression. *)
+sm5NotebookTransportCode[case_Association, variable_String] := StringReplace[
+  StringRiffle[{
+    "$VARIABLE$Particles = $PARTICLES$;",
+    "$VARIABLE$Amplitude = Module[{run, approval, directory, projected, metadata, payload,",
+    "    record, capsule, expected, reject},",
+    "  run = RunProcess[{\"python3\", FileNameJoin[{hepcatDirectory, \"tests\", \"SM-5-point\", \"transport-generation.py\"}],",
+    "    \"--family\", $FAMILY$, \"--retry-failed\",",
+    "    \"--spinas\", spinasDirectory, \"--calchep\", calcHEPDirectory,",
+    "    \"--madgraph\", madGraphDirectory, \"--points\", ToString[validationPoints]}];",
+    "  If[run[\"ExitCode\"] =!= 0, Return[Failure[\"TransportCampaignFailed\", <|\"Run\" -> run|>]]];",
+    "  approval = RunProcess[{\"python3\", FileNameJoin[{hepcatDirectory, \"tests\", \"SM-5-point\", \"stage_context.py\"}],",
+    "    \"--export-inputs\", $FAMILY$, \"--configuration\",",
+    "    FileNameJoin[{hepcatDirectory, \"tests\", \"results\", \"SM-5-point\", \"configuration.json\"}]}];",
+    "  approval = If[approval[\"ExitCode\"] === 0, Quiet[Check[ImportString[approval[\"StandardOutput\"], \"RawJSON\"], $Failed]], $Failed];",
+    "  If[!AssociationQ[approval] || Lookup[approval, \"Status\", None] =!= \"APPROVED\",",
+    "    Return[Failure[\"TransportNativeCheckpointUnavailable\", <||>]]];",
+    "  expected = approval[\"CaseCapsulesSHA256\"][$CASE$];",
+    "  capsule = FileNameJoin[{hepcatDirectory, \"tests\", \"results\", \"SM-5-point\", $CASEFILE$}];",
+    "  directory = CreateDirectory[];",
+    "  reject[reason_] := Throw[Failure[\"TransportCheckpointProjectionFailed\", <|\"Reason\" -> reason|>], \"TransportNotebook\"];",
+    "  Internal`WithLocalSettings[Null, Catch[",
+    "    projected = RunProcess[{\"python3\", FileNameJoin[{hepcatDirectory, \"tests\", \"SM-5-point\", \"project-export-inputs.py\"}],",
+    "      \"--capsule\", capsule, \"--output\", FileNameJoin[{directory, \"input\"}],",
+    "      \"--expected-sha\", expected, \"--case-id\", $CASE$,",
+    "      \"--particles-json\", ExportString[$VARIABLE$Particles, \"RawJSON\"],",
+    "      \"--context\", approval[\"NativeCaseContexts\"][$CASE$]}];",
+    "    If[projected[\"ExitCode\"] =!= 0, reject[\"Projection unavailable\"]];",
+    "    metadata = Quiet[Check[ImportString[projected[\"StandardOutput\"], \"RawJSON\"], $Failed]];",
+    "    payload = FileNameJoin[{directory, \"input\", \"input.wxf\"}];",
+    "    If[!AssociationQ[metadata] || Lookup[metadata, \"Status\", None] =!= \"PROJECTED\" ||",
+    "      Lookup[metadata, \"SourceSHA256\", None] =!= expected ||",
+    "      Lookup[metadata, \"PayloadSHA256\", None] =!= IntegerString[FileHash[payload, \"SHA256\"], 16, 64], reject[\"Projection checksum differs\"]];",
+    "    record = Import[payload, \"WXF\"];",
+    "    If[!AssociationQ[record] || Lookup[record, \"Status\", None] =!= \"COMPLETE\" ||",
+    "      Lookup[record, \"ID\", None] =!= $CASE$ || Lookup[record, \"Particles\", None] =!= $VARIABLE$Particles ||",
+    "      !KeyExistsQ[record, \"Expression\"] || !FreeQ[record[\"Expression\"], _Missing | _Failure] ||",
+    "      IntegerString[FileHash[capsule, \"SHA256\"], 16, 64] =!= expected, reject[\"Target checkpoint changed or incomplete\"]];",
+    "    record[\"Expression\"], \"TransportNotebook\"],",
+    "    If[DirectoryQ[directory], DeleteDirectory[directory, DeleteContents -> True]]]];",
+    "$VARIABLE$Amplitude"
+  }, "\n"], {
+    "$VARIABLE$" -> variable, "$PARTICLES$" -> sm5NotebookSource[case["Particles"]],
+    "$FAMILY$" -> sm5NotebookSource[case["FamilyID"]], "$CASE$" -> sm5NotebookSource[case["ID"]],
+    "$CASEFILE$" -> sm5NotebookSource[case["ID"] <> ".wxf"]}];
+
+sm5NotebookCalculation[case_Association] := Module[{id, variable, code, record, cells, controls, adopted, transported, display},
   id = case["ID"]; variable = sm5NotebookVariable[id];
   record = sm5NotebookRecord[FileNameJoin[{sm5NotebookResultsPath, id <> ".wxf"}]];
   controls = sm5NotebookConstructionControls[record];
@@ -502,6 +549,19 @@ sm5NotebookCalculation[case_Association] := Module[{id, variable, code, record, 
     sm5NotebookAdoptionCells[record],
     {sm5NotebookOutput[Lookup[record, "Expression", Missing["NoSavedFormula"]], "Output"]}],
     sm5NotebookCaptured[record, "Construction"]];
+  transported = Lookup[record, "RecordKind", None] === "ValidatedGenerationTransport";
+  If[transported,
+    code = sm5NotebookTransportCode[case, variable];
+    display = Lookup[record,"ValidationAdoptionDisplay",<||>];
+    cells = Prepend[cells, sm5NotebookText[
+      "The saved amplitude was obtained by an exact model generation map from " <>
+      ToString[Lookup[display,"TransportSourceParticles",{}],InputForm] <>
+      ". The input above resumes that family's transport-enabled campaign using the Setup paths and point count. " <>
+      "Compatible validated checkpoints can be reused; this call does not force a new transport. " <>
+      "When transport is needed, its representative is admitted and its exact generation map is certified against " <>
+      "every elementary vertex and particle role, with widths disabled. Fresh target native checks are required, " <>
+      "followed by the ordinary family exports. A refused transport falls back to ordinary construction. " <>
+      "Only an admitted, checksum-verified target expression is loaded below."]]];
   If[controls =!= {}, cells = Prepend[cells, Cell[
     "This saved run used explicit construction controls, retained in the input above.",
     "Text", GeneratedCell -> True, CellAutoOverwrite -> True,
