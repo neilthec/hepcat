@@ -2625,6 +2625,7 @@ amplitudeParallelSignature[] := Module[{required, optional},
       "internal/HEPCAT-MadGraph.wl", "internal/HEPCAT-CovariantSources.wl",
       "internal/HEPCAT-CovariantContacts.wl", "internal/HEPCAT-ColoredCurrents.wl",
       "internal/HEPCAT-QCDCurrents.wl",
+      "internal/HEPCAT-MixedNullCalibration.wl", "internal/HEPCAT-MixedNullIntegration.wl", "internal/HEPCAT-MixedNullPublic.wl",
       "internal/HEPCAT-SPINAS-Optimize.wl", "internal/export/spinas-runtime.hpp"};
   optional = {"internal/proofs/laurent-proof-runtime.cpp", "internal/proofs/laurent-proof-runtime.py",
     "internal/proofs/laurent-proof-factor.py", "internal/proofs/laurent-proof-verify.py"};
@@ -21418,8 +21419,29 @@ constructValidationOverrides[model_List, overrides_, assignment_List] := Module[
     Join[named, Replace[overrides, Automatic -> {}]]]
 ];
 
+(* Automatic checks deliberately route candidate-only zero channels through the
+   spurious-pole checker. Keep that coverage distinct from supplied physical
+   targets, and use the same canonical propagator key as the checker. *)
+constructAutomaticZeroPoleCoverageQ[report_Association, targets_List] := Module[
+  {spurious = Lookup[report, "SpuriousChecks", {}],
+   discovery = Lookup[report, "PoleDiscovery", {}], key, external},
+  If[targets === {}, Return[True]];
+  If[!ListQ[spurious] || !ListQ[discovery], Return[False]];
+  AllTrue[targets, Function[target,
+    key = residueChannelKey[target]; external = target["ExternalLegs"];
+    !KeyExistsQ[target, "ChannelExpression"] &&
+    TrueQ[Lookup[target, "Complete", False]] &&
+    TrueQ[residueExactZero[Lookup[target, "StateSum", Missing["UnknownStateSum"]]]] &&
+    AnyTrue[discovery, AssociationQ[#] &&
+      Lookup[#, "Classification", None] === "Spurious" &&
+      residuePropagatorKey[Lookup[#, "CanonicalFactor", None], external] === key &] &&
+    AnyTrue[spurious, AssociationQ[#] && Lookup[#, "Status", None] === "PASS" &&
+      residuePropagatorKey[Lookup[#, "Pole", None], external] === key &]
+  ]]
+];
+
 constructAllChecksPassQ[report_, pair_, channels_List, model_List, benchmark_] := Module[
-  {inputs, expected, actual, checks},
+  {inputs, expected, actual, checks, inferredMissing},
   If[!AssociationQ[report] || !ListQ[Lookup[report, "Checks", None]] ||
       !AssociationQ[Lookup[report, "HighEnergyCheck", None]] ||
       !AssociationQ[Lookup[report, "ReferenceCheck", None]] ||
@@ -21432,7 +21454,12 @@ constructAllChecksPassQ[report_, pair_, channels_List, model_List, benchmark_] :
   If[!AssociationQ[inputs] || FailureQ[inputs], Return[False]];
   expected = DeleteDuplicates[residueChannelKey /@ inputs["Targets"]];
   actual = residueChannelKey /@ Lookup[report, "Channels", {}];
-  If[!ContainsAll[actual, expected], Return[False]];
+  (* Preserve the legacy complete physical-coverage success branch. Only a
+     missing inferred exact-zero target may instead use the official
+     Automatic spurious-pole coverage required by CheckAmplitudes. *)
+  If[!ContainsAll[actual, expected],
+    inferredMissing = Select[inputs["Targets"], !MemberQ[actual, residueChannelKey[#]] &];
+    If[!constructAutomaticZeroPoleCoverageQ[report, inferredMissing], Return[False]]];
   benchmark === None || AssociationQ[Lookup[report, "FeynmanCheck", None]] &&
     Lookup[report["FeynmanCheck"], "Status", None] === "PASS"
 ];
@@ -22467,6 +22494,7 @@ ConstructiveDiagrams`Private`constructCovariantSourceMetadata[
         AllTrue[ConstructiveDiagrams`Private`metadataVectors, #[[6]] =!= 0 &], "Calibrated metric currents",
       Length[ConstructiveDiagrams`Private`metadataFermions] === 0 && Length[ConstructiveDiagrams`Private`metadataVectors] === 3 && Length[ConstructiveDiagrams`Private`metadataScalars] === 2 &&
         AllTrue[ConstructiveDiagrams`Private`metadataVectors, #[[6]] =!= 0 &] && SameQ @@ ConstructiveDiagrams`Private`metadataScalars[[All, 6]], "Calibrated metric currents",
+      ConstructiveDiagrams`Private`constructMixedNullPublicClassQ[ConstructiveDiagrams`Private`metadataProcess,ConstructiveDiagrams`Private`metadataModel], "Calibrated mixed-null metric currents",
       Length[ConstructiveDiagrams`Private`metadataFermions] === 0 && Length[ConstructiveDiagrams`Private`metadataVectors] === 4 && Length[ConstructiveDiagrams`Private`metadataScalars] === 1 &&
         AllTrue[ConstructiveDiagrams`Private`metadataVectors, #[[6]] =!= 0 &], "Calibrated metric currents",
       True, Return[False]]];
@@ -22867,23 +22895,27 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
      previousPair = finalPair, previousPrepared = lastPreparedPair,
      previousSelection = representativeSelection, previousReport = checkReport,
      previousBenchmark = benchmark, previousReady = benchmarkReady,
-     previousRecovery = benchmarkRecovery, certificates, sourceBudget, sourceLabel},
+     previousRecovery = benchmarkRecovery, certificates, sourceBudget, sourceLabel, ConstructiveDiagrams`Private`mixedNullPlanData},
     If[feynmanModel === None || TrueQ[$colorConstructingProjection] ||
         !completionModelQ[diagramModel] || Length[process] =!= 5 || remaining[] <= 0.01,
       Return[False]];
     ConstructiveDiagrams`Private`sourceMetadata = constructCovariantSourceMetadata[process, diagramModel, diagramData, augmentVectors];
     If[!AssociationQ[ConstructiveDiagrams`Private`sourceMetadata], Return[False]];
     rows=ConstructiveDiagrams`Private`sourceMetadata["Rows"];fermions=ConstructiveDiagrams`Private`sourceMetadata["Fermions"];vectors=ConstructiveDiagrams`Private`sourceMetadata["Vectors"];scalars=ConstructiveDiagrams`Private`sourceMetadata["Scalars"];class=ConstructiveDiagrams`Private`sourceMetadata["SourceClass"];
-    sourceBudget=If[TrueQ[augmentVectors]&&AssociationQ[vectorPlan],constructFourVectorSourceBudget[vectorPlan,remaining[]],Min[60,Max[0.000001,remaining[]]]];
-    sourceLabel=If[TrueQ[augmentVectors],"Lower-derived vector source","Certified covariant source"];
-    proposal = run[If[TrueQ[augmentVectors],"Building lower-derived vector source","Building certified covariant source"],
+    ConstructiveDiagrams`Private`mixedNullPlanData=If[class==="Calibrated mixed-null metric currents",constructMixedNullPublicPlan[process,diagramModel,factorizationModel,Min[3,remaining[]]],None];
+    If[class==="Calibrated mixed-null metric currents"&&!AssociationQ[ConstructiveDiagrams`Private`mixedNullPlanData],Return[False]];
+    sourceBudget=If[class==="Calibrated mixed-null metric currents",constructFourVectorSourceBudget[ConstructiveDiagrams`Private`mixedNullPlanData,remaining[]],If[TrueQ[augmentVectors]&&AssociationQ[vectorPlan],constructFourVectorSourceBudget[vectorPlan,remaining[]],Min[60,Max[0.000001,remaining[]]]]];
+    sourceLabel=If[class==="Calibrated mixed-null metric currents","Mixed-null lower-derived vector source",If[TrueQ[augmentVectors],"Lower-derived vector source","Certified covariant source"]];
+    proposal = run[If[class==="Calibrated mixed-null metric currents","Building mixed-null lower-derived vector source",If[TrueQ[augmentVectors],"Building lower-derived vector source","Building certified covariant source"]],
+      If[class==="Calibrated mixed-null metric currents",
+        constructMixedNullPublicCandidate[process,diagramModel,factorizationModel,sourceBudget,child],
       If[class === "Cubic currents",
         HEPCATCovariantCurrentSources`Private`covariantCurrentSource[process, diagramModel,
           "TimeConstraint" -> sourceBudget],
         HEPCATCovariantContactCalibration`Private`calibratedCovariantSource[
           process, diagramModel, factorizationModel,
-          "TimeConstraint" -> sourceBudget,"AugmentFourVectorContacts"->TrueQ[augmentVectors]]]];
-    save[If[TrueQ[augmentVectors],"Lower-derived vector source proposal","Covariant source proposal"], proposal];
+          "TimeConstraint" -> sourceBudget,"AugmentFourVectorContacts"->TrueQ[augmentVectors]]]]];
+    save[If[class==="Calibrated mixed-null metric currents","Mixed-null vector source proposal",If[TrueQ[augmentVectors],"Lower-derived vector source proposal","Covariant source proposal"]], proposal];
     If[!AssociationQ[proposal] || Lookup[proposal, "Status", None] =!= "UNVALIDATED_CANDIDATE" ||
         !AllTrue[{"EveryOriginalDiagramCovered", "EveryUsedOrderedVertexCertified",
           "CompleteOffShellConversionCoverage", "RequiresCheckAmplitudes"}, TrueQ[Lookup[proposal, #, False]] &] ||
@@ -22892,22 +22924,22 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
         Lookup[proposal, "InternalOnShellConditions", None] =!= {} ||
         Lookup[proposal, "NumericalParameterAssignments", None] =!= {} ||
         Lookup[proposal, "SourceModelSHA256", None] =!= HEPCATCovariantCurrentSources`Private`objectSHA[diagramModel] ||
-        !constructCovariantGraphCoverageQ[proposal,diagramData] ||
+        !If[class==="Calibrated mixed-null metric currents",constructMixedNullPublicGraphCoverageQ[proposal,diagramData,diagramModel,factorizationModel],constructCovariantGraphCoverageQ[proposal,diagramData]] ||
         !preparationPairQ[Lookup[proposal, "Amplitude", None]] ||
         First[proposal["Amplitude"]] =!= external ||
         Lookup[proposal, "Expression", None] =!= Last[proposal["Amplitude"]], Return[False]];
     certificates = Lookup[proposal, "VertexCertificates", {}];
     If[certificates === {} || !AllTrue[certificates, AssociationQ] ||
-        (class === "Calibrated metric currents" &&
+        ((class === "Calibrated metric currents" || class==="Calibrated mixed-null metric currents") &&
           Lookup[proposal, "LowerModelSHA256", None] =!= HEPCATCovariantCurrentSources`Private`objectSHA[factorizationModel]),
       Return[False]];
     If[class === "Cubic currents", extraSets = covariantExtraValidationSets[fermions]];
-    save[If[TrueQ[augmentVectors],"Lower-derived vector source validation policy","Covariant source validation policy"], <|"SourceClass" -> class,"AdditionalFourVectorContactsRequested"->TrueQ[augmentVectors],"SourceBudget"->sourceBudget,
+    save[If[TrueQ[augmentVectors],"Lower-derived vector source validation policy","Covariant source validation policy"], <|"SourceClass" -> class,"AdditionalFourVectorContactsRequested"->If[class==="Calibrated mixed-null metric currents",True,TrueQ[augmentVectors]],"SourceBudget"->sourceBudget,
       "AdditionalResolvedParameterRules" -> extraSets,
       "BenchmarkUsedForConstruction" -> False, "OriginalTargetsRetained" -> True|>];
     candidate = Join[proposal, <|"Status" -> "COMPLETE", "Amplitude" -> proposal["Expression"],
       "FreeParameters" -> {}|>];
-    checked = Block[{$constructFourVectorCheckPlan=If[TrueQ[augmentVectors],vectorPlan,None]},
+    checked = Block[{$constructFourVectorCheckPlan=If[class==="Calibrated mixed-null metric currents",ConstructiveDiagrams`Private`mixedNullPlanData,If[TrueQ[augmentVectors],vectorPlan,None]]},
       validateRepresentative[candidate,sourceLabel,remaining[],True,extraSets]];
     If[!TrueQ[checked],
       finalPair = previousPair; lastPreparedPair = previousPrepared;

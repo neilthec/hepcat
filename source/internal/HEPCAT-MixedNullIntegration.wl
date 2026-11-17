@@ -1,0 +1,450 @@
+(* PRIVATE integration prototype. Load current HEPCAT and the reviewed private
+   massless calibration candidate first. No Root definitions, models or caches
+   are modified. Existing research capsules are never an input. *)
+BeginPackage["HEPCATMasslessVectorIntegration`",{"ConstructiveDiagrams`"}];
+Begin["`Private`"];
+HEPCATMasslessVectorIntegration`Private`reject[tag_String,data_:<||>]:=Failure[tag,data];
+HEPCATMasslessVectorIntegration`Private`zero[x_]:=TrueQ[Cancel[Together[x]]===0];
+HEPCATMasslessVectorIntegration`Private`rowParts[row_List]:=DeleteCases[Drop[row,-2],""];
+HEPCATMasslessVectorIntegration`Private`declaredAliases[model_List]:=Module[{aliases=<||>,names,base,tag=Unique["privateAliasRejection"]},Catch[
+ If[Length[model]=!=4,Throw[Failure["MalformedSourceModel",<||>],tag]];
+ Do[If[Length[row]=!=11||row[[5]]=!=2||row[[6]]=!=0||row[[8]]=!=1,Continue[]];
+  names=row[[{2,3}]];
+  If[!StringEndsQ[First[names],".+"]||Last[names]=!=StringDrop[First[names],-1]<>"-",Throw[Failure["UndeclaredNullVectorHelicityPair",<||>],tag]];
+  base=StringDrop[First[names],-2];
+  If[!ConstructiveDiagrams`Private`feynmanIdentifierQ[base]||MemberQ[Flatten[model[[1,All,{2,3}]]],base],Throw[Failure["NullVectorAliasCollision",<||>],tag]];
+  AssociateTo[aliases,{First[names]->base,Last[names]->base}],{row,model[[1]]}];aliases,tag]
+];
+(* A pure metadata plan. These aliases are grouping labels only, not a cubic
+   continuation certificate. Actual sourceCatalog certificates remain mandatory. *)
+HEPCATMasslessVectorIntegration`Private`augmentationPlanWork[process_List,model_List,lower_List,seconds_:3]:=Module[
+ {started=AbsoluteTime[],aliases,legacy,rows,cubics,groups,entries={},meta,parts,physical,attachments,portRow,anti,rest,cubicParts,tag=Unique["privatePlanRejection"]},Catch[
+ If[Length[process]=!=5||!AllTrue[process,StringQ]||Length[model]=!=4||Length[lower]=!=4,Throw[Failure["InvalidMixedNullAugmentationInput",<||>],tag]];
+ aliases=HEPCATMasslessVectorIntegration`Private`declaredAliases[model];If[FailureQ[aliases],Throw[aliases,tag]];
+ legacy=HEPCATCovariantContactCalibration`Private`fourVectorAugmentationPlan[process,model,lower,seconds];If[FailureQ[legacy],Throw[legacy,tag]];
+ rows=Select[lower[[2]],Length[HEPCATMasslessVectorIntegration`Private`rowParts[#]]===4&];
+ rows=Select[rows,Function[lowerRow,Module[{names=HEPCATMasslessVectorIntegration`Private`rowParts[lowerRow],particleRows,classification},
+  particleRows=HEPCATCovariantCurrentSources`Private`particleRow[#,model]&/@names;
+  If[!AllTrue[particleRows,ListQ[#]&&Length[#]===11&],Throw[Failure["UnknownLowerContactParticle",<||>],tag]];
+  If[AllTrue[particleRows,#[[5]]===2&&#[[8]]===1&]&&MemberQ[{1,2},Count[particleRows[[All,6]],0]],
+   classification=HEPCATMasslessVectorCalibration`Private`metadata[names,model,lower];If[FailureQ[classification],Throw[classification,tag]];
+   If[!AssociationQ[classification]||Lookup[classification,"Status",None]=!="AVAILABLE_METADATA_ONLY",Throw[Failure["UnsupportedEligibleLowerMetadata",<||>],tag]];True,
+   False]]]];
+ groups=GatherBy[rows,Function[row,Sort[Lookup[aliases,#,#]&/@HEPCATMasslessVectorIntegration`Private`rowParts[row]]]];
+ cubics=Select[model[[2]],Length[HEPCATMasslessVectorIntegration`Private`rowParts[#]]===3&];
+ Do[parts=HEPCATMasslessVectorIntegration`Private`rowParts[First[group]];meta=HEPCATMasslessVectorCalibration`Private`metadata[parts,model,lower];
+  If[FailureQ[meta],Throw[meta,tag]];physical=Lookup[aliases,#,#]&/@parts;attachments={};
+  Do[Do[portRow=HEPCATCovariantCurrentSources`Private`particleRow[word[[quartetPort]],model];
+    anti=If[word[[quartetPort]]===portRow[[2]],portRow[[3]],portRow[[2]]];
+    Do[cubicParts=HEPCATMasslessVectorIntegration`Private`rowParts[cubic];
+     Do[If[cubicParts[[cubicPort]]=!=anti,Continue[]];rest=Join[Delete[word,quartetPort],Delete[cubicParts,cubicPort]];
+      If[Sort[rest]===Sort[process],AppendTo[attachments,<|"CubicRow"->cubic,"QuartetPort"->quartetPort,"CubicPort"->cubicPort,"QuartetHelicityWord"->word,
+        "ConjugateInternalStates"->{word[[quartetPort]],anti},"ExternalWordVerified"->True|>]],{cubicPort,3}],{cubic,cubics}],{quartetPort,4}],{word,meta["HelicityWords"]}];
+  If[attachments=!={},AppendTo[entries,<|"Particles"->parts,"PhysicalParticles"->physical,"LowerRow"->First[group],"AllPhysicalLowerRows"->group,
+    "Attachments"->DeleteDuplicates[attachments],"NullLegCount"->Length[meta["NullLegs"]],"HelicityWords"->meta["HelicityWords"],
+    "CoherentComponentsPerWord"->meta["CoherentComponentsByWord"],"TotalExactComponents"->Total[meta["CoherentComponentsByWord"]],"MetricTemplates"->3,
+    "AliasesAreMetadataOnlyUntilCertified"->True|>]],{group,groups}];
+ entries=Join[legacy["Quartets"],entries];
+ If[!DuplicateFreeQ[Sort[Lookup[aliases,#,#]&/@#["Particles"]]&/@entries],Throw[Failure["DuplicatePhysicalLowerContactPlan",<||>],tag]];
+ <|"Status"->If[entries==={},"NOT_APPLICABLE","AVAILABLE"],"ExternalParticles"->process,"Quartets"->entries,"DeclaredAliases"->aliases,
+  "NoNumericalKinematicsOrCoefficients"->True,"IndependentBenchmarkRead"->False,"SourceModelSHA256"->HEPCATCovariantContactCalibration`Private`objectSHA[model],
+  "LowerModelSHA256"->HEPCATCovariantContactCalibration`Private`objectSHA[lower],"Seconds"->AbsoluteTime[]-started|>,tag]
+];
+HEPCATMasslessVectorIntegration`Private`augmentationPlan[process_List,model_List,lower_List,seconds_:3]:=TimeConstrained[HEPCATMasslessVectorIntegration`Private`augmentationPlanWork[process,model,lower,seconds],seconds,Failure["MixedNullAugmentationMetadataClockLimit",<||>]];
+HEPCATMasslessVectorIntegration`Private`lowerIdentityQ[cal_Association,model_List,lower_List]:=Module[{meta,actual,n,m,words,chart,coordinates,records,coeffProofs,residualProofs,expectedPowers,polynomialCertificates},
+ If[!MemberQ[{"PRIVATE_EXACT_LOWER_METRIC_TENSOR_NOT_INTEGRATED","EXACT_COMPLETE_LOWER_MIXED_NULL_FOUR_VECTOR_CONTACT"},Lookup[cal,"Status",None]],Return[False]];
+ meta=Lookup[cal,"Metadata",<||>];If[!AssociationQ[meta]||!KeyExistsQ[meta,"RequestedParts"],Return[False]];
+ actual=HEPCATMasslessVectorCalibration`Private`metadata[meta["RequestedParts"],model,lower];If[!AssociationQ[actual]||actual=!=meta,Return[False]];
+ n=Length[meta["NullLegs"]];m=Length[meta["MassiveLegs"]];words=meta["HelicityWords"];If[!MemberQ[{1,2},n]||Length[words]=!=2^n||!DuplicateFreeQ[words]||m=!=4-n,Return[False]];
+ chart=Lookup[cal,"SymbolicChart",<||>];records=Lookup[cal,"HelicityWordCertificates",{}];
+ If[Length[records]=!=Length[words]||Lookup[records,"Word"]=!=words||Lookup[records,"CoherentComponentCount"]=!=ConstantArray[3^m,2^n],Return[False]];
+ expectedPowers=Tuples[Range[0,2],m];
+ If[!AllTrue[records,Lookup[#,"CompleteCoherentPowers",{}]===expectedPowers&],Return[False]];
+ polynomialCertificates=Flatten[Lookup[records,"PolynomialCertificates",{}],1];
+ If[Length[polynomialCertificates]=!=4*Length[words]||!AllTrue[polynomialCertificates,Function[cert,
+   AssociationQ[cert]&&Lookup[cert,"Status",None]==="COMPLETE"&&And@@(TrueQ[Lookup[cert,#,False]]&/@{"FullCoefficientCoverage","ReconstructionVerified","AbstractRestorationExact","ConstantCoefficientIncluded"})&&
+   Lookup[Lookup[cert,"ReconstructionProof",<||>],"Method",None]==="ExactRecursivePolynomialConvolution"&&Lookup[cert,"NumericalSpinSamples",None]===0&&
+   DuplicateFreeQ[First/@cert["CoefficientRules"]]&&AllTrue[First/@cert["CoefficientRules"],MemberQ[expectedPowers,#]&]]],Return[False]];
+ If[Dimensions[Lookup[cal,"MetricMatrix",{}]]=!={2^n*3^m,3}||Length[Lookup[cal,"SelectedMinorRows",{}]]=!=3||HEPCATMasslessVectorIntegration`Private`zero[Lookup[cal,"NonzeroMinor",0]],Return[False]];
+ If[Length[Lookup[cal,"AllCoherentResiduals",{}]]=!=2^n*3^m||!AllTrue[cal["AllCoherentResiduals"],#===0&],Return[False]];
+ coordinates=Join[chart["ExternalIdentityCoordinates"],chart["FormalReferenceCoordinates"],chart["SpinVariables"]];
+ If[Length[cal["Coefficients"]]=!=3||!AllTrue[cal["Coefficients"],HEPCATCovariantCurrentSources`Private`modelScalarQ[#,model]&]||!FreeQ[cal["Coefficients"],Alternatives@@coordinates],Return[False]];
+ If[!TrueQ[Lookup[cal,"CompleteDeclaredHelicityCoherentCoverage",False]]||!TrueQ[Lookup[cal,"AllFormalReferenceIdentitiesProved",False]]||
+  !AllTrue[records,TrueQ[#["CovariantScalarInputCertificate"]["AllTypedCovariantScalars"]]&&TrueQ[#["CubicCatalog"]["ExactOriginalCubicGraphCoverage"]]&],Return[False]];
+ If[chart["InvariantDensityCertificate"]["ExternalInvariantRank"]=!=2||!TrueQ[chart["MomentumConservationCertified"]]||!And@@Join[chart["AllExternalShellsCertified"],chart["MassiveFrameCertificates"]],Return[False]];
+ coeffProofs=Lookup[cal,"ExactScalarCoefficientProofs",{}];residualProofs=Lookup[cal,"ExactScalarResidualProofs",{}];
+ If[Length[coeffProofs]=!=3||Length[residualProofs]=!=2^n*3^m||Lookup[coeffProofs,"Value"]=!=cal["Coefficients"]||
+  Lookup[coeffProofs,"Original"]=!=cal["RawMetricCoefficients"]||Lookup[residualProofs,"Original"]=!=cal["RawCoherentResiduals"]||
+  !AllTrue[Join[coeffProofs,residualProofs],#["ExactDifference"]===0&&#["AdditionalAssumptions"]==={}&&#["NumericalDefaultsUsed"]===False&]||!AllTrue[residualProofs,#["Value"]===0&],Return[False]];
+ cal["SourceModelSHA256"]===HEPCATCovariantContactCalibration`Private`objectSHA[model]&&cal["LowerModelSHA256"]===HEPCATCovariantContactCalibration`Private`objectSHA[lower]&&
+ cal["NumericalKinematicSamples"]===0&&cal["NumericalCoefficientFit"]===False&&cal["IndependentBenchmarkRead"]===False&&cal["InternalOnShellConditions"]==={}
+];
+HEPCATMasslessVectorIntegration`Private`lowerIdentityQ[___]:=False;
+HEPCATMasslessVectorIntegration`Private`boseTensorProof[parts_List,tensor_,model_List,seconds_]:=Module[
+ {started=AbsoluteTime[],remaining,canonical,groups,pairs,proofs={},difference,metrics,tokens,rules,coefficientProofs,metricBasis,images,permutation,tag=Unique["privateBoseRejection"]},Catch[
+ remaining[]:=Max[0.000001,seconds-(AbsoluteTime[]-started)];
+ canonical[value_]:=value/.LorentzMetric[a_,b_]:>Apply[LorentzMetric,Sort[{a,b}]];
+ metricBasis=canonical/@{LorentzMetric[LorentzIndex[1],LorentzIndex[2]]LorentzMetric[LorentzIndex[3],LorentzIndex[4]],LorentzMetric[LorentzIndex[1],LorentzIndex[3]]LorentzMetric[LorentzIndex[2],LorentzIndex[4]],LorentzMetric[LorentzIndex[1],LorentzIndex[4]]LorentzMetric[LorentzIndex[2],LorentzIndex[3]]};
+ groups=Select[GatherBy[Range[Length[parts]],parts[[#]]&],Length[#]>1&];pairs=Flatten[Partition[#,2,1]&/@groups,1];
+ Do[images=canonical/@(metricBasis/.{LorentzIndex[pair[[1]]]->LorentzIndex[pair[[2]]],LorentzIndex[pair[[2]]]->LorentzIndex[pair[[1]]]});
+  If[!AllTrue[images,MemberQ[metricBasis,#]&],Throw[Failure["MetricPairingPermutationNotClosed",<||>],tag]];permutation=(First[FirstPosition[metricBasis,#]]&/@images);
+  difference=Expand[canonical[tensor]-canonical[tensor/.{LorentzIndex[pair[[1]]]->LorentzIndex[pair[[2]]],LorentzIndex[pair[[2]]]->LorentzIndex[pair[[1]]]}]];
+  metrics=DeleteDuplicates[Cases[difference,_LorentzMetric,{0,Infinity}]];tokens=Table[Unique["formalIndependentMetric"],{Length[metrics]}];
+  rules=If[metrics==={},{{}->difference},CoefficientRules[difference/.Thread[metrics->tokens],tokens]];
+  coefficientProofs=HEPCATMasslessVectorCalibration`Private`exactScalarNormalForm[#,model,remaining[]]&/@(Last/@rules);
+  If[AnyTrue[coefficientProofs,FailureQ]||!AllTrue[coefficientProofs,#["Value"]===0&&#["ExactDifference"]===0&],Throw[Failure["DerivedPhysicalContactNotBoseSymmetric",<|"Exchange"->pair,"Proofs"->coefficientProofs|>],tag]];
+  AppendTo[proofs,<|"AdjacentTransposition"->pair,"MetricPairingPermutation"->permutation,"IndependentMetricCoefficientRules"->rules,"ExactScalarProofs"->coefficientProofs|>],{pair,pairs}];
+ <|"Status"->"COMPLETE","PhysicalParticles"->parts,"IdenticalPhysicalSpeciesGroups"->groups,"Generators"->pairs,"Proofs"->proofs,
+  "DistinctParticleAntiparticleNamesNotMerged"->True,"NoPolarizationOrReferenceSpecialization"->True|>,tag]
+];
+HEPCATMasslessVectorIntegration`Private`contactExternalBinding[converted_List,expected_List,external_List]:=Module[{required,headers,expression,weights},
+ required=Mass/@Range[4];
+ If[Length[expected]=!=4||converted==={}||!AllTrue[converted,ConstructiveDiagrams`Private`preparationPairQ],Return[Failure["ContactOnlyPairFormatMismatch",<||>]]];
+ headers=Association[First[#]]&/@converted;
+ If[!AllTrue[headers,Sort[Keys[#]]===Sort[required]&&And@@Table[Lookup[#,Mass[i],Missing["NoMass"]]===Lookup[Association[external],Mass[i],Missing["NoExpectedMass"]],{i,4}]&],Return[Failure["ContactOnlyExternalMassHeaderMismatch",<||>]]];
+ expression=HEPCATCovariantContactCalibration`Private`coherent[Total[Last/@converted]];
+ weights=If[expression===0,expected,ConstructiveDiagrams`Private`completionExternalSpinWeights[expression,external]];
+ If[weights=!=expected,Return[Failure["ContactOnlyDeclaredHelicityOrSpinWeightMismatch",<|"Expected"->expected,"Actual"->weights|>]]];
+ <|"Status"->"COMPLETE","CoherentExpression"->expression,"ExternalMassRules"->external,"ExpectedWeights"->expected,"ActualWeights"->weights,"OnlyExternalMassHeaders"->True,"CheckedBeforeExternalChartEvaluation"->True|>
+];
+(* A physical cubic operator can have several independently computed exact
+   witnesses. Only explicitly listed witness fields may differ. Every complete
+   variant is retained; no graph or operator equality is inferred from an ID. *)
+(* Recompute the producer's exact owned-definition remainder identity. Raw
+   chart witnesses remain intact; no numerical/default values are substituted. *)
+HEPCATMasslessVectorIntegration`Private`cubicRemainderExpansionProof[proof_Association,model_List]:=Module[{raw,recorded,expanded},
+ raw=Lookup[proof,"ExactRemainders",None];recorded=Lookup[proof,"ModelDefinitionExpandedRemainders",None];
+ If[!ListQ[raw]||!ListQ[recorded]||Length[raw]=!=Length[recorded],Return[Failure["MalformedCubicRemainderVectors",<||>]]];
+ expanded=Block[{$Assumptions=True},Cancel[Together[ConstructiveDiagrams`Private`modelExpandParameterDefinitions[#,model]]]&/@raw];
+ If[expanded=!=recorded||!AllTrue[expanded,#===0&],Return[Failure["UnmatchedOwnedCubicRemainderExpansion",<||>]]];
+ <|"Status"->"EXACT_OWNED_MODEL_DEFINITION_REMAINDERS_ZERO","VariantSHA256"->HEPCATCovariantCurrentSources`Private`objectSHA[proof],"SourceModelSHA256"->HEPCATCovariantContactCalibration`Private`objectSHA[model],
+  "ComponentCount"->Length[raw],"RecomputedExpandedRemainders"->expanded,"RecordedExpandedRemaindersMatched"->True,"NumericalParameterAssignments"->{},"NumericalDefaultsUsed"->False,
+  "Domain"->"Inherited producer chart and declared model-definition denominators; no enlargement at singular points"|>
+];
+HEPCATMasslessVectorIntegration`Private`cubicRemainderExpansionProof[___]:=Failure["MalformedCubicRemainderProofArguments",<||>];
+HEPCATMasslessVectorIntegration`Private`cubicProofVariantQ[certificate_Association,model_List]:=Module[
+ {required,declared,parts,sourceRows,lifted,primitiveQ,partners,nullRows,names,sourceClasses},
+ required={"Status","Class","Particles","SourceRows","LiftedRow","Coefficients","CertificateID"};
+ If[!And@@(KeyExistsQ[certificate,#]&/@required)||!StringQ[certificate["Status"]]||!StringStartsQ[certificate["Status"],"EXACT"]||!StringQ[certificate["Class"]]||!StringQ[certificate["CertificateID"]],Return[False]];
+ parts=certificate["Particles"];sourceRows=certificate["SourceRows"];lifted=certificate["LiftedRow"];
+ If[!MatchQ[parts,{_String,_String,_String}]||!ListQ[sourceRows]||sourceRows==={}||!DuplicateFreeQ[sourceRows]||!AllTrue[sourceRows,ListQ[#]&&Length[HEPCATMasslessVectorIntegration`Private`rowParts[#]]===3&&MemberQ[model[[2]],#]&]||!ListQ[lifted]||Length[lifted]=!=6||HEPCATMasslessVectorIntegration`Private`rowParts[lifted]=!=parts,Return[False]];
+ If[!ListQ[certificate["Coefficients"]]||certificate["Coefficients"]==={}||!AllTrue[certificate["Coefficients"],HEPCATCovariantCurrentSources`Private`modelScalarQ[#,model]&],Return[False]];
+ declared=First/@Join[model[[3]],model[[4]]];
+ If[Complement[DeleteDuplicates[Cases[certificate,_ModelParameter,Infinity]],declared]=!={}||certificate["CertificateID"]=!=HEPCATCovariantCurrentSources`Private`objectSHA[KeyTake[certificate,{"Class","Particles","Coefficients"}]],Return[False]];
+ sourceClasses=Map[Function[sourceRow,Module[{particleRows,spins,vectorRows},
+  particleRows=HEPCATCovariantCurrentSources`Private`particleRow[#,model]&/@HEPCATMasslessVectorIntegration`Private`rowParts[sourceRow];
+  If[!AllTrue[particleRows,ListQ[#]&&Length[#]===11&],Return[Missing["UnknownCubicParticle"]]];
+  spins=Sort[particleRows[[All,5]]];vectorRows=Select[particleRows,#[[5]]===2&];
+  Which[spins==={2,2,2},"MinimalVectorVectorVector",spins==={0,2,2},"VectorVectorScalar",spins==={0,0,0},"ScalarCubic",spins==={0,1,1},"FermionFermionScalar",
+   spins==={1,1,2}&&First[vectorRows][[6]]===0,"FermionFermionMasslessVector",spins==={1,1,2},"FermionFermionMassiveVector",True,Missing["UnsupportedCubicClass"]]
+ ]],sourceRows];
+ If[!AllTrue[sourceClasses,#===certificate["Class"]&],Return[False]];
+ If[certificate["Class"]=!="MinimalVectorVectorVector",Return[True]];
+ primitiveQ[proof_Association]:=Module[{original,particleRows,massive,powers,count,remainderProof},
+  If[!And@@(KeyExistsQ[proof,#]&/@{"OriginalModelRow","CanonicalParticleOrder","SymbolicChart","GenericReferenceSpinors","ConvertedTemplate","OriginalVertex","MinimalLorentzOperator","Coefficient","CoherentPowers","CoherentComponentCount","TargetCoefficients","TemplateCoefficients","ExactRemainders","ModelDefinitionExpandedRemainders","ExternalMassShellChecks","SpinFrameChecks","NullRankOneChecks"}),Return[False]];
+  If[!MatchQ[proof["CanonicalParticleOrder"],{_String,_String,_String}],Return[False]];
+  original=proof["OriginalModelRow"];If[!MemberQ[sourceRows,original]||proof["CanonicalParticleOrder"]=!=HEPCATCovariantCurrentSources`Private`minimalVectorVertexOrder[original,model],Return[False]];
+  particleRows=HEPCATCovariantCurrentSources`Private`particleRow[#,model]&/@proof["CanonicalParticleOrder"];
+  If[!AllTrue[particleRows,ListQ[#]&&Length[#]===11&&#[[5]]===2&],Return[False]];
+  massive=Count[particleRows[[All,6]],Except[0]];powers=Tuples[Range[0,2],massive];count=Length[powers];
+  remainderProof=HEPCATMasslessVectorIntegration`Private`cubicRemainderExpansionProof[proof,model];If[!AssociationQ[remainderProof],Return[False]];
+  If[!AllTrue[{"ExternalMassShellChecks","SpinFrameChecks","NullRankOneChecks"},ListQ[proof[#]]&]||Length[proof["ExternalMassShellChecks"]]=!=3||Length[proof["SpinFrameChecks"]]=!=massive||Length[proof["NullRankOneChecks"]]=!=3-massive,Return[False]];
+  AssociationQ[proof["SymbolicChart"]]&&ListQ[proof["GenericReferenceSpinors"]]&&Length[proof["GenericReferenceSpinors"]]===4&&
+   proof["CoherentPowers"]===powers&&proof["CoherentComponentCount"]===count&&
+   AllTrue[{"TargetCoefficients","TemplateCoefficients","ExactRemainders","ModelDefinitionExpandedRemainders"},ListQ[proof[#]]&&Length[proof[#]]===count&]&&
+   AllTrue[proof["ModelDefinitionExpandedRemainders"],#===0&]&&AllTrue[{"ExternalMassShellChecks","SpinFrameChecks","NullRankOneChecks"},ListQ[proof[#]]&&AllTrue[proof[#],TrueQ]&]&&
+   And@@(TrueQ[Lookup[proof,#,False]]&/@{"MomentumConservationVerified","GenericReferenceIndependenceVerified","CoherentCoefficientCoverageVerified"})&&
+   Lookup[proof,"NumericalKinematicSamples",None]===0&&Lookup[proof,"NumericalCoefficientFit",None]===False&&Lookup[proof,"NumericalParameterAssignments",None]==={}&&Lookup[proof,"IndependentBenchmarkRead",None]===False&&Lookup[proof,"CompleteAmplitudeRead",None]===False&&Lookup[proof,"InternalOnShellConditions",None]==={}
+ ];primitiveQ[___]:=False;
+ If[!TrueQ[primitiveQ[certificate]]||certificate["Coefficients"]=!={certificate["Coefficient"]}||Last[lifted]=!=certificate["Coefficient"]certificate["MinimalLorentzOperator"],Return[False]];
+ nullRows=Select[model[[1]],#[[5]]===2&&#[[6]]===0&&Intersection[#[[{2,3}]],Flatten[HEPCATMasslessVectorIntegration`Private`rowParts/@sourceRows]]=!={}&];
+ If[nullRows==={},Return[True]];
+ partners=Lookup[certificate,"MasslessHelicityCertificates",{}];
+ If[!TrueQ[Lookup[certificate,"BothDeclaredMasslessHelicitiesCertified",False]]||!ListQ[partners]||Length[partners]=!=Length[sourceRows]||!AllTrue[partners,AssociationQ[#]&&primitiveQ[#]&]||Sort[Lookup[partners,"OriginalModelRow"]]=!=Sort[sourceRows]||!ListQ[Lookup[certificate,"AliasedOperatorDifferences",None]]||!AllTrue[certificate["AliasedOperatorDifferences"],#===0&],Return[False]];
+ AllTrue[nullRows,Function[particle,names=particle[[{2,3}]];Sort[Intersection[Flatten[HEPCATMasslessVectorIntegration`Private`rowParts/@sourceRows],names]]===Sort[names]]]
+];
+HEPCATMasslessVectorIntegration`Private`cubicProofVariantQ[___]:=False;
+HEPCATMasslessVectorIntegration`Private`reconcileCubicCatalogs[catalogs_List,model_List]:=Module[
+ {aliases,declared,all,groups,merged={},variants,core,witnessFields,groupWitnessFields,bindings,tag=Unique["privateCubicReconciliation"]},Catch[
+ If[catalogs==={}||!AllTrue[catalogs,AssociationQ[#]&&AssociationQ[Lookup[#,"Aliases",None]]&&ListQ[Lookup[#,"Certificates",None]]&&MatchQ[Lookup[#,"Model",None],_FeynmanModel]&],Throw[Failure["MalformedCubicCatalog",<||>],tag]];
+ aliases=First[catalogs]["Aliases"];declared=HEPCATMasslessVectorIntegration`Private`declaredAliases[model];
+ If[FailureQ[declared]||!AllTrue[Normal[aliases],Lookup[declared,First[#],Missing["UndeclaredAlias"]]===Last[#]&]||!AllTrue[catalogs,#["Aliases"]===aliases&&#["Model"][[3]]===model[[3]]&&#["Model"][[4]]===model[[4]]&],Throw[Failure["CubicCatalogModelOrAliasMismatch",<||>],tag]];
+ If[!AllTrue[catalogs,Function[item,Module[{expectedRows,expectedParticles,needed},
+   If[Length[item["Model"]]=!=4||!ListQ[item["Model"][[1]]]||!ListQ[item["Model"][[2]]]||!AllTrue[item["Certificates"],AssociationQ[#]&&ListQ[Lookup[#,"LiftedRow",None]]&],Return[False]];
+   expectedRows=DeleteDuplicates[Lookup[item["Certificates"],"LiftedRow"]];needed=DeleteDuplicates[Flatten[HEPCATMasslessVectorIntegration`Private`rowParts/@expectedRows]];
+   expectedParticles=Map[Function[particle,With[{plain=ReplacePart[particle,7->0]},If[KeyExistsQ[aliases,plain[[2]]],ReplacePart[plain,{2->aliases[plain[[2]]],3->aliases[plain[[3]]],9->"G"}],plain]]],model[[1]]];
+   expectedParticles=Select[expectedParticles,Intersection[#[[{2,3}]],needed]=!={}&];
+   Sort[item["Model"][[1]]]===Sort[expectedParticles]&&Sort[item["Model"][[2]]]===Sort[expectedRows]
+  ]]],Throw[Failure["CubicCatalogParticleOrOperatorModelMismatch",<||>],tag]];
+ all=DeleteDuplicates[Flatten[Lookup[catalogs,"Certificates"],1]];
+ If[all==={}||!AllTrue[all,HEPCATMasslessVectorIntegration`Private`cubicProofVariantQ[#,model]&],Throw[Failure["MalformedOrUnownedCubicCertificateVariant",<||>],tag]];
+ witnessFields={"CanonicalParticleOrder","ConvertedTemplate","DenseDomainNonzeroExpressions","GenericReferenceSpinors","MasslessHelicityCertificates","OriginalModelRow","OriginalVertex","SymbolicChart","TargetCoefficients","TemplateCoefficients"};
+ bindings=Flatten[Map[Function[certificate,Join[({"SourceRow",#}->certificate["CertificateID"]&/@certificate["SourceRows"]),{{"LiftedRow",certificate["LiftedRow"]}->certificate["CertificateID"]}]],all],1];
+ If[AnyTrue[GatherBy[bindings,First],Length[DeleteDuplicates[Last/@#]]>1&],Throw[Failure["ConflictingCubicRowIdentityBindings",<||>],tag]];
+ groups=GatherBy[all,#["CertificateID"]&];
+ Do[groupWitnessFields=If[AllTrue[variants,#["Class"]==="MinimalVectorVectorVector"&&AssociationQ[HEPCATMasslessVectorIntegration`Private`cubicRemainderExpansionProof[#,model]]&],Append[witnessFields,"ExactRemainders"],witnessFields];
+  core=KeyDrop[First[variants],groupWitnessFields];
+  If[!AllTrue[variants,KeyDrop[#,groupWitnessFields]===core&],Throw[Failure["ConflictingCubicPhysicalOrModelBinding",<|"CertificateID"->First[variants]["CertificateID"]|>],tag]];
+  AppendTo[merged,Join[First[variants],<|"CompleteWitnessVariants"->variants,"WitnessVariantCount"->Length[variants],"RemainderExpansionCertificates"->(HEPCATMasslessVectorIntegration`Private`cubicRemainderExpansionProof[#,model]&/@Select[variants,#["Class"]==="MinimalVectorVectorVector"&]),"ReconciliationCertificate"-><|"Status"->"EXACT_COMMON_OPERATOR_AND_MODEL_BINDING","ComparedCore"->core,"VariableWitnessFields"->groupWitnessFields,"AllVariantsRetained"->True,"SourceModelSHA256"->HEPCATCovariantContactCalibration`Private`objectSHA[model]|>|>]],{variants,groups}];
+ <|"Status"->"COMPLETE","Aliases"->aliases,"Certificates"->merged,"CompleteOriginalCertificates"->all,"SourceModelSHA256"->HEPCATCovariantContactCalibration`Private`objectSHA[model],"NoOperatorIdentityInferredFromHashOnly"->True|>,tag]
+];
+HEPCATMasslessVectorIntegration`Private`reconcileCubicCatalogs[___]:=Failure["MalformedCubicCatalogArguments",<||>];
+HEPCATMasslessVectorIntegration`Private`contactImplementation[cal_Association,model_List,lower_List,seconds_]:=Module[
+ {started=AbsoluteTime[],remaining,tag=Unique["mixedNullContact"],result,sourceHash,lowerHash},
+ sourceHash=HEPCATCovariantContactCalibration`Private`objectSHA[model];lowerHash=HEPCATCovariantContactCalibration`Private`objectSHA[lower];
+ remaining[]:=Max[0.000001,seconds-(AbsoluteTime[]-started)];
+ result=TimeConstrained[MemoryConstrained[Catch[Module[
+  {fail,records,aliases,catalogs,certificates,reconciledCatalog,particles,liftedRows,contactRow,physical,extendedModel,catalog,word,diagrams,contacts,cubics,signatures,pairs,converted,
+   difference,mapped,polynomial,spins,powers,values,normalProofs,wordProofs={},bose,sourceRows,externalBinding},
+  fail[name_,data_:<||>]:=Throw[Failure[name,data],tag];
+  If[!HEPCATMasslessVectorIntegration`Private`lowerIdentityQ[cal,model,lower],fail["IncompleteMixedNullLowerIdentity"]];
+  records=cal["HelicityWordCertificates"];catalogs=Lookup[records,"CubicCatalog"];
+  reconciledCatalog=HEPCATMasslessVectorIntegration`Private`reconcileCubicCatalogs[catalogs,model];
+  If[FailureQ[reconciledCatalog],fail["CubicCatalogReconciliationRejected",<|"Reason"->reconciledCatalog|>]];
+  aliases=reconciledCatalog["Aliases"];certificates=reconciledCatalog["Certificates"];
+  particles=DeleteDuplicates[Flatten[(#["Model"][[1]]&/@catalogs),1]];
+  liftedRows=DeleteDuplicates[Flatten[(#["Model"][[2]]&/@catalogs),1]];
+  contactRow=cal["DerivedAliasedContactRow"];physical=Take[contactRow,4];
+  If[physical=!=(Lookup[aliases,#,#]&/@First[cal["Metadata"]["HelicityWords"]]),fail["DerivedContactAliasBindingMismatch"]];
+  extendedModel=FeynmanModel[particles,Append[liftedRows,contactRow],model[[3]],model[[4]]];
+  catalog=<|"Aliases"->aliases,"Certificates"->certificates,"Model"->extendedModel|>;
+  spins=cal["SymbolicChart"]["SpinVariables"];powers=Tuples[Range[0,2],Length[spins]];
+  Do[word=records[[wordIndex]]["Word"];diagrams=CreateDiagrams[word,extendedModel];
+   If[!ListQ[diagrams]||!AllTrue[diagrams,AssociationQ],fail["ContactExtendedGraphsIncomplete"]];
+   contacts=Select[diagrams,MemberQ[HEPCATCovariantCurrentSources`Private`usedRows[{#}],contactRow]&];cubics=Complement[diagrams,contacts];
+   If[Length[contacts]=!=1||Length[cubics]=!=records[[wordIndex]]["CubicCatalog"]["LiftedCubicDiagramCount"],fail["ContactOnlyOrCubicMultiplicityMismatch"]];
+   signatures=HEPCATCovariantCurrentSources`Private`diagramCertificate[#,catalog,model,True]&/@cubics;
+   If[!AllTrue[signatures,AssociationQ]||Sort[signatures]=!=Sort[records[[wordIndex]]["CubicCatalog"]["OriginalCubicGraphCertificates"]],fail["ContactExtensionChangedOriginalCubicGraphs"]];
+   pairs=DiagramAmplitudes[contacts];converted=FeynmanToSpinorProducts[pairs,"ReferenceSpinors"->Automatic,"ReduceSpinorProducts"->False,"TimeConstraint"->Min[30,remaining[]]];
+   If[!TrueQ[ConstructiveDiagrams`Private`constructBenchmarkConversionCompleteQ[pairs,converted]],fail["ContactOnlyConversionIncomplete"]];
+   externalBinding=HEPCATMasslessVectorIntegration`Private`contactExternalBinding[converted,records[[wordIndex]]["ExpectedWeights"],cal["Metadata"]["ExternalMassRules"]];
+   If[FailureQ[externalBinding],fail["ContactOnlyExternalMetadataUnproved",<|"Reason"->externalBinding|>]];
+   difference=externalBinding["CoherentExpression"]-cal["Coefficients"].records[[wordIndex]]["MetricUnitTemplates"];
+   If[!ConstructiveDiagrams`Private`completionHECovariantScalarQ[difference,Range[4],True],fail["ContactDifferenceNotTypedCovariantScalar"]];
+   mapped=ConstructiveDiagrams`Private`residueEvaluateChart[difference,cal["SymbolicChart"],{}];
+   If[!FreeQ[mapped,_Missing|_Failure|_Spinor|_SpinorChain|_Mom|_MomProd|_PropDen|_Mandelstahm],fail["ContactOnlyChartMappingIncomplete"]];
+   polynomial=ConstructiveDiagrams`Private`amplitudeCoherentPolynomialRules[mapped,spins,Min[15,remaining[]]];
+   If[!AssociationQ[polynomial]||Lookup[polynomial,"Status",None]=!="COMPLETE"||!And@@(TrueQ[Lookup[polynomial,#,False]]&/@{"FullCoefficientCoverage","ReconstructionVerified","AbstractRestorationExact","ConstantCoefficientIncluded"})||
+     Lookup[Lookup[polynomial,"ReconstructionProof",<||>],"Method",None]=!="ExactRecursivePolynomialConvolution"||Lookup[polynomial,"NumericalSpinSamples",None]=!=0,fail["ContactOnlyCoherentCoverageIncomplete"]];
+   If[!AllTrue[First/@polynomial["CoefficientRules"],MemberQ[powers,#]&],fail["ContactOnlyCoherentPowersMismatch"]];
+   values=Replace[#,Append[polynomial["CoefficientRules"],_List->0]]&/@powers;
+   normalProofs=HEPCATMasslessVectorCalibration`Private`exactScalarNormalForm[#,model,remaining[]]&/@values;
+   If[AnyTrue[normalProofs,FailureQ]||!AllTrue[normalProofs,#["Value"]===0&&#["ExactDifference"]===0&],fail["ContactOnlyTemplateIdentityUnproved",<|"Word"->word,"Proofs"->normalProofs|>]];
+   AppendTo[wordProofs,<|"Word"->word,"ContactDiagram"->First[contacts],"RawContactPairs"->pairs,"ConvertedContactPairs"->converted,"TypedCovariantScalarCheck"->True,"ExternalBindingProof"->externalBinding,
+    "PolynomialCertificate"->polynomial,"CompleteComponentCount"->Length[powers],"ExactScalarProofs"->normalProofs,"FormalReferencesUnchanged"->True,"OriginalCubicGraphCertificates"->signatures|>],
+   {wordIndex,Length[records]}];
+  bose=HEPCATMasslessVectorIntegration`Private`boseTensorProof[physical,cal["Coefficients"].cal["Operators"],model,remaining[]];If[FailureQ[bose],fail["PhysicalTensorBoseProofUnresolved",<|"Reason"->bose|>]];
+  sourceRows=Select[model[[2]],Function[sourceRow,Length[HEPCATMasslessVectorIntegration`Private`rowParts[sourceRow]]===4&&Sort[(Function[name,Lookup[aliases,name,name]]/@HEPCATMasslessVectorIntegration`Private`rowParts[sourceRow])]===Sort[physical]]];
+  Join[cal,<|"Status"->"EXACT_COMPLETE_LOWER_MIXED_NULL_FOUR_VECTOR_CONTACT","OriginalLowerIdentityStatus"->cal["Status"],"DerivedContactRow"->contactRow,"CanonicalQuartet"->physical,
+   "AllowedOriginalQuarticRows"->sourceRows,"RequestedQuartet"->cal["Metadata"]["RequestedParts"],"ContactOnlyGraphProofs"->wordProofs,"ContactOnlyConvertedTemplateIdentityVerified"->True,
+   "BoseTensorCertificate"->bose,"ExactOriginalCubicGraphCoverage"->True,"SourceAliases"->aliases,"CubicCatalogReconciliation"->reconciledCatalog,"AllDeclaredHelicityContactGraphsVerified"->True,
+   "ContactOnlyGraphImplementationPending"->False,"ContactGraphImplementationAndAliasUnionValidationPending"->True,"RequiresIndependentFinalValidation"->True,"SourceAdmissionClaimed"->False|>]
+ ],tag],512*1024^2,Failure["PrivateContactImplementationMemoryLimit",<||>]],seconds,Failure["PrivateContactImplementationClockLimit",<||>]];
+ If[HEPCATCovariantContactCalibration`Private`objectSHA[model]=!=sourceHash||HEPCATCovariantContactCalibration`Private`objectSHA[lower]=!=lowerHash,Return[Failure["ContactImplementationMutatedModel",<||>]]];result
+];
+(* All-massive calibration delegates literally to the existing implementation.
+   Mixed-null calibration is recomputed from the actual two model arguments. *)
+HEPCATMasslessVectorIntegration`Private`calibrateAndVerify[model_List,lower_List,parts_List,seconds_,callback_:None]:=Module[{rows,started=AbsoluteTime[],cal},
+ rows=HEPCATCovariantCurrentSources`Private`particleRow[#,model]&/@parts;
+ If[Length[parts]=!=4||!AllTrue[rows,ListQ[#]&&Length[#]===11&],Return[Failure["InvalidFourVectorMetadata",<||>]]];
+ If[AllTrue[rows,#[[6]]=!=0&],Return[HEPCATCovariantContactCalibration`Private`fourVectorMetricCalibration[model,lower,parts,"TimeConstraint"->seconds]]];
+ cal=HEPCATMasslessVectorCalibration`Private`calibrate[model,lower,parts,"AllowCalibration"->True,"TimeConstraint"->Min[240,seconds]];
+ If[!AssociationQ[cal],Return[cal]];
+ (* Diagnostic output is side-channel evidence, never a source/cache input or
+    an acceptance flag. Its storage uses the caller's original outer budget. *)
+ If[callback=!=None,Quiet[Check[callback[<|"Stage"->"LOWER_CALIBRATION_UNADMITTED_DIAGNOSTIC","ElapsedTime"->AbsoluteTime[]-started,
+   "Data"-><|"Status"->"UNADMITTED_LOWER_CALIBRATION_DIAGNOSTIC_ONLY","LowerCalibrationRecord"->cal,
+    "ContactAcceptance"->False,"GraphAcceptance"->False,"FivePointAcceptance"->False,"LiveCacheSeedAllowed"->False|>|>],Null]]];
+ HEPCATMasslessVectorIntegration`Private`contactImplementation[cal,model,lower,Max[0.000001,seconds-(AbsoluteTime[]-started)]]
+];
+HEPCATMasslessVectorIntegration`Private`allowedSourceRows[cal_Association]:=If[Lookup[cal,"Status",None]==="EXACT_COMPLETE_LOWER_FOUR_VECTOR_CONTACT",
+ If[Lookup[cal,"AllowedOriginalQuarticRow",None]===None,{}, {cal["AllowedOriginalQuarticRow"]}],Lookup[cal,"AllowedOriginalQuarticRows",{}]];
+HEPCATMasslessVectorIntegration`Private`completeContactQ[cal_Association,model_List,lower_List]:=If[Lookup[cal,"Status",None]==="EXACT_COMPLETE_LOWER_FOUR_VECTOR_CONTACT",
+ TrueQ[Lookup[cal,"AllEightyOneComponentsProvedZero",False]],
+ Lookup[cal,"Status",None]==="EXACT_COMPLETE_LOWER_MIXED_NULL_FOUR_VECTOR_CONTACT"&&HEPCATMasslessVectorIntegration`Private`lowerIdentityQ[cal,model,lower]&&
+ TrueQ[Lookup[cal,"ContactOnlyConvertedTemplateIdentityVerified",False]]&&TrueQ[Lookup[cal,"AllDeclaredHelicityContactGraphsVerified",False]]&&Lookup[Lookup[cal,"BoseTensorCertificate",<||>],"Status",None]==="COMPLETE"];
+HEPCATMasslessVectorIntegration`Private`completeContactQ[___]:=False;
+
+Options[HEPCATMasslessVectorIntegration`Private`fourVectorMetricCalibration]={"TimeConstraint"->486,"ProgressFunction"->None};
+HEPCATMasslessVectorIntegration`Private`fourVectorMetricCalibration[model_List,lower_List,parts_List,OptionsPattern[]]:=Module[{rows},
+ rows=HEPCATCovariantCurrentSources`Private`particleRow[#,model]&/@parts;
+ If[Length[parts]=!=4||!AllTrue[rows,ListQ[#]&&Length[#]===11&],Return[Failure["InvalidFourVectorMetadata",<||>]]];
+ If[AllTrue[rows,#[[6]]=!=0&],Return[HEPCATCovariantContactCalibration`Private`fourVectorMetricCalibration[model,lower,parts,"TimeConstraint"->OptionValue["TimeConstraint"],"ProgressFunction"->OptionValue["ProgressFunction"]]]];
+ HEPCATMasslessVectorIntegration`Private`calibrateAndVerify[model,lower,parts,OptionValue["TimeConstraint"],OptionValue["ProgressFunction"]]
+];
+Options[HEPCATMasslessVectorIntegration`Private`candidate]={"AllowIntegration"->False,"TimeConstraint"->900,"ProgressFunction"->None};
+HEPCATMasslessVectorIntegration`Private`candidate[process_List,model_List,lower_List,OptionsPattern[]]:=Module[
+ {started=AbsoluteTime[],seconds=OptionValue["TimeConstraint"],plan,rows},
+ If[!(NumericQ[seconds]&&TrueQ[0<seconds<Infinity]),Return[Failure["InvalidPrivateIntegrationBudget",<||>]]];
+ rows=HEPCATCovariantCurrentSources`Private`particleRow[#,model]&/@process;
+ If[Length[process]=!=5||!AllTrue[rows,ListQ[#]&&Length[#]===11&]||!AnyTrue[rows,#[[5]]===2&&#[[6]]===0&],Return[<|"Status"->"NOT_APPLICABLE","Reason"->"Private mixed-null source only; existing all-massive and QED dispatch unchanged"|>]];
+ plan=HEPCATMasslessVectorIntegration`Private`augmentationPlan[process,model,lower,Min[3,seconds]];
+ If[FailureQ[plan]||Lookup[plan,"Status",None]=!="AVAILABLE",Return[plan]];
+ If[!TrueQ[OptionValue["AllowIntegration"]],Return[<|"Status"->"METADATA_ONLY_ALLOW_INTEGRATION_REQUIRED","Plan"->plan,"HeavyCalibrationOrGraphConversionRun"->False,"RootSourceChanged"->False|>]];
+ HEPCATMasslessVectorIntegration`Private`buildCandidate[process,model,lower,"AugmentFourVectorContacts"->True,
+  "TimeConstraint"->Max[0.000001,seconds-(AbsoluteTime[]-started)],"ProgressFunction"->OptionValue["ProgressFunction"]]
+];
+
+HEPCATMasslessVectorIntegration`Private`graphUnion[original_List,lifted_List,catalog_Association,model_List,plan_Association,lower_List]:=Module[
+ {originalCertificates,liftedCertificates,pool,position,additional,added={},used,contacts,cubics,certificate,entry,possibleRows,ids,unionRejectTag=Unique["privateUnionReject"]},Catch[
+ originalCertificates=HEPCATCovariantCurrentSources`Private`diagramCertificate[#,catalog,model,False]&/@original;
+ liftedCertificates=HEPCATCovariantCurrentSources`Private`diagramCertificate[#,catalog,model,True]&/@lifted;
+ If[!AllTrue[Join[originalCertificates,liftedCertificates],AssociationQ],Throw[Failure["UncertifiedOrderedUnionGraph",<||>],unionRejectTag]];
+ pool=Range[Length[lifted]];
+ Do[position=SelectFirst[pool,liftedCertificates[[#]]===signature&,Missing["OriginalGraphDropped"]];
+  If[MissingQ[position],Throw[Failure["OriginalOrderedGraphMissingFromUnion",<||>],unionRejectTag]];pool=DeleteCases[pool,position],{signature,originalCertificates}];
+ Do[used=HEPCATCovariantCurrentSources`Private`usedRows[{lifted[[index]]}];
+  contacts=Select[catalog["Certificates"],Lookup[#,"Class",None]==="VectorVectorVectorVector"&&MemberQ[used,#["LiftedRow"]]&];
+  cubics=Select[catalog["Certificates"],Length[HEPCATCovariantCurrentSources`Private`rowParticles[#["LiftedRow"]]]===3&&MemberQ[used,#["LiftedRow"]]&];
+  If[Length[contacts]=!=1||Length[cubics]=!=1||Length[lifted[[index]]["InternalVertices"]]=!=2,
+    Throw[Failure["AdditionalGraphNotOneCertifiedCubicPlusLowerContact",<||>],unionRejectTag]];
+  certificate=First[contacts];entry=SelectFirst[Lookup[plan,"Quartets",{}],Sort[(Function[name,Lookup[catalog["Aliases"],name,name]]/@#["Particles"]) ]===Sort[certificate["Particles"]]&,Missing["UnplannedContact"]];
+  If[MissingQ[entry]||!HEPCATMasslessVectorIntegration`Private`completeContactQ[certificate["LowerAmplitudeCalibration"],model,lower],Throw[Failure["AdditionalContactHasNoExactLowerCertificate",<||>],unionRejectTag]];
+  possibleRows=Lookup[entry["Attachments"],"CubicRow",{}];
+  If[Intersection[possibleRows,First[cubics]["SourceRows"]]==={},Throw[Failure["AdditionalGraphEmitterNotDeclaredByAttachmentPlan",<||>],unionRejectTag]];
+  AppendTo[added,<|"GraphCertificate"->liftedCertificates[[index]],"ContactCertificateID"->certificate["CertificateID"],
+    "CubicCertificateIDs"->{First[cubics]["CertificateID"]},"DeclaredAttachmentPlanEntry"->entry,"EveryVertexExactlyCertified"->True|>],{index,pool}];
+ If[Sort[liftedCertificates]=!=Sort[Join[originalCertificates,Lookup[added,"GraphCertificate",{}]]],Throw[Failure["OrderedUnionMultiplicityMismatch",<||>],unionRejectTag]];
+ <|"Status"->"COMPLETE","OriginalGraphCount"->Length[original],"LiftedGraphCount"->Length[lifted],"AdditionalLowerDerivedGraphCount"->Length[pool],
+  "OriginalGraphCertificates"->originalCertificates,"LiftedGraphCertificates"->liftedCertificates,"AddedLowerGraphCertificates"->added,
+  "OriginalOrderedSubsetVerified"->True,"ExactOrderedUnionVerified"->True,"EveryAddedVertexCertified"->True|>,unionRejectTag]
+];
+Options[HEPCATMasslessVectorIntegration`Private`buildCandidate]={"TimeConstraint"->60,"AugmentFourVectorContacts"->False,"ProgressFunction"->None};
+HEPCATMasslessVectorIntegration`Private`buildCandidate[process_List,diagramModel_List,lowerModel_List,OptionsPattern[]]:=Module[
+ {seconds=OptionValue["TimeConstraint"],augment=OptionValue["AugmentFourVectorContacts"],callback=OptionValue["ProgressFunction"],started=AbsoluteTime[],sourceBefore,lowerBefore,result,tag=Unique["calibratedSource"]},
+ If[!(NumericQ[seconds]&&TrueQ[0<seconds<Infinity]),Return[HEPCATCovariantContactCalibration`Private`reject["InvalidCalibratedSourceBudget"]]];
+ sourceBefore=HEPCATCovariantContactCalibration`Private`objectSHA[diagramModel];lowerBefore=HEPCATCovariantContactCalibration`Private`objectSHA[lowerModel];
+ result=TimeConstrained[Catch[Module[
+  {fail,emit,rows,fermions,vectors,scalars,diagrams,used,cubics,quartics,catalog,calibrations={},certificates,liftedRows,
+   quartetRows,vectorNames,scalarNames,calibration,canonical,liftedRow,certificate,needed,particles,liftedModel,liftedDiagrams,
+   sourceSignatures,liftedSignatures,pairs,converted,external,rawExpression,expression,vectorLegs,weights,expected,remaining,augmentationData,plannedCubicRows,union,additionalCertificates={},sourceRows,nonzero,existingContactParticles,preconditioning=<||>,conversionRecord=<||>},
+  fail[reason_,data_:<||>]:=Throw[HEPCATCovariantContactCalibration`Private`reject[reason,data],tag];
+  remaining[]:=Max[0.000001,seconds-(AbsoluteTime[]-started)];
+  emit[stage_,data_:<||>]:=If[callback===None,Null,callback[<|"Stage"->stage,"ElapsedTime"->AbsoluteTime[]-started,"Data"->data|>]];
+  If[Length[diagramModel]=!=4||Length[lowerModel]=!=4||!AllTrue[Join[diagramModel,lowerModel],ListQ]||
+    Length[process]=!=5||!AllTrue[process,StringQ],fail["UnsupportedCalibratedSourceInput"]];
+  rows=HEPCATCovariantCurrentSources`Private`particleRow[#,diagramModel]&/@process;
+  If[!AllTrue[rows,ListQ],fail["UnknownCalibratedSourceParticle"]];
+  fermions=Select[rows,#[[5]]===1&];vectors=Select[rows,#[[5]]===2&];scalars=Select[rows,#[[5]]===0&];
+  If[!(MemberQ[{{2,1,2},{2,2,1},{0,3,2},{0,4,1}},{Length[fermions],Length[vectors],Length[scalars]}]||TrueQ[augment]&&MemberQ[{{2,3,0},{0,5,0}},{Length[fermions],Length[vectors],Length[scalars]}])||
+    !AllTrue[rows,#[[8]]===1&]||!AllTrue[fermions,HEPCATCovariantCurrentSources`Private`supportedFermionRowQ]||
+    (!TrueQ[augment]&&!AllTrue[vectors,#[[6]]=!=0&])||(scalars=!={}&&Length[DeleteDuplicates[Pick[process,rows[[All,5]],0]]]=!=1),
+    fail["UnsupportedExternalCalibratedCurrentClass"]];
+  diagrams=CreateDiagrams[process,diagramModel];
+  If[!ListQ[diagrams]||(!TrueQ[augment]&&diagrams==={})||!AllTrue[diagrams,AssociationQ],fail["OriginalCalibratedSourceGraphsIncomplete"]];
+  used=HEPCATCovariantCurrentSources`Private`usedRows[diagrams];
+  If[!TrueQ[augment]&&Length[vectors]===4&&Length[scalars]===1&&
+    AnyTrue[used,Function[vertex,Length[HEPCATCovariantCurrentSources`Private`rowParticles[vertex]]===3&&
+      AllTrue[HEPCATCovariantCurrentSources`Private`particleRow[#,diagramModel]&/@HEPCATCovariantCurrentSources`Private`rowParticles[vertex],ListQ[#]&&#[[5]]===2&]]],
+    augmentationData=HEPCATMasslessVectorIntegration`Private`augmentationPlan[process,diagramModel,lowerModel,Min[3,remaining[]]];
+    If[AssociationQ[augmentationData]&&Lookup[augmentationData,"Status",None]==="AVAILABLE",fail["LowerFourVectorContactAugmentationRequired",<|"Plan"->augmentationData|>]]];
+  cubics=Select[used,Length[HEPCATCovariantContactCalibration`Private`rowParticles[#]]===3&];
+  quartics=Select[used,Length[HEPCATCovariantContactCalibration`Private`rowParticles[#]]===4&];
+  If[Length[cubics]+Length[quartics]=!=Length[used],fail["UnsupportedCalibratedSourceVertexArity"]];
+  augmentationData=If[TrueQ[augment],HEPCATMasslessVectorIntegration`Private`augmentationPlan[process,diagramModel,lowerModel,Min[3,remaining[]]],<|"Status"->"NOT_REQUESTED","Quartets"->{}|>];
+  If[TrueQ[augment]&&(!AssociationQ[augmentationData]||Lookup[augmentationData,"Status",None]=!="AVAILABLE"),fail["NoAdmittedLowerFourVectorAugmentation",<|"Reason"->augmentationData|>]];
+  plannedCubicRows=DeleteDuplicates[Lookup[Flatten[Lookup[Lookup[augmentationData,"Quartets",{}],"Attachments",{}],1],"CubicRow",{}]];
+  cubics=DeleteDuplicates[Join[cubics,plannedCubicRows]];
+  If[cubics==={},fail["NoCertifiedCubicSourceOrEmitter"]];
+  catalog=HEPCATCovariantCurrentSources`Private`sourceCatalog[diagramModel,cubics];
+  If[!AssociationQ[catalog],fail["UsedCubicCurrentNotCertified",<|"Reason"->catalog|>]];
+  emit["CUBIC_CATALOG_CERTIFIED",<|"Certificates"->catalog["Certificates"]|>];
+  certificates=catalog["Certificates"];liftedRows=catalog["Model"][[2]];
+  Do[quartetRows=HEPCATCovariantCurrentSources`Private`particleRow[#,diagramModel]&/@HEPCATCovariantContactCalibration`Private`rowParticles[row];
+   If[AllTrue[quartetRows,ListQ[#]&&#[[5]]===2&&#[[8]]===1&],
+    calibration=HEPCATMasslessVectorIntegration`Private`fourVectorMetricCalibration[diagramModel,lowerModel,
+      HEPCATCovariantContactCalibration`Private`rowParticles[row],"TimeConstraint"->remaining[]];
+    If[!HEPCATMasslessVectorIntegration`Private`completeContactQ[calibration,diagramModel,lowerModel]||
+      !MemberQ[HEPCATMasslessVectorIntegration`Private`allowedSourceRows[calibration],row],
+      fail["UsedFourVectorContactNotExactlyCalibrated",<|"Reason"->calibration|>]];
+    liftedRow=calibration["DerivedContactRow"];canonical=calibration["CanonicalQuartet"];
+    certificate=<|"Class"->"VectorVectorVectorVector","Particles"->canonical,"SourceRows"->{row},"LiftedRow"->liftedRow,
+      "Coefficients"->calibration["Coefficients"],"Status"->"EXACT_COMPLETE_LOWER_AMPLITUDE_CONTACT_CONTINUATION",
+      "LowerAmplitudeCalibration"->calibration,"NumericalParameterAssignments"->{},"InternalOnShellConditions"->{},"BareVertexOffShellEqualityClaimed"->False|>;
+    certificate=Append[certificate,"CertificateID"->HEPCATCovariantCurrentSources`Private`objectSHA[KeyTake[certificate,{"Class","Particles","Coefficients"}]]];
+    AppendTo[certificates,certificate];AppendTo[liftedRows,liftedRow];AppendTo[calibrations,calibration];Continue[]];
+   If[!AllTrue[quartetRows,ListQ]||Count[quartetRows[[All,5]],2]=!=2||Count[quartetRows[[All,5]],0]=!=2,
+    fail["UnsupportedUsedQuarticCurrentClass"]];
+   vectorNames=Pick[HEPCATCovariantContactCalibration`Private`rowParticles[row],quartetRows[[All,5]],2];
+   scalarNames=Pick[HEPCATCovariantContactCalibration`Private`rowParticles[row],quartetRows[[All,5]],0];
+   If[Length[DeleteDuplicates[scalarNames]]=!=1,fail["UnsupportedUnequalScalarQuartic"]];
+   calibration=HEPCATCovariantContactCalibration`Private`metricContactCalibration[diagramModel,lowerModel,vectorNames,First[scalarNames],"TimeConstraint"->remaining[]];
+   If[!AssociationQ[calibration]||Lookup[calibration,"Status",None]=!="EXACT_SYMBOLIC_CONTACT_CALIBRATION",
+    fail["UsedMetricContactNotExactlyCalibrated",<|"Reason"->calibration|>]];
+   If[calibration["AllowedOriginalQuarticRow"]=!=row,fail["QuarticCalibrationRowMismatch"]];
+   canonical=Join[vectorNames,scalarNames];
+   liftedRow=Join[canonical,{1,calibration["MetricCoefficient"]LorentzMetric[LorentzIndex[1],LorentzIndex[2]]}];
+   certificate=<|"Class"->"VectorVectorScalarScalar","Particles"->canonical,"SourceRows"->{row},"LiftedRow"->liftedRow,
+    "Coefficients"->{calibration["MetricCoefficient"]},"Status"->"EXACT_COMPLETE_LOWER_AMPLITUDE_CONTACT_CONTINUATION",
+    "LowerAmplitudeCalibration"->calibration,"NumericalParameterAssignments"->{},"InternalOnShellConditions"->{},
+    "BareVertexOffShellEqualityClaimed"->False|>;
+   certificate=Append[certificate,"CertificateID"->HEPCATCovariantCurrentSources`Private`objectSHA[KeyTake[certificate,{"Class","Particles","Coefficients"}]]];
+   AppendTo[certificates,certificate];AppendTo[liftedRows,liftedRow];AppendTo[calibrations,calibration],{row,quartics}];
+  If[TrueQ[augment],
+   existingContactParticles=Sort/@Lookup[Select[certificates,Lookup[#,"Class",None]==="VectorVectorVectorVector"&],"Particles",{}];
+   Do[canonical=entry["Particles"];If[MemberQ[existingContactParticles,Sort[(Function[name,Lookup[catalog["Aliases"],name,name]]/@canonical)]],Continue[]];
+    calibration=HEPCATMasslessVectorIntegration`Private`fourVectorMetricCalibration[diagramModel,lowerModel,canonical,"TimeConstraint"->remaining[],"ProgressFunction"->callback];
+    If[!HEPCATMasslessVectorIntegration`Private`completeContactQ[calibration,diagramModel,lowerModel],
+      fail["AdditionalLowerFourVectorContactNotCertified",<|"Reason"->calibration|>]];
+    liftedRow=calibration["DerivedContactRow"];sourceRows=HEPCATMasslessVectorIntegration`Private`allowedSourceRows[calibration];
+    nonzero=!AllTrue[calibration["Coefficients"],TrueQ[Cancel[Together[ConstructiveDiagrams`Private`modelExpandParameterDefinitions[#,diagramModel]]]===0]&];
+    certificate=<|"Class"->"VectorVectorVectorVector","Particles"->calibration["CanonicalQuartet"],"SourceRows"->sourceRows,"LiftedRow"->liftedRow,
+      "Coefficients"->calibration["Coefficients"],"Status"->"EXACT_COMPLETE_LOWER_AMPLITUDE_CONTACT_CONTINUATION","LowerAmplitudeCalibration"->calibration,
+      "NumericalParameterAssignments"->{},"InternalOnShellConditions"->{},"BareVertexOffShellEqualityClaimed"->False,"AdditionalLowerDerivedOperator"->True,"NonzeroOperator"->nonzero|>;
+    certificate=Append[certificate,"CertificateID"->HEPCATCovariantCurrentSources`Private`objectSHA[KeyTake[certificate,{"Class","Particles","Coefficients"}]]];
+    AppendTo[calibrations,calibration];If[nonzero,AppendTo[certificates,certificate];AppendTo[liftedRows,liftedRow];AppendTo[additionalCertificates,certificate]],
+    {entry,augmentationData["Quartets"]}]];
+  needed=DeleteDuplicates[Flatten[HEPCATCovariantContactCalibration`Private`rowParticles/@liftedRows]];
+  particles=Map[Function[p,With[{r=ReplacePart[p,7->0]},If[KeyExistsQ[catalog["Aliases"],r[[2]]],
+   ReplacePart[r,{2->catalog["Aliases"][r[[2]]],3->catalog["Aliases"][r[[3]]],9->"G"}],r]]],diagramModel[[1]]];
+  particles=Select[particles,Intersection[#[[{2,3}]],needed]=!={}&];
+  liftedModel=FeynmanModel[particles,DeleteDuplicates[liftedRows],diagramModel[[3]],diagramModel[[4]]];
+  catalog=Join[catalog,<|"Certificates"->certificates,"Model"->liftedModel|>];
+  liftedDiagrams=CreateDiagrams[process,liftedModel];
+  If[!ListQ[liftedDiagrams]||!AllTrue[liftedDiagrams,AssociationQ],fail["LiftedCalibratedSourceGraphsIncomplete"]];
+  union=HEPCATMasslessVectorIntegration`Private`graphUnion[diagrams,liftedDiagrams,catalog,diagramModel,augmentationData,lowerModel];
+  If[!AssociationQ[union]||Lookup[union,"Status",None]=!="COMPLETE",fail["CalibratedOrderedGraphCoverageMismatch",<|"Reason"->union|>]];
+  emit["COMPLETE_ORDERED_GRAPH_UNION",union];
+  sourceSignatures=union["OriginalGraphCertificates"];liftedSignatures=union["LiftedGraphCertificates"];
+  emit["SOURCE_MODEL_SEALED",<|"Model"->liftedModel,"Diagrams"->liftedDiagrams,"Catalog"->catalog,"OriginalDiagrams"->diagrams,"GraphUnion"->union|>];
+  pairs=DiagramAmplitudes[liftedDiagrams];emit["SOURCE_DIAGRAM_PAIRS",<|"SourcePairs"->pairs,"PairCount"->Length[pairs]|>];conversionRecord=If[TrueQ[augment],HEPCATCovariantContactCalibration`Private`coherentSourceConversion[pairs,process,diagramModel,remaining[]],<||>];
+  converted=If[TrueQ[augment],If[AssociationQ[conversionRecord]&&Lookup[conversionRecord,"Status",None]==="COMPLETE",conversionRecord["ConvertedPairs"],
+    fail["CoherentSourceConversionIncomplete",<|"Conversion"->conversionRecord|>]],
+    FeynmanToSpinorProducts[pairs,"ReferenceSpinors"->Automatic,"ReduceSpinorProducts"->False,"TimeConstraint"->remaining[]]];
+  If[!TrueQ[ConstructiveDiagrams`Private`constructBenchmarkConversionCompleteQ[pairs,converted]],fail["CalibratedOffShellConversionIncomplete"]];
+  external=First[First[converted]];
+  If[!AllTrue[converted,First[#]===external&],fail["CalibratedExternalMassOrderingMismatch"]];
+  emit["COMPLETE_SOURCE_CONVERSION",<|"PairCount"->Length[converted]|>];
+  rawExpression=Total[Last/@converted];expression=HEPCATCovariantContactCalibration`Private`coherent[rawExpression];
+  If[TrueQ[augment]&&LeafCount[expression]>=24000,
+   preconditioning=HEPCATCovariantContactCalibration`Private`preconditionCovariantPairs[{{external,expression}},{{external,expression}},process,diagramModel,Min[15,remaining[]]];
+   If[AssociationQ[preconditioning]&&Lookup[preconditioning,"Status",None]==="COMPLETE",expression=Last[First[preconditioning["Pairs"]]]]];
+  vectorLegs=Flatten[Position[rows[[All,5]],2]];expected=HEPCATCovariantCurrentSources`Private`declaredExternalSpinWeights[process,diagramModel];
+  If[FailureQ[expected],fail["UnsupportedDeclaredExternalSpinWeights",<|"Reason"->expected|>]];
+  weights=ConstructiveDiagrams`Private`completionExternalSpinWeights[expression,external];
+  If[!FreeQ[expression,_VectorSpinIndex]||weights=!=expected,fail["UnsupportedCoherentExternalTensorEncoding"]];
+  <|"Status"->"UNVALIDATED_CANDIDATE","Amplitude"->{external,expression},"Expression"->expression,
+   "RawTensorExpression"->If[TrueQ[augment],Total[Last/@pairs],rawExpression],"RawSourceLorentzPairs"->If[TrueQ[augment],pairs,{}],
+   "SourceConversion"->conversionRecord,"RawTensorRepresentation"->If[TrueQ[augment],"CompleteOrderedLorentzGraphPairs","ExplicitVectorSpinorTensor"],"ExternalMassRules"->external,"ExternalParticles"->process,
+   "CoherentExternalVectorEncoding"-><|"Method"->"InjectiveHomogeneousSymmetricSpinPolynomial","VectorLegs"->vectorLegs,
+    "RawTensorRetained"->True,"CompleteSpinDegrees"->Abs[weights],"CompleteSpinWeights"->weights,"OffShellKinematicsChanged"->False|>,
+   "VertexCertificates"->certificates,"ContactCalibrations"->calibrations,"SourceUsedRows"->used,
+   "OrderedGraphCertificates"->sourceSignatures,"LiftedGraphCertificates"->liftedSignatures,
+   "EveryOriginalDiagramCovered"->True,"EveryUsedOrderedVertexCertified"->True,"CompleteOffShellConversionCoverage"->True,
+   "OriginalDiagramCount"->Length[diagrams],"LiftedDiagramCount"->Length[liftedDiagrams],
+   "SourceGraphUnion"->union,"AddedLowerGraphCertificates"->union["AddedLowerGraphCertificates"],"AdditionalLowerDerivedGraphCount"->union["AdditionalLowerDerivedGraphCount"],
+   "FourVectorAugmentationPlan"->augmentationData,"ExactSourcePoleBlockPreconditioning"->preconditioning,"AdditionalLowerDerivedContactCertificates"->additionalCertificates,
+   "OriginalSupportedSourceGraphCount"->Count[diagrams,d_Association/;!AnyTrue[HEPCATCovariantCurrentSources`Private`usedRows[{d}],Function[r,MemberQ[Lookup[Select[certificates,Lookup[#,"Class",None]==="VectorVectorVectorVector"&],"SourceRows",{}],{r}]]]],
+   "LowerDerivedFourVectorContactGraphCount"->Count[liftedDiagrams,d_Association/;AnyTrue[HEPCATCovariantCurrentSources`Private`usedRows[{d}],MemberQ[Lookup[Select[certificates,Lookup[#,"Class",None]==="VectorVectorVectorVector"&],"LiftedRow",{}],#]&]],
+   "FullOrderedUnionCertified"->True,"ContactGraphCountIsNotClaimedOriginalCubicCount"->True,
+   "SourceModelSHA256"->sourceBefore,"LowerModelSHA256"->lowerBefore,"NativeValidationPerformed"->False,
+   "IndependentBenchmarkRead"->False,"NumericalCoefficientFit"->False,"NumericalParameterAssignments"->{},
+   "InternalOnShellConditions"->{},"NewIndependentContacts"->False,"RequiresCheckAmplitudes"->True,
+   "ContinuationAssumption"->"MinimalCovariantCubicCurrentsWithExistingMetricContactsFixedByCompleteKnownLowerAmplitudes"|>
+ ],tag],seconds,HEPCATCovariantContactCalibration`Private`reject["CalibratedSourceTimeConstraint"]];
+ If[HEPCATCovariantContactCalibration`Private`objectSHA[diagramModel]=!=sourceBefore||HEPCATCovariantContactCalibration`Private`objectSHA[lowerModel]=!=lowerBefore,
+  Return[HEPCATCovariantContactCalibration`Private`reject["CalibratedSourceModelChanged"]]];
+ If[AssociationQ[result],Append[result,"Seconds"->N[AbsoluteTime[]-started]],result]
+];
+HEPCATMasslessVectorIntegration`Private`buildCandidate[___]:=HEPCATCovariantContactCalibration`Private`reject["UnsupportedCalibratedSourceInput"];
+End[];EndPackage[];

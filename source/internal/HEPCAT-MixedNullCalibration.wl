@@ -1,0 +1,217 @@
+(* PRIVATE prototype. Load current HEPCAT first. No production definitions or guards are changed.
+   The expensive coefficient reconstruction is disabled unless a reviewed pilot explicitly enables it. *)
+BeginPackage["HEPCATMasslessVectorCalibration`", {"ConstructiveDiagrams`"}];
+Begin["`Private`"];
+HEPCATMasslessVectorCalibration`Private`zero[value_]:=TrueQ[Cancel[Together[value]]===0];
+HEPCATMasslessVectorCalibration`Private`bad[tag_,data_:<||>]:=Failure[tag,data];
+HEPCATMasslessVectorCalibration`Private`endpointRole[name_String,row_List]:=Module[{particle,anti,role,helicity,chirality},
+ If[Length[row]=!=11||!MemberQ[row[[{2,3}]],name],Return[Failure["UnknownEndpointRole",<||>]]];
+ {particle,anti}=row[[{2,3}]];
+ role=Which[particle===anti,"SelfConjugate",name===particle,"Particle",name===anti,"Antiparticle",True,"Unknown"];
+ helicity=If[row[[6]]===0&&row[[5]]===2,
+   If[StringEndsQ[particle,".+"]&&anti===StringDrop[particle,-1]<>"-",If[name===particle,1,-1],"UndeclaredMasslessVectorHelicity"],"NotMasslessVector"];
+ chirality=If[MemberQ[{"L","R"},row[[9]]],row[[9]],"NotChiral"];
+ <|"ParticleAntiparticlePair"->{particle,anti},"RequestedEndpointRole"->role,"Spin2"->row[[5]],"Color"->row[[8]],
+   "DeclaredMassless"->(row[[6]]===0),"DeclaredMasslessHelicity"->helicity,"DeclaredChirality"->chirality|>
+];
+HEPCATMasslessVectorCalibration`Private`covariantInputs[known_,cubic_,units_List,external_List]:=Module[{a,b,c},
+ a=ConstructiveDiagrams`Private`completionHECovariantScalarQ[known,external,True];
+ b=ConstructiveDiagrams`Private`completionHECovariantScalarQ[cubic,external,True];
+ c=ConstructiveDiagrams`Private`completionHECovariantScalarQ[#,external,True]&/@units;
+ <|"KnownLower"->a,"ConvertedCubic"->b,"MetricUnits"->c,"AllTypedCovariantScalars"->And@@Join[{a,b},c],
+   "NativeGuard"->"completionHECovariantScalarQ","ReferencesAllowed"->True,"CheckedBeforeFrameEvaluation"->True|>
+];
+HEPCATMasslessVectorCalibration`Private`metadata[parts_List,model_List,lower_List]:=Module[
+ {rows,lowerRows,masses,null,massive,choices,words,weights,counts,matching,sourceRoles,lowerRoles,wordRoleChecks},
+ If[Length[parts]=!=4||Length[model]=!=4||Length[lower]=!=4||!AllTrue[parts,StringQ],Return[Failure["UnsupportedFourVectorMetadata",<||>]]];
+ rows=HEPCATCovariantCurrentSources`Private`particleRow[#,model]&/@parts;
+ lowerRows=HEPCATCovariantCurrentSources`Private`particleRow[#,lower]&/@parts;
+ If[!AllTrue[Join[rows,lowerRows],ListQ[#]&&Length[#]===11&&#[[5]]===2&&#[[8]]===1&],Return[Failure["UnsupportedVectorSpinColorOrLowerMetadata",<||>]]];
+ masses=rows[[All,6]];
+ If[!AllTrue[masses,HEPCATCovariantCurrentSources`Private`modelScalarQ[#,model]&],Return[Failure["NonOwnedExternalMass",<||>]]];
+ null=Select[Range[4],masses[[#]]===0&];massive=Complement[Range[4],null];
+ If[null==={},Return[<|"Status"->"USE_UNCHANGED_ALL_MASSIVE_ROUTE","Parts"->parts|>]];
+ sourceRoles=MapThread[HEPCATMasslessVectorCalibration`Private`endpointRole,{parts,rows}];
+ lowerRoles=MapThread[HEPCATMasslessVectorCalibration`Private`endpointRole,{parts,lowerRows}];
+ If[sourceRoles=!=lowerRoles||AnyTrue[Join[sourceRoles,lowerRoles],FailureQ],Return[Failure["SourceLowerEndpointRoleMismatch",<|"SourceRoles"->sourceRoles,"LowerRoles"->lowerRoles|>]]];
+ (* The first review covers one or two declared massless vectors with at least two
+    massive vector legs. No mass is reclassified from a numerical default. *)
+ If[!MemberQ[{1,2},Length[null]],Return[Failure["MasslessMetricCalibrationScopeNotEstablished",<||>]]];
+ If[!AllTrue[null,Function[i,StringEndsQ[rows[[i,2]],".+"]&&rows[[i,3]]===StringDrop[rows[[i,2]],-1]<>"-"]],Return[Failure["UndeclaredVectorHelicityPair",<||>]]];
+ choices=Table[If[MemberQ[null,i],rows[[i,{2,3}]],{parts[[i]]}],{i,4}];words=Tuples[choices];
+ wordRoleChecks=Function[word,MapThread[Function[{name,left,right},HEPCATMasslessVectorCalibration`Private`endpointRole[name,left]===HEPCATMasslessVectorCalibration`Private`endpointRole[name,right]],
+   {word,HEPCATCovariantCurrentSources`Private`particleRow[#,model]&/@word,HEPCATCovariantCurrentSources`Private`particleRow[#,lower]&/@word}]]/@words;
+ If[!And@@Flatten[wordRoleChecks],Return[Failure["HelicityWordEndpointRoleMismatch",<||>]]];
+ weights=HEPCATCovariantCurrentSources`Private`declaredExternalSpinWeights[#,model]&/@words;
+ If[!AllTrue[weights,ListQ[#]&&Length[#]===4&],Return[Failure["UnsupportedDeclaredSpinWeights",<||>]]];
+ matching=Function[word,Select[lower[[2]],Sort[HEPCATCovariantContactCalibration`Private`rowParticles[#]]===Sort[word]&]]/@words;
+ If[AnyTrue[matching,Length[#]>1&],Return[Failure["AmbiguousCompleteLowerHelicityRow",<||>]]];
+ counts=ConstantArray[3^Length[massive],Length[words]];
+ <|"Status"->"AVAILABLE_METADATA_ONLY","RequestedParts"->parts,"ParticleRows"->rows,"LowerParticleRows"->lowerRows,
+   "SourceEndpointRoles"->sourceRoles,"LowerEndpointRoles"->lowerRoles,"AllHelicityWordEndpointRoleChecks"->wordRoleChecks,
+   "Masses"->masses,"ExternalMassRules"->Thread[(Mass/@Range[4])->masses],"NullLegs"->null,"MassiveLegs"->massive,
+   "HelicityWords"->words,"ExpectedSpinWeights"->weights,"CoherentComponentsByWord"->counts,
+   "KnownLowerRowsByWord"->matching,"MissingLowerRowsMeanZeroAccordingToModel"->True,
+   "NumericalMassOrCouplingDefaultsUsed"->False,"IndependentBenchmarkRead"->False|>
+];
+HEPCATMasslessVectorCalibration`Private`nullFrame[p_]:=Module[{pivot,r,c,lambda,tilde,patch,remainder},
+ If[Dimensions[p]=!={2,2}||!HEPCATMasslessVectorCalibration`Private`zero[Det[p]],Return[Failure["NotExactRankOneMomentum",<||>]]];
+ pivot=SelectFirst[Tuples[Range[2],2],!HEPCATMasslessVectorCalibration`Private`zero[Extract[p,#]]&,Missing["ZeroMomentum"]];
+ If[MissingQ[pivot],Return[Failure["ZeroNullMomentum",<||>]]];{r,c}=pivot;patch=Cancel[Together[p[[r,c]]]];
+ lambda=p[[All,c]];tilde=p[[r,All]]/patch;remainder=Cancel[Together[Outer[Times,lambda,tilde]-p]];
+ If[!AllTrue[Flatten[remainder],HEPCATMasslessVectorCalibration`Private`zero],Return[Failure["NullFrameReconstructionFailed",<||>]]];
+ <|"Angle"->lambda,"Square"->tilde,"Pivot"->pivot,"NonzeroPivotPatch"->patch,"ExactOuterProductRemainder"->remainder,
+   "DivisionByDeclaredMasslessMass"->False,"ZeroMomentumExcluded"->True|>
+];
+HEPCATMasslessVectorCalibration`Private`densityCertificate[chart_Association,meta_Association]:=Module[
+ {axes,dependent,invariants,coordinates,trials,chosen,jacobian,minor},
+ axes=If[Length[meta["NullLegs"]]>=2,Take[meta["NullLegs"],2],{First[meta["NullLegs"]],First[meta["MassiveLegs"]]}];
+ dependent=First[chart["DependentShellLegs"]];
+ invariants={Det[chart["Momenta"][axes[[1]]]+chart["Momenta"][axes[[2]]]],Det[chart["Momenta"][axes[[1]]]+chart["Momenta"][dependent]]};
+ coordinates=chart["ExternalIdentityCoordinates"];trials=Subsets[coordinates,{2}];
+ chosen=SelectFirst[trials,Function[pair,!HEPCATMasslessVectorCalibration`Private`zero[Det[Table[D[invariants[[i]],pair[[j]]],{i,2},{j,2}]]]],Missing["NoRankTwoInvariantMap"]];
+ If[MissingQ[chosen],Return[Failure["ExternalInvariantDensityNotCertified",<||>]]];
+ jacobian=Table[D[invariants[[i]],chosen[[j]]],{i,2},{j,2}];minor=Cancel[Together[Det[jacobian]]];
+ <|"Status"->"EXACT_NONZERO_MANDELSTAM_JACOBIAN","InvariantLegPairs"->{axes,{First[axes],dependent}},"MandelstamValues"->invariants,
+   "DifferentiatedCoordinates"->chosen,"Jacobian"->jacobian,"NonzeroMinor"->minor,"NonzeroOpenPatch"->minor,
+   "ExternalInvariantRank"->2,"NoInternalInvariantFixed"->True,"Scope"->"DenseComplexFourPointInvariantImageCombinedWithTypedLorentzCovarianceAndCompleteExternalSpinCoverage"|>
+];
+HEPCATMasslessVectorCalibration`Private`chart[meta_Association]:=Module[
+ {chart,frames=<||>,angle,square,angleReferences=<||>,squareReferences=<||>,referenceCoordinates={},patches={},frame,ra,rs,ad,sd,frameDenominators,
+  shells,bases,conservation,spinByLeg,density,j={{0,1},{-1,0}}},
+ chart=ConstructiveDiagrams`Private`completionHESymbolicExternalChart[meta["ExternalMassRules"]];
+ If[!AssociationQ[chart],Return[Failure["ExistingDenseExternalChartUnavailable",<||>]]];angle=chart["Angle"];square=chart["Square"];
+ Do[frame=HEPCATMasslessVectorCalibration`Private`nullFrame[chart["Momenta"][i]];If[FailureQ[frame],Return[frame]];
+  AssociateTo[frames,i->frame];AssociateTo[angle,i->frame["Angle"]];AssociateTo[square,i->frame["Square"]];AppendTo[patches,frame["NonzeroPivotPatch"]];
+  ra={1,Unique["independentAngleReference"]};rs={1,Unique["independentSquareReference"]};
+  referenceCoordinates=Join[referenceCoordinates,{Last[ra],Last[rs]}];ad=ra.(-j).angle[i];sd=square[i].j.rs;
+  If[AnyTrue[{ad,sd},HEPCATMasslessVectorCalibration`Private`zero],Return[Failure["IdenticallySingularReferencePatch",<||>]]];
+  AssociateTo[angleReferences,i->ra];AssociateTo[squareReferences,i->rs];patches=Join[patches,{ad,sd}],{i,meta["NullLegs"]}];
+ shells=Table[HEPCATMasslessVectorCalibration`Private`zero[Det[chart["Momenta"][i]]-meta["Masses"][[i]]^2],{i,4}];
+ conservation=AllTrue[Flatten[Total[Values[chart["Momenta"]]]],HEPCATMasslessVectorCalibration`Private`zero];
+ bases=Table[AllTrue[Flatten[chart["AngleBasis"][i].j.Transpose[chart["SquareBasis"][i]]-chart["Momenta"][i]],HEPCATMasslessVectorCalibration`Private`zero],{i,meta["MassiveLegs"]}];
+ If[!And@@Join[shells,bases,{conservation}],Return[Failure["DenseChartOrFrameCertificateFailed",<||>]]];
+ frameDenominators=DeleteDuplicates[DeleteCases[Denominator[Together[#]]&/@Flatten[Join[Values[chart["Momenta"]],Values[chart["AngleBasis"]],Values[chart["SquareBasis"]]]],1|-1]];
+ If[AnyTrue[frameDenominators,HEPCATMasslessVectorCalibration`Private`zero],Return[Failure["IdenticallyZeroExternalChartDenominator",<||>]]];
+ patches=DeleteDuplicates[Join[patches,frameDenominators]];
+ spinByLeg=AssociationThread[meta["MassiveLegs"],chart["SpinVariables"]];
+ density=HEPCATMasslessVectorCalibration`Private`densityCertificate[chart,meta];If[FailureQ[density],Return[density]];
+ patches=DeleteDuplicates[Append[patches,density["NonzeroOpenPatch"]]];
+ Join[chart,<|"Angle"->angle,"Square"->square,"ReferenceOverrides"-><|"Angle"->angleReferences,"Square"->squareReferences|>,
+  "FormalReferenceCoordinates"->referenceCoordinates,"NullFrameCertificates"->frames,"OpenPatchNonzeroFactors"->patches,"CoordinateAndMassiveFrameDenominators"->frameDenominators,
+  "InvariantDensityCertificate"->density,"MassiveSpinVariablesByLeg"->spinByLeg,"AllExternalShellsCertified"->shells,"MassiveFrameCertificates"->bases,
+  "MomentumConservationCertified"->conservation,"InternalOnShellConditions"->{},"NoSquareRootRadialExtension"->True|>]
+];
+(* Private, massless-only coefficient normalization. Candidate discovery and its
+   exact identity check share the caller's existing remaining clock. No parameter
+   defaults, assumptions, PowerExpand, kinematic substitution or ownership relaxation. *)
+HEPCATMasslessVectorCalibration`Private`exactScalarNormalForm[expression_,model_List,seconds_]:=Module[
+ {started=AbsoluteTime[],budget,remaining,declared,used,expanded,rational,candidate,proof,radicals},
+ budget=If[NumericQ[seconds]&&TrueQ[seconds>0],Min[2,seconds],0];
+ remaining[]:=Max[0.000001,budget-(AbsoluteTime[]-started)];
+ declared=First/@Join[model[[3]],model[[4]]];used=DeleteDuplicates[Cases[expression,_ModelParameter,{0,Infinity}]];
+ If[Complement[used,declared]=!={},Return[Failure["ForeignScalarNormalizationParameter",<||>]]];
+ expanded=ConstructiveDiagrams`Private`modelExpandParameterDefinitions[expression,model];
+ If[FailureQ[expanded],Return[expanded]];
+ If[!FreeQ[expanded,Indeterminate|ComplexInfinity|_DirectedInfinity|_Failure],Return[Failure["SingularScalarNormalizationInput",<||>]]];
+ rational=Cancel[Together[expanded]];
+ If[!FreeQ[rational,Indeterminate|ComplexInfinity|_DirectedInfinity|_Failure],Return[Failure["SingularScalarNormalizationInput",<||>]]];
+ If[rational===0,Return[
+   <|"Value"->rational,"Original"->expression,"DeclaredDefinitionExpandedInput"->expanded,"ExactDifference"->0,
+     "Method"->"ExactRationalCancelAfterDeclaredModelDefinitions","OriginalDenominator"->Denominator[Together[expanded]],
+     "NumericalDefaultsUsed"->False,"AdditionalAssumptions"->{},"InternalOnShellConditions"->{}|>]];
+ radicals=DeleteDuplicates[Cases[rational,Power[b_,e_Rational]/;Denominator[e]>1&&HEPCATCovariantCurrentSources`Private`modelScalarQ[b,model],{0,Infinity}]];
+ If[budget<=0&&radicals=!={},Return[Failure["ScalarAlgebraicNormalizationTimeLimit",<||>]]];
+ If[radicals==={},Return[<|"Value"->rational,"Original"->expression,"DeclaredDefinitionExpandedInput"->expanded,"ExactDifference"->0,
+   "Method"->"ExactRationalCancelNoOwnedAlgebraicFallback","OriginalDenominator"->Denominator[Together[expanded]],
+   "NumericalDefaultsUsed"->False,"AdditionalAssumptions"->{},"InternalOnShellConditions"->{}|>]];
+ candidate=TimeConstrained[FullSimplify[rational,Assumptions->True],remaining[],$Aborted];
+ If[candidate===$Aborted,Return[Failure["ScalarAlgebraicNormalizationTimeLimit",<||>]]];
+ proof=TimeConstrained[FullSimplify[rational-candidate,Assumptions->True],remaining[],$Aborted];
+ If[proof=!=0,Return[Failure["ScalarAlgebraicNormalizationIdentityUnproved",<|"ExactDifference"->proof|>]]];
+ <|"Value"->candidate,"Original"->expression,"DeclaredDefinitionExpandedInput"->expanded,"ExactDifference"->proof,
+   "Method"->"ExactFullSimplifyIdentityAfterDeclaredModelDefinitions","OwnedAlgebraicPowers"->radicals,
+   "OriginalDenominator"->Denominator[Together[expanded]],"NormalizedDenominator"->Denominator[Together[candidate]],
+   "NumericalDefaultsUsed"->False,"AdditionalAssumptions"->{},"PowerExpandUsed"->False,"InternalOnShellConditions"->{}|>
+];
+Options[HEPCATMasslessVectorCalibration`Private`calibrate]={"AllowCalibration"->False,"TimeConstraint"->240};
+HEPCATMasslessVectorCalibration`Private`calibrate[model_List,lower_List,parts_List,OptionsPattern[]]:=Module[
+ {meta,seconds=OptionValue["TimeConstraint"],sourceHash,lowerHash,result,tag=Unique["privateMasslessCalibration"]},
+ meta=HEPCATMasslessVectorCalibration`Private`metadata[parts,model,lower];If[FailureQ[meta],Return[meta]];
+ If[!TrueQ[OptionValue["AllowCalibration"]],Return[Join[meta,<|"CalibrationRun"->False,"Reason"->"Private heavy pilot requires explicit Root GO"|>]]];
+ If[meta["Status"]==="USE_UNCHANGED_ALL_MASSIVE_ROUTE",Return[HEPCATCovariantContactCalibration`Private`fourVectorMetricCalibration[model,lower,parts,"TimeConstraint"->seconds]]];
+ If[!(NumericQ[seconds]&&TrueQ[0<seconds<=486]),Return[Failure["InvalidPrivateCalibrationBudget",<||>]]];
+ sourceHash=HEPCATCovariantContactCalibration`Private`objectSHA[model];lowerHash=HEPCATCovariantContactCalibration`Private`objectSHA[lower];
+ result=TimeConstrained[MemoryConstrained[Catch[Module[
+  {started=AbsoluteTime[],remaining,fail,externalChart,spins,powers,coordinates,operators,records={},allRows={},allTargets={},known,transport,
+   catalog,pairs,converted,cubic,unitPolarization,rawUnits,units,expected,weights,mapped,certificates,rows,componentMatrix,targets,
+   selected={},minorTrials={},row,independent,minor,coefficients,proofs,aliases,physicalParts,derivedRow,word,helicities,null,sourceAliases={},knownRows,covariantCertificates,rawCoefficients,coefficientProofs,rawResiduals,residualProofs},
+  remaining[]:=Max[0.000001,seconds-(AbsoluteTime[]-started)];fail[name_,data_:<||>]:=Throw[Failure[name,data],tag];
+  externalChart=HEPCATMasslessVectorCalibration`Private`chart[meta];If[FailureQ[externalChart],fail["DenseChartFailed",<|"Reason"->externalChart|>]];
+  spins=externalChart["SpinVariables"];powers=Tuples[Range[0,2],Length[spins]];
+  coordinates=Join[externalChart["ExternalIdentityCoordinates"],externalChart["FormalReferenceCoordinates"]];null=meta["NullLegs"];
+  operators={LorentzMetric[LorentzIndex[1],LorentzIndex[2]]LorentzMetric[LorentzIndex[3],LorentzIndex[4]],
+   LorentzMetric[LorentzIndex[1],LorentzIndex[3]]LorentzMetric[LorentzIndex[2],LorentzIndex[4]],
+   LorentzMetric[LorentzIndex[1],LorentzIndex[4]]LorentzMetric[LorentzIndex[2],LorentzIndex[3]]};
+  Do[word=meta["HelicityWords"][[wordIndex]];knownRows=meta["KnownLowerRowsByWord"][[wordIndex]];
+   known=If[knownRows==={},0,Block[{ConstructiveDiagrams`Private`$colorFactorizationEnabled=False},LookupAmplitude[MapIndexed[{#1,First[#2]}&,word],ReplacePart[lower,2->knownRows],False,Table[Unique["lowerVectorSpin"],{4}]]]];
+   transport=HEPCATCovariantContactCalibration`Private`parameterTransport[{known,meta["LowerParticleRows"][[All,6]]},model,lower];
+   If[FailureQ[transport],fail["LowerParameterTransportFailed",<|"Report"->transport|>]];
+   known=First[transport["Expression"]];
+   If[!AllTrue[MapThread[HEPCATMasslessVectorCalibration`Private`zero[ConstructiveDiagrams`Private`modelExpandParameterDefinitions[#1-#2,model]]&,{Last[transport["Expression"]],meta["Masses"]}],TrueQ],fail["LowerMassMismatch"]];
+   If[!FreeQ[known,_Real|_ModelFunction|_SpinorHat|_MomHat|_MomQ|_xFactor|_xTildeFactor|Spinor["Xi"|"Zeta",___]],fail["UnsupportedKnownCompleteLowerExpression"]];
+   If[!ConstructiveDiagrams`Private`completionHECovariantScalarQ[known,Range[4],True],fail["KnownLowerNotTypedCovariantScalar"]];
+   catalog=HEPCATCovariantContactCalibration`Private`fourVectorCubicCatalog[word,model];If[!AssociationQ[catalog],fail["CertifiedCubicCatalogUnavailable",<|"Reason"->catalog|>]];
+   AppendTo[sourceAliases,catalog["Aliases"]];
+   pairs=If[catalog["LiftedDiagrams"]==={}, {},DiagramAmplitudes[catalog["LiftedDiagrams"]]];
+   converted=If[pairs==={}, {},FeynmanToSpinorProducts[pairs,"ReferenceSpinors"->Automatic,"ReduceSpinorProducts"->False,"TimeConstraint"->Min[90,remaining[]]]];
+   If[pairs=!={}&&!TrueQ[ConstructiveDiagrams`Private`constructBenchmarkConversionCompleteQ[pairs,converted]],fail["CubicConversionIncomplete"]];
+   cubic=HEPCATCovariantContactCalibration`Private`coherent[Total[Last/@converted]];
+   If[!ConstructiveDiagrams`Private`completionHECovariantScalarQ[cubic,Range[4],True],fail["ConvertedCubicNotTypedCovariantScalar"]];
+   expected=meta["ExpectedSpinWeights"][[wordIndex]];helicities=AssociationThread[null,(-expected[[#]]/2&/@null)];
+   unitPolarization=Times@@Table[PolarizationVector[i,LorentzIndex[i],meta["Masses"][[i]],If[MemberQ[null,i],helicities[i],Automatic]],{i,4}];rawUnits=(# unitPolarization&/@operators);
+   units=FeynmanToSpinorProducts[#,"ReferenceSpinors"->Automatic,"ReduceSpinorProducts"->False,"TimeConstraint"->Min[15,remaining[]]]&/@rawUnits;
+   If[AnyTrue[units,FailureQ],fail["MetricTemplateConversionIncomplete"]];units=HEPCATCovariantContactCalibration`Private`coherent/@units;
+   If[!AllTrue[Join[{known,cubic},units],#===0||ConstructiveDiagrams`Private`completionExternalSpinWeights[#,meta["ExternalMassRules"]]===expected&],fail["DeclaredHelicityOrMassiveHomogeneityMismatch"]];
+   covariantCertificates=HEPCATMasslessVectorCalibration`Private`covariantInputs[known,cubic,units,Range[4]];
+   If[!TrueQ[covariantCertificates["AllTypedCovariantScalars"]],fail["MetricUnitOrInputNotTypedCovariantScalar",<|"Certificate"->covariantCertificates|>]];
+   mapped=ConstructiveDiagrams`Private`residueEvaluateChart[#,externalChart,{}]&/@Join[{known-cubic},units];
+   If[!FreeQ[mapped,_Missing|_Failure|_Spinor|_SpinorChain|_Mom|_MomProd|_PropDen|_Mandelstahm],fail["IncompleteExternalChartMapping"]];
+   certificates=ConstructiveDiagrams`Private`amplitudeCoherentPolynomialRules[#,spins,Min[15,remaining[]]]&/@mapped;
+   If[!AllTrue[certificates,Function[cert,AssociationQ[cert]&&Lookup[cert,"Status",None]==="COMPLETE"&&And@@(Function[key,TrueQ[Lookup[cert,key,False]]]/@{"FullCoefficientCoverage","ReconstructionVerified","AbstractRestorationExact","ConstantCoefficientIncluded"})&&Lookup[Lookup[cert,"ReconstructionProof",<||>],"Method",None]==="ExactRecursivePolynomialConvolution"&&Lookup[cert,"NumericalSpinSamples",None]===0]],fail["IncompleteCoherentCoefficientCoverage"]];
+   rows=Function[certificate,Module[{rules=certificate["CoefficientRules"]},If[!AllTrue[First/@rules,MemberQ[powers,#]&],fail["UnexpectedCoherentPowers"]];Replace[#,Append[rules,_List->0]]&/@powers]]/@certificates;
+   rows=ConstructiveDiagrams`Private`modelExpandParameterDefinitions[rows,model];
+   allTargets=Join[allTargets,First[rows]];allRows=Join[allRows,Transpose[Rest[rows]]];
+   AppendTo[records,<|"Word"->word,"KnownLowerRows"->knownRows,"MissingLowerRowIsZero"->(knownRows==={}),"ParameterTransport"->transport,"CubicCatalog"->catalog,"KnownCompleteLowerAmplitude"->known,"CubicAmplitude"->cubic,"MetricUnitTemplates"->units,"PolynomialCertificates"->certificates,"CovariantScalarInputCertificate"->covariantCertificates,"CoherentComponentCount"->Length[powers],"CompleteCoherentPowers"->powers,"ExpectedWeights"->expected|>],
+   {wordIndex,Length[meta["HelicityWords"]]}];
+  componentMatrix=allRows;targets=allTargets;
+  Do[row=componentMatrix[[i]];independent=Switch[Length[selected],0,AnyTrue[row,!HEPCATMasslessVectorCalibration`Private`zero[#]&],
+    1,AnyTrue[Subsets[Range[3],{2}],!HEPCATMasslessVectorCalibration`Private`zero[Det[{componentMatrix[[First[selected]]],row}[[All,#]]]]&],
+    2,!HEPCATMasslessVectorCalibration`Private`zero[Det[Append[componentMatrix[[selected]],row]]]];
+   AppendTo[minorTrials,<|"Row"->i,"Independent"->TrueQ[independent]|>];If[TrueQ[independent],AppendTo[selected,i]];If[Length[selected]===3,Break[]],{i,Length[allRows]}];
+  If[Length[selected]=!=3,fail["MetricSpanNotUniquelyIdentified",<|"SelectedRows"->selected|>]];
+  minor=Cancel[Together[Det[componentMatrix[[selected]]]]];If[HEPCATMasslessVectorCalibration`Private`zero[minor],fail["ZeroMetricMinor"]];
+  rawCoefficients=Cancel[Together[#]]&/@LinearSolve[componentMatrix[[selected]],targets[[selected]]];
+  coefficientProofs=HEPCATMasslessVectorCalibration`Private`exactScalarNormalForm[#,model,remaining[]]&/@rawCoefficients;
+  If[AnyTrue[coefficientProofs,FailureQ],fail["ExactScalarCoefficientNormalizationUnresolved",<|"Proofs"->coefficientProofs|>]];
+  coefficients=Lookup[coefficientProofs,"Value"];
+  If[!AllTrue[coefficients,HEPCATCovariantCurrentSources`Private`modelScalarQ[#,model]&]||!FreeQ[coefficients,Alternatives@@Join[coordinates,spins]],fail["CoefficientsNotOwnedModelScalars",<|"Coefficients"->coefficients|>]];
+  rawResiduals=targets-componentMatrix.coefficients;
+  residualProofs=HEPCATMasslessVectorCalibration`Private`exactScalarNormalForm[#,model,remaining[]]&/@rawResiduals;
+  If[AnyTrue[residualProofs,FailureQ],fail["ExactScalarResidualNormalizationUnresolved",<|"Proofs"->residualProofs|>]];
+  proofs=Lookup[residualProofs,"Value"];
+  If[!AllTrue[proofs,#===0&],fail["MetricSpanInsufficientOrLowerHelicitiesInconsistent",<|"Residuals"->proofs|>]];
+  aliases=First[sourceAliases];If[!AllTrue[sourceAliases,#===aliases&],fail["HelicityCatalogAliasMismatch"]];
+  physicalParts=Lookup[aliases,#,#]&/@First[meta["HelicityWords"]];derivedRow=Join[physicalParts,{1,coefficients.operators}];
+  <|"Status"->"PRIVATE_EXACT_LOWER_METRIC_TENSOR_NOT_INTEGRATED","Coefficients"->coefficients,"Operators"->operators,"DerivedAliasedContactRow"->derivedRow,
+    "Metadata"->meta,"SymbolicChart"->externalChart,"HelicityWordCertificates"->records,"MetricMatrix"->componentMatrix,"SelectedMinorRows"->selected,"MinorTrials"->minorTrials,"NonzeroMinor"->minor,
+    "RawMetricCoefficients"->rawCoefficients,"ExactScalarCoefficientProofs"->coefficientProofs,"RawCoherentResiduals"->rawResiduals,"ExactScalarResidualProofs"->residualProofs,
+    "AllCoherentResiduals"->proofs,"CompleteDeclaredHelicityCoherentCoverage"->True,"AllFormalReferenceIdentitiesProved"->True,
+    "NumericalKinematicSamples"->0,"NumericalParameterAssignments"->{},"NumericalCoefficientFit"->False,"IndependentBenchmarkRead"->False,"InternalOnShellConditions"->{},
+    "NewIndependentCoupling"->False,"NativePolarizationPhaseChanged"->False,"SourceModelSHA256"->sourceHash,"LowerModelSHA256"->lowerHash,
+    "ContactGraphImplementationAndAliasUnionValidationPending"->True,"RequiresIndependentFinalValidation"->True,"ElapsedSeconds"->AbsoluteTime[]-started|>
+ ],tag],512*1024^2,Failure["PrivateCalibrationMemoryLimit",<||>]],seconds,Failure["PrivateCalibrationClockLimit",<||>]];
+ If[HEPCATCovariantContactCalibration`Private`objectSHA[model]=!=sourceHash||HEPCATCovariantContactCalibration`Private`objectSHA[lower]=!=lowerHash,Return[Failure["CalibrationModelMutation",<||>]]];result
+];
+End[];
+EndPackage[];

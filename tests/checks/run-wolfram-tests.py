@@ -105,6 +105,10 @@ TEST_SUITES = (
     "sm5-current-namespace-tests.wl", "sm5-current-metadata-dispatch-tests.wl",
     "sm5-current-vector-metadata-tests.wl", "sm5-renamed-model-metadata-tests.wl",
     "qcd-namespace-hygiene-tests.wl",
+    "qcd-constant-polynomial-fit-tests.wl", "qcd-four-adjoint-auxiliary-tests.wl",
+    "qcd-four-adjoint-scope-tests.wl", "qcd-three-adjoint-metadata-tests.wl",
+    "construction-coverage-origin-tests.wl",
+    "mixed-null-source-tests.wl",
     "automatic-resource-tests.wl", "random-seed-tests.wl",
 )
 

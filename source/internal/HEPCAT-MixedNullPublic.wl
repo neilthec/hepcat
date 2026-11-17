@@ -1,0 +1,83 @@
+(* PRIVATE typed provider bridge. Existing C13 paths and all physics checkers
+   remain literal. No retained calibration or five-point answer is an input. *)
+Begin["ConstructiveDiagrams`Private`"];
+constructMixedNullPublicClassQ[process_List,model_List]:=Module[{rows,vectors,scalars,null},
+ If[Length[process]=!=5||Length[model]=!=4||!AllTrue[process,StringQ],Return[False]];
+ rows=HEPCATCovariantCurrentSources`Private`particleRow[#,model]&/@process;
+ If[!AllTrue[rows,ListQ[#]&&Length[#]===11&&#[[8]]===1&],Return[False]];
+ vectors=Select[rows,#[[5]]===2&];scalars=Select[rows,#[[5]]===0&];
+ If[Length[vectors]=!=4||Length[scalars]=!=1,Return[False]];
+ null=Select[vectors,#[[6]]===0&];
+ Length[null]===2&&AllTrue[null,StringEndsQ[#[[2]],".+"]&&#[[3]]===StringDrop[#[[2]],-1]<>"-"&]
+];
+constructMixedNullPublicClassQ[___]:=False;
+constructMixedNullPublicPlan[process_List,model_List,lower_List,seconds_]:=Module[{plan,entries},
+ If[!constructMixedNullPublicClassQ[process,model],Return[Failure["OutsidePrivateA36PublicScope",<||>]]];
+ plan=HEPCATMasslessVectorIntegration`Private`augmentationPlan[process,model,lower,seconds];
+ If[!AssociationQ[plan]||Lookup[plan,"Status",None]=!="AVAILABLE",Return[plan]];
+ entries=Lookup[plan,"Quartets",{}];
+ If[entries==={}||!AllTrue[entries,Lookup[#,"NullLegCount",None]===2&&Lookup[#,"TotalExactComponents",None]===36&&Lookup[#,"CoherentComponentsPerWord",None]==={9,9,9,9}&],Return[Failure["MixedNullPublicPlanOutsideTwoNullContactScope",<||>]]];
+ Join[plan,<|"Quartets"->(Join[#,<|"CoherentComponents"->#["TotalExactComponents"]|>]&/@entries),"PublicTypedScope"->"TwoDeclaredNullTwoMassiveVectorsOneScalar"|>]
+];
+constructMixedNullPublicReferenceCertificate[proposal_Association,process_List,model_List]:=Module[{rows,null,expected,converted,references,conversion,primitive},
+ rows=HEPCATCovariantCurrentSources`Private`particleRow[#,model]&/@process;
+ null=Select[Range[Length[process]],rows[[#,5]]===2&&rows[[#,6]]===0&];
+ expected=Table[Spinor["Xi",If[process[[leg]]===rows[[leg,2]],"Angle","Square"],leg],{leg,null}];
+ conversion=Lookup[proposal,"SourceConversion",<||>];primitive=Lookup[conversion,"PrimitiveProjectionCertificate",<||>];
+ converted=Lookup[conversion,"ConvertedPairs",None];
+ If[!ListQ[converted]||converted==={}||!TrueQ[Lookup[conversion,"NativeConverterDefinitionsRestored",False]]||Lookup[conversion,"NativeDefinitionFieldsCompared",None]=!=10||
+   !And@@(TrueQ[Lookup[conversion,#,False]]&/@{"RawLorentzTensorRetained","CompleteRawPairOrderRetained","ExternalLegAndMassBindingVerified","CompleteSpinWeightsVerified","EveryProjectedPolarizationOccursExactlyOncePerNonzeroTerm"})||
+   !TrueQ[Lookup[primitive,"NoHelicityOrReferenceChange",False]],Return[Failure["IncompleteNativeCoherentReferenceBinding",<||>]]];
+ references=DeleteDuplicates[Cases[converted,(reference:(Spinor|SpinorHat)["Xi",___]):>reference,Infinity]];
+ If[!AllTrue[references,MemberQ[expected,#]&],Return[Failure["SourceReferenceNotSharedByDeclaredExternalLeg",<||>]]];
+ <|"Status"->"SHARED_PER_EXTERNAL_LEG_REFERENCE_ASSIGNMENT","Policy"->"Automatic Xi of the same declared external leg across the complete graph sum",
+   "DeclaredNullLegs"->null,"ExpectedReferences"->expected,"ActualReferences"->references,"SingleCompletePairListConverted"->True,
+   "NativeDefinitionFieldsCompared"->10,"NativeConverterDefinitionsRestored"->True,"NoPerDiagramReferenceReassignment"->True,
+   "ReferenceIndependenceStillRequiresCheckAmplitudes"->True|>
+];
+constructMixedNullPublicExternalBinding[proposal_Association,process_List,model_List]:=Module[{rows,external,conversion,raw,converted,waves,expectedHelicity},
+ rows=HEPCATCovariantCurrentSources`Private`particleRow[#,model]&/@process;
+ If[!constructMixedNullPublicClassQ[process,model],Return[Failure["OutsidePrivateA36ExternalBinding",<||>]]];
+ external=Thread[(Mass/@Range[5])->rows[[All,6]]];conversion=Lookup[proposal,"SourceConversion",<||>];raw=Lookup[proposal,"RawSourceLorentzPairs",None];converted=Lookup[conversion,"ConvertedPairs",None];
+ If[Lookup[proposal,"ExternalParticles",None]=!=process||Lookup[proposal,"ExternalMassRules",None]=!=external||Lookup[conversion,"DeclaredExternalParticles",None]=!=process||Lookup[conversion,"DeclaredMasses",None]=!=rows[[All,6]]||
+   Lookup[proposal,"InternalOnShellConditions",None]=!={}||Lookup[Lookup[proposal,"CoherentExternalVectorEncoding",<||>],"OffShellKinematicsChanged",None]=!=False||
+   !ListQ[raw]||raw==={}||!ListQ[converted]||Length[converted]=!=Length[raw]||!AllTrue[Join[raw,converted],MatchQ[#,{_List,_}]&&First[#]===external&],Return[Failure["MixedNullSourceExternalMassOrCrossingBindingMismatch",<||>]]];
+ waves=DeleteDuplicates[Cases[raw,_PolarizationVector,Infinity]];
+ expectedHelicity[leg_]:=If[rows[[leg,6]]===0,If[process[[leg]]===rows[[leg,2]],1,-1],Automatic];
+ If[!AllTrue[waves,Function[wave,IntegerQ[First[wave]]&&1<=First[wave]<=5&&rows[[First[wave],5]]===2&&wave[[3]]===rows[[First[wave],6]]&&wave[[4]]===expectedHelicity[First[wave]]]],Return[Failure["MixedNullSourcePolarizationRoleOrMassMismatch",<||>]]];
+ <|"Status"->"EXACT_EXTERNAL_LEG_MASS_AND_ALL_INCOMING_BINDING","ExternalParticles"->process,"ExternalMassRules"->external,
+  "RawAndConvertedExternalHeadersExact"->True,"NoInternalMassShellRules"->True,"NativePolarizationMassAndHelicityRolesMatch"->True,
+  "CrossingConvention"->"Same all-incoming external leg order as the original constructive graphs",
+  "OrderedGraphCertificateStillRequired"->True,"OffShellKinematicsChanged"->False|>
+];
+constructMixedNullPublicCandidate[process_List,model_List,lower_List,seconds_,callback_:None]:=Module[
+ {assembly=Missing["NoGraphAssembly"],proposal,reference,externalBinding,forward},
+ If[!constructMixedNullPublicClassQ[process,model],Return[Failure["OutsidePrivateA36PublicScope",<||>]]];
+ forward[event_Association]:=(If[Lookup[event,"Stage",None]==="SOURCE_MODEL_SEALED",assembly=Lookup[event,"Data",<||>]];If[callback=!=None,callback[event]];Null);
+ proposal=HEPCATMasslessVectorIntegration`Private`candidate[process,model,lower,"AllowIntegration"->True,"TimeConstraint"->seconds,"ProgressFunction"->forward];
+ If[!AssociationQ[proposal]||Lookup[proposal,"Status",None]=!="UNVALIDATED_CANDIDATE",Return[proposal]];
+ If[!AssociationQ[assembly],Return[Failure["MixedNullSourceAssemblyNotRetained",<||>]]];
+ reference=constructMixedNullPublicReferenceCertificate[proposal,process,model];If[FailureQ[reference],Return[reference]];
+ externalBinding=constructMixedNullPublicExternalBinding[proposal,process,model];If[FailureQ[externalBinding],Return[externalBinding]];
+ Join[proposal,<|"OrderedGraphAssembly"->assembly,"MasslessReferenceAssignmentCertificate"->reference,"ExternalLegMassAndCrossingCertificate"->externalBinding,
+   "TypedPublicSourceScope"->"TwoDeclaredNullTwoMassiveVectorsOneScalar","NoSavedCalibrationInput"->True|>]
+];
+constructMixedNullPublicGraphCoverageQ[proposal_Association,original_List,model_List,lower_List]:=Module[
+ {process,assembly,catalog,plan,union,stored,calibrations,reference,externalBinding},
+ process=Lookup[proposal,"ExternalParticles",{}];If[!constructMixedNullPublicClassQ[process,model],Return[False]];
+ If[Lookup[proposal,"SourceModelSHA256",None]=!=HEPCATCovariantCurrentSources`Private`objectSHA[model]||Lookup[proposal,"LowerModelSHA256",None]=!=HEPCATCovariantCurrentSources`Private`objectSHA[lower],Return[False]];
+ assembly=Lookup[proposal,"OrderedGraphAssembly",<||>];catalog=Lookup[assembly,"Catalog",<||>];plan=Lookup[proposal,"FourVectorAugmentationPlan",<||>];stored=Lookup[proposal,"SourceGraphUnion",<||>];
+ If[!AssociationQ[assembly]||!AssociationQ[catalog]||Lookup[catalog,"Certificates",None]=!=Lookup[proposal,"VertexCertificates",None]||!ListQ[Lookup[assembly,"Diagrams",None]],Return[False]];
+ calibrations=Lookup[Select[catalog["Certificates"],Lookup[#,"Class",None]==="VectorVectorVectorVector"&],"LowerAmplitudeCalibration",{}];
+ If[calibrations==={}||!AllTrue[calibrations,HEPCATMasslessVectorIntegration`Private`completeContactQ[#,model,lower]&&Length[#["Metadata"]["NullLegs"]]===2&&Length[#["AllCoherentResiduals"]]===36&],Return[False]];
+ union=HEPCATMasslessVectorIntegration`Private`graphUnion[original,assembly["Diagrams"],catalog,model,plan,lower];
+ If[!AssociationQ[union]||union=!=stored||Lookup[union,"Status",None]=!="COMPLETE"||
+   Lookup[proposal,"OriginalDiagramCount",None]=!=Length[original]||Lookup[proposal,"LiftedDiagramCount",None]=!=Length[assembly["Diagrams"]]||
+   Lookup[proposal,"OrderedGraphCertificates",None]=!=union["OriginalGraphCertificates"]||Lookup[proposal,"LiftedGraphCertificates",None]=!=union["LiftedGraphCertificates"],Return[False]];
+ reference=constructMixedNullPublicReferenceCertificate[proposal,process,model];externalBinding=constructMixedNullPublicExternalBinding[proposal,process,model];
+ AssociationQ[reference]&&reference===Lookup[proposal,"MasslessReferenceAssignmentCertificate",None]&&AssociationQ[externalBinding]&&externalBinding===Lookup[proposal,"ExternalLegMassAndCrossingCertificate",None]&&
+  Lookup[proposal,"InternalOnShellConditions",None]==={}&&Lookup[proposal,"NumericalParameterAssignments",None]==={}&&
+  Lookup[proposal,"NewIndependentContacts",None]===False&&Lookup[proposal,"NoSavedCalibrationInput",False]===True
+];
+constructMixedNullPublicGraphCoverageQ[___]:=False;
+End[];

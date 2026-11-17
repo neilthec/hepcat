@@ -1539,3 +1539,73 @@ class, and checks the early-source/fallback order with actual providers stubbed.
 Separate controls retain unsupported used-quartic and used-operator provider
 refusals and the SM4/QED6 exclusions. These are dispatch controls; the existing
 real operator/catalogue rejection suites and full native tests remain necessary.
+
+
+## Adjoint-current continuation controls
+
+These small suites test the implementation without loading saved five-point
+answers:
+
+- `qcd-constant-polynomial-fit-tests.wl` checks exact polynomial reconstruction,
+  constant coefficient fitting, rank, denominator domains and rejection of
+  approximate or unsupported expressions.
+- `qcd-four-adjoint-auxiliary-tests.wl` generates three constant auxiliary
+  exchanges from a renamed toy model and checks all 24 tensor coordinates.
+  It loads no saved calibration.
+- `qcd-four-adjoint-scope-tests.wl` checks that model and helper changes
+  invalidate a cached certificate, and that exact restoration restores its scope.
+- `qcd-three-adjoint-metadata-tests.wl` checks selection from particle metadata,
+  renamed fields, particle order, ordinary fallback and finite deadlines.
+  The optimized source currently requires a finite deadline; an explicit
+  infinite deadline must not produce an unvalidated acceptance.
+- `construction-coverage-origin-tests.wl` checks physical-channel coverage and
+  a real four-sample spurious-pole cancellation. It distinguishes supplied
+  targets from inferred exact-zero channels and retains mandatory high-energy,
+  reference and Feynman checks.
+
+`qcd-metadata-cold-tests.wl` retains its original 54-case metadata cohort by
+checking the earlier predicate directly. The new metadata suite separately
+checks the extended selection rule.
+
+Component tests do not replace exact local tensor proofs, fresh public
+construction calls, independent Feynman comparisons or complete-helicity
+CalcHEP and MadGraph integrations. Those are separate integration checks.
+Changes shared with older routes also need representative SM four-point and
+QED six-point preservation checks.
+
+For a candidate checkout, `HEPCAT_QCD_TEST_SOURCE` selects its source directory
+and `HEPCAT_QCD_REPOSITORY_ROOT` selects the model data. Installed tests default
+to their own checkout.
+
+## Mixed massless and massive vector sources
+
+`mixed-null-source-tests.wl` is a fast unit suite for the supported five-point
+current route with two declared massless vectors, two massive vectors and one
+scalar. It checks metadata, source dispatch, ordinary fallback, shared external
+references and graph-admission bookkeeping. The tests also rename the model's
+particle labels and exercise declared helicities, endpoint roles, arbitrary
+identical-particle slots and namespace boundaries. Four-point SM and six-point
+QED inputs must keep their established routing.
+
+The suite includes 61 controls carried forward from development and 20 small
+additional guards. Expensive calibration and complete graph construction are
+stubbed. Small native reference conversions and real ordered graph-union
+bookkeeping still run; the graph proof inputs in that isolated unit control
+are explicitly synthetic. No stored target-amplitude fixture or research
+capsule is read. The standard model tables provide particle metadata and
+lower-amplitude row bindings.
+A passing unit suite establishes these interfaces and rejections, not a new
+amplitude or an analytic contact identity. Fresh construction and independent
+Feynman, CalcHEP and MadGraph comparisons remain separate integration tests.
+
+Run it through the normal test runner:
+
+```sh
+python3 tests/checks/run-wolfram-tests.py \
+  --suite mixed-null-source-tests.wl --timeout 60
+```
+
+`HEPCAT_TEST_SOURCE_ENTRYPOINT` can select another `source/HEPCAT.wl`, and
+`HEPCAT_TEST_DATA_ROOT` selects the checkout providing the model tables.
+The defaults use the suite's own checkout. These variables change only test
+setup; they do not add options to `ConstructAmplitude`.

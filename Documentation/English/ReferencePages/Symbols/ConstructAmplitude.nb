@@ -72,6 +72,36 @@ model supplies complete lower-point amplitudes used by ",
       ButtonData -> "paclet:HEPCAT/ref/FactorizationAmplitudeChannels"], ". \
 They can be the same model at four points, but the factorization model must \
 contain enough higher-point information for larger processes."}], "Notes"],
+  Cell[TextData[{"For supported five-point colored processes, the wrapper can \
+also derive a covariant current proposal from the elementary model and \
+complete lower-point amplitudes. In the minimal SU(3) class with a massive \
+fermion pair and three identical massless adjoint vectors, the needed \
+four-vector local continuation is determined from the supplied complete \
+four-point amplitudes. The derivation checks all sixteen four-vector helicity \
+assignments, the complete color tensor and cancellation of the reference \
+spinors. Missing model amplitudes follow the usual zero convention of ",
+     ButtonBox["ReadModel", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ReadModel"], ". No saved five-point \
+formula or independent Feynman expression supplies the proposed result."}],
+   "Notes"], Cell[TextData[{"The local tensor may be represented internally \
+by three constant auxiliary exchanges. Their sum is one contact contribution, \
+with its coefficient fixed by the lower amplitudes; they introduce neither \
+independent interactions nor auxiliary physical poles. The original cubic \
+diagrams retain their ordered vertices, color factors and fermion-flow \
+certificates. This route keeps internal momenta off shell. ",
+     ButtonBox["PrepareAmplitudes", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/PrepareAmplitudes"], " then applies \
+ordinary external identities and the requested pole preference to the \
+complete proposal."}], "Notes"],
+  Cell[TextData[{"A local identity or source certificate does not by itself \
+accept the final amplitude. All physical, apparent-spurious, high-energy, \
+reference and independent Feynman checks must still finish at the normal \
+validation parameter assignments. The independent benchmark is used only for \
+validation. Unsupported interactions or an unfinished local derivation \
+preserve the ordinary completion route and its finite overall budget. \
+Detailed output retains the source attempt and its certificates; an exact \
+model-and-code-scoped cache may reuse a successful local calibration within \
+the same kernel."}], "Notes"],
   Cell[TextData[{"A successful ordinary call returns the final bare \
 expression after all required checks pass. ",
      Cell[BoxData[RowBox[{"\"Output\"", " ", "->", " ", "\"Amplitude\""}]],
@@ -322,6 +352,56 @@ massive vectors and two identical scalars when all used interactions can be \
 certified. Existing two-vector/two-scalar contacts are fixed from the \
 complete known lower amplitudes. These are model-derived continuations, not \
 new independent interactions supplied to make a check pass."}], "Notes"],
+  Cell[TextData[{"For a supported colorless five-point process with two \
+declared massless vectors, two massive vectors and one scalar, the same idea \
+can use complete lower four-vector amplitudes from your factorization model. \
+The source subtracts the certified cubic exchanges and tests whether the \
+remainder is a linear combination of the three metric pairings. It must prove \
+the identity for all four declared massless-helicity combinations and all \
+nine coherent massive-spin components for each combination. The certificate \
+requires 36 exact zero residuals, rank three for the reconstruction and \
+coefficients depending only on declared model parameters. This determines a \
+contact required by that continuation; it does not introduce a new \
+independent interaction or read a saved five-point answer."}], "Notes"],
+  Cell[TextData[{"The mixed-null source keeps internal momenta off shell and \
+converts the complete ordered graph sum with one consistent reference \
+assignment for each external massless leg. It verifies the external masses, \
+helicities, graph multiplicities, particle/antiparticle ports and \
+identical-particle symmetries. Null spinors use a certified nonzero \
+momentum-matrix pivot rather than division by a zero mass. The recorded \
+identities apply on their regular chart domain. An unsupported attachment, an \
+incomplete tensor proof or a resource limit rejects this proposal and \
+preserves the ordinary preparation/completion path."}], "Notes"],
+  Cell[TextData[{"No additional user option is needed for this supported \
+source. Supply the elementary diagram model, the model containing complete \
+lower amplitudes, and an independent ",
+     Cell[BoxData[RowBox[{"\"FeynmanModel\""}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{".", " ", "The", " ", "latter", " ", "is", " ",
+         "used", " ", "only", " ", "after", " ", "construction", " ", "to",
+         " ", "validate", " ", "the", " ", "candidate", ".", " ", "Every",
+         " ", "original", " ", "[", "FactorizationAmplitudeChannels", "]",
+         "(", "paclet", ":", "HEPCAT", "/", "ref", "/",
+         "FactorizationAmplitudeChannels", ")", " ", "condition", " ", "and",
+         " ", "the", " ", "usual", " ", "[", "CheckAmplitudes", "]", "(",
+         "paclet", ":", "HEPCAT", "/", "ref", "/", "CheckAmplitudes", ")",
+         " ", "tests", " ", "remain", " ", "required", " ", "at", " ", "all",
+         " ", "resolved", " ", "validation", " ", "parameter", " ",
+         "assignments", ".", " ", "Contact", " ", "reconstruction", ",", " ",
+         "conversion", " ", "and", " ", "validation", " ", "share", " ",
+         "finite", " ", "allowances", " ", "within", " ", "the", " ",
+         "original", " ", "construction", " ", "clock", ".", " "}]],
+      "InlineFormula"], ButtonBox["FactorizationAmplitudeChannels",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/FactorizationAmplitudeChannels"],
+     " condition and the usual ", ButtonBox["CheckAmplitudes",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/CheckAmplitudes"], " tests remain required at all \
+resolved validation parameter assignments. Contact reconstruction, conversion \
+and validation share finite allowances within the original construction \
+clock. ", Cell[BoxData[RowBox[{"\"Output\"", " ", "->", " ",
+         "\"Details\""}]], "InlineFormula"], " retains the mixed-null source \
+proposal and any rejected attempt. The existing all-massive and QED \
+construction routes keep their established scope."}], "Notes"],
   Cell[TextData[{"Large massive-vector benchmarks can first be converted once \
 and reorganized by exact identities before ordinary external-only \
 preparation. This avoids repeatedly expanding equivalent spin tensors. \
