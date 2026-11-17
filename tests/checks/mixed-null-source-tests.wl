@@ -183,7 +183,7 @@ plan=ConstructiveDiagrams`Private`constructMixedNullPublicPlan[process,model,low
 check["source entrypoint loads without messages",FileByteCount[HEPCATMixedNullRegressionSetup`messages]===0];
 check["public constructor is loaded",Length[DownValues[ConstructAmplitude]]>0];
 check["two-null metadata enters the typed mixed-null source class",AssociationQ[metaClass]&&metaClass["SourceClass"]==="Calibrated mixed-null metric currents"];
-check["one-null contact integration remains outside the public provider",!ConstructiveDiagrams`Private`constructMixedNullPublicClassQ[{"A.+","Z","W-","W+","h"},model]];
+check["one-null contact shape is admitted to the private typed provider",ConstructiveDiagrams`Private`constructMixedNullPublicClassQ[{"A.+","Z","W-","W+","h"},model]];
 check["five vectors remain outside the public mixed-null provider",!ConstructiveDiagrams`Private`constructMixedNullPublicClassQ[{"A.+","A.-","Z","W-","W+"},model]];
 check["fermions remain outside the public mixed-null provider",!ConstructiveDiagrams`Private`constructMixedNullPublicClassQ[{"e","E","A.+","Z","Z"},model]];
 check["colored null vectors remain outside this colorless provider",!ConstructiveDiagrams`Private`constructMixedNullPublicClassQ[{"G.+","G.-","W-","W+","h"},model]];
@@ -285,7 +285,7 @@ check["renamed particle and antiparticle endpoints stay distinct",DuplicateFreeQ
 parts=entry["Particles"];masslessMeta=HEPCATMasslessVectorCalibration`Private`metadata[parts,model,lower];
 check["two-null metadata has all4declared words with9components each",Length[masslessMeta["HelicityWords"]]===4&&masslessMeta["CoherentComponentsByWord"]==={9,9,9,9}];
 oneNullMeta=HEPCATMasslessVectorCalibration`Private`metadata[{"A.+","Z","W+","W-"},model,lower];
-check["one-null lower metadata has2words with27components each without public admission",AssociationQ[oneNullMeta]&&oneNullMeta["CoherentComponentsByWord"]==={27,27}&&!ConstructiveDiagrams`Private`constructMixedNullPublicClassQ[{"A.+","Z","W+","W-","h"},model]];
+check["one-null lower metadata has2words with27components each and matches private candidate eligibility",AssociationQ[oneNullMeta]&&oneNullMeta["CoherentComponentsByWord"]==={27,27}&&ConstructiveDiagrams`Private`constructMixedNullPublicClassQ[{"A.+","Z","W+","W-","h"},model]];
 wrongRoles=lower;roleIndex=First[FirstPosition[wrongRoles[[1,All,2]],"W+"]];wrongRoles[[1,roleIndex,{2,3}]]=Reverse[wrongRoles[[1,roleIndex,{2,3}]]];
 check["reversing a declared lower endpoint role is rejected",FailureQ[HEPCATMasslessVectorCalibration`Private`metadata[parts,model,wrongRoles]]];
 external4=masslessMeta["ExternalMassRules"];
@@ -302,6 +302,56 @@ publicNames[ctx_String]:=Select[Names[ctx<>"*"],StringCount[#,"`"]===StringCount
 check["new calibration module exposes no public functions",publicNames["HEPCATMasslessVectorCalibration`"]==={}];
 check["new integration module exposes no public functions",publicNames["HEPCATMasslessVectorIntegration`"]==={}];
 check["new public bridge helpers stay in package Private context",AllTrue[Names["ConstructiveDiagrams`*MixedNull*"],StringContainsQ[#,"`Private`"]&]];
+oneProcess={"A.+","Z","W+","W-","h"};
+onePlan=ConstructiveDiagrams`Private`constructMixedNullPublicPlan[oneProcess,model,lower,3];
+check["one-null class admits both declared photon helicities by metadata",ConstructiveDiagrams`Private`constructMixedNullPublicClassQ[oneProcess,model]&&ConstructiveDiagrams`Private`constructMixedNullPublicClassQ[oneProcess/."A.+"->"A.-",model]];
+check["one-null plan derives2words times27components",AssociationQ[onePlan]&&Lookup[onePlan["Quartets"],"NullLegCount"]==={1}&&Lookup[onePlan["Quartets"],"CoherentComponents"]==={54}&&Lookup[onePlan["Quartets"],"CoherentComponentsPerWord"]==={{27,27}}];
+check["one-null plan keeps finite component-based source budget",ConstructiveDiagrams`Private`constructFourVectorSourceBudget[onePlan,1000]===324];
+oneMetrics=ConstructiveDiagrams`Private`amplitudeConstructionResourceMetrics[oneProcess,lower];oneResources=ConstructiveDiagrams`Private`amplitudeAutomaticSettings["Construction",Association[Options[ConstructAmplitude]],oneMetrics];
+check["one-null public defaults stayAutomatic and AllPhysical with2160seconds",Lookup[Association[Options[ConstructAmplitude]],"TimeConstraint"]===Automatic&&Lookup[Association[Options[ConstructAmplitude]],"PolePreference"]==="AllPhysical"&&oneResources["Settings"]["TimeConstraint"]===2160];
+check["one-null scope is explicitly typed without changing A36 scope",onePlan["PublicTypedScope"]==="OneDeclaredNullThreeMassiveVectorsOneScalar"&&plan["PublicTypedScope"]==="TwoDeclaredNullTwoMassiveVectorsOneScalar"];
+check["three-null sources remain outside this extension",!ConstructiveDiagrams`Private`constructMixedNullPublicClassQ[{"A.+","A.-","A.+","W+","h"},model]];
+check["fermionic one-null input remains outside this extension",!ConstructiveDiagrams`Private`constructMixedNullPublicClassQ[{"e","Ne","A.+","W+","Z"},model]];
+wrongPhotonMetadata=model;photonRow=First[FirstPosition[wrongPhotonMetadata[[1,All,2]],"A.+"]];wrongPhotonMetadata[[1,photonRow,3]]="unpaired-null-state";
+check["undeclared photon helicity pairing is rejected",!ConstructiveDiagrams`Private`constructMixedNullPublicClassQ[oneProcess,wrongPhotonMetadata]];
+oneRows=HEPCATCovariantCurrentSources`Private`particleRow[#,model]&/@oneProcess;
+oneExternal=Thread[(Mass/@Range[5])->oneRows[[All,6]]];
+oneWave[leg_]:=PolarizationVector[leg,LorentzIndex[leg],oneRows[[leg,6]],If[oneRows[[leg,6]]===0,1,Automatic]];
+oneRaw=LorentzMetric[LorentzIndex[1],LorentzIndex[2]]LorentzMetric[LorentzIndex[3],LorentzIndex[4]]Times@@Table[oneWave[i],{i,4}];
+onePairs={{oneExternal,oneRaw},{oneExternal,2oneRaw}};
+oneNativeBefore=HEPCATCovariantContactCalibration`Private`coherentConversionNativeFields[];
+oneConversion=HEPCATCovariantContactCalibration`Private`coherentSourceConversion[onePairs,oneProcess,model,10];
+oneReference=ConstructiveDiagrams`Private`constructMixedNullPublicReferenceCertificate[<|"SourceConversion"->oneConversion|>,oneProcess,model];
+oneFixture=<|"SourceConversion"->oneConversion,"RawSourceLorentzPairs"->onePairs,"ExternalParticles"->oneProcess,"ExternalMassRules"->oneExternal,"InternalOnShellConditions"->{},"CoherentExternalVectorEncoding"-><|"OffShellKinematicsChanged"->False|>|>;
+check["native one-null conversion covers three coherent massive vectors",AssociationQ[oneConversion]&&oneConversion["Status"]==="COMPLETE"&&oneConversion["ExpectedCompleteSpinWeights"]===oneConversion["ActualCompleteSpinWeights"]&&oneConversion["EveryProjectedPolarizationOccursExactlyOncePerNonzeroTerm"]===True];
+check["one-null conversion shares only its actual external photon reference",AssociationQ[oneReference]&&oneReference["ActualReferences"]==={Spinor["Xi","Angle",1]}];
+check["one-null external headers and off-shell binding pass",AssociationQ[ConstructiveDiagrams`Private`constructMixedNullPublicExternalBinding[oneFixture,oneProcess,model]]];
+check["all native conversion fields restore after one-null primitive",oneNativeBefore===HEPCATCovariantContactCalibration`Private`coherentConversionNativeFields[]];
+check["one-null source rejects an internal shell rule",FailureQ[ConstructiveDiagrams`Private`constructMixedNullPublicExternalBinding[Join[oneFixture,<|"InternalOnShellConditions"->{Mass[Multiparticle[1,2]]->1}|>],oneProcess,model]]];
+oneGraphChecks=Internal`InheritedBlock[{HEPCATCovariantCurrentSources`Private`diagramCertificate,HEPCATCovariantCurrentSources`Private`usedRows,HEPCATMasslessVectorIntegration`Private`completeContactQ,ConstructiveDiagrams`Private`constructMixedNullPublicReferenceCertificate,ConstructiveDiagrams`Private`constructMixedNullPublicExternalBinding},
+ Clear[HEPCATCovariantCurrentSources`Private`diagramCertificate,HEPCATCovariantCurrentSources`Private`usedRows,HEPCATMasslessVectorIntegration`Private`completeContactQ,ConstructiveDiagrams`Private`constructMixedNullPublicReferenceCertificate,ConstructiveDiagrams`Private`constructMixedNullPublicExternalBinding];
+ HEPCATCovariantCurrentSources`Private`diagramCertificate[g_Association,___]:=g["ControlSignature"];
+ HEPCATCovariantCurrentSources`Private`usedRows[g_List]:=DeleteDuplicates[Flatten[Lookup[g,"ControlUsedRows",{}],1]];
+ HEPCATMasslessVectorIntegration`Private`completeContactQ[c_Association,___]:=Lookup[c,"ControlFixtureTag",None]==="SYNTHETIC_NO_LOWER_PROOF";
+ ConstructiveDiagrams`Private`constructMixedNullPublicReferenceCertificate[___]:=referenceFixture;
+ ConstructiveDiagrams`Private`constructMixedNullPublicExternalBinding[___]:=externalFixture;
+ oneEntry=First[onePlan["Quartets"]];oneCubic=First[oneEntry["Attachments"]]["CubicRow"];
+ onePhysical=Lookup[aliases,#,#]&/@oneEntry["Particles"];oneContactRow=Join[onePhysical,{1,0}];
+ oneCalibration=<|"ControlFixtureTag"->"SYNTHETIC_NO_LOWER_PROOF","Metadata"-><|"NullLegs"->{1}|>,"AllCoherentResiduals"->ConstantArray[0,54]|>;
+ oneContact=<|"Class"->"VectorVectorVectorVector","Particles"->onePhysical,"LiftedRow"->oneContactRow,"LowerAmplitudeCalibration"->oneCalibration,"CertificateID"->"one-null-control-contact"|>;
+ oneCubicCertificate=<|"Class"->"ControlCubic","LiftedRow"->oneCubic,"SourceRows"->{oneCubic},"CertificateID"->"one-null-control-cubic"|>;
+ oneCatalog=<|"Certificates"->{oneContact,oneCubicCertificate},"Aliases"->aliases|>;
+ oneAdded=<|"InternalVertices"->{0,1},"ControlSignature"-><|"OrderedPorts"->{1,2,3,4,5},"Kind"->"one-null-derived-contact"|>,"ControlUsedRows"->{oneContactRow,oneCubic}|>;
+ oneLifted={originalGraph,oneAdded};oneUnion=HEPCATMasslessVectorIntegration`Private`graphUnion[original,oneLifted,oneCatalog,model,<|"Quartets"->{oneEntry}|>,lower];
+ oneAssembly=<|"Catalog"->oneCatalog,"Diagrams"->oneLifted|>;
+ oneProposal=<|"ExternalParticles"->oneProcess,"SourceModelSHA256"->HEPCATCovariantCurrentSources`Private`objectSHA[model],"LowerModelSHA256"->HEPCATCovariantCurrentSources`Private`objectSHA[lower],"OrderedGraphAssembly"->oneAssembly,"FourVectorAugmentationPlan"-><|"Quartets"->{oneEntry}|>,"SourceGraphUnion"->oneUnion,"VertexCertificates"->oneCatalog["Certificates"],"OriginalDiagramCount"->Length[original],"LiftedDiagramCount"->Length[oneLifted],"OrderedGraphCertificates"->Lookup[oneUnion,"OriginalGraphCertificates",None],"LiftedGraphCertificates"->Lookup[oneUnion,"LiftedGraphCertificates",None],"MasslessReferenceAssignmentCertificate"->referenceFixture,"ExternalLegMassAndCrossingCertificate"->externalFixture,"InternalOnShellConditions"->{},"NumericalParameterAssignments"->{},"NewIndependentContacts"->False,"NoSavedCalibrationInput"->True|>;
+ shortContact=Join[oneContact,<|"LowerAmplitudeCalibration"->Join[oneCalibration,<|"AllCoherentResiduals"->ConstantArray[0,53]|>]|>];
+ wrongNullContact=Join[oneContact,<|"LowerAmplitudeCalibration"->Join[oneCalibration,<|"Metadata"-><|"NullLegs"->{1,2}|>|>]|>];
+ <|"one-null graph gate accepts its54component interface fixture"->ConstructiveDiagrams`Private`constructMixedNullPublicGraphCoverageQ[oneProposal,original,model,lower],
+ "one-null graph gate rejects53residuals"->(!ConstructiveDiagrams`Private`constructMixedNullPublicGraphCoverageQ[Join[oneProposal,<|"OrderedGraphAssembly"->Join[oneAssembly,<|"Catalog"->Join[oneCatalog,<|"Certificates"->{shortContact,oneCubicCertificate}|>]|>],"VertexCertificates"->{shortContact,oneCubicCertificate}|>],original,model,lower]),
+ "one-null graph gate rejects wrong declared null coverage"->(!ConstructiveDiagrams`Private`constructMixedNullPublicGraphCoverageQ[Join[oneProposal,<|"OrderedGraphAssembly"->Join[oneAssembly,<|"Catalog"->Join[oneCatalog,<|"Certificates"->{wrongNullContact,oneCubicCertificate}|>]|>],"VertexCertificates"->{wrongNullContact,oneCubicCertificate}|>],original,model,lower])|>];
+KeyValueMap[check[#1,#2]&,oneGraphChecks];
+
 check["no expensive calibrator or full graph builder was invoked",heavyCalls===0];
 subsetCounts=<|"ExistingConstructorControls"->legacyCount,"MetadataControls"->metadataCount,"BoundaryControls"->7,"NativeReferenceControls"->referenceCount,"GraphAdmissionControls"->graphCount,"BaseTotal"->legacyCount+metadataCount+7+referenceCount+graphCount|>;
 check["all61base controls remain represented",subsetCounts["BaseTotal"]===61];

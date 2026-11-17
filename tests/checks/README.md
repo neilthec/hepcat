@@ -1580,15 +1580,19 @@ to their own checkout.
 ## Mixed massless and massive vector sources
 
 `mixed-null-source-tests.wl` is a fast unit suite for the supported five-point
-current route with two declared massless vectors, two massive vectors and one
-scalar. It checks metadata, source dispatch, ordinary fallback, shared external
+current route with four colorless vector bosons and one scalar. It supports
+one or two declared massless vectors, with the other vectors massive. It checks metadata, source dispatch, ordinary fallback, shared external
 references and graph-admission bookkeeping. The tests also rename the model's
 particle labels and exercise declared helicities, endpoint roles, arbitrary
 identical-particle slots and namespace boundaries. Four-point SM and six-point
 QED inputs must keep their established routing.
 
-The suite includes 61 controls carried forward from development and 20 small
-additional guards. Expensive calibration and complete graph construction are
+The suite includes 97 controls: 61 carried forward from development, the
+20 existing interface guards, and 16 additional one-null controls. The new
+checks cover both declared helicities, the 54-component interface, the
+component-based effort allowance, complete external mass headers, shared
+references and unsupported three-null or fermionic shapes. The original
+two-null interface still requires 36 components. Expensive calibration and complete graph construction are
 stubbed. Small native reference conversions and real ordered graph-union
 bookkeeping still run; the graph proof inputs in that isolated unit control
 are explicitly synthetic. No stored target-amplitude fixture or research

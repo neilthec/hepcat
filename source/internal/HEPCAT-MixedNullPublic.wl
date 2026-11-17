@@ -8,16 +8,19 @@ constructMixedNullPublicClassQ[process_List,model_List]:=Module[{rows,vectors,sc
  vectors=Select[rows,#[[5]]===2&];scalars=Select[rows,#[[5]]===0&];
  If[Length[vectors]=!=4||Length[scalars]=!=1,Return[False]];
  null=Select[vectors,#[[6]]===0&];
- Length[null]===2&&AllTrue[null,StringEndsQ[#[[2]],".+"]&&#[[3]]===StringDrop[#[[2]],-1]<>"-"&]
+ MemberQ[{1,2},Length[null]]&&AllTrue[null,StringEndsQ[#[[2]],".+"]&&#[[3]]===StringDrop[#[[2]],-1]<>"-"&]
 ];
 constructMixedNullPublicClassQ[___]:=False;
-constructMixedNullPublicPlan[process_List,model_List,lower_List,seconds_]:=Module[{plan,entries},
+constructMixedNullPublicPlan[process_List,model_List,lower_List,seconds_]:=Module[{plan,entries,vectorRows,nullCount,wordCount,perWord,totalComponents,typedScope},
  If[!constructMixedNullPublicClassQ[process,model],Return[Failure["OutsidePrivateA36PublicScope",<||>]]];
  plan=HEPCATMasslessVectorIntegration`Private`augmentationPlan[process,model,lower,seconds];
  If[!AssociationQ[plan]||Lookup[plan,"Status",None]=!="AVAILABLE",Return[plan]];
+ vectorRows=Select[HEPCATCovariantCurrentSources`Private`particleRow[#,model]&/@process,#[[5]]===2&];
+ nullCount=Count[vectorRows[[All,6]],0];wordCount=2^nullCount;perWord=3^(4-nullCount);totalComponents=wordCount perWord;
+ typedScope=If[nullCount===2,"TwoDeclaredNullTwoMassiveVectorsOneScalar","OneDeclaredNullThreeMassiveVectorsOneScalar"];
  entries=Lookup[plan,"Quartets",{}];
- If[entries==={}||!AllTrue[entries,Lookup[#,"NullLegCount",None]===2&&Lookup[#,"TotalExactComponents",None]===36&&Lookup[#,"CoherentComponentsPerWord",None]==={9,9,9,9}&],Return[Failure["MixedNullPublicPlanOutsideTwoNullContactScope",<||>]]];
- Join[plan,<|"Quartets"->(Join[#,<|"CoherentComponents"->#["TotalExactComponents"]|>]&/@entries),"PublicTypedScope"->"TwoDeclaredNullTwoMassiveVectorsOneScalar"|>]
+ If[entries==={}||!AllTrue[entries,Lookup[#,"NullLegCount",None]===nullCount&&Lookup[#,"TotalExactComponents",None]===totalComponents&&Lookup[#,"CoherentComponentsPerWord",None]===ConstantArray[perWord,wordCount]&],Return[Failure[If[nullCount===2,"MixedNullPublicPlanOutsideTwoNullContactScope","MixedNullPublicPlanOutsideDeclaredNullContactScope"],<||>]]];
+ Join[plan,<|"Quartets"->(Join[#,<|"CoherentComponents"->#["TotalExactComponents"]|>]&/@entries),"PublicTypedScope"->typedScope|>]
 ];
 constructMixedNullPublicReferenceCertificate[proposal_Association,process_List,model_List]:=Module[{rows,null,expected,converted,references,conversion,primitive},
  rows=HEPCATCovariantCurrentSources`Private`particleRow[#,model]&/@process;
@@ -51,8 +54,10 @@ constructMixedNullPublicExternalBinding[proposal_Association,process_List,model_
   "OrderedGraphCertificateStillRequired"->True,"OffShellKinematicsChanged"->False|>
 ];
 constructMixedNullPublicCandidate[process_List,model_List,lower_List,seconds_,callback_:None]:=Module[
- {assembly=Missing["NoGraphAssembly"],proposal,reference,externalBinding,forward},
+ {assembly=Missing["NoGraphAssembly"],proposal,reference,externalBinding,forward,nullCount,typedScope},
  If[!constructMixedNullPublicClassQ[process,model],Return[Failure["OutsidePrivateA36PublicScope",<||>]]];
+ nullCount=Count[Select[HEPCATCovariantCurrentSources`Private`particleRow[#,model]&/@process,#[[5]]===2&][[All,6]],0];
+ typedScope=If[nullCount===2,"TwoDeclaredNullTwoMassiveVectorsOneScalar","OneDeclaredNullThreeMassiveVectorsOneScalar"];
  forward[event_Association]:=(If[Lookup[event,"Stage",None]==="SOURCE_MODEL_SEALED",assembly=Lookup[event,"Data",<||>]];If[callback=!=None,callback[event]];Null);
  proposal=HEPCATMasslessVectorIntegration`Private`candidate[process,model,lower,"AllowIntegration"->True,"TimeConstraint"->seconds,"ProgressFunction"->forward];
  If[!AssociationQ[proposal]||Lookup[proposal,"Status",None]=!="UNVALIDATED_CANDIDATE",Return[proposal]];
@@ -60,16 +65,17 @@ constructMixedNullPublicCandidate[process_List,model_List,lower_List,seconds_,ca
  reference=constructMixedNullPublicReferenceCertificate[proposal,process,model];If[FailureQ[reference],Return[reference]];
  externalBinding=constructMixedNullPublicExternalBinding[proposal,process,model];If[FailureQ[externalBinding],Return[externalBinding]];
  Join[proposal,<|"OrderedGraphAssembly"->assembly,"MasslessReferenceAssignmentCertificate"->reference,"ExternalLegMassAndCrossingCertificate"->externalBinding,
-   "TypedPublicSourceScope"->"TwoDeclaredNullTwoMassiveVectorsOneScalar","NoSavedCalibrationInput"->True|>]
+   "TypedPublicSourceScope"->typedScope,"NoSavedCalibrationInput"->True|>]
 ];
 constructMixedNullPublicGraphCoverageQ[proposal_Association,original_List,model_List,lower_List]:=Module[
- {process,assembly,catalog,plan,union,stored,calibrations,reference,externalBinding},
+ {process,assembly,catalog,plan,union,stored,calibrations,reference,externalBinding,vectorRows,nullCount,totalComponents},
  process=Lookup[proposal,"ExternalParticles",{}];If[!constructMixedNullPublicClassQ[process,model],Return[False]];
+ vectorRows=Select[HEPCATCovariantCurrentSources`Private`particleRow[#,model]&/@process,#[[5]]===2&];nullCount=Count[vectorRows[[All,6]],0];totalComponents=2^nullCount 3^(4-nullCount);
  If[Lookup[proposal,"SourceModelSHA256",None]=!=HEPCATCovariantCurrentSources`Private`objectSHA[model]||Lookup[proposal,"LowerModelSHA256",None]=!=HEPCATCovariantCurrentSources`Private`objectSHA[lower],Return[False]];
  assembly=Lookup[proposal,"OrderedGraphAssembly",<||>];catalog=Lookup[assembly,"Catalog",<||>];plan=Lookup[proposal,"FourVectorAugmentationPlan",<||>];stored=Lookup[proposal,"SourceGraphUnion",<||>];
  If[!AssociationQ[assembly]||!AssociationQ[catalog]||Lookup[catalog,"Certificates",None]=!=Lookup[proposal,"VertexCertificates",None]||!ListQ[Lookup[assembly,"Diagrams",None]],Return[False]];
  calibrations=Lookup[Select[catalog["Certificates"],Lookup[#,"Class",None]==="VectorVectorVectorVector"&],"LowerAmplitudeCalibration",{}];
- If[calibrations==={}||!AllTrue[calibrations,HEPCATMasslessVectorIntegration`Private`completeContactQ[#,model,lower]&&Length[#["Metadata"]["NullLegs"]]===2&&Length[#["AllCoherentResiduals"]]===36&],Return[False]];
+ If[calibrations==={}||!AllTrue[calibrations,HEPCATMasslessVectorIntegration`Private`completeContactQ[#,model,lower]&&Length[#["Metadata"]["NullLegs"]]===nullCount&&Length[#["AllCoherentResiduals"]]===totalComponents&],Return[False]];
  union=HEPCATMasslessVectorIntegration`Private`graphUnion[original,assembly["Diagrams"],catalog,model,plan,lower];
  If[!AssociationQ[union]||union=!=stored||Lookup[union,"Status",None]=!="COMPLETE"||
    Lookup[proposal,"OriginalDiagramCount",None]=!=Length[original]||Lookup[proposal,"LiftedDiagramCount",None]=!=Length[assembly["Diagrams"]]||

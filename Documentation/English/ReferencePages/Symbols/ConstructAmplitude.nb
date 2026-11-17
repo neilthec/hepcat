@@ -352,17 +352,23 @@ massive vectors and two identical scalars when all used interactions can be \
 certified. Existing two-vector/two-scalar contacts are fixed from the \
 complete known lower amplitudes. These are model-derived continuations, not \
 new independent interactions supplied to make a check pass."}], "Notes"],
-  Cell[TextData[{"For a supported colorless five-point process with two \
-declared massless vectors, two massive vectors and one scalar, the same idea \
-can use complete lower four-vector amplitudes from your factorization model. \
-The source subtracts the certified cubic exchanges and tests whether the \
-remainder is a linear combination of the three metric pairings. It must prove \
-the identity for all four declared massless-helicity combinations and all \
-nine coherent massive-spin components for each combination. The certificate \
-requires 36 exact zero residuals, rank three for the reconstruction and \
-coefficients depending only on declared model parameters. This determines a \
-contact required by that continuation; it does not introduce a new \
-independent interaction or read a saved five-point answer."}], "Notes"],
+  Cell[TextData[{"For a supported colorless five-point process with four \
+vector bosons and one scalar, this route also handles one or two declared \
+massless vectors, with the remaining vectors massive. It uses complete lower \
+four-vector amplitudes from your factorization model, subtracts the certified \
+cubic exchanges, and tests whether the remainder is a linear combination of \
+the three metric pairings. With one massless vector, it requires both \
+declared helicities and all 27 coherent massive-spin components for each \
+helicity: 54 exact zero residuals. With two massless vectors, it requires all \
+four declared helicity combinations and all nine massive-spin components for \
+each combination: 36 exact zero residuals. Each reconstruction requires rank \
+three, complete formal-reference identities and coefficients depending only \
+on declared model parameters. These identities hold on the regular domain \
+recorded by their certificates. The result fixes a contact required by this \
+continuation; it does not add an independent interaction or read a saved \
+five-point answer. Three massless vectors and fermions remain outside this \
+particular source. Unsupported inputs continue through their existing source \
+or completion routes."}], "Notes"],
   Cell[TextData[{"The mixed-null source keeps internal momenta off shell and \
 converts the complete ordered graph sum with one consistent reference \
 assignment for each external massless leg. It verifies the external masses, \
