@@ -547,6 +547,8 @@ def c4_module():
 
 
 def public_proof(proof, stage=None):
+    if isinstance(proof, dict) and proof.get('_FiniteConstructorReceiptVerified') is True:
+        return receipt_module().public_proof(proof, stage)
     if proof.get('_C12VerifiedCurrentContext') is True:
         return c12_module().public_proof(proof, stage)
     if proof.get('_C11VerifiedCurrentContext') is True:
@@ -583,8 +585,25 @@ def public_proof(proof, stage=None):
             'PrecisionQualificationUnchangedRequired': True}
 
 
+def receipt_module():
+    spec = importlib.util.spec_from_file_location('hepcat_finite_constructor_receipts',
+        Path(__file__).with_name('constructor_receipts.py'))
+    value = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(value)
+    return value
+
+
+def finite_receipt_status(root, here, configuration, current_context):
+    from types import SimpleNamespace
+    return receipt_module().receipt_status(root, here, configuration, current_context,
+        core=SimpleNamespace(cold_pair=cold_pair, _loader_value=_loader_value))
+
+
 def resolve(root, here, configuration, current_context):
     """Resolve one exact reviewed historical transition; never infer a migration."""
+    current = finite_receipt_status(root, here, configuration, current_context)['Proof']
+    if current is not None:
+        return current
     current = c12_module().verified_proof(root, here, configuration, current_context)
     if current is not None:
         return current
@@ -630,6 +649,8 @@ def record_evidence(summary_path, summary, current_context, proof):
         return None
     if not isinstance(proof, dict):
         return None
+    if proof.get('_FiniteConstructorReceiptVerified') is True:
+        return receipt_module().record_evidence(summary_path, summary, current_context, proof)
     if proof.get('_C12VerifiedCurrentContext') is True:
         return c12_module().record_evidence(summary_path, summary, current_context, proof)
     if proof.get('_C11VerifiedCurrentContext') is True:

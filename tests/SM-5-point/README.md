@@ -771,3 +771,27 @@ They do not expand its bytes into a Wolfram integer list, which would create an
 unnecessary temporary object when retaining large validation reports. The stored
 WXF bytes, checksum, round-trip expression and atomic replacement behavior are
 unchanged. This removes a copy; it is not a measured whole-calculation speedup.
+
+### Reviewed finite evidence receipts
+
+`constructor_receipts.py` can retain a finite set of recorded validations after a
+reviewed change to constructor routing. It requires two exact cold definition
+inventories on each side, unchanged model and numerical-runtime inputs, explicit
+review of every changed constructor field and new symbol, and a separately pinned
+data receipt. `constructor-receipts.json` is empty by default. The reader never
+creates or approves its own receipt, and an absent receipt means unavailable
+historical evidence rather than a validation pass.
+
+Retained records keep their actual producer, raw status, timing and earlier
+conditions. They do not claim a new construction or a rerun of the checks. Native
+capsules are checked individually; exports also require their exact member inputs.
+Precision replay files belong to the corresponding export, so removing one
+family's generated files does not invalidate unrelated cases. Existing precision
+and supplemental-probe verifiers remain authoritative. New failures are never
+filtered out, and a missing required artifact means unavailable or regeneration.
+
+The focused controls are `test_constructor_receipts.py`. The explicit bounded
+`constructor-capture-coverage.py --output <temporary-directory>` check exercises
+all current namespaces with a tiny synthetic package and performs no physics.
+The current capture controller checks the expanded namespace inventory without
+changing the older readers used by previously reviewed evidence.

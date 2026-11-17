@@ -402,7 +402,7 @@ def main():
             cases = {cid: workflow.checked_summary(cid, '', current, compatibility) for cid in family['CaseIDs']}
             for cid, value in cases.items():
                 if isinstance(value, dict):
-                    report = workflow.supplemental_probes.case_report(cid, value.get('CapsuleSHA256'), probes, results, current)
+                    report = workflow.supplemental_probes.case_report(cid, value.get('CapsuleSHA256'), probes, results, current, compatibility)
                     if report: value['SupplementalParameterProbes'] = report
             export = workflow.checked_summary(family['ID'], '-export', current, compatibility)
             output.append(cleanup_completed_family(root, results, family, cases, export,

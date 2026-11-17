@@ -79,11 +79,25 @@ def verify(entry, source_sha, results, context):
         return {**result, 'Reason': str(error)}
 
 
-def case_report(case_id, source_sha, entries, results, context):
+def case_report(case_id, source_sha, entries, results, context, compatibility=None):
     selected = [row for row in entries if row['CaseID'] == case_id]
+    contexts = {row['ID']: context for row in selected}
+    historical = set()
+    if isinstance(compatibility, dict) and compatibility.get('_FiniteConstructorReceiptVerified') is True:
+        import importlib.util
+        spec = importlib.util.spec_from_file_location('hepcat_finite_probe_receipts',
+            Path(__file__).with_name('constructor_receipts.py'))
+        receipts = importlib.util.module_from_spec(spec); spec.loader.exec_module(receipts)
+        plan = receipts.supplemental_plan(case_id, source_sha, entries, results, context, compatibility)
+        if not isinstance(plan, dict) or plan.get('Status') != 'VERIFIED_CONTEXT_PLAN':
+            return {'Status': 'UNAVAILABLE', 'Probes': [],
+                    'Reason': (plan or {}).get('Reason', 'Historical supplemental evidence is unavailable.')}
+        contexts = plan['ContextsByID']; historical = set(plan['HistoricalIDs'])
     if not selected:
         return None
-    probes = [verify(row, source_sha, results, context) for row in selected]
+    probes = [verify(row, source_sha, results, contexts[row['ID']]) for row in selected]
+    probes = [{**row, 'HistoricalEvidenceOnly': True, 'CurrentValidatorPassClaimed': False}
+              if row['ID'] in historical else row for row in probes]
     status = ('FAIL' if any(row['Status'] == 'FAIL' for row in probes) else
               'UNAVAILABLE' if any(row['Status'] != 'PASS' for row in probes) else 'PASS')
     return {'Status': status, 'Probes': probes}

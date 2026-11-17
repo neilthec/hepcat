@@ -140,7 +140,7 @@ def export_input_admission(identifier, configuration):
     try:
         entries = supplemental_probes.read_registry(HERE / 'supplemental-probes.json')
         probes = [supplemental_probes.case_report(cid, row['CapsuleSHA256'],
-                  entries, RESULTS, current) for cid, row in cases.items()]
+                  entries, RESULTS, current, proof) for cid, row in cases.items()]
         if any(probe and probe.get('Status') != 'PASS' for probe in probes):
             return {**rejected, 'Reason':
                     'A supplemental parameter check failed or requires a verified recheck.'}
@@ -204,7 +204,7 @@ def refresh(inventory, previous=None, context_sha=None, points=1000):
     entries = supplemental_probes.read_registry(HERE / 'supplemental-probes.json')
     for cid, summary in cases.items():
         probe = supplemental_probes.case_report(cid, summary.get('CapsuleSHA256'),
-            entries, RESULTS, context_sha)
+            entries, RESULTS, context_sha, compatibility)
         if probe:
             summary['SupplementalParameterProbes'] = probe
     def known_checks_pass(family):

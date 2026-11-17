@@ -7,7 +7,9 @@ fpPass = Environment["HEPCAT_FINGERPRINT_PASS"];
 fpStarted = AbsoluteTime[];
 fpPatterns = {"ConstructiveDiagrams`*", "ConstructiveDiagrams`Private`*",
   "HEPCATCovariantCurrentSources`*", "HEPCATCovariantCurrentSources`Private`*",
-  "HEPCATCovariantContactCalibration`*", "HEPCATCovariantContactCalibration`Private`*"};
+  "HEPCATCovariantContactCalibration`*", "HEPCATCovariantContactCalibration`Private`*",
+  "HEPCATMinimalAdjointCubicSources`*", "HEPCATMinimalAdjointCubicSources`Private`*",
+  "HEPCATMinimalQCDCurrentSources`*", "HEPCATMinimalQCDCurrentSources`Private`*"};
 fpNames = Sort[DeleteDuplicates[Flatten[Names /@ fpPatterns]]];
 fpText[expr_] := ToString[expr, InputForm, PageWidth -> Infinity];
 fpEntries = Table[ToExpression[name, InputForm, Function[s,

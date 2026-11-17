@@ -20,6 +20,14 @@ def atomic_json(path, value):
     temporary.replace(path)
 
 
+def validate_current_pair(context, receipt_engine, first, second):
+    """Check the current collector inventory without changing legacy core gates."""
+    expected = list(receipt_engine.CAPTURE_PATTERNS)
+    if first.get('CapturedNamePatterns') != expected or second.get('CapturedNamePatterns') != expected:
+        raise ValueError('The current cold collector must include all ten ordered namespace patterns.')
+    return context.cold_pair(first, second, require_post=False)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--directory', required=True, type=Path)
@@ -38,6 +46,7 @@ def main():
     spec = importlib.util.spec_from_file_location('constructor_context_capture', here / 'constructor_context.py')
     context = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(context)
+    receipt_engine = context.receipt_module()
     stage = context.stage_module()
     configuration = context.object_at(args.configuration or root / 'tests/results/SM-5-point/configuration.json')
     before = stage.manifest(root, here, configuration)
@@ -45,7 +54,7 @@ def main():
         raise ValueError('Source/model/runtime inputs differ from the explicitly frozen context.')
     atomic_json(directory / 'after-manifest.json', before)
     script = here / 'capture-constructor-definitions.wl'
-    loaded_hashes = {str(path.relative_to(root)): context.digest(path) for path in (Path(__file__).resolve(), script)}
+    loaded_hashes = {str(path.relative_to(root)): context.digest(path) for path in (Path(__file__).resolve(), script, here / 'constructor_receipts.py')}
     records = []
     for index in (1, 2):
         if stage.manifest(root, here, configuration) != before:
@@ -80,8 +89,9 @@ def main():
         print(json.dumps(record), flush=True)
         if record['ExitCode'] != 0 or not all(record[key] for key in ('OutputExists', 'ContextUnchanged', 'ToolBytesUnchanged')):
             raise RuntimeError('A cold capture failed or its frozen inputs changed.')
-    context.cold_pair(context.object_at(directory / 'definitions-1-raw.json'),
-                      context.object_at(directory / 'definitions-2-raw.json'), require_post=True)
+    validate_current_pair(context, receipt_engine,
+        context.object_at(directory / 'definitions-1-raw.json'),
+        context.object_at(directory / 'definitions-2-raw.json'))
     atomic_json(directory / 'capture-complete.json', {'Status': 'TWO_EXACT_COLD_CAPTURES_ONLY',
                 'ExpectedContextSHA256': args.expected_context, 'ValidationRerunPerformed': False,
                 'PhysicsCalculationsPerformed': False, 'Sealed': False})
