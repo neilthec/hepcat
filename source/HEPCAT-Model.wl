@@ -21876,10 +21876,11 @@ constructVectorCoupling[rows_List, species_List, helicities_List] := Module[{ord
 (* Pair the two emission orders on a line by external Dirac and Schouten
    identities before contracting the currents. Equal helicities share one
    reciprocal denominator on double-emission lines. The mixed form keeps
-   the off-shell double-emission remainder and reciprocal spin-shift terms. *)
+   the off-shell double-emission remainder. In physical pole mode the
+   Schouten difference eliminates each reciprocal reference bracket. *)
 twoLinePhotonCurrentProduct[{leftLine_List, rightLine_List}, photons_List, polarizations_List,
-    left_List, right_List, leftMass_, rightMass_] := Module[
-  {same = SameQ @@ polarizations, angleType, squareType, spin, angle, square, sandwich,
+    left_List, right_List, leftMass_, rightMass_, polePreference_: "AllSpurious"] := Module[
+  {physical = polePreference === "AllPhysical", same = SameQ @@ polarizations, angleType, squareType, spin, angle, square, sandwich,
    pole, contraction, firstPhoton = First[photons], positive, negative},
   angleType = If[same && First[polarizations] === 2, "Square", "Angle"];
   squareType = If[angleType === "Angle", "Square", "Angle"];
@@ -21893,11 +21894,11 @@ twoLinePhotonCurrentProduct[{leftLine_List, rightLine_List}, photons_List, polar
   contraction[leftTerms_List, rightTerms_List] := Total[Flatten[Table[
     l[[1]] r[[1]] angle[l[[2]], r[[2]]] square[l[[3]], r[[3]]],
     {l, leftTerms}, {r, rightTerms}], 1]];
-  If[same, Return[-Module[{soft, spinShift, triple, scalar, shifts, current},
+  If[same, Return[Module[{soft, spinShift, triple, scalar, shifts, spinTerms, current, bare},
     (* Use Schouten to cancel reference brackets in the scalar currents.
        When both photons are emitted from one line, one spin shift keeps
        the reciprocal denominator. *)
-    soft[mass_, a_, b_, i_, split_] := If[i === firstPhoton || split,
+    soft[mass_, a_, b_, i_, split_] := If[physical || i === firstPhoton || split,
       -sandwich[squareType, i, {b, a}, squareType, i]/(pole[mass, a, i] pole[mass, b, i]),
       (sandwich[squareType, i, {a}, angleType, firstPhoton]/pole[mass, a, i] -
         sandwich[squareType, i, {b}, angleType, firstPhoton]/pole[mass, b, i])/angle[i, firstPhoton]];
@@ -21914,14 +21915,29 @@ twoLinePhotonCurrentProduct[{leftLine_List, rightLine_List}, photons_List, polar
         mass square[i, j]^2 angle[i, p]/triple[mass, p, i, j], i},
       {spinShift[mass, p, j] soft[mass, p, q, i, False] +
         mass square[j, i]^2 angle[j, p]/triple[mass, p, j, i], j}};
+    spinTerms[mass_, {a_, b_}, emitted_List] := Join[
+      ({First[#], b, Last[#]} & /@ shifts[mass, a, b, emitted]),
+      ({(-1)^Length[emitted] First[#], a, Last[#]} & /@ shifts[mass, b, a, emitted])];
     current[mass_, {a_, b_}, emitted_List] := With[{c = scalar[mass, a, b, emitted]},
-      Join[{{c, a, b}, {c, b, a}}, ({#[[1]], b, #[[2]]} & /@ shifts[mass, a, b, emitted]),
-        ({If[Length[emitted] === 1, -#[[1]], #[[1]]], a, #[[2]]} & /@ shifts[mass, b, a, emitted])]];
-    contraction[current[leftMass, leftLine, left], current[rightMass, rightLine, right]]
+      Join[{{c, a, b}, {c, b, a}}, spinTerms[mass, {a, b}, emitted]]];
+    If[physical,
+      With[{a = leftLine[[1]], b = leftLine[[2]], c = rightLine[[1]], d = rightLine[[2]],
+          sl = scalar[leftMass, Sequence @@ leftLine, left],
+          sr = scalar[rightMass, Sequence @@ rightLine, right],
+          dl = spinTerms[leftMass, leftLine, left], dr = spinTerms[rightMass, rightLine, right]},
+        bare = angle[a, c] square[b, d] + angle[a, d] square[b, c] +
+          angle[b, c] square[a, d] + angle[b, d] square[a, c];
+        <|"BareContraction" -> bare, "ScalarCoefficient" -> -sl sr,
+          "SpinTerms" -> -(sr Total[Function[entry, With[{u = entry[[2]], v = entry[[3]]},
+              entry[[1]] (angle[u, c] square[v, d] + angle[u, d] square[v, c])]] /@ dl] +
+            sl Total[Function[entry, With[{u = entry[[2]], v = entry[[3]]},
+              entry[[1]] (angle[a, u] square[b, v] + angle[b, u] square[a, v])]] /@ dr] +
+            contraction[dl, dr])|>],
+      -contraction[current[leftMass, leftLine, left], current[rightMass, rightLine, right]]]
   ]]];
   positive = photons[[FirstPosition[polarizations, 1][[1]]]];
   negative = photons[[FirstPosition[polarizations, 2][[1]]]];
-  Module[{soft, softProduct, shift, current, remainder, leading},
+  Module[{soft, softProduct, shift, current, dressedBracket, remainder, leading},
     soft[{i_, j_}, mass_, photon_, cancel_] := If[cancel,
       If[photon === positive, -sandwich["Square", positive, {j, i}, "Square", positive],
         sandwich["Angle", negative, {j, i}, "Angle", negative]]/
@@ -21948,12 +21964,25 @@ twoLinePhotonCurrentProduct[{leftLine_List, rightLine_List}, photons_List, polar
         current[otherLine, otherMass, {}]]/
         (pole[mass, i, positive] pole[mass, i, negative] pole[mass, i, positive, negative])],
       {i, {u, v}}]];
-    leading = Total[Flatten[Table[With[
+    (* Opposite helicities act on opposite ends of each rank-one dyad. Sum the
+       two choices (scalar emission or spin shift) before multiplying the
+       angle and square factors. The recoil term still needs its own pole. *)
+    dressedBracket[bracket_, i_, j_, photon_] := With[{onLeft = MemberQ[left, photon]},
+      With[{line = If[onLeft, leftLine, rightLine], mass = If[onLeft, leftMass, rightMass],
+          endpoint = If[onLeft, i, j]},
+        soft[line, mass, photon, True] bracket[i, j] +
+          shift[endpoint, mass, photon, If[endpoint === First[line], 1, -1]] *
+          If[onLeft, bracket[photon, j], bracket[i, photon]]]];
+    leading = If[physical,
+      Total[Flatten[Table[dressedBracket[angle, l[[1]], r[[1]], negative] *
+          dressedBracket[square, l[[2]], r[[2]], positive],
+        {l, {leftLine, Reverse[leftLine]}}, {r, {rightLine, Reverse[rightLine]}}], 1]],
+      Total[Flatten[Table[With[
       {cancel = Length[left] === 1 || leftShift === {} && rightShift === {}},
       softProduct[leftLine, leftMass, Complement[left, leftShift], cancel]
         softProduct[rightLine, rightMass, Complement[right, rightShift], cancel]
         contraction[current[leftLine, leftMass, leftShift], current[rightLine, rightMass, rightShift]]],
-      {leftShift, Subsets[left]}, {rightShift, Subsets[right]}], 1]];
+      {leftShift, Subsets[left]}, {rightShift, Subsets[right]}], 1]]];
     leading + Which[Length[left] === 2, remainder[leftLine, leftMass, rightLine, rightMass],
       Length[right] === 2, remainder[rightLine, rightMass, leftLine, leftMass], True, 0]
   ]
@@ -21962,12 +21991,13 @@ twoLinePhotonCurrentProduct[{leftLine_List, rightLine_List}, photons_List, polar
 (* Trace both oriented fermion lines from the actual diagrams, including
    the exchanged vector attachment. Require every allowed emission order
    before replacing the sum by the contracted pair of currents. *)
-constructGroupedVectorCurrents[diagrams_List, process_List, model_List, external_List] := Module[
+constructGroupedVectorCurrents[diagrams_List, process_List, model_List, external_List,
+    polePreference_: "AllSpurious"] := Module[
   {legs = externalIndices[external], unsupported = Missing["UnsupportedTwoLineCurrents"],
    vectors, matter, vector, helicities, base, fermionRows, species, speciesOf, modelRows,
    vertexRows, pole, topology, records, expectedMatchings, expected, groups, buildGroup,
-   polarizations, expression},
-  If[legs =!= Range[6] || Length[process] =!= 6 || Length[model] < 4 ||
+   polarizations, contributions, expression, physical = polePreference === "AllPhysical", allowed, inverses},
+  If[!MemberQ[{"AllPhysical", "AllSpurious"}, polePreference] || legs =!= Range[6] || Length[process] =!= 6 || Length[model] < 4 ||
       !MemberQ[{20, 40}, Length[diagrams]] || !preparationScalarExternalRulesQ[external],
     Return[unsupported]];
   vectors = Select[legs, (Mass[#] /. external) === 0 &];
@@ -22056,9 +22086,14 @@ constructGroupedVectorCurrents[diagrams_List, process_List, model_List, external
       Return[unsupported]];
     factors = First[vertices[#]]["ModelRow"][[-2]] & /@ Keys[vertices];
     sign = ConstructiveDiagrams`diagramFermionSign[diagram];
-    If[!MemberQ[{-1, 1}, sign], Return[unsupported]];
+    (* The ordered current assigns Grassmann parity to the matching of
+       particle and antiparticle endpoints. Decline the physical proposal
+       if the diagram's local ordering uses a different external phase. *)
+    If[!MemberQ[{-1, 1}, sign] ||
+        (physical && sign =!= feynmanFermionPairSign[lines]),
+      Return[unsupported]];
     <|"Lines" -> lines, "Attachments" -> attachments, "Emissions" -> groups,
-      "Masses" -> masses, "VectorPole" -> vectorPole, "Coefficient" -> sign Times @@ factors|>
+      "Masses" -> masses, "VectorPole" -> vectorPole, "Cuts" -> cuts, "Coefficient" -> sign Times @@ factors|>
   ];
   records = topology /@ diagrams;
   If[!AllTrue[records, AssociationQ], Return[unsupported]];
@@ -22079,14 +22114,31 @@ constructGroupedVectorCurrents[diagrams_List, process_List, model_List, external
     {left, right} = record["Emissions"];
     {leftMass, rightMass} = record["Masses"];
     numerator = twoLinePhotonCurrentProduct[linePair, vectors, polarizations,
-      left, right, leftMass, rightMass];
-    record["Coefficient"] numerator/record["VectorPole"]
+      left, right, leftMass, rightMass, polePreference];
+    With[{weight = record["Coefficient"]/record["VectorPole"]},
+      If[AssociationQ[numerator],
+        {numerator["BareContraction"], weight numerator["ScalarCoefficient"], weight numerator["SpinTerms"]},
+        weight numerator]]
   ];
-  expression = Total[(buildGroup[First[#]] &) /@ groups];
-  If[!residueFiniteQ[expression] || !constructSpuriousBracketFormQ[expression],
-    Return[unsupported]];
-  <|"Expression" -> expression, "Method" -> "GroupedVectorCurrents",
-    "ReferenceAssignments" -> Thread[vectors -> Reverse[vectors]]|>
+  contributions = buildGroup /@ (First /@ groups);
+  (* In the equal-helicity physical form each attachment partition multiplies
+     the same bare two-line contraction. Keep the actual pole and coupling of
+     each partition inside its scalar coefficient, also for distinct species. *)
+  expression = If[physical && SameQ @@ polarizations,
+    Total[Function[orbit, orbit[[1, 1]] Total[orbit[[All, 2]]] + Total[orbit[[All, 3]]]] /@
+      GatherBy[contributions, First]], Total[contributions]];
+  If[!residueFiniteQ[expression], Return[unsupported]];
+  If[physical,
+    allowed = Union @@ Lookup[records, "Cuts"];
+    inverses = DeleteDuplicates[Cases[{expression}, Power[base_, exponent_] /;
+      poleKinematicFactorQ[base] && !TrueQ[exponent >= 0] :> base, Infinity]];
+    If[!FreeQ[expression, (Spinor | SpinorHat)["Xi", ___]] || !AllTrue[inverses,
+        MatchQ[#, _PropDen] && MemberQ[allowed, residueCanonicalPropagators[#, legs]] &],
+      Return[unsupported]];
+    <|"Expression" -> expression, "Method" -> "PhysicalGroupedVectorCurrents", "ReferenceAssignments" -> {}|>,
+    If[!constructSpuriousBracketFormQ[expression], Return[unsupported]];
+    <|"Expression" -> expression, "Method" -> "GroupedVectorCurrents",
+      "ReferenceAssignments" -> Thread[vectors -> Reverse[vectors]]|>]
 ];
 
 (* Contract two standard vector currents with a central off-shell Dirac
@@ -22324,6 +22376,46 @@ constructPhysicalChiralCurrent[endpoints_List, vectors_List, kind_Integer, mass_
     "Scope" -> "OffShellDiracLineExternalIdentities"|>
 ];
 
+(* Combine the two emission orders at each end of a massive fermion line.
+   positive and negative contain the two external labels of each helicity.
+   couplingProduct is the product of the four stripped cubic vertex factors. *)
+constructBalancedPhysicalCurrent[endpoints_List, positive_List, negative_List, mass_, couplingProduct_] := Module[
+  {left, right, photons, spin, bracket, angle, square, sandwich, pole, emission,
+   determinant, oneCurrent, twoCurrent, contract, bridge, contact, pairs},
+  {left, right} = endpoints;
+  photons = Join[positive, negative];
+  spin[type_, leg_] := Spinor[If[MemberQ[endpoints, leg], "Spin", "Helicity"], type, leg];
+  bracket[type_, i_, j_] := If[i === j, 0, SpinorChain[spin[type, i], spin[type, j]]];
+  angle[i_, j_] := bracket["Angle", i, j];
+  square[i_, j_] := bracket["Square", i, j];
+  sandwich[i_, p_, j_] := SpinorChain[spin["Square", i], Mom[p], spin["Angle", j]];
+  pole[legs__] := PropDen[Mom[Multiparticle @@ canonicalPhysicalCut[{legs}, Join[endpoints, photons]]], mass];
+
+  (* In the physical reference choice all four polarizations are transverse to p_left. *)
+  emission[i_, p_] := Which[p === left, 0, MemberQ[positive, i],
+    SpinorChain[spin["Square", i], Mom[p], Mom[left], spin["Square", i]]/pole[left, i],
+    True, SpinorChain[spin["Angle", i], Mom[left], Mom[p], spin["Angle", i]]/pole[left, i]];
+  determinant[p_, i_, j_] := Which[MemberQ[positive, j], -mass^2 square[i, j]^2,
+    MemberQ[positive, i], sandwich[i, p, j]^2, True, -mass^2 angle[i, j]^2];
+  oneCurrent[p_, i_] := Prepend[(-Boole[i === #] angle[#, p] &) /@ negative, emission[i, p]];
+  twoCurrent[p_, {i_, j_}] := Module[{central = pole[p, i, j], spinTerms},
+    spinTerms = Which[MemberQ[positive, j], {0, 0}, MemberQ[positive, i],
+      (-Boole[# === j] angle[j, p] (emission[i, p] central + square[i, j] sandwich[i, p, j]) &) /@ negative,
+      True, Function[k, -angle[k, p] emission[If[k === i, j, i], p] central
+        + mass angle[i, j]^2 square[k, p]] /@ negative];
+    Prepend[spinTerms, emission[i, p] emission[j, p] central + determinant[p, i, j]]/
+      (pole[p, i] pole[p, j])];
+  contract[l_, r_] := l . Outer[angle, Prepend[negative, left], Prepend[negative, right]] . r;
+  pairs = Subsets[photons, {2}];
+  bridge[ij_] := With[{kl = Select[photons, !MemberQ[ij, #] &]},
+    contract[twoCurrent[left, ij], twoCurrent[right, kl]]/pole[left, Sequence @@ ij]];
+  contact[ij_] := With[{kl = Select[photons, !MemberQ[ij, #] &]},
+    -determinant[left, Sequence @@ ij]/(Times @@ (pole[left, #] & /@ ij)) *
+      Total[Function[order, With[{k = First[order], l = Last[order]},
+        contract[oneCurrent[left, k], oneCurrent[right, l]]/(pole[left, k] pole[right, l])]] /@ Permutations[kl]]];
+  -couplingProduct Total[(bridge[#] + contact[#]) & /@ pairs]/mass
+];
+
 (* A cubic vector current on one Dirac line admits a common chiral reference:
    all majority polarizations and the opposite polarization have the same
    angle (or square) endpoint. In this gauge their pair contractions vanish.
@@ -22333,9 +22425,9 @@ constructPhysicalChiralCurrent[endpoints_List, vectors_List, kind_Integer, mass_
 constructVectorLineForm[diagrams_List, process_List, model_List, external_List,
     polePreference_: "AllSpurious"] := Module[
   {legs = externalIndices[external], massive, null, fermion, vector, endpoints, mass,
-   vertexCoupling, vertices, kinds, sameChirality, largerSameChirality, majority, opposite, common, ref, angle, square,
+   vertexCoupling, vertices, kinds, balancedPhysical, sameChirality, largerSameChirality, majority, opposite, common, ref, angle, square,
    bracket, insertion, spin, legSpin, angle12, spinTerm, x, reference, pole, plusPair,
-   mixedPair, pairBlock, scalarCurrent, subsetTerm, propagatorOrder, orders, candidate, coefficient},
+   mixedPair, pairBlock, scalarCurrent, subsetTerm, propagatorOrder, balancedVertexQ, orders, candidate, coefficient},
   If[Length[legs] < 6 || Length[diagrams] > 5040 ||
       !preparationScalarExternalRulesQ[external], Return[Missing["UnsupportedChiralLine"]]];
   null = Select[legs, (Mass[#] /. external) === 0 &];
@@ -22363,7 +22455,8 @@ constructVectorLineForm[diagrams_List, process_List, model_List, external_List,
   vertices = vertexCoupling /@ process[[null]];
   If[!AllTrue[vertices, MatchQ[#, {_Integer, _}] &], Return[Missing["UnsupportedChiralLine"]]];
   kinds = First /@ vertices;
-  If[polePreference === "AllPhysical" &&
+  balancedPhysical = Length[null] === 4 && Count[kinds, 1] === 2 && Count[kinds, 2] === 2;
+  If[polePreference === "AllPhysical" && !balancedPhysical &&
       (Length[null] < 5 || 2^Length[null] > 128 || !SameQ @@ kinds),
     Return[Missing["UnsupportedPhysicalChiralLine"]]];
   sameChirality = Length[null] === 4 && SameQ @@ kinds;
@@ -22375,6 +22468,16 @@ constructVectorLineForm[diagrams_List, process_List, model_List, external_List,
       Min[Count[kinds, 1], Count[kinds, 2]] < 2), Return[Missing["UnsupportedChiralLine"]]];
   (* Every source must be an ordered cubic chain on the same Dirac line.
      Its successive cut differences are the emitted external vector legs. *)
+  balancedVertexQ[vertex_Association] := Module[{row = vertex["ModelRow"], leg, slotRules},
+    leg = Last[vertex["IncidentLegs"]];
+    slotRules = vertex["SlotRules"];
+    AssociationQ[leg] && leg["Kind"] === "External" && MemberQ[null, leg["Source"]] &&
+      leg["Particle"] === process[[leg["Source"]]] &&
+      ListQ[row] && Take[row, 3] === Append[process[[endpoints]], leg["Particle"]] &&
+      MemberQ[model[[2]], row] && standardFermionVectorVertexQ[vertex] && rspScalarQ[row[[-2]]] &&
+      AssociationQ[slotRules] && vertex["Expression"] === ConstructiveDiagrams`replaceVertexIndices[
+        I row[[-2]] row[[-1]], slotRules]
+  ];
   propagatorOrder[diagram_Association] := Module[{props, cuts, order, rows},
     props = Values[diagram["Propagators"]];
     rows = Values[diagram["VertexStructures"]];
@@ -22394,8 +22497,21 @@ constructVectorLineForm[diagrams_List, process_List, model_List, external_List,
         Length[Last[#]] === Length[First[#]] + 1 &], Return[None]];
     order = First[Complement[Last[#], First[#]]] & /@ Partition[cuts, 2, 1];
     order];
+  (* The two-emission identity assumes the standard minimally coupled cubic
+     line and Dirac propagator. Inspect the signed factors actually supplied. *)
+  If[polePreference === "AllPhysical" && balancedPhysical &&
+      !AllTrue[diagrams, Function[d, d["ExternalParticles"] === process &&
+        d["HelicitySumEdges"] === {} && ConstructiveDiagrams`diagramFermionSign[d] === 1 &&
+        AllTrue[Values[d["Propagators"]], #["Factor"] === I/PropDen[Mom[#["Index"]], mass] &] &&
+        AllTrue[Values[d["VertexStructures"]], Length[#] === 1 && balancedVertexQ[First[#]] &]]],
+    Return[Missing["UnsupportedPhysicalChiralLine"]]];
   orders = propagatorOrder /@ diagrams;
   If[Sort[orders] =!= Sort[Permutations[null]], Return[Missing["UnsupportedChiralLine"]]];
+  If[polePreference === "AllPhysical" && balancedPhysical,
+    candidate = constructBalancedPhysicalCurrent[endpoints, Pick[null, kinds, 1], Pick[null, kinds, 2],
+      mass, Times @@ (Last /@ vertices)];
+    If[!residueFiniteQ[candidate], Return[Missing["UnsupportedPhysicalChiralLine"]]];
+    Return[<|"Expression" -> candidate, "Method" -> "BalancedPhysicalTwoEmissionCurrents"|>]];
   If[polePreference === "AllPhysical",
     Return[constructPhysicalChiralCurrent[endpoints, null, First[kinds], mass, Last /@ vertices]]];
   If[sameChirality,
@@ -22852,27 +22968,37 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
     accepted
   ];
   tryPhysicalVectorLine[] := Module[{proposal, checked, previousPair = finalPair,
-      previousSelection = representativeSelection, validationBudget},
+      previousSelection = representativeSelection, previousBenchmark = benchmark,
+      previousBenchmarkReady = benchmarkReady, previousPreparedPair = lastPreparedPair, validationBudget, grouped = Length[process] === 6 && Count[Last /@ external, 0] === 2, origin},
     If[!completionModelQ[diagramModel] || feynmanModel === None || remaining[] <= 5 ||
         options["BoseSymmetryGroups"] =!= Automatic || options["FermionSymmetryGroups"] =!= Automatic ||
         !AllTrue[{"PreparationOptions", "ChannelPreparationOptions", "FactorizationOptions",
           "HighEnergyOptions", "FinalPreparationOptions", "FeynmanPreparationOptions"},
           constructRuleOptions[options[#]] === <||> &], Return[False]];
-    proposal = run["Combining physical chiral currents", TimeConstrained[MemoryConstrained[
-      constructVectorLineForm[diagramData, process, diagramModel, external, "AllPhysical"],
+    (* The six-leg two-line route requires a complete vector-exchange topology.
+       The established single-line route handles higher multiplicities. *)
+    If[Length[process] === 6 && !grouped && Count[Last /@ external, 0] =!= 4, Return[False]];
+    origin = Which[grouped, "Physical grouped vector currents", Length[process] === 6, "Balanced physical current", True, "Physical chiral current"];
+    proposal = run["Combining " <> ToLowerCase[origin], TimeConstrained[MemoryConstrained[
+      If[grouped, constructGroupedVectorCurrents[diagramData, process, diagramModel, external, "AllPhysical"],
+        constructVectorLineForm[diagramData, process, diagramModel, external, "AllPhysical"]],
       268435456, Missing["PhysicalCurrentMemoryLimit"]],
       Min[30, remaining[]], Missing["PhysicalCurrentTimeConstraint"]]];
     If[!AssociationQ[proposal], Return[False]];
     If[!ListQ[channels],
       channels = run["Generating factorization channels", FactorizationAmplitudeChannels[process, factorizationModel]];
       require[channels]];
-    prepareBenchmark["SpinorProducts"];
+    (* For the balanced line, apply each numerical parameter assignment to the
+       independently generated Feynman tensors before spinor conversion. *)
+    prepareBenchmark[If[Length[process] === 6 && !grouped, True, "SpinorProducts"]];
     validationBudget = Min[remaining[], Max[180, 20 Length[channels]]];
     checked = validateRepresentative[Join[KeyDrop[proposal, "Expression"],
       <|"Status" -> "COMPLETE", "Amplitude" -> proposal["Expression"],
         "ExternalMassRules" -> external, "FreeParameters" -> {}|>],
-      "Physical chiral current", validationBudget];
-    If[checked, save["Physical chiral current", KeyDrop[proposal, "Expression"]],
+      origin, validationBudget];
+    If[checked, save[origin, KeyDrop[proposal, "Expression"]],
+      If[Length[process] === 6, benchmark = previousBenchmark; benchmarkReady = previousBenchmarkReady;
+        lastPreparedPair = previousPreparedPair];
       finalPair = previousPair; representativeSelection = previousSelection;
       save["Representative selection", previousSelection]];
     checked
@@ -22938,7 +23064,7 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
       $colorConstructionInput["DiagramAmplitudes"], DiagramAmplitudes[diagramData]]];
     require[diagramPairs];
     If[diagramPairs === {}, diagramPairs = {{external, 0}}];
-    If[options["PolePreference"] === "AllPhysical" && Length[process] > 6 &&
+    If[options["PolePreference"] === "AllPhysical" && Length[process] >= 6 &&
         tryPhysicalVectorLine[], completed = True; Throw[finalPair, tag]];
     If[options["PolePreference"] === "AllSpurious" && Length[process] >= 6 &&
         trySpuriousVectorLine[], completed = True; Throw[finalPair, tag]];
