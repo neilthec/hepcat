@@ -22840,6 +22840,13 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
           "RandomSeed" -> seedBase + 104729 (i - 1)|>,
         If[feynmanModel =!= None,
           <|"FeynmanAmplitudes" -> benchmark, "FeynmanModel" -> feynmanModel|>, <||>]];
+      (* A balanced two-emission current has just four external spin
+         coefficients. Evaluating its exact checks locally avoids shipping
+         the large tensor benchmark to workers for these short comparisons. *)
+      If[Lookup[source, "Method", None] === "BalancedPhysicalTwoEmissionCurrents" &&
+          options["Parallelization"] === Automatic &&
+          Lookup[settings, "Parallelization", Automatic] === Automatic,
+        AssociateTo[settings, "Parallelization" -> False]];
       finalPair = pair;
       checked = run["Validating " <> ToLowerCase[origin] <> " representative" <>
           If[Length[validationSets] > 1, " (" <> ToString[i] <> "/" <> ToString[Length[validationSets]] <> ")", ""],
