@@ -424,6 +424,15 @@ const amp_expression& amplitude::complete_factorization(std::size_t workers) {
 }
 
 const amp_expression& amplitude::complete_factorization(const factorization_options& options) {
+    if(vertices_model_ && (!channels_model_ || vertices_model_->is_feynman()))
+        throw std::logic_error("native factorization completion requires both constructive model roles");
+    if(vertices_model_ && (!diagrams_generated_ || !channels_generated_)) {
+        amplitude staged = *this;
+        staged.generate(options.workers);
+        staged.complete_factorization(options);
+        *this=std::move(staged);
+        return *completed_;
+    }
     auto pending = [](const amplitude_item& item) { return !item.reduced_; };
     if (std::any_of(diagrams_.begin(), diagrams_.end(), pending) ||
         std::any_of(products_.begin(), products_.end(), pending)) {

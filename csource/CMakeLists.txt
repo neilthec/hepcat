@@ -8,7 +8,8 @@ find_library(GMPXX_LIBRARY gmpxx REQUIRED)
 find_library(GMP_LIBRARY gmp REQUIRED)
 
 add_library(hepcat_reduce
-    amplitude.cpp completion.cpp continuations.cpp null_shift.cpp residue.cpp
+    model.cpp model_expression.cpp model_parameters.cpp generation_plan.cpp generation_sew.cpp generation_spin.cpp generation_null.cpp
+    generation_current.cpp generation_feynman.cpp generation.cpp amplitude.cpp completion.cpp continuations.cpp null_shift.cpp residue.cpp
     high_energy.cpp high_energy_chart.cpp high_energy_contacts.cpp
     collect.cpp algebra.cpp amp_expression.cpp kinematics.cpp spinor.cpp vector_basis.cpp)
 target_compile_features(hepcat_reduce PUBLIC cxx_std_17)
@@ -25,12 +26,26 @@ target_link_libraries(hepcat-reduce-amplitude PRIVATE hepcat_reduce)
 
 include(CTest)
 if(BUILD_TESTING)
-    foreach(suite IN ITEMS spinor kinematics collect vector_basis api amplitude completion residue continuations high_energy high_energy_chart)
+    foreach(suite IN ITEMS spinor generation_spin kinematics collect vector_basis api amplitude completion residue continuations high_energy high_energy_chart)
         add_executable(test_${suite} ${suite}_tests.cpp)
         target_include_directories(test_${suite} SYSTEM PRIVATE ${GMP_INCLUDE_DIR})
         target_link_libraries(test_${suite} PRIVATE hepcat_reduce)
         add_test(NAME ${suite} COMMAND test_${suite})
     endforeach()
+    add_executable(test_generation_plan generation_plan_tests.cpp)
+    target_include_directories(test_generation_plan SYSTEM PRIVATE ${GMP_INCLUDE_DIR})
+    target_link_libraries(test_generation_plan PRIVATE hepcat_reduce)
+    set(HEPCAT_TEST_MODELS "${CMAKE_CURRENT_SOURCE_DIR}/../models" CACHE PATH "HEPCAT model files for native tests")
+    add_test(NAME generation_plan COMMAND test_generation_plan "${HEPCAT_TEST_MODELS}")
+    add_executable(test_generation generation_tests.cpp)
+    target_link_libraries(test_generation PRIVATE hepcat_reduce)
+    add_test(NAME generation COMMAND test_generation "${HEPCAT_TEST_MODELS}")
+    add_executable(test_model model_tests.cpp)
+    target_include_directories(test_model SYSTEM PRIVATE ${GMP_INCLUDE_DIR})
+    target_link_libraries(test_model PRIVATE hepcat_reduce)
+    add_test(NAME model COMMAND test_model)
+    get_filename_component(HEPCAT_MODEL_ROOT "${HEPCAT_TEST_MODELS}" DIRECTORY)
+    set_tests_properties(model PROPERTIES ENVIRONMENT "HEPCAT_ROOT=${HEPCAT_MODEL_ROOT}")
     add_executable(test_c_api c_api_test.c)
     target_link_libraries(test_c_api PRIVATE hepcat_reduce)
     add_test(NAME c_api COMMAND test_c_api)

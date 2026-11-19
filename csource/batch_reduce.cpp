@@ -107,6 +107,82 @@ void write_result(const fs::path& path, Writer write) {
     output.close();
     fs::rename(temporary, path);
 }
+void generate_from_models(std::istream& input, const fs::path& path, std::size_t workers) {
+    struct source {
+        std::string directory;
+        unsigned number;
+        std::string scope;
+    };
+    auto spec = [&] { return source{line(input), read_integer<unsigned>(line(input)), line(input)}; };
+    const auto vertices = spec(), channels = spec();
+    const auto mode = line(input), refs = line(input);
+    if (refs != "Automatic" && refs != "Keep" && refs != "Physical")
+        throw std::invalid_argument("unknown generation reference policy");
+    if (mode != "Both" && mode != "Channels" && mode != "Diagrams")
+        throw std::invalid_argument("unknown generation group");
+    auto n = count(line(input));
+    if (n < 3 || n > 64) throw std::invalid_argument("native generation requires 3 to 64 external legs");
+    std::vector<std::string> names;
+    names.reserve(n);
+    for (std::size_t i = 0; i < n; ++i)
+        names.push_back(line(input));
+    if (input.peek() != std::char_traits<char>::eof() || input.bad())
+        throw std::invalid_argument("unexpected generation input");
+    using clock = std::chrono::steady_clock;
+    auto begin = clock::now();
+    hepcat::model vm(vertices.directory, vertices.number, vertices.scope);
+    auto choice = refs == "Keep"       ? hepcat::generation_references::keep
+                  : refs == "Physical" ? hepcat::generation_references::physical
+                                       : hepcat::generation_references::automatic;
+    auto amp = [&] {
+        if (mode == "Diagrams") return hepcat::amplitude(std::move(names), vm, choice);
+        auto fm = vertices.directory == channels.directory && vertices.number == channels.number &&
+                          vertices.scope == channels.scope
+                      ? vm
+                      : hepcat::model(channels.directory, channels.number, channels.scope);
+        return hepcat::amplitude(std::move(names), vm, fm, choice);
+    }();
+    auto start = clock::now();
+    if (mode == "Both")
+        amp.generate(workers);
+    else if (mode == "Diagrams")
+        amp.generate_diagrams(workers);
+    else
+        amp.generate_factorization_products(workers);
+    auto finish = clock::now();
+    auto peak = highWaterRSS();
+    write_result(path, [&](std::ostream& out) {
+        out << "HEPCAT_GENERATED_1\n"
+            << amp.last_worker_count() << '\n'
+            << std::chrono::duration<double>(start - begin).count() << '\n'
+            << std::chrono::duration<double>(finish - start).count() << '\n'
+            << peak << "\nList[";
+        for (std::size_t i = 0; i < n; ++i) {
+            if (i) out << ',';
+            out << amp.external_masses()[i];
+        }
+        out << "]\n";
+        for (const auto* rows : {&amp.diagrams(), &amp.factorization_products()}) {
+            out << rows->size() << '\n';
+            for (const auto& row : *rows) {
+                out << "List[";
+                for (std::size_t k = 0; k < row.shells.size(); ++k) {
+                    auto& s = row.shells[k];
+                    if (k) out << ',';
+                    out << "List[List[";
+                    for (std::size_t j = 0; j < s.legs.size(); ++j) {
+                        if (j) out << ',';
+                        out << s.legs[j];
+                    }
+                    out << "]," << s.mass << ']';
+                }
+                out << "]\n" << row.expression.str() << '\n';
+                auto rest = row.expression.discarded_remainder();
+                out << (rest ? rest->str() : "0") << '\n';
+            }
+        }
+    });
+}
 } // namespace
 
 int main(int argc, char** argv) {
@@ -119,6 +195,10 @@ int main(int argc, char** argv) {
         if (fs::exists(argv[2]) && fs::equivalent(argv[1], argv[2]))
             throw std::invalid_argument("input and output paths must differ");
         const auto format = line(input);
+        if (format == "HEPCAT_GENERATE_1") {
+            generate_from_models(input, argv[2], workers);
+            return 0;
+        }
         bool energy = format == "HEPCAT_HIGH_ENERGY_1";
         bool prepared = energy || format == "HEPCAT_FACTOR_PREPARED_1";
         bool complete = prepared || format == "HEPCAT_FACTOR_1";

@@ -1,4 +1,4 @@
-# Native amplitude reduction and completion
+# Native amplitude generation, reduction and completion
 
 `hepcat::amp_expression` holds a symbolic expression, the ordered external masses, and any internal numerator shells declared for that expression. Its particle count is the length of the mass list. Labels start at 1 and all momenta are incoming. Construct it once, then call `amp.reduce()` to simplify it in place. To keep the original for comparison, copy the object before reduction. Copies share their stored expression nodes. An ordinary native process needs no Wolfram installation.
 
@@ -17,6 +17,47 @@ int main() {
 ```
 
 Here the numerator shell is $(p_1+p_3)^2=m_e^2$. Since $p_1^2=m_e^2$ and $p_3^2=0$, the reduced dot product is zero. Its off-cut remainder is `MomProd[1,3]`. Omit the third constructor argument to use external masses and momentum conservation alone. The optional C interface is in [hepcat.h](hepcat.h), with a runnable short example in [c_api_test.c](c_api_test.c).
+
+## Generate from HEPCAT model files
+
+A native program can start with particle names. Read each model once and reuse it across processes. The QED vertex model is number 3 and its physical-pole factorization model is number 4. Use models 1 and 2 for the corresponding SM pair.
+
+```cpp
+#include "amplitude.hpp"
+
+hepcat::model vertices("models", 3);
+hepcat::model lower_amplitudes("models", 4);
+hepcat::amplitude amp({"e", "E", "A.+", "A.+", "A.-"}, vertices, lower_amplitudes);
+amp.generate();
+
+const auto& diagrams = amp.diagrams();                       // 6 reduced diagrams
+const auto& channels = amp.factorization_products();          // 6 reduced products
+const auto& factorized = amp.complete_factorization();
+const auto& final_amp = amp.complete_high_energy();
+```
+
+The reader loads the particle, variable, function and interaction tables for the selected number. Model copies share those immutable tables. The two models can come from different directories if their common external particle definitions and parameter scopes agree. A separate model can be used at the same time without creating global parameter names.
+
+`generate_diagrams()` and `generate_factorization_products()` are available separately. Calling `generate()` schedules both collections in one queue. A single worker sews the complete internal spin or helicity sum for its row and reduces that row with its own numerator shells. It keeps the reduced result and off-cut remainder and releases its working algebra. Output order is independent of worker completion order. Subsequent generation calls skip collections already built. Pass a worker limit, such as `amp.generate(4)`, or use `amp.generate(1)` for serial execution.
+
+Automatic constructive references use a cycle of massless external particles when available and a massive spectator for a lone photon. Pass `hepcat::generation_references::keep` to keep explicit references or `hepcat::generation_references::physical` to request physical denominators where a suitable spectator exists. A factorization product is defined on its own pole. Its continuation can differ from the Mathematica representative while giving the same residue.
+
+From Mathematica, after loading HEPCAT and the optional bridge, the equivalent call is
+
+```wolfram
+batch = HEPCATNative`GenerateNativeAmplitude[{"e","E","A.+","A.+","A.-"},
+  ExpandFileName["models"], 3, 4, binary];
+batch["Diagrams"]
+batch["FactorizationProducts"]
+```
+
+For an independent Feynman diagram calculation, give the one-model constructor a CalcHEP model directory containing `lgrngN.mdl` and call `generate_diagrams()`. The result contains the raw Dirac and Lorentz tensors with off-shell internal propagators and only external mass rules. The four-argument Mathematica bridge call `GenerateNativeAmplitude[process, directory, number, binary]` returns those rows for use with the package's `FeynmanToSpinorProducts`. Native spinor reduction applies to constructive input.
+
+In the Mathematica bridge, `"PolePreference" -> "AllSpurious"` requests the cyclic massless reference policy with the massive-spectator fallback.
+
+The [generation benchmark](generation_benchmark.wls) compares individual diagram spin polynomials, including their remainders, at two conserved exact points. It compares each factorization product at two regular points on its own pole. It times the fused native generation and reduction separately from model loading and bridge transfer. Run it with a licensed Wolfram kernel after building the executable. The [model reader check](model_reader_oracle.wls) compares vertex expressions and factors with Mathematica for all shipped constructive and CalcHEP models. Additional checks cover [three identical fermion pairs](generation_six_fermion_checks.wls), [quark color coefficients](generation_color_checks.wls), [gluon channels](generation_gluon_checks.wls) and [off-shell Feynman tensors](generation_feynman_checks.wls).
+
+On the eight-worker release build, the electron pair with four positive-helicity photons took 1.01 s with one worker and 0.32 s with eight for its 24 diagrams and 14 channels. Peak RSS went from 5.8 to 12.2 MiB. For four W bosons the corresponding times were 7.91 s and 2.76 s, with 15.2 and 37.0 MiB peak RSS. These timings cover topology generation, sewing and reduction after loading the models. The [measurements for all eight processes](generation-benchmark-results.json) also report model read time and Wolfram raw generation time separately.
 
 ## Reduce diagrams and factorization products in one batch
 

@@ -77,25 +77,30 @@ amp_expression::amp_expression(const std::string& expr,const std::vector<std::st
     kinematics_=std::move(ctx);
 }
 
-amp_expression& amp_expression::reduce() {
-    std::lock_guard<std::mutex> guard(*kinematics_->lock);
-    if (reduced_) return *this;
-    const auto answer=reduceInto(*arena_,root_,kinematics_->masses,kinematics_->shells);
-    if (!kinematics_->shells.empty() && root_!=answer) {
-        // Comparing two continuations preserves cross terms when several
-        // lines are on shell at once. Re-reducing the amplitude adds only
-        // the new change to the remainder already retained.
-        const auto offCut=reduceInto(*arena_,root_,kinematics_->masses,{});
-        if (offCut!=answer) {
-            std::vector<Id> terms{offCut,arena_->mul({arena_->integer(-1),answer})};
-            if (remainder_) terms.push_back(*remainder_);
-            auto difference=reduceInto(*arena_,arena_->add(std::move(terms)),kinematics_->masses,{});
-            if (difference==arena_->integer(0)) remainder_.reset();
-            else remainder_=difference;
+namespace {
+Id reduce_and_retain(Algebra& a, Id root, const std::vector<Id>& masses, const Shells& shells,
+                     std::optional<Id>& remainder) {
+    const auto answer=reduceInto(a,root,masses,shells);
+    if(!shells.empty() && root!=answer) {
+        const auto off_cut=reduceInto(a,root,masses,{});
+        if(off_cut!=answer) {
+            std::vector<Id> terms{off_cut,a.mul({a.integer(-1),answer})};
+            if(remainder)terms.push_back(*remainder);
+            auto difference=reduceInto(a,a.add(std::move(terms)),masses,{});
+            if(difference==a.integer(0)) remainder.reset();
+            else remainder=difference;
         }
     }
-    root_=answer;
-    reduced_=true;
+    return answer;
+}
+}
+
+amp_expression& amp_expression::reduce() {
+    std::lock_guard<std::mutex> guard(*kinematics_->lock);
+    if (!reduced_) {
+        root_=reduce_and_retain(*arena_,root_,kinematics_->masses,kinematics_->shells,remainder_);
+        reduced_=true;
+    }
     return *this;
 }
 
@@ -149,6 +154,20 @@ std::vector<Id> amp_expression::import_masses(Algebra& destination) const {
 
 void amp_expression::set_from(const Algebra& source, Id result) {
     root_ = copy_tree(source, *arena_, result);
+}
+
+// A generated row is born in a worker arena borrowing the model. Run the
+// reduction there too, then retain only the two reachable output trees.
+void amp_expression::reduce_from(Algebra& worker, Id source) {
+    auto masses=import_masses(worker);
+    Shells shells;
+    for(const auto& [cut,mass]:kinematics_->shells)
+        shells.emplace(cut,copy_tree(*arena_,worker,mass));
+    std::optional<Id> rest;
+    auto result=reduce_and_retain(worker,source,masses,shells,rest);
+    set_from(worker,result);
+    if(rest) remainder_=copy_tree(worker,*arena_,*rest);
+    reduced_=true;
 }
 
 std::string amp_expression::str() const {

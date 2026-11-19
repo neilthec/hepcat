@@ -65,12 +65,17 @@ operation.", "ExampleText"],
       "]", ";"}]], "Input"], Cell["This example writes files, starts a longer \
 calculation, or requires an optional external tool. Evaluate it when you want \
 to perform that operation.", "ExampleText"],
-  Cell["Optional Native Reduction and Completion", "TechNoteSection"],
-  Cell[TextData[{"After generating both lists, you can reduce them together \
-with the experimental C++ reducer in csource. Build the \
-hepcat-reduce-amplitude executable using the commands in csource/README.md, \
-then load the optional Mathematica bridge. Its default worker count uses the \
-available hardware threads and the number of items."}], "TechNoteText"],
+  Cell["Optional Native Generation, Reduction and Completion",
+   "TechNoteSection"],
+  Cell[TextData[
+    {"The experimental C++ generator reads the same model files as ",
+     ButtonBox["ReadModel", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ReadModel"], ". Give it the elementary \
+vertex model for diagrams and the lower-point amplitude model for \
+factorization. Each worker builds one diagram or channel, sums its internal \
+helicities and reduces it before taking the next one. Build the executable \
+using csource/README.md. You can also send existing Mathematica rows to \
+ReduceNativeAmplitude."}], "TechNoteText"],
   Cell[TextData[{"Each diagram uses its own numerator shells. Each \
 factorization product uses its channel shell. The returned Diagrams and \
 FactorizationProducts entries preserve the input row order. DiagramRemainders \
@@ -94,18 +99,21 @@ rows requests an independent ", ButtonBox["CheckAmplitudes",
       BaseStyle -> "Link", ButtonData ->
        "paclet:HEPCAT/ref/CheckAmplitudes"],
      " report, including spurious poles and reference dependence."}],
-   "TechNoteText"], Cell[TextData[{"Reduce both lists from the preceding \
-example in one native call. Adjust the executable path if you built it \
-elsewhere."}], "ExampleText"],
+   "TechNoteText"], Cell[TextData[{"Generate and reduce the QED diagrams and \
+channel products directly from model files. Adjust the paths to your \
+checkout."}], "ExampleText"],
   Cell[BoxData[RowBox[{"Get", "[",
       "\"~/code/hepcat/csource/NativeAmplitude.wl\"", "]", ";", "\n",
       "binary", " ", "=", " ", "ExpandFileName", "[", "\"~/code/hepcat/tests/\
 results/native-reduce-build/hepcat-reduce-amplitude\"", "]", ";", "\n",
-      "batch", " ", "=", " ", "HEPCATNative`ReduceNativeAmplitude", "[",
-      "rawAmplitudes", ",", " ", "channels", ",", " ", "binary", "]", ";",
-      "\n", "batch", "[", "\"Diagrams\"", "]"}]], "Input"],
-  Cell["This example writes files, starts a longer calculation, or requires \
-an optional external tool. Evaluate it when you want to perform that \
+      "nativeProcess", " ", "=", " ", "{", "\"e\"", ",", " ", "\"E\"", ",",
+      " ", "\"A.+\"", ",", " ", "\"A.+\"", ",", " ", "\"A.-\"", "}", ";",
+      "\n", "batch", " ", "=", " ", "HEPCATNative`GenerateNativeAmplitude",
+      "[", "nativeProcess", ",", " ", "ExpandFileName", "[",
+      "modelDirectory", "]", ",", " ", "3", ",", " ", "4", ",", " ",
+      "binary", "]", ";", "\n", "batch", "[", "\"Diagrams\"", "]"}]],
+   "Input"], Cell["This example writes files, starts a longer calculation, or \
+requires an optional external tool. Evaluate it when you want to perform that \
 operation.", "ExampleText"],
   Cell[TextData[{"Complete the prepared amplitude and inspect the fitted \
 expression and its validation statistics."}], "ExampleText"],
@@ -121,16 +129,18 @@ you want to perform that operation.", "ExampleText"],
   Cell[TextData[{"Finish the high-energy stage and check the result against \
 the original channels. The reported native time excludes the independent \
 checks."}], "ExampleText"],
-  Cell[BoxData[RowBox[{"result", " ", "=", " ",
-      "HEPCATNative`CompleteNativeHighEnergy", "[", "fit", ",", " ",
-      "channels", ",", " ", "qedModel", ",", " ", "binary", ",", " ",
-      "\"ReturnDetails\"", " ", "->", " ", "True", "]", ";", "\n", "If", "[",
-      "AssociationQ", "[", "result", "]", ",", " ", "{", "result", "[",
-      "\"Amplitude\"", "]", ",", " ", "result", "[", "\"ValidationReport\"",
-      "]", "[", "\"Summary\"", "]", "}", ",", " ", "result", "]"}]],
-   "Input"], Cell["This example writes files, starts a longer calculation, or \
-requires an optional external tool. Evaluate it when you want to perform that \
-operation.", "ExampleText"],
+  Cell[BoxData[RowBox[{"nativeChannels", " ", "=", " ",
+      "FactorizationAmplitudeChannels", "[", "nativeProcess", ",", " ",
+      "ReadModel", "[", "modelDirectory", ",", " ", "4", "]", "]", ";", "\n",
+      "result", " ", "=", " ", "HEPCATNative`CompleteNativeHighEnergy", "[",
+      "fit", ",", " ", "nativeChannels", ",", " ", "qedModel", ",", " ",
+      "binary", ",", " ", "\"ReturnDetails\"", " ", "->", " ", "True", "]",
+      ";", "\n", "If", "[", "AssociationQ", "[", "result", "]", ",", " ",
+      "{", "result", "[", "\"Amplitude\"", "]", ",", " ", "result", "[",
+      "\"ValidationReport\"", "]", "[", "\"Summary\"", "]", "}", ",", " ",
+      "result", "]"}]], "Input"], Cell["This example writes files, starts a \
+longer calculation, or requires an optional external tool. Evaluate it when \
+you want to perform that operation.", "ExampleText"],
   Cell["Prepare Without Throwing Away Information", "TechNoteSection"],
   Cell[TextData[{ButtonBox["PrepareAmplitudes", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/PrepareAmplitudes"], " chooses the \

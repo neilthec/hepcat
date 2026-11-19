@@ -34,6 +34,7 @@ private:
     void restore_prepared(const std::string& remainder);
     std::uint32_t import_into(Algebra& destination, bool remainder = false) const;
     std::vector<std::uint32_t> import_masses(Algebra& destination) const;
+    void reduce_from(Algebra& worker, std::uint32_t source);
     void set_from(const Algebra& source, std::uint32_t result);
     struct context;
     std::shared_ptr<const context> kinematics_;

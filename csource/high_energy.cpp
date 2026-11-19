@@ -264,6 +264,49 @@ const high_energy_report& amplitude::last_high_energy() const {
     if (!high_energy_result_) throw std::logic_error("no validated high-energy result");
     return high_energy_report_;
 }
+void amplitude::bind_model_parameters(Algebra& a, Id seed, high_energy_options& settings) const {
+    std::vector<Id> roots{seed};
+    for (Id mass : a.masses())
+        roots.push_back(mass);
+    for (const auto& expr : settings.correction_basis)
+        roots.push_back(a.parse(expr));
+    // Retained terms can carry a parameter that has canceled from the seed.
+    for (const auto* items : {&diagrams_, &products_})
+        for (const auto& row : *items)
+            if (auto rest = row.expression.discarded_remainder()) roots.push_back(rest->import_into(a));
+    std::set<Id> visited;
+    std::vector<std::string> active;
+    while (!roots.empty()) {
+        Id id = roots.back();
+        roots.pop_back();
+        if (!visited.insert(id).second) continue;
+        const auto& n = a.node(id);
+        if (n.head == "ModelParameter")
+            active.push_back(a.format(id));
+        else
+            roots.insert(roots.end(), n.args.begin(), n.args.end());
+    }
+    std::set<std::string> scopes, resolved;
+    for (const auto* source : {&vertices_model_, &channels_model_}) {
+        if (!*source || !scopes.insert((*source)->parameter_scope()).second) continue;
+        auto points = (*source)->high_energy_parameter_points(active);
+        if (points.empty()) continue;
+        for (const auto& pair : points[0])
+            resolved.insert(pair.first);
+        if (settings.parameter_points.empty())
+            settings.parameter_points = std::move(points);
+        else {
+            if (points.size() != settings.parameter_points.size())
+                throw std::logic_error("incompatible model sample counts");
+            for (std::size_t i = 0; i < points.size(); ++i)
+                settings.parameter_points[i].insert(settings.parameter_points[i].end(), points[i].begin(),
+                                                    points[i].end());
+        }
+    }
+    for (const auto& key : active)
+        if (!resolved.count(key)) throw std::invalid_argument("model does not declare " + key);
+}
+
 const amp_expression& amplitude::complete_high_energy(std::size_t workers) {
     high_energy_options options;
     options.workers = workers;
@@ -292,7 +335,9 @@ const amp_expression& amplitude::complete_high_energy(const amp_expression& expr
         throw std::invalid_argument("high-energy input has different external masses");
     a.setKinematics(std::move(masses), {});
     auto seed = expression.import_into(a);
-    high_energy_fit work(a, seed, options);
+    auto settings = options;
+    if (settings.parameter_points.empty() && vertices_model_) bind_model_parameters(a, seed, settings);
+    high_energy_fit work(a, seed, settings);
     auto publish = [&](Id answer, const char* unchanged = nullptr) -> const amp_expression& {
         amp_expression result("0", masses_);
         result.set_from(a, answer);

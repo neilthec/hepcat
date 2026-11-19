@@ -124,17 +124,17 @@
         ]
       },
       {
-        "title": "Optional Native Reduction and Completion",
+        "title": "Optional Native Generation, Reduction and Completion",
         "paragraphs": [
-          "After generating both lists, you can reduce them together with the experimental C++ reducer in csource. Build the hepcat-reduce-amplitude executable using the commands in csource/README.md, then load the optional Mathematica bridge. Its default worker count uses the available hardware threads and the number of items.",
+          "The experimental C++ generator reads the same model files as [ReadModel](paclet:HEPCAT/ref/ReadModel). Give it the elementary vertex model for diagrams and the lower-point amplitude model for factorization. Each worker builds one diagram or channel, sums its internal helicities and reduces it before taking the next one. Build the executable using csource/README.md. You can also send existing Mathematica rows to ReduceNativeAmplitude.",
           "Each diagram uses its own numerator shells. Each factorization product uses its channel shell. The returned Diagrams and FactorizationProducts entries preserve the input row order. DiagramRemainders and FactorizationRemainders contain the matching off-cut differences, so adding a remainder to its reduced expression recovers the original away from the cut.",
           "Pass that batch to CompleteNativeFactorization to fit the diagram residues to the sewn channel residues. Each cut supplies equations for the same coefficients. The native solver checks the resulting expression again on fresh cut points. ReturnDetails reports the route, rank, sample counts and elapsed native time. A physical-residue match alone leaves contact terms undetermined. Use [CheckAmplitudes](paclet:HEPCAT/ref/CheckAmplitudes) for the other amplitude checks.",
           "CompleteNativeHighEnergy takes the mass-tagged factorization result and the model. It expands the amplitude at fixed angles and looks for powers above the expected limit, E^(4-n) for n external legs. If needed, it adds local spinor contractions whose coefficients cancel those powers. Such terms have no physical residues. Supplying the original channel rows requests an independent [CheckAmplitudes](paclet:HEPCAT/ref/CheckAmplitudes) report, including spurious poles and reference dependence."
         ],
         "examples": [
           {
-            "description": "Reduce both lists from the preceding example in one native call. Adjust the executable path if you built it elsewhere.",
-            "input": "Get[\"~/code/hepcat/csource/NativeAmplitude.wl\"];\nbinary = ExpandFileName[\"~/code/hepcat/tests/results/native-reduce-build/hepcat-reduce-amplitude\"];\nbatch = HEPCATNative`ReduceNativeAmplitude[rawAmplitudes, channels, binary];\nbatch[\"Diagrams\"]",
+            "description": "Generate and reduce the QED diagrams and channel products directly from model files. Adjust the paths to your checkout.",
+            "input": "Get[\"~/code/hepcat/csource/NativeAmplitude.wl\"];\nbinary = ExpandFileName[\"~/code/hepcat/tests/results/native-reduce-build/hepcat-reduce-amplitude\"];\nnativeProcess = {\"e\", \"E\", \"A.+\", \"A.+\", \"A.-\"};\nbatch = HEPCATNative`GenerateNativeAmplitude[nativeProcess, ExpandFileName[modelDirectory], 3, 4, binary];\nbatch[\"Diagrams\"]",
             "evaluate": false
           },
           {
@@ -144,7 +144,7 @@
           },
           {
             "description": "Finish the high-energy stage and check the result against the original channels. The reported native time excludes the independent checks.",
-            "input": "result = HEPCATNative`CompleteNativeHighEnergy[fit, channels, qedModel, binary, \"ReturnDetails\" -> True];\nIf[AssociationQ[result], {result[\"Amplitude\"], result[\"ValidationReport\"][\"Summary\"]}, result]",
+            "input": "nativeChannels = FactorizationAmplitudeChannels[nativeProcess, ReadModel[modelDirectory, 4]];\nresult = HEPCATNative`CompleteNativeHighEnergy[fit, nativeChannels, qedModel, binary, \"ReturnDetails\" -> True];\nIf[AssociationQ[result], {result[\"Amplitude\"], result[\"ValidationReport\"][\"Summary\"]}, result]",
             "evaluate": false
           }
         ]

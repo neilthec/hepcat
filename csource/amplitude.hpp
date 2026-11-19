@@ -1,6 +1,7 @@
 #pragma once
 
 #include "amp_expression.hpp"
+#include "model.hpp"
 
 #include <cstddef>
 #include <optional>
@@ -44,6 +45,8 @@ struct high_energy_report {
     std::string route;
 };
 
+enum class generation_references { automatic, keep, physical };
+
 struct amplitude_item {
     std::vector<numerator_shell> shells;
     amp_expression expression;
@@ -62,6 +65,16 @@ private:
 class amplitude {
 public:
     explicit amplitude(std::vector<std::string> external_masses);
+    // A model handle shares its immutable parsed tables across processes and workers.
+    amplitude(std::vector<std::string> particles, model vertex_model,
+              generation_references references = generation_references::automatic);
+    amplitude(std::vector<std::string> particles, model vertex_model, model factorization_model,
+              generation_references references = generation_references::automatic);
+    amplitude& generate_diagrams(std::size_t workers = 0);
+    amplitude& generate_factorization_products(std::size_t workers = 0);
+    // Generate the collections for the supplied models in one worker queue.
+    amplitude& generate(std::size_t workers = 0);
+
     void add_diagram(const std::string& expression, std::vector<numerator_shell> shells = {});
     void add_factorization_product(const std::string& expression, numerator_shell channel);
 
@@ -89,13 +102,19 @@ public:
     // together. Later calls reduce only entries appended since the last call.
     amplitude& reduce(std::size_t workers = 0);
 
+    const std::vector<std::string>& particles() const { return particles_; }
     const std::vector<std::string>& external_masses() const { return masses_; }
     const std::vector<amplitude_item>& diagrams() const { return diagrams_; }
     const std::vector<amplitude_item>& factorization_products() const { return products_; }
     std::size_t last_worker_count() const { return last_workers_; }
 
 private:
-    std::vector<std::string> masses_;
+    amplitude& generate_rows(bool diagrams, bool products, std::size_t workers);
+    void bind_model_parameters(Algebra&, std::uint32_t seed, high_energy_options&) const;
+    std::vector<std::string> masses_, particles_;
+    std::optional<model> vertices_model_, channels_model_;
+    generation_references references_ = generation_references::automatic;
+    bool diagrams_generated_ = false, channels_generated_ = false;
     std::vector<amplitude_item> diagrams_, products_;
     std::size_t last_workers_ = 0;
     std::optional<amp_expression> completed_;
