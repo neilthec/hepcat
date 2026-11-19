@@ -22,6 +22,8 @@ See [the tested environment](../ENVIRONMENT.md) for exact versions, the tested
 SPINAS revision, precision modes and the distinction between the current
 validation and historical timing measurements.
 
+The [current QED validation records](reproduction/100k/README.md) cover the published formulas, spin-summed and polarized rates, timing measurements and precision studies. Their statistical samples use at least 100,000 phase-space points.
+
 Choose the task you want:
 
 | Task | Start here | External programs needed |
@@ -39,8 +41,7 @@ purpose; none is labeled as another kind of test.
 
 ## Check and plot the published timing data
 
-The maintained inputs are in `data/timings/one-pair/` and
-`data/timings/two-pair/`. Both studies used 10,000 common phase-space points
+The current inputs are in [reproduction/100k/precision-timing/results/timings](reproduction/100k/precision-timing/results/timings/). Both studies use 100,000 common phase-space points
 per multiplicity and nine serial timing sweeps. The plotting tools verify the
 medians against the individual sweeps before drawing the figures.
 
@@ -90,11 +91,9 @@ Use the separate SM notebook for the 74 SM families. Full high-multiplicity
 validations can take much longer than the timing check. Their point counts
 are chosen in the notebook; an interrupted run is not a completed validation.
 
-The timing exporter reads the unchanged complete formulas from models 3 and 4,
-which are the physical- and spurious-pole catalogs. It does not use whatever
-amplitude variables happen to be present in an interactive kernel, and it does
-not reconstruct or simplify an amplitude during timing. This makes the formulas
-being measured explicit and reproducible.
+The timing runner exports the paper formulas from `reproduction/100k/catalog/input-expressions.wxf`. Its provenance files record the SHA-256 hash of each helicity expression. Constructive models 3 and 4 supply the physical- and spurious-pole model parameters. To rerun the exact arithmetic used for the paper timings, use the [checksummed timing sources](reproduction/100k/precision-timing/README.md). A fresh Wolfram export can select a different order of operations if the optimization step reaches its time limit. The standalone Wolfram exporters also accept an explicit `--paper-amplitudes` path. Invoking those exporters directly without that option selects the saved model amplitudes.
+
+The file `data/qed-formula-validation.json` in the benchmark bundle records the separate checks of the compact paper formulas, including the exact catalog signs, seeds, helicity counts and maximum deviations. In the QED notebook the compact amplitude assignments precede their full-process exports. For the catalog reference runs use `"CalcHEPPoints" -> 100000`, `"MadGraphPoints" -> 100000`, and set both `"CalcHEPSeed"` and `"MadGraphSeed"` to `861811`.
 
 ## Try the complete timing workflow
 
@@ -130,7 +129,7 @@ For the paper-sized measurements, omit `--smoke`:
   --spinas /path/to/spinas
 ```
 
-The defaults are 10,000 points, nine sweeps, 100 warmup points and a
+The defaults are 100,000 points, nine sweeps, 100 warmup points and a
 center-of-mass energy of 100 GeV. The saved one-pair seed is
 `1793918752098091000`; the four-fermion seed is `1794010385397612000`.
 The runner selects these study seeds unless overridden. Use a quiet machine
@@ -266,7 +265,7 @@ Export the complete saved families into separate directories:
 
 Configure and build a separate benchmark for each export set using the preceding
 CMake recipe. Run the two benchmarks serially with the same explicit seed,
-`--points 10000 --repeats 9 --warmup 100 --energy 100`. Both exports default to
+`--points 100000 --repeats 9 --warmup 100 --energy 100`. Both exports default to
 optimized double-precision SPINAS code. Each run independently checks every point
 against CalcHEP and MadGraph before accepting a timing row.
 
@@ -414,12 +413,12 @@ Use the same SPINAS precision for all exports and the linked SPINAS library.
 independent CalcHEP and MadGraph matrix elements with `-O3`. It leaves their
 installations, model files, normal validation defaults, and event sessions alone.
 
-Defaults are 10,000 points per N, five complete timing repetitions, 100 warmup
+Defaults are 100,000 points per N, five complete timing repetitions, 100 warmup
 calls, and fixed center-of-mass energy 100 GeV. The seed comes from the time and
 is printed and saved. Override settings when needed:
 
 ```sh
-./qed_photon_benchmark --points 10000 --repeats 5 --energy 100 \
+./qed_photon_benchmark --points 100000 --repeats 5 --energy 100 \
   --seed 12345 --output photon-timings
 ```
 
@@ -431,8 +430,7 @@ coupling values must be used at every N; values come from the exported model.
 ## Files to plot
 
 - `photon-timings.csv`: one row per N. `spinas_seconds`, `calchep_seconds`, and
-  `madgraph_seconds` are median elapsed times for one complete 10,000-point
-  sweep. The three `*_relative_N2` columns are the requested three curves.
+  `madgraph_seconds` are median elapsed times for one sweep over all requested points. The three `*_relative_N2` columns are the requested three curves.
 - `photon-timings-repetitions.csv`: every elapsed-time measurement, including
   seconds per point. Use these to show timing spread or error bars.
 - `photon-timings-points-N*.csv`: the actual common physical momenta, in GeV.
@@ -491,14 +489,18 @@ selected precision failures, see [the generated-graph precision workflow](reprod
 Its original native N8 AllSpurious result is retained as FAIL (16/100000).
 
 
-`all-positive-formulas.hpp` evaluates the previously fixed physical and spurious
-all-positive QED recurrences directly, using memoized photon subsets.
-`all-positive-validation.cpp` compares both with an independent MadGraph
-matrix element. It does not load Mathematica, generate HEPCAT diagrams, run
-preparation/completion, or expand the formulas into long symbolic expressions.
-The argument N counts photons: N=7 and N=8 mean nine and ten external particles.
+`all-positive-formulas.hpp` evaluates the original marked-pair physical current,
+the determinant-collected physical current of the QED notebook, and the
+spurious current. The validator accepts two through eight photons and compares
+all three spin sums with an independently generated MadGraph matrix element.
+It also compares the two physical forms as complex amplitudes for all four
+massive-spin choices. The historical `physical` columns refer to the
+marked-pair recurrence. The collected-current comparisons appear in
+`MaximumCollectedPhysicalMadGraphRelativeError` and
+`MaximumCollectedPhysicalOriginalComplexError` in the JSON report.
+Seven and eight photons correspond to nine and ten external particles.
 
-Both formulas take physical positive-energy momenta for incoming electron and
+The evaluators take physical positive-energy momenta for incoming electron and
 positron and outgoing positive-helicity photons. The evaluator performs the
 all-ingoing crossing once, including photon angle-spinor signs. It retains
 all four massive spin amplitudes. The comparison uses the raw sum of their
@@ -547,7 +549,7 @@ Use a Python compatible with the selected MadGraph installation:
 ```sh
 python3 source/internal/export/madgraph-runtime.py --config /path/to/config.json \
   --output "$validation_dir/reference-N8"
-"$validation_dir/all-positive-validation" --photons 8 --points 1000 \
+"$validation_dir/all-positive-validation" --photons 8 --points 100000 \
   --mass 1.5 --reference "$validation_dir/reference-N8/libhepcat_madgraph.dylib" \
   --output "$validation_dir/N8"
 ```

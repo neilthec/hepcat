@@ -1,10 +1,9 @@
 # Verify the paper results
 
-These tools let a reader check the numerical records and amplitude catalog
-used in the QED and HEPCAT papers. They also provide a numerical replay of
-the precision study. The inputs are curated in one `paper-evidence.zip`;
-the full research directory and generated build trees are not required.
-The bundle contains data and frozen evaluator source, not external binaries.
+The [current QED study index](100k/README.md) gives the amplitude comparisons,
+precision records and timings used in the paper. The directory also includes
+an earlier evidence archive for the QED and HEPCAT papers. The verifier checks
+the current study files and then reproduces the archived checks.
 
 Run commands from the HEPCAT checkout root. All defaults are relative to the
 checkout, not a particular user's home directory. Generated results go under
@@ -19,6 +18,12 @@ python3 tests/run-checks.py --unpack-only
 This verifies and expands `tests/benchmarks/benchmarks.zip` to the paths used
 below. Expanded files are ignored by Git. The compact checkout retains this
 guide and the bundle; generated results remain under `tests/results/`.
+
+## Current QED paper
+
+The current numerical campaigns use at least 100,000 phase-space points in every statistical sample. The [QED validation records](100k/README.md) give the sample sizes, generators, precision modes, tolerances, timing repetitions and results. They also explain how to repeat the comparisons using the printed amplitudes. Exact spinor identities and tests at selected rational momenta have their own records.
+
+The following sections document the earlier evidence bundle. Its historical sample sizes are part of the record.
 
 ## Check the saved evidence
 
@@ -82,7 +87,7 @@ python3 tests/benchmarks/reproduction/analyze-precision.py
 This writes `summary.csv`, `summary.json` and `helicity-summary.csv` under
 `tests/results/reproduction/precision/`. The statistics include medians,
 percentiles, maxima, threshold counts and worst-point identities. The seven
-catalog families use 61,000 common point configurations in total. The
+catalog families each use 10,000 points at 100 GeV, giving 70,000 configurations in total. The
 high-multiplicity one-pair study uses a separate 1,000 points at each of five
 through eight photons. These samples and their scopes remain distinct.
 
@@ -151,11 +156,56 @@ python3 tests/benchmarks/reproduction/replay-precision.py \
   --output-directory tests/results/precision-x86
 ```
 
+### Six-fermion catalog row
+
+The six-fermion row uses 10,000 phase-space points at 100 GeV and the same
+electron mass (0.0005 GeV) and charge (0.31333) as the other six families.
+At each point both HEPCAT representations and MadGraph sum all 64 external
+spin assignments. The raw MadGraph sum is divided by 16 for the initial
+spin average and the two pairs of identical final fermions.
+
+To recompute this row in all three precisions, use the command above with
+`--families six-fermion`. For a fresh MadGraph reference, set `precision_dir`
+to that run's output directory and set `mg_dir` to the MadGraph installation.
+The following commands use the frozen generator and model inputs, with
+`-arch x86_64` for the same target on macOS. On Linux omit that option
+and use the `.so` suffix in the final command.
+
+```sh
+precision_dir=tests/results/precision-x86
+mg_dir=/path/to/MadGraph
+inputs="$precision_dir/frozen-inputs/fermions"
+sample="$precision_dir/new-six"
+mkdir -p "$sample"
+c++ -arch x86_64 -std=c++17 -O2 -ffp-contract=off \
+  -I"$inputs" -I"$precision_dir/spinas/double/include" \
+  "$inputs/generate-six.cpp" "$inputs/exports/sixPhysical/process.cpp" \
+  "$precision_dir/spinas/double/libspinas.a" -o "$sample/generate-six"
+"$sample/generate-six" "$sample/six-points.csv" 10000 100 100 2026110806
+python3 -c 'import json,sys; c=json.load(open(sys.argv[1])); c["MadGraphDirectory"]=sys.argv[2]; print(json.dumps(c))' \
+  "$inputs/six-mg-config.json" "$mg_dir" > "$sample/config.json"
+python3 source/internal/export/madgraph-runtime.py --config "$sample/config.json" \
+  --output "$sample/reference"
+python3 "$inputs/eval-six-mg.py" "$sample/six-points.csv" \
+  "$sample/reference/libhepcat_madgraph.dylib" "$sample/six-mg-values.csv"
+for mode in float double extended; do
+  "$precision_dir/build/$mode/six-fermion" "$sample" "$sample/$mode"
+done
+```
+
+A separate 10,000-point control extends the original logarithmic 1.5 to 6 GeV
+sample. To generate that control, replace the energy arguments `100 100` by
+`1.5 6` and use a separate output directory. The first 1,000 points and
+MadGraph values reproduce the earlier sample exactly on the recorded target.
+The saved control inputs, pointwise results and maxima are in
+`six-fermion-control.zip` inside `paper-evidence.zip`. The two ensembles have
+separate results. Both use the same seed and generator.
+
 The frozen input policies are retained. One-pair and high-multiplicity
 drivers parse coordinates through binary64, then convert to the working
-type. Four- and six-fermion drivers parse the same decimal records directly
-at the working precision. Their extended inputs therefore need not contain
-exactly the original binary64 bits. Float also quantizes the inputs. These
+type. The four- and six-fermion drivers read each decimal with
+`std::stold` and then cast it to the working type. In the Intel extended build
+this can preserve digits that would be lost by first rounding to binary64. Float also quantizes the inputs. These
 comparisons include the specified input and arithmetic effects; the
 MadGraph references remain binary64. The saved and separately projected
 eight-photon inputs are explicitly distinguished.
@@ -167,6 +217,8 @@ Feynman, CalcHEP and MadGraph comparisons, use:
 
 - `tests/QED-6-point-construction.nb` for the QED catalog and general formulas;
 - `tests/SM-4-point-construction.nb` for the SM four-point families.
+
+[Mixed-helicity formula checks](restored-mixed/README.md) reproduce the signed and squared comparisons for the three- and four-photon expressions printed in the QED paper.
 
 Set the installation paths and models in each notebook's Setup. Keep model
 parameters, particle restrictions, widths, crossing, spin sums and symmetry
