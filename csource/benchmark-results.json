@@ -1,0 +1,344 @@
+{
+  "platform": "macOS 26.6.2 arm64",
+  "compiler": "AppleClang 21.0.3, CMake Release",
+  "wolfram": "15.0.0 arm64",
+  "repetitions": 3,
+  "time": "Wall seconds inside the reduction, after import and before export. Fresh process for each run.",
+  "memory": "Sampled whole-process resident bytes during the reduction. Baseline is sampled after import. Native OS process high-water values are reported separately.",
+  "cases": {
+    "qed": {
+      "process": [
+        "e",
+        "E",
+        "A.+",
+        "A.+"
+      ],
+      "diagramCount": 2,
+      "inputSHA256": "c6aa9e566a8be071200681486c922205a8b33b89c00f5ef3daf37ab5fb8f3662",
+      "inputComplexity": 36,
+      "massAssignments": [
+        {
+          "Me": "2",
+          "EE": "1/3"
+        },
+        {
+          "Me": "3",
+          "EE": "2/7"
+        }
+      ],
+      "kinematicCoordinates": [
+        [
+          3,
+          5,
+          7
+        ],
+        [
+          5,
+          7,
+          11
+        ],
+        [
+          7,
+          11,
+          13
+        ]
+      ],
+      "agreement": "Exact equality to the common input of every coherent spin coefficient at all six samples. Each of the nine timed outputs checked.",
+      "symbolicChartIdentity": true,
+      "methods": {
+        "reduce": {
+          "medianSeconds": 0.01258,
+          "maxSampledRSSBytes": 326074368,
+          "runs": [
+            {
+              "Seconds": 0.01258,
+              "WolframEvaluationPeakAdditionalBytes": 156584,
+              "OutputComplexity": 18,
+              "OutputLeaves": 79,
+              "OutputSHA256": "bee141e825287d99f57a310a05e4b5828a1b996837ffdf9f41ae41b4f9642f21",
+              "BaselineRSSBytes": 324812800,
+              "SampledPeakRSSBytes": 326074368,
+              "AdditionalRSSBytes": 1261568,
+              "RSSSamples": 48
+            },
+            {
+              "Seconds": 0.012266,
+              "WolframEvaluationPeakAdditionalBytes": 156584,
+              "OutputComplexity": 18,
+              "OutputLeaves": 79,
+              "OutputSHA256": "bee141e825287d99f57a310a05e4b5828a1b996837ffdf9f41ae41b4f9642f21",
+              "BaselineRSSBytes": 323436544,
+              "SampledPeakRSSBytes": 324698112,
+              "AdditionalRSSBytes": 1261568,
+              "RSSSamples": 47
+            },
+            {
+              "Seconds": 0.015382,
+              "WolframEvaluationPeakAdditionalBytes": 156584,
+              "OutputComplexity": 18,
+              "OutputLeaves": 79,
+              "OutputSHA256": "bee141e825287d99f57a310a05e4b5828a1b996837ffdf9f41ae41b4f9642f21",
+              "BaselineRSSBytes": 323682304,
+              "SampledPeakRSSBytes": 324943872,
+              "AdditionalRSSBytes": 1261568,
+              "RSSSamples": 47
+            }
+          ]
+        },
+        "prepare": {
+          "medianSeconds": 1.262907,
+          "maxSampledRSSBytes": 362872832,
+          "runs": [
+            {
+              "Seconds": 1.338082,
+              "WolframEvaluationPeakAdditionalBytes": 19756224,
+              "OutputComplexity": 18,
+              "OutputLeaves": 79,
+              "OutputSHA256": "bee141e825287d99f57a310a05e4b5828a1b996837ffdf9f41ae41b4f9642f21",
+              "BaselineRSSBytes": 323567616,
+              "SampledPeakRSSBytes": 362708992,
+              "AdditionalRSSBytes": 39141376,
+              "RSSSamples": 3957
+            },
+            {
+              "Seconds": 1.262907,
+              "WolframEvaluationPeakAdditionalBytes": 19756224,
+              "OutputComplexity": 18,
+              "OutputLeaves": 79,
+              "OutputSHA256": "bee141e825287d99f57a310a05e4b5828a1b996837ffdf9f41ae41b4f9642f21",
+              "BaselineRSSBytes": 323633152,
+              "SampledPeakRSSBytes": 362594304,
+              "AdditionalRSSBytes": 38961152,
+              "RSSSamples": 3888
+            },
+            {
+              "Seconds": 1.208259,
+              "WolframEvaluationPeakAdditionalBytes": 19756224,
+              "OutputComplexity": 18,
+              "OutputLeaves": 79,
+              "OutputSHA256": "bee141e825287d99f57a310a05e4b5828a1b996837ffdf9f41ae41b4f9642f21",
+              "BaselineRSSBytes": 323911680,
+              "SampledPeakRSSBytes": 362872832,
+              "AdditionalRSSBytes": 38961152,
+              "RSSSamples": 3717
+            }
+          ]
+        },
+        "native": {
+          "medianSeconds": 0.000330792,
+          "maxSampledRSSBytes": 1998848,
+          "runs": [
+            {
+              "Seconds": 0.000477625,
+              "HighWaterRSSBeforeBytes": 1687552,
+              "HighWaterRSSAfterBytes": 1998848,
+              "ImportSeconds": 0.000228791,
+              "ExportSeconds": 0.000108292,
+              "OutputSHA256": "0513bf6a8dab61056189fca514a52832302e17bd42f60c9507f9a6ea15b1d284",
+              "BaselineRSSBytes": 1687552,
+              "SampledPeakRSSBytes": 1998848,
+              "AdditionalRSSBytes": 311296,
+              "RSSSamples": 6,
+              "OutputComplexity": 18
+            },
+            {
+              "Seconds": 0.000313334,
+              "HighWaterRSSBeforeBytes": 1687552,
+              "HighWaterRSSAfterBytes": 1998848,
+              "ImportSeconds": 5.9375e-05,
+              "ExportSeconds": 9.0875e-05,
+              "OutputSHA256": "0513bf6a8dab61056189fca514a52832302e17bd42f60c9507f9a6ea15b1d284",
+              "BaselineRSSBytes": 1687552,
+              "SampledPeakRSSBytes": 1998848,
+              "AdditionalRSSBytes": 311296,
+              "RSSSamples": 5,
+              "OutputComplexity": 18
+            },
+            {
+              "Seconds": 0.000330792,
+              "HighWaterRSSBeforeBytes": 1703936,
+              "HighWaterRSSAfterBytes": 1998848,
+              "ImportSeconds": 5.6958e-05,
+              "ExportSeconds": 6.8416e-05,
+              "OutputSHA256": "0513bf6a8dab61056189fca514a52832302e17bd42f60c9507f9a6ea15b1d284",
+              "BaselineRSSBytes": 1703936,
+              "SampledPeakRSSBytes": 1998848,
+              "AdditionalRSSBytes": 294912,
+              "RSSSamples": 6,
+              "OutputComplexity": 18
+            }
+          ]
+        }
+      }
+    },
+    "wwww": {
+      "process": [
+        "W+",
+        "W+",
+        "W-",
+        "W-"
+      ],
+      "diagramCount": 6,
+      "inputSHA256": "59af4a77575e12d31f2cd8a80cfc0e4148224f9f11f2d6e30edb4e1eae26f7be",
+      "inputComplexity": 2232,
+      "massAssignments": [
+        {
+          "MW": "20",
+          "SW": "3/5",
+          "EE": "1/3",
+          "Mh": "30"
+        },
+        {
+          "MW": "21",
+          "SW": "5/13",
+          "EE": "2/7",
+          "Mh": "32"
+        }
+      ],
+      "kinematicCoordinates": [
+        [
+          3,
+          5,
+          7
+        ],
+        [
+          5,
+          7,
+          11
+        ],
+        [
+          7,
+          11,
+          13
+        ]
+      ],
+      "agreement": "Exact equality to the common input of every coherent spin coefficient at all six samples. Each of the nine timed outputs checked.",
+      "symbolicChartIdentity": null,
+      "methods": {
+        "reduce": {
+          "medianSeconds": 0.369912,
+          "maxSampledRSSBytes": 339656704,
+          "runs": [
+            {
+              "Seconds": 0.433123,
+              "WolframEvaluationPeakAdditionalBytes": 2662192,
+              "OutputComplexity": 2232,
+              "OutputLeaves": 12241,
+              "BaselineRSSBytes": 330809344,
+              "SampledPeakRSSBytes": 337379328,
+              "AdditionalRSSBytes": 6569984,
+              "RSSSamples": 1178,
+              "OutputSHA256": "812f0270de19f45f2471196df16f3c7e534709466d13c66a86caf84470cd3ae5"
+            },
+            {
+              "Seconds": 0.369912,
+              "WolframEvaluationPeakAdditionalBytes": 2662192,
+              "OutputComplexity": 2232,
+              "OutputLeaves": 12241,
+              "BaselineRSSBytes": 332742656,
+              "SampledPeakRSSBytes": 339656704,
+              "AdditionalRSSBytes": 6914048,
+              "RSSSamples": 901,
+              "OutputSHA256": "812f0270de19f45f2471196df16f3c7e534709466d13c66a86caf84470cd3ae5"
+            },
+            {
+              "Seconds": 0.357165,
+              "WolframEvaluationPeakAdditionalBytes": 2662192,
+              "OutputComplexity": 2232,
+              "OutputLeaves": 12241,
+              "BaselineRSSBytes": 333119488,
+              "SampledPeakRSSBytes": 339361792,
+              "AdditionalRSSBytes": 6242304,
+              "RSSSamples": 885,
+              "OutputSHA256": "812f0270de19f45f2471196df16f3c7e534709466d13c66a86caf84470cd3ae5"
+            }
+          ]
+        },
+        "prepare": {
+          "medianSeconds": 63.343233,
+          "maxSampledRSSBytes": 472121344,
+          "runs": [
+            {
+              "Seconds": 81.493135,
+              "WolframEvaluationPeakAdditionalBytes": 49926976,
+              "OutputComplexity": 898,
+              "OutputLeaves": 10342,
+              "BaselineRSSBytes": 333168640,
+              "SampledPeakRSSBytes": 378388480,
+              "AdditionalRSSBytes": 45219840,
+              "RSSSamples": 137994,
+              "OutputSHA256": "96eaae7dc230aa752e188f4b825a376905070956ac357aa5767f267bcee84568"
+            },
+            {
+              "Seconds": 63.343233,
+              "WolframEvaluationPeakAdditionalBytes": 90633680,
+              "OutputComplexity": 807,
+              "OutputLeaves": 8356,
+              "BaselineRSSBytes": 332775424,
+              "SampledPeakRSSBytes": 375750656,
+              "AdditionalRSSBytes": 42975232,
+              "RSSSamples": 144195,
+              "OutputSHA256": "5deaa78004cd936d271ca14870c269561aae07d820f514a5a8faf6f04761048b"
+            },
+            {
+              "Seconds": 41.804331,
+              "WolframEvaluationPeakAdditionalBytes": 114834512,
+              "OutputComplexity": 788,
+              "OutputLeaves": 8182,
+              "BaselineRSSBytes": 331055104,
+              "SampledPeakRSSBytes": 472121344,
+              "AdditionalRSSBytes": 141066240,
+              "RSSSamples": 117855,
+              "OutputSHA256": "57cd7042b6d82b7a2c9833cedb94e14d15f2a4346e706f0409b873aaa2b931a7"
+            }
+          ]
+        },
+        "native": {
+          "medianSeconds": 0.208696,
+          "maxSampledRSSBytes": 5931008,
+          "runs": [
+            {
+              "Seconds": 0.205729167,
+              "HighWaterRSSBeforeBytes": 2179072,
+              "HighWaterRSSAfterBytes": 5931008,
+              "ImportSeconds": 0.004326625,
+              "ExportSeconds": 0.000361208,
+              "OutputSHA256": "53735a191580c697fcabffd3eb9779755e0215f06bd9a8fd86d5eddfbc0a4ac9",
+              "BaselineRSSBytes": 2179072,
+              "SampledPeakRSSBytes": 5931008,
+              "AdditionalRSSBytes": 3751936,
+              "RSSSamples": 632,
+              "OutputComplexity": 1038
+            },
+            {
+              "Seconds": 0.212800041,
+              "HighWaterRSSBeforeBytes": 2162688,
+              "HighWaterRSSAfterBytes": 5898240,
+              "ImportSeconds": 0.001052708,
+              "ExportSeconds": 0.000359375,
+              "OutputSHA256": "53735a191580c697fcabffd3eb9779755e0215f06bd9a8fd86d5eddfbc0a4ac9",
+              "BaselineRSSBytes": 2162688,
+              "SampledPeakRSSBytes": 5898240,
+              "AdditionalRSSBytes": 3735552,
+              "RSSSamples": 625,
+              "OutputComplexity": 1038
+            },
+            {
+              "Seconds": 0.208696,
+              "HighWaterRSSBeforeBytes": 2162688,
+              "HighWaterRSSAfterBytes": 5898240,
+              "ImportSeconds": 0.001073917,
+              "ExportSeconds": 0.000330583,
+              "OutputSHA256": "53735a191580c697fcabffd3eb9779755e0215f06bd9a8fd86d5eddfbc0a4ac9",
+              "BaselineRSSBytes": 2162688,
+              "SampledPeakRSSBytes": 5898240,
+              "AdditionalRSSBytes": 3735552,
+              "RSSSamples": 639,
+              "OutputComplexity": 1038
+            }
+          ]
+        }
+      }
+    }
+  }
+}
