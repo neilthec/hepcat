@@ -7,7 +7,10 @@ find_path(GMP_INCLUDE_DIR gmpxx.h REQUIRED)
 find_library(GMPXX_LIBRARY gmpxx REQUIRED)
 find_library(GMP_LIBRARY gmp REQUIRED)
 
-add_library(hepcat_reduce amplitude.cpp completion.cpp continuations.cpp null_shift.cpp residue.cpp collect.cpp algebra.cpp amp_expression.cpp kinematics.cpp spinor.cpp vector_basis.cpp)
+add_library(hepcat_reduce
+    amplitude.cpp completion.cpp continuations.cpp null_shift.cpp residue.cpp
+    high_energy.cpp high_energy_chart.cpp high_energy_contacts.cpp
+    collect.cpp algebra.cpp amp_expression.cpp kinematics.cpp spinor.cpp vector_basis.cpp)
 target_compile_features(hepcat_reduce PUBLIC cxx_std_17)
 target_include_directories(hepcat_reduce PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(hepcat_reduce SYSTEM PRIVATE ${GMP_INCLUDE_DIR})
@@ -22,7 +25,7 @@ target_link_libraries(hepcat-reduce-amplitude PRIVATE hepcat_reduce)
 
 include(CTest)
 if(BUILD_TESTING)
-    foreach(suite IN ITEMS spinor kinematics collect vector_basis api amplitude completion residue continuations)
+    foreach(suite IN ITEMS spinor kinematics collect vector_basis api amplitude completion residue continuations high_energy high_energy_chart)
         add_executable(test_${suite} ${suite}_tests.cpp)
         target_include_directories(test_${suite} SYSTEM PRIVATE ${GMP_INCLUDE_DIR})
         target_link_libraries(test_${suite} PRIVATE hepcat_reduce)

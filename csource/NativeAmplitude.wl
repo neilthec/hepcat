@@ -13,6 +13,11 @@ Options[CompleteNativeFactorization] = Join[
   DeleteCases[Options[ReduceNativeAmplitude], ("PolePreference" -> _)], {"PolePreference" -> Automatic},
   {"ReturnDetails" -> False, "CorrectionBasis" -> Automatic}];
 
+CompleteNativeHighEnergy::usage =
+  "CompleteNativeHighEnergy[amp, model, executable] checks the fixed-angle high-energy bound and fits a local correction if needed. amp can be the external-mass pair or details returned by CompleteNativeFactorization. CompleteNativeHighEnergy[amp, batch, model, executable] also supplies retained reduction data. Passing the prepared batch alone runs both native stages in one process. Use [amp, originalChannelRows, model, executable] to also require the full Wolfram CheckAmplitudes report before returning. ReturnDetails -> True reports the fit and native time. HighEnergyBound defaults to 4 minus the number of external legs. ParameterPoints accepts lists of exact model overrides for fitting and validation.";
+Options[CompleteNativeHighEnergy] = {"Workers" -> Automatic, "CorrectionBasis" -> Automatic,
+  "ReturnDetails" -> False, "HighEnergyBound" -> Automatic, "ParameterPoints" -> Automatic};
+
 Begin["`Private`"];
 
 $batchFailure = Unique["batchFailure"];
@@ -89,7 +94,7 @@ fixedExpression[pair_, masses_, preference_, inventory_] := Module[{value, resul
 runBatch[diagrams_, channels_, executable_, workers_, preference_, specifiedMasses_, completion_: None] := Module[
   {pairs, masses, candidates, n, diagramLines, channelLines, fields, output, temp,
    count, command, run, response, body, values, remainders, nd, threads, seconds, header,
-   prepared, expression, diagramRest, channelRest, basis, result},
+   prepared, expression, diagramRest, channelRest, basis, result, energy, points, bound, seed},
   If[!MemberQ[{None, Automatic, "AllPhysical", "AllSpurious", "Mixed", "Cyclic"}, preference],
     fail["NativeReference", "Use Automatic, AllPhysical, AllSpurious, Mixed, Cyclic, or None for the reference choice."]];
   count = Replace[workers, Automatic -> 0];
@@ -107,6 +112,7 @@ runBatch[diagrams_, channels_, executable_, workers_, preference_, specifiedMass
       !SameQ @@ candidates || !FreeQ[candidates, _Missing | _Mass | _Real | _Failure | Indeterminate | _DirectedInfinity],
     fail["NativeExternalMasses", "All items must have the same ordered exact external masses. For an empty batch supply ExternalMasses."]];
   masses = First[candidates]; n = Length[masses]; nd = Length[diagrams];
+  energy = AssociationQ[completion] && Lookup[completion, "Stage", None] === "HighEnergy";
   prepared = AssociationQ[completion] && TrueQ[completion["Prepared"]];
   expression[p_] := If[prepared, Last[p], fixedExpression[p, masses, preference, pairs]];
   diagramLines = Function[p, {diagramShells[First[p], n], wire[expression[p]]}] /@ diagrams;
@@ -118,13 +124,21 @@ runBatch[diagrams_, channels_, executable_, workers_, preference_, specifiedMass
       fail["NativeRows", "Supply one discarded remainder per prepared diagram and per factorization product."]];
     diagramLines = MapThread[Append[#1, wire[#2]] &, {diagramLines, diagramRest}];
     channelLines = MapThread[Append[#1, wire[#2]] &, {channelLines, channelRest}]];
-  header = Which[prepared, "HEPCAT_FACTOR_PREPARED_1", AssociationQ[completion], "HEPCAT_FACTOR_1", True, "HEPCAT_BATCH_1"];
+  header = Which[energy, "HEPCAT_HIGH_ENERGY_1", prepared, "HEPCAT_FACTOR_PREPARED_1", AssociationQ[completion], "HEPCAT_FACTOR_1", True, "HEPCAT_BATCH_1"];
   fields = Join[{header, wire[masses], ToString[nd]}, Flatten[diagramLines],
     {ToString[Length[channels]]}, Flatten[channelLines]];
   If[AssociationQ[completion],
     basis = Replace[completion["Basis"], Automatic -> {}];
     If[!ListQ[basis], fail["NativeBasis", "CorrectionBasis must be Automatic or a list of amplitude expressions."]];
     fields = Join[fields, {ToString[Length[basis]]}, wire /@ basis]];
+
+  If[energy,
+    seed = completion["Seed"]; bound = completion["Bound"];
+    If[bound =!= Automatic && !IntegerQ[bound], fail["NativeBound", "HighEnergyBound must be Automatic or an integer."]];
+    points = highEnergyPoints[completion["Model"], completion["Points"],
+      DeleteDuplicates[Cases[{masses,seed,basis,pairs,diagramRest,channelRest}, _ModelParameter, Infinity]]];
+    fields = Join[fields, {If[seed === Automatic, "", wire[seed]], ToString[bound], ToString[Length[points]]},
+      Flatten[Function[point, Join[{ToString[Length[point]]}, ({wire[First[#]],wire[Last[#]]} &) /@ point]] /@ points]]];
 
   temp = CreateDirectory[];
   If[!StringQ[temp], fail["NativeTemporaryDirectory", "Could not create the native reduction's temporary directory."]];
@@ -135,8 +149,9 @@ runBatch[diagrams_, channels_, executable_, workers_, preference_, specifiedMass
       fail["NativeTransfer", "Could not write the batch to the native reducer."]];
     run = RunProcess[command];
     If[!AssociationQ[run] || run["ExitCode"] =!= 0 || !FileExistsQ[output],
-      fail[If[completion === None, "NativeReduction", "IncompleteFactorization"],
-        If[completion === None, "The native batch reduction failed.", "Native factorization did not produce a validated amplitude."],
+      fail[Which[energy, "IncompleteHighEnergy", completion === None, "NativeReduction", True, "IncompleteFactorization"],
+        Which[energy, "Native high-energy completion failed.", completion === None, "The native batch reduction failed.",
+          True, "Native factorization did not produce a validated amplitude."],
         If[AssociationQ[run], KeyTake[run, {"ExitCode","StandardError"}], <||>]]];
     response = Import[output, "Lines", CharacterEncoding -> "UTF-8"];
     If[!ListQ[response] || Length[response] < 3 || !StringMatchQ[response[[2]], DigitCharacter ..] ||
@@ -145,14 +160,24 @@ runBatch[diagrams_, channels_, executable_, workers_, preference_, specifiedMass
     threads = FromDigits[response[[2]]];
     seconds = ToExpression[StringReplace[response[[3]], {"e"|"E" -> "*^"}], InputForm];
     If[AssociationQ[completion],
-      If[Length[response] =!= 10 || First[response] =!= "HEPCAT_FACTOR_RESULT_1" ||
-          !AllTrue[response[[4 ;; 8]], StringMatchQ[#, DigitCharacter ..] &],
+      If[Length[response] =!= If[energy,14,10] || First[response] =!= If[energy, "HEPCAT_HIGH_ENERGY_RESULT_1", "HEPCAT_FACTOR_RESULT_1"] ||
+          !StringMatchQ[response[[4]], If[energy, RegularExpression["-?[0-9]+"], DigitCharacter ..]] ||
+          !AllTrue[response[[5 ;; 8]], StringMatchQ[#, DigitCharacter ..] &],
         fail["NativeProtocol", "Invalid completion result or sample counts."]];
       result = <|"Amplitude" -> {Thread[(Mass /@ Range[n]) -> masses], decode[Last[response]]},
         "CompletionSeconds" -> seconds, "WorkersUsed" -> threads, "Route" -> response[[9]],
-        "Channels" -> FromDigits[response[[4]]], "Candidates" -> FromDigits[response[[5]]],
+        If[energy, "Bound", "Channels"] -> ToExpression[response[[4]],InputForm], "Candidates" -> FromDigits[response[[5]]],
         "Rank" -> FromDigits[response[[6]]], "TrainingSamples" -> FromDigits[response[[7]]],
         "ValidationSamples" -> FromDigits[response[[8]]]|>;
+      If[energy,
+        If[!StringMatchQ[response[[10]], DigitCharacter ..] || !MemberQ[{"0","1"},response[[11]]] ||
+            !AllTrue[response[[12 ;; 13]], StringMatchQ[#, "-1" | (DigitCharacter ..)] &],
+          fail["NativeProtocol", "Invalid spin coverage or memory measurements in the native response."]];
+        AssociateTo[result, <|"ParameterPoints" -> points,
+          "FreeCoefficients" -> If[result["Route"] === "Unchanged", Missing["NotFitted"], result["Candidates"] - result["Rank"]],
+          "ValidationSpinStates" -> FromDigits[response[[10]]], "ExhaustiveSpin" -> (response[[11]] === "1"),
+          "PreCompletionPeakRSSBytes" -> Replace[response[[12]], {"-1" -> Missing["Unavailable"], x_ :> FromDigits[x]}],
+          "ProcessPeakRSSBytes" -> Replace[response[[13]], {"-1" -> Missing["Unavailable"], x_ :> FromDigits[x]}]|>]];
       If[TrueQ[completion["Details"]], result, result["Amplitude"]],
     If[Length[response] =!= 3 + 2 Length[pairs] || First[response] =!= "HEPCAT_BATCH_RESULT_1",
       fail["NativeProtocol", "Invalid item count in the native batch response."]];
@@ -211,6 +236,103 @@ CompleteNativeFactorization[process : {__String}, diagramModel_List, factorizati
   generatedBatch[process, diagramModel, factorizationModel, executable, OptionValue["Workers"], OptionValue["PolePreference"],
     OptionValue["ExternalMasses"], <|"Prepared" -> False, "Details" -> OptionValue["ReturnDetails"],
       "Basis" -> OptionValue["CorrectionBasis"]|>];
+
+(* Use exact generic parameter values for identities in model variables. Small
+   rational points on x^2+y^2=1 keep common square-root definitions rational.
+   The definitions themselves are always evaluated by the model reader. *)
+highEnergyPoints[{}, Automatic, {}] := {};
+highEnergyPoints[model_List, requested_, active_List] := Module[
+  {points, base, independent, declared, assignments, rules, variant, pick, complete},
+  If[model =!= {} && (Length[model] =!= 4 || !AllTrue[model, ListQ]),
+    fail["NativeModel", "Supply a model returned by ReadModel."]];
+  If[requested === Automatic,
+    If[active === {}, Return[{}]];
+    If[model === {}, fail["NativeParameters", "Supply the model or explicit ParameterPoints for model-scoped parameters."]];
+    base = ModelParameterRules[model];
+    independent = First /@ model[[3]];
+    pick[value_, i_, k_] := Module[{u = (1 + Mod[i + 2 k, 7])/(9 + Mod[3 i + k, 11]), m},
+      If[TrueQ[value == 0], Return[0]];
+      If[!TrueQ[Element[value,Reals]], Return[value]];
+      m = Abs[value];
+      If[m < 1, Sign[value] 2 u/(1 + u^2),
+        Sign[value] (1 + Mod[i + k, 5]) 2^Floor[Log[2, m]]/(1 + Mod[i + 2 k, 3])]];
+    points = Table[MapIndexed[Function[{parameter,index}, With[{value = parameter /. base},
+      If[NumberQ[value] && FreeQ[value, _Real], parameter -> pick[value, First[index], variant], Nothing]]],
+      independent], {variant, 3}],
+    points = requested];
+  If[!ListQ[points] || points === {} || !AllTrue[points, MatchQ[#, {___Rule}] &],
+    fail["NativeParameters", "ParameterPoints must be a nonempty list of exact parameter-rule lists."]];
+  declared = If[model === {}, {}, First /@ Join[model[[3]],model[[4]]]];
+  complete[point_List] := Module[{normalized, extras, names},
+    names = First /@ point;
+    If[!DuplicateFreeQ[names] || !AllTrue[names,
+        MatchQ[#, _Symbol | _ModelParameter] || (StringQ[#] && MemberQ[ModelParameterName /@ declared, #]) &],
+      fail["NativeParameters", "Each point needs distinct parameters from the model or explicit symbolic parameters."]];
+    extras = Select[point, Head[First[#]] === Symbol &];
+    normalized = Select[point, Head[First[#]] =!= Symbol &];
+    rules = If[model === {}, normalized, ModelParameterRules[model, normalized]];
+    If[!ListQ[rules] || !ContainsAll[First /@ rules, active],
+      fail["NativeParameters", "One or more model parameters could not be resolved from the supplied model and overrides."]];
+    assignments = Join[Select[rules, MemberQ[active,First[#]] &],extras];
+    If[!AllTrue[Last /@ assignments, MatchQ[#, _Integer | _Rational] &],
+      fail["NativeParameters", "Native parameter samples require exact rational values. Supply ParameterPoints if the automatic model assignments leave a radical."]];
+    assignments];
+  DeleteDuplicates[complete /@ points]
+];
+
+emptyBatch = <|"Diagrams" -> {}, "FactorizationProducts" -> {}, "DiagramRemainders" -> {},
+  "FactorizationRemainders" -> {}|>;
+energyStage[input_, batch_, model_, executable_, workers_, basis_, details_, bound_, points_] := Catch[
+  Module[{seed, masses = Automatic, opts, raw, inherited, directions},
+    If[!AllTrue[Keys[emptyBatch], KeyExistsQ[batch,#] &],
+      fail["NativeRows", "Supply a prepared native batch with its diagram and channel remainders."]];
+    If[AssociationQ[input] && KeyExistsQ[input, "Status"] && input["Status"] =!= "COMPLETE",
+      fail["NativeFactorization", "The supplied report does not contain a completed factorization.",
+        <|"FactorizationStatus" -> input["Status"]|>]];
+    raw = If[AssociationQ[input], Lookup[input, "Amplitude", Missing[]], input];
+    If[AssociationQ[input] && !ListQ[raw] && KeyExistsQ[input,"ExternalMassRules"],
+      raw = {input["ExternalMassRules"],raw}];
+    If[raw === Automatic, seed = Automatic,
+      If[!ConstructiveDiagrams`Private`preparationPairQ[raw] ||
+          !AllTrue[First[raw], MatchQ[#, HoldPattern[Mass[_Integer] -> _]] &],
+        fail["NativeSeed", "Supply a completed amplitude with only external mass rules, or a native factorization report."]];
+      masses = externalMasses[First[raw]]; seed = Last[raw]];
+    inherited = If[AssociationQ[input], Lookup[input, "RemainingBasis", {}], {}];
+    If[!ListQ[inherited] || (basis =!= Automatic && !ListQ[basis]),
+      fail["NativeBasis", "Supply an affine factorization report and a list of local correction directions."]];
+    directions = DeleteDuplicates[Join[inherited, Replace[basis, Automatic -> {}]]];
+    opts = Join[KeyTake[batch, {"DiagramRemainders", "FactorizationRemainders"}],
+      <|"Stage" -> "HighEnergy", "Prepared" -> True, "Seed" -> seed, "Bound" -> bound,
+        "Model" -> model, "Points" -> points, "Basis" -> directions, "Details" -> details|>];
+    runBatch[batch["Diagrams"],batch["FactorizationProducts"],executable,workers,None,masses,opts]], $batchFailure];
+
+CompleteNativeHighEnergy[input_, model_List, executable_String, opts : OptionsPattern[]] :=
+  If[AssociationQ[input] && KeyExistsQ[input,"Diagrams"],
+    CompleteNativeHighEnergy[Automatic,input,model,executable,opts],
+    CompleteNativeHighEnergy[input,emptyBatch,model,executable,opts]];
+CompleteNativeHighEnergy[input_, batch_Association, model_List, executable_String, OptionsPattern[]] :=
+  energyStage[input,batch,model,executable,OptionValue["Workers"],OptionValue["CorrectionBasis"],
+    OptionValue["ReturnDetails"],OptionValue["HighEnergyBound"],OptionValue["ParameterPoints"]];
+
+(* With original channel rows present, run the independent package checker
+   explicitly. Its timing and report stay separate from the native stage. *)
+CompleteNativeHighEnergy[input_, channels_List, model_List, executable_String, opts : OptionsPattern[]] := Catch[
+  Module[{result, point, report, elapsed, summary, settings},
+    If[!AllTrue[channels, ConstructiveDiagrams`Private`preparationChannelQ],
+      fail["NativeRows", "Supply the original channel rows returned by FactorizationAmplitudeChannels."]];
+    settings = DeleteCases[{opts}, ("ReturnDetails" -> _)];
+    result = CompleteNativeHighEnergy[input,model,executable,"ReturnDetails" -> True,Sequence @@ settings];
+    If[FailureQ[result], Return[result]];
+    point = If[result["ParameterPoints"] === {}, Automatic, Last[result["ParameterPoints"]]];
+    {elapsed,report} = AbsoluteTiming[CheckAmplitudes[result["Amplitude"],channels,model,
+      "Output" -> "Details", "ParameterRules" -> point, "HighEnergyCheck" -> True,
+      "HighEnergyBound" -> result["Bound"]]];
+    summary = If[AssociationQ[report], Lookup[report,"Summary",None], None];
+    If[!AssociationQ[summary] || Keys[summary] =!= {"PASS"} || !TrueQ[summary["PASS"] > 0],
+      fail["IncompleteAmplitude", "The native growth fit completed, but the independent amplitude checks did not all pass.",
+        <|"ValidationReport" -> report, "CompletionSeconds" -> result["CompletionSeconds"]|>]];
+    If[TrueQ[OptionValue["ReturnDetails"]],
+      Join[result,<|"ValidationReport" -> report, "ValidationSeconds" -> elapsed|>],result["Amplitude"]]], $batchFailure];
 
 End[];
 EndPackage[];

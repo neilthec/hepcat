@@ -23,6 +23,7 @@ amplitude::amplitude(std::vector<std::string> external_masses)
 void amplitude::add_diagram(const std::string& input, std::vector<numerator_shell> shells) {
     diagrams_.push_back(amplitude_item(input, masses_, std::move(shells)));
     completed_.reset();
+    high_energy_result_.reset();
 }
 
 void amplitude::add_factorization_product(const std::string& input, numerator_shell channel) {
@@ -30,6 +31,7 @@ void amplitude::add_factorization_product(const std::string& input, numerator_sh
     shells.push_back(std::move(channel));
     products_.push_back(amplitude_item(input, masses_, std::move(shells)));
     completed_.reset();
+    high_energy_result_.reset();
 }
 
 void amplitude::add_prepared_diagram(const std::string& input, std::vector<numerator_shell> shells,
@@ -39,6 +41,7 @@ void amplitude::add_prepared_diagram(const std::string& input, std::vector<numer
     item.reduced_ = true;
     diagrams_.push_back(std::move(item));
     completed_.reset();
+    high_energy_result_.reset();
 }
 
 void amplitude::add_prepared_factorization_product(const std::string& input, numerator_shell channel,
@@ -48,6 +51,7 @@ void amplitude::add_prepared_factorization_product(const std::string& input, num
     item.reduced_ = true;
     products_.push_back(std::move(item));
     completed_.reset();
+    high_energy_result_.reset();
 }
 
 const factorization_report& amplitude::last_factorization() const {

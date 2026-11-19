@@ -124,11 +124,12 @@
         ]
       },
       {
-        "title": "Optional Native Reduction and Factorization",
+        "title": "Optional Native Reduction and Completion",
         "paragraphs": [
           "After generating both lists, you can reduce them together with the experimental C++ reducer in csource. Build the hepcat-reduce-amplitude executable using the commands in csource/README.md, then load the optional Mathematica bridge. Its default worker count uses the available hardware threads and the number of items.",
           "Each diagram uses its own numerator shells. Each factorization product uses its channel shell. The returned Diagrams and FactorizationProducts entries preserve the input row order. DiagramRemainders and FactorizationRemainders contain the matching off-cut differences, so adding a remainder to its reduced expression recovers the original away from the cut.",
-          "Pass that batch to CompleteNativeFactorization to fit the diagram residues to the sewn channel residues. Each cut supplies equations for the same coefficients. The native solver checks the resulting expression again on fresh cut points. ReturnDetails reports the route, rank, sample counts and elapsed native time. A physical-residue match alone leaves contact terms undetermined. Use [CheckAmplitudes](paclet:HEPCAT/ref/CheckAmplitudes) for the other amplitude checks."
+          "Pass that batch to CompleteNativeFactorization to fit the diagram residues to the sewn channel residues. Each cut supplies equations for the same coefficients. The native solver checks the resulting expression again on fresh cut points. ReturnDetails reports the route, rank, sample counts and elapsed native time. A physical-residue match alone leaves contact terms undetermined. Use [CheckAmplitudes](paclet:HEPCAT/ref/CheckAmplitudes) for the other amplitude checks.",
+          "CompleteNativeHighEnergy takes the mass-tagged factorization result and the model. It expands the amplitude at fixed angles and looks for powers above the expected limit, E^(4-n) for n external legs. If needed, it adds local spinor contractions whose coefficients cancel those powers. Such terms have no physical residues. Supplying the original channel rows requests an independent [CheckAmplitudes](paclet:HEPCAT/ref/CheckAmplitudes) report, including spurious poles and reference dependence."
         ],
         "examples": [
           {
@@ -139,6 +140,11 @@
           {
             "description": "Complete the prepared amplitude and inspect the fitted expression and its validation statistics.",
             "input": "fit = HEPCATNative`CompleteNativeFactorization[batch, binary, \"ReturnDetails\" -> True];\nIf[AssociationQ[fit], {fit[\"Amplitude\"], fit[\"Channels\"], fit[\"ValidationSamples\"]}, fit]",
+            "evaluate": false
+          },
+          {
+            "description": "Finish the high-energy stage and check the result against the original channels. The reported native time excludes the independent checks.",
+            "input": "result = HEPCATNative`CompleteNativeHighEnergy[fit, channels, qedModel, binary, \"ReturnDetails\" -> True];\nIf[AssociationQ[result], {result[\"Amplitude\"], result[\"ValidationReport\"][\"Summary\"]}, result]",
             "evaluate": false
           }
         ]

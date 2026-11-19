@@ -9,29 +9,11 @@
 #include <iostream>
 #include <stdexcept>
 #include <thread>
-#if defined(__APPLE__) || defined(__linux__)
-#include <sys/resource.h>
-#endif
+#include "process_memory.hpp"
 
 using Clock=std::chrono::steady_clock;
 static double seconds(Clock::time_point a,Clock::time_point b) {
     return std::chrono::duration<double>(b-a).count();
-}
-
-// OS high-water RSS includes process startup and import. A rise between
-// these two readings locates a true process high-water mark inside reduce.
-static long long highWaterRSS() {
-#if defined(__APPLE__) || defined(__linux__)
-    rusage usage{};
-    if (getrusage(RUSAGE_SELF,&usage)==0) {
-#ifdef __APPLE__
-        return usage.ru_maxrss;
-#else
-        return usage.ru_maxrss*1024LL;
-#endif
-    }
-#endif
-    return -1;
 }
 
 static void barrier(const char* signal,const char* reply) {

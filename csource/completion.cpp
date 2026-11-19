@@ -1,4 +1,5 @@
 #include "amplitude.hpp"
+#include "native_fit.hpp"
 #include "continuations.hpp"
 #include "residue.hpp"
 
@@ -311,91 +312,6 @@ struct channel {
     Id target;
 };
 
-class sparse_system {
-    using Sparse = std::map<std::size_t, Q>;
-    std::map<std::size_t, Sparse> pivots;
-    std::size_t dimension;
-
-  public:
-    explicit sparse_system(std::size_t columns) : dimension(columns) {}
-    bool add(const std::vector<Q>& values) {
-        Sparse row;
-        for (std::size_t i = 0; i < dimension; ++i)
-            if (values[i + 2] != 0) row[i] = values[i + 2];
-        Q rhs = values[0] - values[1];
-        if (rhs != 0) row.emplace(dimension, std::move(rhs));
-        while (!row.empty()) {
-            auto col = row.begin()->first;
-            if (col == dimension) return false;
-            auto it = pivots.find(col);
-            Q scale = row.begin()->second;
-            if (it == pivots.end()) {
-                for (auto& x : row)
-                    x.second /= scale;
-                pivots.emplace(col, std::move(row));
-                return true;
-            }
-            for (const auto& [j, x] : it->second) {
-                auto& entry = row[j];
-                entry -= scale * x;
-                if (!entry) row.erase(j);
-            }
-        }
-        return true;
-    }
-    std::size_t rank() const { return pivots.size(); }
-    std::vector<Q> solution() const {
-        std::vector<Q> result(dimension);
-        for (auto it = pivots.rbegin(); it != pivots.rend(); ++it) {
-            const auto& [col, row] = *it;
-            Q value = 0;
-            for (const auto& [j, x] : row) {
-                if (j == dimension)
-                    value += x;
-                else if (j != col)
-                    value -= x * result[j];
-            }
-            result[col] = std::move(value);
-        }
-        return result;
-    }
-};
-
-template <class F> void by_channel(std::size_t count, std::size_t workers, F task) {
-    if (workers <= 1) {
-        for (std::size_t i = 0; i < count; ++i)
-            task(i);
-        return;
-    }
-    std::atomic<std::size_t> next{0};
-    std::vector<std::exception_ptr> errors(count);
-    auto run = [&] {
-        for (;;) {
-            auto i = next.fetch_add(1, std::memory_order_relaxed);
-            if (i >= count) return;
-            try {
-                task(i);
-            } catch (...) {
-                errors[i] = std::current_exception();
-            }
-        }
-    };
-    std::vector<std::thread> pool;
-    try {
-        for (std::size_t i = 1; i < workers; ++i)
-            pool.emplace_back(run);
-    } catch (...) {
-        for (auto& thread : pool)
-            thread.join();
-        throw;
-    }
-    run();
-    for (auto& thread : pool)
-        thread.join();
-    for (const auto& error : errors)
-        if (error) std::rethrow_exception(error);
-}
-
 struct sample_row {
     std::size_t cut, index;
     std::vector<Q> values;
@@ -404,7 +320,7 @@ std::vector<sample_row> sample(const Algebra& a, const std::vector<channel>& cha
                                const std::vector<Id>& basis, std::size_t first, std::size_t count,
                                std::size_t workers) {
     std::vector<sample_row> rows(channels.size() * count);
-    by_channel(channels.size(), workers, [&](std::size_t i) {
+    fit_detail::parallel_indices(channels.size(), workers, [&](std::size_t i) {
         std::vector<Id> expressions{channels[i].target, seed};
         expressions.insert(expressions.end(), basis.begin(), basis.end());
         for (std::size_t j = 0; j < count; ++j) {
@@ -461,9 +377,9 @@ struct completion {
     std::optional<Id> fit(const std::string& route) {
         if (basis.empty()) return {};
         auto training = samples(seed, basis, 4, false);
-        sparse_system system(basis.size());
+        fit_detail::sparse_system system(basis.size());
         for (const auto& r : training)
-            if (!system.add(r.values)) return {};
+            if (!system.add(r.values, 2, r.values[0] - r.values[1])) return {};
         for (;;) {
             auto coefficients = system.solution();
             std::vector<Id> terms{seed};
@@ -482,11 +398,11 @@ struct completion {
                 try {
                     auto row = residue_sample(a, cuts[r.cut].cut, cols, r.index);
                     ++report.training_samples;
-                    if (!system.add(row)) return {};
+                    if (!system.add(row, 2, row[0] - row[1])) return {};
                 } catch (const residue_singular&) {
                     auto fresh = samples(seed, basis, 4, false);
                     for (const auto& row : fresh)
-                        if (!system.add(row.values)) return {};
+                        if (!system.add(row.values, 2, row.values[0] - row.values[1])) return {};
                 }
             }
             if (passed) {
@@ -579,6 +495,7 @@ const amp_expression& amplitude::complete_factorization(const factorization_opti
         amp_expression result("0", masses_);
         result.set_from(a, answer);
         completed_ = std::move(result);
+        high_energy_result_.reset();
         report_ = std::move(work.report);
         return *completed_;
     };

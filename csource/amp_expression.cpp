@@ -140,6 +140,13 @@ Id amp_expression::import_into(Algebra& destination, bool remainder) const {
     return copy_tree(*arena_, destination, remainder ? *remainder_ : root_);
 }
 
+std::vector<Id> amp_expression::import_masses(Algebra& destination) const {
+    std::lock_guard<std::mutex> guard(*kinematics_->lock);
+    std::vector<Id> result;
+    for (Id mass : kinematics_->masses) result.push_back(copy_tree(*arena_,destination,mass));
+    return result;
+}
+
 void amp_expression::set_from(const Algebra& source, Id result) {
     root_ = copy_tree(source, *arena_, result);
 }

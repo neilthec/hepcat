@@ -2,6 +2,7 @@
 // deliberately outside the timer used to compare native reduction schedules.
 #include "amplitude.hpp"
 #include "reduce.hpp"
+#include "process_memory.hpp"
 
 #include <charconv>
 #include <chrono>
@@ -17,14 +18,16 @@
 namespace {
 namespace fs = std::filesystem;
 
-std::size_t count(std::string_view text) {
-    std::size_t value = 0;
+template<class Integer> Integer read_integer(std::string_view text) {
+    Integer value = 0;
     auto end = text.data() + text.size();
     auto parsed = std::from_chars(text.data(), end, value);
     if (parsed.ec != std::errc{} || parsed.ptr != end)
-        throw std::invalid_argument("expected a nonnegative integer, got " + std::string(text));
+        throw std::invalid_argument("expected an integer, got " + std::string(text));
     return value;
 }
+
+std::size_t count(std::string_view text) { return read_integer<std::size_t>(text); }
 
 std::string line(std::istream& input) {
     std::string result;
@@ -116,7 +119,8 @@ int main(int argc, char** argv) {
         if (fs::exists(argv[2]) && fs::equivalent(argv[1], argv[2]))
             throw std::invalid_argument("input and output paths must differ");
         const auto format = line(input);
-        bool prepared = format == "HEPCAT_FACTOR_PREPARED_1";
+        bool energy = format == "HEPCAT_HIGH_ENERGY_1";
+        bool prepared = energy || format == "HEPCAT_FACTOR_PREPARED_1";
         bool complete = prepared || format == "HEPCAT_FACTOR_1";
         if (!complete && format != "HEPCAT_BATCH_1") throw std::invalid_argument("unknown native amplitude format");
         auto amp = read_amplitude(input, prepared);
@@ -126,10 +130,48 @@ int main(int argc, char** argv) {
             auto directions = count(line(input));
             for (std::size_t i = 0; i < directions; ++i) options.correction_basis.push_back(line(input));
         }
+        hepcat::high_energy_options high_energy;
+        std::optional<hepcat::amp_expression> seed;
+        if (energy) {
+            high_energy.workers = workers;
+            high_energy.correction_basis = std::move(options.correction_basis);
+            auto expression = line(input);
+            if (!expression.empty()) seed.emplace(expression, amp.external_masses());
+            auto bound = line(input);
+            if (bound != "Automatic") high_energy.energy_bound = read_integer<int>(bound);
+            auto points = count(line(input));
+            for (std::size_t i = 0; i < points; ++i) {
+                auto& point = high_energy.parameter_points.emplace_back();
+                auto parameters = count(line(input));
+                for (std::size_t j = 0; j < parameters; ++j) {
+                    auto parameter = line(input);
+                    auto value = line(input);
+                    point.emplace_back(std::move(parameter), std::move(value));
+                }
+            }
+        }
         if (input.peek() != std::char_traits<char>::eof()) throw std::invalid_argument("unexpected trailing records");
         if (input.bad()) throw std::runtime_error("error reading native amplitude file");
         using clock = std::chrono::steady_clock;
-        if (complete) {
+        if (energy) {
+            // The benchmark clock starts with the factorized expression already
+            // resident in C++. The chained entry point can acquire it here.
+            if (!seed) amp.complete_factorization(workers);
+            const auto before = highWaterRSS();
+            const auto start = clock::now();
+            const auto& result = seed ? amp.complete_high_energy(*seed, high_energy)
+                                      : amp.complete_high_energy(high_energy);
+            double seconds = std::chrono::duration<double>(clock::now() - start).count();
+            const auto after = highWaterRSS();
+            const auto& r = amp.last_high_energy();
+            write_result(argv[2], [&](std::ostream& out) {
+                out << "HEPCAT_HIGH_ENERGY_RESULT_1\n" << r.workers << '\n' << seconds << '\n'
+                    << r.bound << '\n' << r.candidates << '\n' << r.rank << '\n'
+                    << r.training_samples << '\n' << r.validation_samples << '\n'
+                    << r.route << '\n' << r.validation_spin_states << '\n' << r.exhaustive_spin << '\n'
+                    << before << '\n' << after << '\n' << result.str() << '\n';
+            });
+        } else if (complete) {
             if (!prepared) amp.reduce(workers);
             auto start = clock::now();
             const auto& result = amp.complete_factorization(options);

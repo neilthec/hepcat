@@ -1,4 +1,4 @@
-# Native amplitude reduction and factorization
+# Native amplitude reduction and completion
 
 `hepcat::amp_expression` holds a symbolic expression, the ordered external masses, and any internal numerator shells declared for that expression. Its particle count is the length of the mass list. Labels start at 1 and all momenta are incoming. Construct it once, then call `amp.reduce()` to simplify it in place. To keep the original for comparison, copy the object before reduction. Copies share their stored expression nodes. An ordinary native process needs no Wolfram installation.
 
@@ -188,6 +188,46 @@ AllPhysical preparation, parallel completion took 0.560 s. With cyclic
 preparation it took 0.217 s. The serial Mathematica call reached its 90 s
 budget for each input. Both native results passed the independent off-cut
 comparison. These preparation labels describe the input gauge choices.
+
+## Complete the fixed-angle high-energy behavior
+
+After completing the physical residues, call the next method on the same process.
+
+```cpp
+const auto& result = amp.complete_high_energy();
+const auto& report = amp.last_high_energy();
+std::cout << result.str() << '\n';
+std::cout << report.route << " (maximum energy power " << report.bound << ")\n";
+```
+
+For four or more external legs, the default bound for an amplitude with $n$ legs is $E^{4-n}$. The method can also start from a supplied factorization result with `amp.complete_high_energy(seed, options)`. Use `high_energy_options::energy_bound` for a different theory bound and `workers = 1` for serial execution. A pure C++ caller can put rational assignments for related masses and couplings in `parameter_points`. For example, an electroweak model with $M_W=M_Z c_W$ needs assignments that satisfy that relation at every point. Without bindings the native scalar evaluator treats distinct symbols as independent.
+
+Each check follows a fixed-angle deformation that preserves momentum conservation and every external mass shell. The solver computes exact Laurent coefficients above the allowed power. It first checks the full seed, so amplitudes that already have the required behavior return directly. If the seed grows too fast, the solver tries supplied local corrections, local pieces of retained remainders and the seed, then spinor contractions built from its external spin weights, masses and scalar factors. These corrections have no kinematic poles, so they preserve every physical residue. Independent directions in momentum space can be evaluated concurrently. All workers contribute to a single coefficient fit.
+
+The search returns one representative that passes new kinematic tests. The validation report distinguishes full interpolation over the external spin variables from sampled spin projections. A coefficient left free by the fit can describe either a redundant spinor identity or a contact term whose growth already meets the bound. Growth alone cannot fix the latter. Use the model or an independent off-cut comparison to determine such couplings. The automatic contact search has a finite basis. If no tested correction works, the call reports failure. A seed with a spurious pole or reference dependence can require a different factorization continuation.
+
+### Call from Mathematica
+
+```wolfram
+he = HEPCATNative`CompleteNativeHighEnergy[fit, qedModel, binary];
+checked = HEPCATNative`CompleteNativeHighEnergy[
+  fit, originalChannelRows, qedModel, binary, "ReturnDetails" -> True];
+checked["Amplitude"]
+checked["ValidationReport"]["Summary"]
+```
+
+Here `fit` is the external-mass pair or detailed factorization result. The bridge evaluates the model's parameter definitions at generic exact points. Supply `"ParameterPoints" -> {rules1, rules2, ...}` if the model requires special relations or if the automatic choices do not give rational masses and couplings. Passing the original channel rows runs Wolfram's `CheckAmplitudes` independently and requires its checks to pass. Its time is listed under `"ValidationSeconds"`. `"CompletionSeconds"` covers the native stage with the input already in C++.
+
+To include the shell remainders when repairing a known seed, use `CompleteNativeHighEnergy[fit, batch, model, binary]`. Use `CompleteNativeHighEnergy[batch, model, binary]` to factorize a prepared native batch and run the high-energy stage in one process. The default output is `{externalMassRules, expression}` for each call.
+
+The [measured comparisons](high-energy-benchmark-results.json) include four-W scattering, four-Higgs scattering and electron-positron annihilation with two, three and four photons. They report the native serial and parallel time, time including the bridge, peak process RSS, independent Wolfram validation and exact off-cut comparisons with the stored amplitudes. On the four-W input the native correction canceled growth through $E^4$ and matched the stored amplitude at both independent off-cut points. The median native times were 4.51 s serial and 1.76 s with eight workers. Peak process RSS rose from 5.78 MiB in serial execution to 14.95 MiB in parallel. The Mathematica call on the same input returned unresolved after 17.80 s.
+
+Set `HEPCAT_BATCH_BINARY` to the absolute path of the Release executable and run
+
+```sh
+WolframKernel -script csource/high_energy_bridge_tests.wls
+WolframKernel -script csource/high_energy_benchmark.wls
+```
 
 ## Representation and identities
 
