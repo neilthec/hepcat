@@ -1,4 +1,4 @@
-# Native amplitude reduction prototype
+# Native amplitude reduction and factorization
 
 `hepcat::amp_expression` holds a symbolic expression, the ordered external masses, and any internal numerator shells declared for that expression. Its particle count is the length of the mass list. Labels start at 1 and all momenta are incoming. Construct it once, then call `amp.reduce()` to simplify it in place. To keep the original for comparison, copy the object before reduction. Copies share their stored expression nodes. An ordinary native process needs no Wolfram installation.
 
@@ -78,6 +78,116 @@ All three schedules returned identical ordered expressions, metadata and remaind
 A separate SM check used the six WWWW diagrams from model 1 and six factorization products from model 2. Serial and eight-worker reductions agreed item by item. The full spin polynomials of all six diagrams and four massive-exchange products agreed at an exact conserved point after restoring remainders. One diagram had a nonzero remainder. All six products preserved their nonzero residues on their respective poles, including the two photon-exchange products with cut-dependent x factors.
 
 To reproduce the combined benchmark from the repository root, set `HEPCAT_BATCH_BINARY` to the absolute path of the built `hepcat-reduce-amplitude` executable and run `WolframKernel -script csource/batch_benchmark.wls`. This also writes its compact report under `tests/results/native-batch-benchmark`. With the same environment setting, run the focused bridge regressions using `WolframKernel -script csource/batch_bridge_tests.wls`.
+
+## Complete the physical factorization channels
+
+Once the process contains its diagrams and **all** its sewn channel rows, call
+`amp.complete_factorization()`. The return value is a reference to the completed
+`amp_expression` owned by the process. Copy it to keep it across later mutations
+of the process. An explicit worker count of one runs the completion serially.
+
+```cpp
+#include "amplitude.hpp"
+#include <iostream>
+
+int main() {
+    hepcat::amplitude amp({"me", "me", "0", "0"});
+    amp.add_diagram("g");  // Contact contribution already in the input.
+    amp.add_factorization_product(
+        "Times[-1,Power[PropDen[Mom[Multiparticle[1,3]],me],-1]]",
+        {{1, 3}, "me"});
+    const auto& completed = amp.complete_factorization();
+    std::cout << completed.str() << '\n';
+    std::cout << amp.last_factorization().route << '\n';
+}
+```
+
+This example restores the missing exchange and keeps the supplied contact
+contribution, giving $g+1/((p_1+p_3)^2-m_e^2)$. Supply the full channel
+expression in HEPCAT sewing conventions. The solver removes the integration
+contour factor when present and applies the sewing sign once. It groups a cut
+and its complement at the same exchanged mass and sums their supplied state
+contributions. For data prepared elsewhere, `add_prepared_diagram` and
+`add_prepared_factorization_product` accept the reduced expression, shell
+metadata, and its discarded remainder. Ordinary additions are prepared on
+demand.
+
+On each cut the target residue minus the seed residue is the right-hand side
+of an equation. The columns are residues of possible corrections. Every cut
+constrains the same coefficients. The solver starts with the seed and tries a
+common rescaling of its pole terms, retained remainders, and individual diagram
+or channel contributions. It can also change a polarization reference or shift
+two distinct massless legs to continue a sewn numerator off its original cut.
+A shifted sum is a proposal, including when the shift may have a boundary term.
+
+Workers assemble exact rational rows independently on different cuts. One
+sparse elimination determines the shared coefficients, then fresh cut points
+test the resulting expression. A failed validation point supplies another
+constraint. The fit uses external momenta obeying momentum conservation,
+the external mass shells and the selected channel shell. It varies kinematics,
+spin and model parameter values. Internal numerator-shell assumptions from
+unrelated diagrams are excluded from this check.
+
+The returned expression has passed sampled **physical residues**. A term
+regular on every physical cut can still change an off-cut amplitude, including
+through spurious denominators. Follow with `CheckAmplitudes` for the spurious
+poles, external references, high-energy behavior and an independent Feynman
+comparison. A missing direction, unsupported input, or unsampleable cut
+produces an error and publishes no new completion. Supply additional full
+amplitude directions with `factorization_options::correction_basis` if
+needed. The current native evaluator handles simple physical poles and a
+bounded spinor/scalar dialect, with coefficients in the rationals extended
+by $i$ and $\sqrt{2}$. Reduce color tensors to independent coefficients before
+using this method. Sampled scalar parameters are independent unless their
+algebraic relations have already been substituted in the input.
+
+In Mathematica the optional bridge accepts the previous batch directly.
+
+```wolfram
+fit = HEPCATNative`CompleteNativeFactorization[batch, binary, "ReturnDetails" -> True];
+fit["Amplitude"]
+KeyTake[fit, {"Route", "Channels", "Rank", "ValidationSamples", "CompletionSeconds"}]
+```
+
+Without `"ReturnDetails" -> True` the result is simply `{externalMassRules, expression}`.
+You can also supply two detailed `PrepareAmplitudes` reports, raw diagram and
+channel lists, or a process and both models, using the same argument order
+as for `ReduceNativeAmplitude`. For raw input `"PolePreference" -> Automatic`
+chooses reference replacements before native reduction. The prepared-batch
+form preserves the references and remainders you supplied. The native time
+excludes model loading, input/output, Mathematica reference assignment and
+initial diagram preparation.
+
+### Reproduce the completion timings
+
+Set `HEPCAT_BATCH_BINARY` to the absolute path of the Release executable.
+Run the following scripts in separate Wolfram kernel sessions from the
+repository root.
+
+```sh
+WolframKernel -script csource/factorization_benchmark.wls
+WolframKernel -script csource/factorization_sm_benchmark.wls
+```
+
+The [QED timings and validations](factorization-benchmark-results.json) include
+both the in-memory solve and the round trip through the Mathematica bridge.
+The two native worker modes receive the same diagram and channel data as the
+serial Mathematica baseline. In addition to the raw channel checks, the QED
+benchmark compares every massive-spin coefficient with the stored amplitude
+at two conserved off-cut points and two electron masses. The [Standard Model
+checks](factorization-sm-benchmark-results.json) include recovery of a missing
+Higgs exchange, exact agreement with the full four-Higgs expression, and the
+separate high-energy check on four-W scattering. On the four-W input the
+seed passes the physical cuts and still requires the next completion stage.
+
+On the eight-core Apple Silicon benchmark, the physically prepared mixed
+three-photon case took 28.93 s in Mathematica, 0.098 s in serial C++, and
+0.068 s in parallel C++ (0.111 s including the bridge). For four positive
+photons, all 14 seed residues initially failed with either preparation. With
+AllPhysical preparation, parallel completion took 0.560 s. With cyclic
+preparation it took 0.217 s. The serial Mathematica call reached its 90 s
+budget for each input. Both native results passed the independent off-cut
+comparison. These preparation labels describe the input gauge choices.
 
 ## Representation and identities
 

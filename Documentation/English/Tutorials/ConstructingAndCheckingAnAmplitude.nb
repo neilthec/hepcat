@@ -65,7 +65,7 @@ operation.", "ExampleText"],
       "]", ";"}]], "Input"], Cell["This example writes files, starts a longer \
 calculation, or requires an optional external tool. Evaluate it when you want \
 to perform that operation.", "ExampleText"],
-  Cell["Optional Native Batch Reduction", "TechNoteSection"],
+  Cell["Optional Native Reduction and Factorization", "TechNoteSection"],
   Cell[TextData[{"After generating both lists, you can reduce them together \
 with the experimental C++ reducer in csource. Build the \
 hepcat-reduce-amplitude executable using the commands in csource/README.md, \
@@ -77,6 +77,14 @@ FactorizationProducts entries preserve the input row order. DiagramRemainders \
 and FactorizationRemainders contain the matching off-cut differences, so \
 adding a remainder to its reduced expression recovers the original away from \
 the cut."}], "TechNoteText"],
+  Cell[TextData[{"Pass that batch to CompleteNativeFactorization to fit the \
+diagram residues to the sewn channel residues. Each cut supplies equations \
+for the same coefficients. The native solver checks the resulting expression \
+again on fresh cut points. ReturnDetails reports the route, rank, sample \
+counts and elapsed native time. A physical-residue match alone leaves contact \
+terms undetermined. Use ", ButtonBox["CheckAmplitudes", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/CheckAmplitudes"],
+     " for the other amplitude checks."}], "TechNoteText"],
   Cell[TextData[{"Reduce both lists from the preceding example in one native \
 call. Adjust the executable path if you built it elsewhere."}],
    "ExampleText"],
@@ -90,6 +98,17 @@ results/native-reduce-build/hepcat-reduce-amplitude\"", "]", ";", "\n",
   Cell["This example writes files, starts a longer calculation, or requires \
 an optional external tool. Evaluate it when you want to perform that \
 operation.", "ExampleText"],
+  Cell[TextData[{"Complete the prepared amplitude and inspect the fitted \
+expression and its validation statistics."}], "ExampleText"],
+  Cell[BoxData[RowBox[{"fit", " ", "=", " ",
+      "HEPCATNative`CompleteNativeFactorization", "[", "batch", ",", " ",
+      "binary", ",", " ", "\"ReturnDetails\"", " ", "->", " ", "True", "]",
+      ";", "\n", "If", "[", "AssociationQ", "[", "fit", "]", ",", " ", "{",
+      "fit", "[", "\"Amplitude\"", "]", ",", " ", "fit", "[", "\"Channels\"",
+      "]", ",", " ", "fit", "[", "\"ValidationSamples\"", "]", "}", ",", " ",
+      "fit", "]"}]], "Input"], Cell["This example writes files, starts a \
+longer calculation, or requires an optional external tool. Evaluate it when \
+you want to perform that operation.", "ExampleText"],
   Cell["Prepare Without Throwing Away Information", "TechNoteSection"],
   Cell[TextData[{ButtonBox["PrepareAmplitudes", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/PrepareAmplitudes"], " chooses the \

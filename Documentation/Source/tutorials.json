@@ -124,15 +124,21 @@
         ]
       },
       {
-        "title": "Optional Native Batch Reduction",
+        "title": "Optional Native Reduction and Factorization",
         "paragraphs": [
           "After generating both lists, you can reduce them together with the experimental C++ reducer in csource. Build the hepcat-reduce-amplitude executable using the commands in csource/README.md, then load the optional Mathematica bridge. Its default worker count uses the available hardware threads and the number of items.",
-          "Each diagram uses its own numerator shells. Each factorization product uses its channel shell. The returned Diagrams and FactorizationProducts entries preserve the input row order. DiagramRemainders and FactorizationRemainders contain the matching off-cut differences, so adding a remainder to its reduced expression recovers the original away from the cut."
+          "Each diagram uses its own numerator shells. Each factorization product uses its channel shell. The returned Diagrams and FactorizationProducts entries preserve the input row order. DiagramRemainders and FactorizationRemainders contain the matching off-cut differences, so adding a remainder to its reduced expression recovers the original away from the cut.",
+          "Pass that batch to CompleteNativeFactorization to fit the diagram residues to the sewn channel residues. Each cut supplies equations for the same coefficients. The native solver checks the resulting expression again on fresh cut points. ReturnDetails reports the route, rank, sample counts and elapsed native time. A physical-residue match alone leaves contact terms undetermined. Use [CheckAmplitudes](paclet:HEPCAT/ref/CheckAmplitudes) for the other amplitude checks."
         ],
         "examples": [
           {
             "description": "Reduce both lists from the preceding example in one native call. Adjust the executable path if you built it elsewhere.",
             "input": "Get[\"~/code/hepcat/csource/NativeAmplitude.wl\"];\nbinary = ExpandFileName[\"~/code/hepcat/tests/results/native-reduce-build/hepcat-reduce-amplitude\"];\nbatch = HEPCATNative`ReduceNativeAmplitude[rawAmplitudes, channels, binary];\nbatch[\"Diagrams\"]",
+            "evaluate": false
+          },
+          {
+            "description": "Complete the prepared amplitude and inspect the fitted expression and its validation statistics.",
+            "input": "fit = HEPCATNative`CompleteNativeFactorization[batch, binary, \"ReturnDetails\" -> True];\nIf[AssociationQ[fit], {fit[\"Amplitude\"], fit[\"Channels\"], fit[\"ValidationSamples\"]}, fit]",
             "evaluate": false
           }
         ]

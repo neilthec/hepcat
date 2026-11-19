@@ -44,4 +44,33 @@ check["common reference for actual generated diagrams and channels", Association
   Length[prepared["Diagrams"]] === 2 && Length[prepared["FactorizationProducts"]] === 2 &&
   FreeQ[{prepared["Diagrams"],prepared["FactorizationProducts"],prepared["DiagramRemainders"],
     prepared["FactorizationRemainders"]},Spinor["Xi",___] | SpinorHat["Xi",___]]];
+(* A deliberately omitted exchange with an unrelated contact term. The channel
+   rows retain HEPCAT's overall sewing sign and optional contour factor. *)
+physicalPole = PropDen[Mom[cut], m];
+sewnRow = Join[masses, {cut,m,-1/(ConstructiveDiagrams`z physicalPole)}];
+scalarBatch = ReduceNativeAmplitude[{{rules, 7}}, {sewnRow}, bin];
+scalarFit = CompleteNativeFactorization[scalarBatch, bin, "ReturnDetails" -> True];
+check["native correction and external-only output masses", AssociationQ[scalarFit] &&
+  scalarFit["Amplitude"] === {rules, 7 + 1/physicalPole} && scalarFit["Channels"] === 1 &&
+  scalarFit["ValidationSamples"] >= 4 && scalarFit["Rank"] === 1];
+rawFit = CompleteNativeFactorization[{{rules,7}}, {sewnRow}, bin, "Workers" -> 1];
+check["raw rows and prepared batch agree", rawFit === scalarFit["Amplitude"]];
+check["misaligned remainders rejected", FailureQ[CompleteNativeFactorization[
+    Join[scalarBatch,<|"DiagramRemainders" -> {}|>], bin]]];
+check["empty target inventory cannot validate a pole-bearing seed",
+  FailureQ[CompleteNativeFactorization[{{rules,1/physicalPole}}, {}, bin]]];
+generatedFit = CompleteNativeFactorization[process,qed,qedFactorization,bin,"PolePreference"->"Cyclic","ReturnDetails"->True];
+check["real process entry point", AssociationQ[generatedFit] && generatedFit["Channels"] === 2 &&
+   SameQ[generatedFit["Amplitude"], CompleteNativeFactorization[prepared,bin]]];
+Do[
+  mirror = Join[{"e", "E"}, photons];
+  fit = CompleteNativeFactorization[mirror,qed,qedFactorization,bin];
+  check["automatic reference assignment", ListQ[fit] && FreeQ[fit,Spinor["Xi",___]]];
+  originalChannels = FactorizationAmplitudeChannels[mirror,qedFactorization];
+  independent = CheckAmplitudes[Last[fit],originalChannels,qedFactorization,
+    "ParameterRules"->{"Me"->3/2,"EE"->2/5}, "SpuriousPoles"->{}, "ReferenceCheck"->False,
+    "HighEnergyCheck"->False, "Parallelization"->False, "TimeConstraint"->45,
+    "Samples"->2, "RandomSeed"->1103, "Output"->"Details"];
+  check["opposite-helicity physical residues", independent["Summary"] === <|"PASS" -> Length[originalChannels]|>],
+  {photons, {{"A.-","A.-"}, {"A.-","A.-","A.+"}}}];
 Print["Native Mathematica bridge checks passed."];

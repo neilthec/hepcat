@@ -22,12 +22,37 @@ amplitude::amplitude(std::vector<std::string> external_masses)
 
 void amplitude::add_diagram(const std::string& input, std::vector<numerator_shell> shells) {
     diagrams_.push_back(amplitude_item(input, masses_, std::move(shells)));
+    completed_.reset();
 }
 
 void amplitude::add_factorization_product(const std::string& input, numerator_shell channel) {
     std::vector<numerator_shell> shells;
     shells.push_back(std::move(channel));
     products_.push_back(amplitude_item(input, masses_, std::move(shells)));
+    completed_.reset();
+}
+
+void amplitude::add_prepared_diagram(const std::string& input, std::vector<numerator_shell> shells,
+                                     const std::string& remainder) {
+    amplitude_item item(input, masses_, std::move(shells));
+    item.expression.restore_prepared(remainder);
+    item.reduced_ = true;
+    diagrams_.push_back(std::move(item));
+    completed_.reset();
+}
+
+void amplitude::add_prepared_factorization_product(const std::string& input, numerator_shell channel,
+                                                   const std::string& remainder) {
+    amplitude_item item(input, masses_, {std::move(channel)});
+    item.expression.restore_prepared(remainder);
+    item.reduced_ = true;
+    products_.push_back(std::move(item));
+    completed_.reset();
+}
+
+const factorization_report& amplitude::last_factorization() const {
+    if (!completed_) throw std::logic_error("no validated factorization result");
+    return report_;
 }
 
 amplitude& amplitude::reduce(std::size_t workers) {

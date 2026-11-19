@@ -30,6 +30,10 @@ public:
     std::string str() const;
     std::size_t particle_count() const;
 private:
+    friend class amplitude;
+    void restore_prepared(const std::string& remainder);
+    std::uint32_t import_into(Algebra& destination, bool remainder = false) const;
+    void set_from(const Algebra& source, std::uint32_t result);
     struct context;
     std::shared_ptr<const context> kinematics_;
     std::shared_ptr<Algebra> arena_;

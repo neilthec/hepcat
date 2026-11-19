@@ -1,0 +1,679 @@
+{
+  "Platform": "MacOSX-ARM64",
+  "LogicalProcessors": 8,
+  "WolframVersion": "15.0.0 for Mac OS X ARM (64-bit) (May 19, 2026)",
+  "WolframTiming": "One serial in-memory CompleteFactorization call per case. Includes its internal fit and validation.",
+  "NativeTiming": "Median of three completion calls per worker mode at four and five points, alternating which mode runs first. Six points uses one call per worker mode. Preparation and expression transfer excluded. BridgeSeconds includes both transfers and process startup.",
+  "IndependentChecks": "Two exact samples per raw physical channel, followed by two exact conserved off-cut points comparing every external spin coefficient with the separately stored model amplitude. The stored result is never supplied to completion.",
+  "Cases": {
+    "eePP": {
+      "Process": [
+        "e",
+        "E",
+        "A.+",
+        "A.+"
+      ],
+      "Preparation": "AllPhysical",
+      "SeedDiagrams": 2,
+      "ChannelRows": 2,
+      "Wolfram": {
+        "Status": "COMPLETE",
+        "Route": "InputRescaling",
+        "Seconds": 0.736145
+      },
+      "Native": {
+        "Serial": {
+          "Status": "COMPLETE",
+          "Route": "RescaledSeed",
+          "WorkersUsed": 1,
+          "Channels": 2,
+          "Candidates": 1,
+          "Rank": 1,
+          "TrainingSamples": 8,
+          "ValidationSamples": 16,
+          "NativeSeconds": 0.002108541,
+          "BridgeSeconds": 0.022048,
+          "NativeRangeSeconds": [
+            0.002016958,
+            0.003459125
+          ]
+        },
+        "Automatic": {
+          "Status": "COMPLETE",
+          "Route": "RescaledSeed",
+          "WorkersUsed": 2,
+          "Channels": 2,
+          "Candidates": 1,
+          "Rank": 1,
+          "TrainingSamples": 8,
+          "ValidationSamples": 16,
+          "NativeSeconds": 0.002445542,
+          "BridgeSeconds": 0.023287,
+          "NativeRangeSeconds": [
+            0.001961958,
+            0.002514084
+          ]
+        }
+      },
+      "IndependentPhysicalResidues": {
+        "Stored": {
+          "PASS": 2
+        },
+        "Seed": {
+          "FAIL": 2
+        },
+        "Wolfram": {
+          "PASS": 2
+        },
+        "Native": {
+          "PASS": 2
+        }
+      },
+      "IndependentOffCut": [
+        {
+          "ElectronMass": "3/2",
+          "MatchesStored": {
+            "Seed": false,
+            "Wolfram": true,
+            "Native": true
+          },
+          "NativeMatchesWolfram": true
+        },
+        {
+          "ElectronMass": "5/2",
+          "MatchesStored": {
+            "Seed": false,
+            "Wolfram": true,
+            "Native": true
+          },
+          "NativeMatchesWolfram": true
+        }
+      ]
+    },
+    "eePPMissingDiagram": {
+      "Process": [
+        "e",
+        "E",
+        "A.+",
+        "A.+"
+      ],
+      "Preparation": "Cyclic",
+      "SeedDiagrams": 1,
+      "ChannelRows": 2,
+      "Wolfram": {
+        "Status": "COMPLETE",
+        "Route": "InputRescaling",
+        "Seconds": 1.265359
+      },
+      "Native": {
+        "Serial": {
+          "Status": "COMPLETE",
+          "Route": "ChannelContinuations",
+          "WorkersUsed": 1,
+          "Channels": 2,
+          "Candidates": 2,
+          "Rank": 2,
+          "TrainingSamples": 16,
+          "ValidationSamples": 16,
+          "NativeSeconds": 0.003418208,
+          "BridgeSeconds": 0.018175,
+          "NativeRangeSeconds": [
+            0.003385666,
+            0.003575833
+          ]
+        },
+        "Automatic": {
+          "Status": "COMPLETE",
+          "Route": "ChannelContinuations",
+          "WorkersUsed": 2,
+          "Channels": 2,
+          "Candidates": 2,
+          "Rank": 2,
+          "TrainingSamples": 16,
+          "ValidationSamples": 16,
+          "NativeSeconds": 0.0036865,
+          "BridgeSeconds": 0.019368,
+          "NativeRangeSeconds": [
+            0.003482375,
+            0.003698959
+          ]
+        }
+      },
+      "IndependentPhysicalResidues": {
+        "Stored": {
+          "PASS": 2
+        },
+        "Seed": {
+          "PASS": 1,
+          "FAIL": 1
+        },
+        "Wolfram": {
+          "PASS": 2
+        },
+        "Native": {
+          "PASS": 2
+        }
+      },
+      "IndependentOffCut": [
+        {
+          "ElectronMass": "3/2",
+          "MatchesStored": {
+            "Seed": false,
+            "Wolfram": false,
+            "Native": false
+          },
+          "NativeMatchesWolfram": true
+        },
+        {
+          "ElectronMass": "5/2",
+          "MatchesStored": {
+            "Seed": false,
+            "Wolfram": false,
+            "Native": false
+          },
+          "NativeMatchesWolfram": true
+        }
+      ]
+    },
+    "eePPP": {
+      "Process": [
+        "e",
+        "E",
+        "A.+",
+        "A.+",
+        "A.+"
+      ],
+      "Preparation": "AllPhysical",
+      "SeedDiagrams": 6,
+      "ChannelRows": 6,
+      "Wolfram": {
+        "Status": "COMPLETE",
+        "Route": "InputRescaling",
+        "Seconds": 4.901921
+      },
+      "Native": {
+        "Serial": {
+          "Status": "COMPLETE",
+          "Route": "RescaledSeed",
+          "WorkersUsed": 1,
+          "Channels": 6,
+          "Candidates": 1,
+          "Rank": 1,
+          "TrainingSamples": 24,
+          "ValidationSamples": 48,
+          "NativeSeconds": 0.010492708,
+          "BridgeSeconds": 0.04721,
+          "NativeRangeSeconds": [
+            0.009676333,
+            0.011153083
+          ]
+        },
+        "Automatic": {
+          "Status": "COMPLETE",
+          "Route": "RescaledSeed",
+          "WorkersUsed": 6,
+          "Channels": 6,
+          "Candidates": 1,
+          "Rank": 1,
+          "TrainingSamples": 24,
+          "ValidationSamples": 48,
+          "NativeSeconds": 0.007657,
+          "BridgeSeconds": 0.042941,
+          "NativeRangeSeconds": [
+            0.006936917,
+            0.007816791
+          ]
+        }
+      },
+      "IndependentPhysicalResidues": {
+        "Stored": {
+          "PASS": 6
+        },
+        "Seed": {
+          "FAIL": 6
+        },
+        "Wolfram": {
+          "PASS": 6
+        },
+        "Native": {
+          "PASS": 6
+        }
+      },
+      "IndependentOffCut": [
+        {
+          "ElectronMass": "3/2",
+          "MatchesStored": {
+            "Seed": false,
+            "Wolfram": true,
+            "Native": true
+          },
+          "NativeMatchesWolfram": true
+        },
+        {
+          "ElectronMass": "5/2",
+          "MatchesStored": {
+            "Seed": false,
+            "Wolfram": true,
+            "Native": true
+          },
+          "NativeMatchesWolfram": true
+        }
+      ]
+    },
+    "eePPPCyclic": {
+      "Process": [
+        "e",
+        "E",
+        "A.+",
+        "A.+",
+        "A.+"
+      ],
+      "Preparation": "Cyclic",
+      "SeedDiagrams": 6,
+      "ChannelRows": 6,
+      "Wolfram": {
+        "Status": "UNRESOLVED",
+        "Route": "BoseSelectedChannelUnion",
+        "Seconds": 16.53631
+      },
+      "Native": {
+        "Serial": {
+          "Status": "COMPLETE",
+          "Route": "ShiftedChannels",
+          "WorkersUsed": 1,
+          "Channels": 6,
+          "Candidates": 17,
+          "Rank": 16,
+          "TrainingSamples": 96,
+          "ValidationSamples": 48,
+          "NativeSeconds": 0.06365425,
+          "BridgeSeconds": 0.088905,
+          "NativeRangeSeconds": [
+            0.06120975,
+            0.076390625
+          ]
+        },
+        "Automatic": {
+          "Status": "COMPLETE",
+          "Route": "ShiftedChannels",
+          "WorkersUsed": 6,
+          "Channels": 6,
+          "Candidates": 17,
+          "Rank": 16,
+          "TrainingSamples": 96,
+          "ValidationSamples": 48,
+          "NativeSeconds": 0.041173833,
+          "BridgeSeconds": 0.069281,
+          "NativeRangeSeconds": [
+            0.039116875,
+            0.046717833
+          ]
+        }
+      },
+      "IndependentPhysicalResidues": {
+        "Stored": {
+          "PASS": 6
+        },
+        "Seed": {
+          "FAIL": 6
+        },
+        "Native": {
+          "PASS": 6
+        }
+      },
+      "IndependentOffCut": [
+        {
+          "ElectronMass": "3/2",
+          "MatchesStored": {
+            "Seed": false,
+            "Native": true
+          },
+          "NativeMatchesWolfram": null
+        },
+        {
+          "ElectronMass": "5/2",
+          "MatchesStored": {
+            "Seed": false,
+            "Native": true
+          },
+          "NativeMatchesWolfram": null
+        }
+      ]
+    },
+    "eePPM": {
+      "Process": [
+        "e",
+        "E",
+        "A.+",
+        "A.+",
+        "A.-"
+      ],
+      "Preparation": "AllPhysical",
+      "SeedDiagrams": 6,
+      "ChannelRows": 6,
+      "Wolfram": {
+        "Status": "COMPLETE",
+        "Route": "PhysicalChannels",
+        "Seconds": 28.934576
+      },
+      "Native": {
+        "Serial": {
+          "Status": "COMPLETE",
+          "Route": "ChannelContinuations",
+          "WorkersUsed": 1,
+          "Channels": 6,
+          "Candidates": 21,
+          "Rank": 19,
+          "TrainingSamples": 96,
+          "ValidationSamples": 48,
+          "NativeSeconds": 0.097955875,
+          "BridgeSeconds": 0.140496,
+          "NativeRangeSeconds": [
+            0.097742333,
+            0.0981285
+          ]
+        },
+        "Automatic": {
+          "Status": "COMPLETE",
+          "Route": "ChannelContinuations",
+          "WorkersUsed": 6,
+          "Channels": 6,
+          "Candidates": 21,
+          "Rank": 19,
+          "TrainingSamples": 96,
+          "ValidationSamples": 48,
+          "NativeSeconds": 0.068104083,
+          "BridgeSeconds": 0.110615,
+          "NativeRangeSeconds": [
+            0.064400959,
+            0.0690385
+          ]
+        }
+      },
+      "IndependentPhysicalResidues": {
+        "Stored": {
+          "PASS": 6
+        },
+        "Seed": {
+          "FAIL": 6
+        },
+        "Wolfram": {
+          "PASS": 6
+        },
+        "Native": {
+          "PASS": 6
+        }
+      },
+      "IndependentOffCut": [
+        {
+          "ElectronMass": "3/2",
+          "MatchesStored": {
+            "Seed": false,
+            "Wolfram": true,
+            "Native": true
+          },
+          "NativeMatchesWolfram": true
+        },
+        {
+          "ElectronMass": "5/2",
+          "MatchesStored": {
+            "Seed": false,
+            "Wolfram": true,
+            "Native": true
+          },
+          "NativeMatchesWolfram": true
+        }
+      ]
+    },
+    "eePPMCyclic": {
+      "Process": [
+        "e",
+        "E",
+        "A.+",
+        "A.+",
+        "A.-"
+      ],
+      "Preparation": "Cyclic",
+      "SeedDiagrams": 6,
+      "ChannelRows": 6,
+      "Wolfram": {
+        "Status": "COMPLETE",
+        "Route": "ShiftedChannels",
+        "Seconds": 59.697921
+      },
+      "Native": {
+        "Serial": {
+          "Status": "COMPLETE",
+          "Route": "ShiftedChannels",
+          "WorkersUsed": 1,
+          "Channels": 6,
+          "Candidates": 41,
+          "Rank": 30,
+          "TrainingSamples": 147,
+          "ValidationSamples": 96,
+          "NativeSeconds": 0.454400584,
+          "BridgeSeconds": 0.480529,
+          "NativeRangeSeconds": [
+            0.452755416,
+            0.455744625
+          ]
+        },
+        "Automatic": {
+          "Status": "COMPLETE",
+          "Route": "ShiftedChannels",
+          "WorkersUsed": 6,
+          "Channels": 6,
+          "Candidates": 41,
+          "Rank": 30,
+          "TrainingSamples": 147,
+          "ValidationSamples": 96,
+          "NativeSeconds": 0.346463667,
+          "BridgeSeconds": 0.373886,
+          "NativeRangeSeconds": [
+            0.336512208,
+            0.347930959
+          ]
+        }
+      },
+      "IndependentPhysicalResidues": {
+        "Stored": {
+          "PASS": 6
+        },
+        "Seed": {
+          "FAIL": 6
+        },
+        "Wolfram": {
+          "PASS": 6
+        },
+        "Native": {
+          "PASS": 6
+        }
+      },
+      "IndependentOffCut": [
+        {
+          "ElectronMass": "3/2",
+          "MatchesStored": {
+            "Seed": false,
+            "Wolfram": true,
+            "Native": true
+          },
+          "NativeMatchesWolfram": true
+        },
+        {
+          "ElectronMass": "5/2",
+          "MatchesStored": {
+            "Seed": false,
+            "Wolfram": true,
+            "Native": true
+          },
+          "NativeMatchesWolfram": true
+        }
+      ]
+    },
+    "eePPPP": {
+      "Process": [
+        "e",
+        "E",
+        "A.+",
+        "A.+",
+        "A.+",
+        "A.+"
+      ],
+      "Preparation": "AllPhysical",
+      "SeedDiagrams": 24,
+      "ChannelRows": 14,
+      "Wolfram": {
+        "Status": "UNRESOLVED",
+        "Route": "BoseSelectedChannelUnion",
+        "Seconds": 90.032136
+      },
+      "Native": {
+        "Serial": {
+          "Status": "COMPLETE",
+          "Route": "ShiftedChannelSum",
+          "WorkersUsed": 1,
+          "Channels": 14,
+          "Candidates": 1,
+          "Rank": 0,
+          "TrainingSamples": 224,
+          "ValidationSamples": 112,
+          "NativeSeconds": 0.764461042,
+          "BridgeSeconds": 0.904121,
+          "NativeRangeSeconds": [
+            0.764461042,
+            0.764461042
+          ]
+        },
+        "Automatic": {
+          "Status": "COMPLETE",
+          "Route": "ShiftedChannelSum",
+          "WorkersUsed": 8,
+          "Channels": 14,
+          "Candidates": 1,
+          "Rank": 0,
+          "TrainingSamples": 224,
+          "ValidationSamples": 112,
+          "NativeSeconds": 0.55999875,
+          "BridgeSeconds": 0.681578,
+          "NativeRangeSeconds": [
+            0.55999875,
+            0.55999875
+          ]
+        }
+      },
+      "IndependentPhysicalResidues": {
+        "Stored": {
+          "PASS": 14
+        },
+        "Seed": {
+          "FAIL": 14
+        },
+        "Native": {
+          "PASS": 14
+        }
+      },
+      "IndependentOffCut": [
+        {
+          "ElectronMass": "3/2",
+          "MatchesStored": {
+            "Seed": false,
+            "Native": true
+          },
+          "NativeMatchesWolfram": null
+        },
+        {
+          "ElectronMass": "5/2",
+          "MatchesStored": {
+            "Seed": false,
+            "Native": true
+          },
+          "NativeMatchesWolfram": null
+        }
+      ]
+    },
+    "eePPPPCyclic": {
+      "Process": [
+        "e",
+        "E",
+        "A.+",
+        "A.+",
+        "A.+",
+        "A.+"
+      ],
+      "Preparation": "Cyclic",
+      "SeedDiagrams": 24,
+      "ChannelRows": 14,
+      "Wolfram": {
+        "Status": "UNRESOLVED",
+        "Route": "BoseChannelUnion",
+        "Seconds": 90.0336
+      },
+      "Native": {
+        "Serial": {
+          "Status": "COMPLETE",
+          "Route": "ShiftedChannelSum",
+          "WorkersUsed": 1,
+          "Channels": 14,
+          "Candidates": 1,
+          "Rank": 0,
+          "TrainingSamples": 168,
+          "ValidationSamples": 112,
+          "NativeSeconds": 0.364781167,
+          "BridgeSeconds": 0.429228,
+          "NativeRangeSeconds": [
+            0.364781167,
+            0.364781167
+          ]
+        },
+        "Automatic": {
+          "Status": "COMPLETE",
+          "Route": "ShiftedChannelSum",
+          "WorkersUsed": 8,
+          "Channels": 14,
+          "Candidates": 1,
+          "Rank": 0,
+          "TrainingSamples": 168,
+          "ValidationSamples": 112,
+          "NativeSeconds": 0.21729175,
+          "BridgeSeconds": 0.277486,
+          "NativeRangeSeconds": [
+            0.21729175,
+            0.21729175
+          ]
+        }
+      },
+      "IndependentPhysicalResidues": {
+        "Stored": {
+          "PASS": 14
+        },
+        "Seed": {
+          "FAIL": 14
+        },
+        "Native": {
+          "PASS": 14
+        }
+      },
+      "IndependentOffCut": [
+        {
+          "ElectronMass": "3/2",
+          "MatchesStored": {
+            "Seed": false,
+            "Native": true
+          },
+          "NativeMatchesWolfram": null
+        },
+        {
+          "ElectronMass": "5/2",
+          "MatchesStored": {
+            "Seed": false,
+            "Native": true
+          },
+          "NativeMatchesWolfram": null
+        }
+      ]
+    }
+  },
+  "Processor": "Apple M3",
+  "TimingConditions": "Release build. The machine was shared with other Wolfram kernels. Four- and five-point timings use the median across three native runs. Six-point timings are single observations.",
+  "Preparation": "AllPhysical uses Mathematica preparation. Cyclic uses native batch preparation. Both completion functions then consume the same prepared inputs and remainders."
+}

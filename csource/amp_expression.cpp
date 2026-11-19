@@ -112,6 +112,38 @@ std::optional<amp_expression> amp_expression::discarded_remainder() const {
     return output;
 }
 
+namespace {
+Id copy_tree(const Algebra& from, Algebra& to, Id root) {
+    std::unordered_map<Id,Id> copied;
+    std::function<Id(Id)> visit = [&](Id id) -> Id {
+        if (auto it = copied.find(id); it != copied.end()) return it->second;
+        const auto& n = from.node(id);
+        auto args = n.args;
+        for (Id& child : args) child = visit(child);
+        Id result = to.raw(n.head, std::move(args), n.compound);
+        copied.emplace(id, result);
+        return result;
+    };
+    return visit(root);
+}
+}
+
+void amp_expression::restore_prepared(const std::string& remainder) {
+    Id rest = arena_->parse(remainder);
+    if (rest != arena_->integer(0)) remainder_ = rest;
+    reduced_ = true;
+}
+
+Id amp_expression::import_into(Algebra& destination, bool remainder) const {
+    std::lock_guard<std::mutex> guard(*kinematics_->lock);
+    if (remainder && !remainder_) return destination.integer(0);
+    return copy_tree(*arena_, destination, remainder ? *remainder_ : root_);
+}
+
+void amp_expression::set_from(const Algebra& source, Id result) {
+    root_ = copy_tree(source, *arena_, result);
+}
+
 std::string amp_expression::str() const {
     std::lock_guard<std::mutex> guard(*kinematics_->lock);
     return arena_->format(root_);
