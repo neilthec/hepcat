@@ -273,6 +273,13 @@ class sewing {
             }
         return missing;
     }
+    // On three-particle kinematics 2 q.p_i = m_j^2 - m_i^2 for a null q.
+    // Equal spectator masses make both possible momentum reference insertions
+    // identically singular, even away from any internal factorization pole.
+    bool degenerate_three_point_reference(int photon) const {
+        if (mass.size() != 3 || mass.at(photon - 1) != zero) return false;
+        return mass[photon % 3] == mass[(photon + 1) % 3];
+    }
     int physical_spectator(int photon) {
         // Try massive momenta first. A massless momentum is also a valid
         // reference insertion when its two-leg invariant is generic here.
@@ -325,6 +332,8 @@ class sewing {
         };
         inspect(inspect, expr, false);
         if (owners.empty()) return expr;
+        // A stored Xi may be the only nonsingular description of a bare vertex.
+        if (!light.empty() && degenerate_three_point_reference(light.front())) return expr;
         struct replacement {
             int spinor, insert;
         };
@@ -395,6 +404,8 @@ class sewing {
             if (photon) {
                 if (mass[photon - 1] != zero)
                     throw std::invalid_argument("the missing leg of an x factor must be massless");
+                if (cyclic && mass_of(n.args[1]) != zero && degenerate_three_point_reference(photon))
+                    return cache.emplace(id, id).first->second;
                 bool ang = is_x(n.head);
                 auto q = a.integer(photon);
                 Id reference = external_spinor(a.integer(next_reference++), xi, ang);

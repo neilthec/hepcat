@@ -79,6 +79,21 @@ int main(int argc, char** argv) {
                 "conflicting external model masses were accepted");
         rejects([&] { amplitude invalid({"e", "E", "not-a-particle"}, qed, qf); }, "unknown particle accepted");
         for (const std::string helicity : {"A.+", "A.-"}) {
+            const std::vector<std::string> cubic{"e", "E", helicity};
+            for (auto reference : {generation_references::automatic, generation_references::physical,
+                                   generation_references::keep}) {
+                amplitude bare(cubic, qed, qf, reference);
+                bare.generate();
+                require(bare.diagrams().size() == 1 && bare.factorization_products().empty(),
+                        "one three-point vertex with no factorization cuts");
+                const auto row = bare.diagrams().front().expression.str();
+                auto expected = helicity == "A.+" ? "xFactor[1,2]" : "xTildeFactor[1,2]";
+                require(reference == generation_references::keep ? row.find("\"Xi\"") != std::string::npos :
+                            (row.find(expected) != std::string::npos && row.find("\"Xi\"") == std::string::npos),
+                        "three-point polarization reference convention");
+            }
+        }
+        for (const std::string helicity : {"A.+", "A.-"}) {
             amplitude same_helicity({"e","E",helicity,helicity},qed,qf,generation_references::physical);
             const auto final = same_helicity.complete_high_energy().str();
             require(same_helicity.diagrams().size() == 2 && same_helicity.factorization_products().size() == 2 &&

@@ -28,11 +28,19 @@ void stored_reference_test() {
                                           "Photon | A.+ | A.- | 22 | 2 | 0 | 0 | 1 | | A | A\n======\n";
     std::ofstream(dir / "amps1.mdl")
         << "q|Q|A.+|A.-|1|SpinorChain[Spinor[\"Xi\",\"Angle\",1],Mom[2],Spinor[\"Helicity\",\"Square\",3]]/"
+           "SpinorChain[Spinor[\"Helicity\",\"Angle\",3],Spinor[\"Xi\",\"Angle\",1]]\n"
+           "q|Q|A.+||1|SpinorChain[Spinor[\"Xi\",\"Angle\",1],Mom[2],Spinor[\"Helicity\",\"Square\",3]]/"
            "SpinorChain[Spinor[\"Helicity\",\"Angle\",3],Spinor[\"Xi\",\"Angle\",1]]\n======\n";
     model m(dir, 1);
     const std::vector<std::string> p{"q", "Q", "A.+", "A.-"};
     plan row{{term{{vertex{0, {1, 2, 3, 4}}}, {}, 1}}};
     Algebra a(&m.algebra());
+    const std::vector<std::string> cubic{"q", "Q", "A.+"};
+    plan bare{{term{{vertex{1, {1, 2, 3}}}, {}, 1}}};
+    auto explicit_ref = sew(a, m, cubic, bare, false, false);
+    if (explicit_ref != sew(a, m, cubic, bare, false, true) ||
+        explicit_ref != sew(a, m, cubic, bare, false, true, true))
+        throw std::runtime_error("singular external replacement for a stored three-point reference");
     auto old = sew(a, m, p, row, false, false);
     if (a.format(old).find("\"Xi\"") == std::string::npos)
         throw std::runtime_error("lost explicit reference in keep mode");
