@@ -65,6 +65,31 @@ operation.", "ExampleText"],
       "]", ";"}]], "Input"], Cell["This example writes files, starts a longer \
 calculation, or requires an optional external tool. Evaluate it when you want \
 to perform that operation.", "ExampleText"],
+  Cell["Optional Native Batch Reduction", "TechNoteSection"],
+  Cell[TextData[{"After generating both lists, you can reduce them together \
+with the experimental C++ reducer in csource. Build the \
+hepcat-reduce-amplitude executable using the commands in csource/README.md, \
+then load the optional Mathematica bridge. Its default worker count uses the \
+available hardware threads and the number of items."}], "TechNoteText"],
+  Cell[TextData[{"Each diagram uses its own numerator shells. Each \
+factorization product uses its channel shell. The returned Diagrams and \
+FactorizationProducts entries preserve the input row order. DiagramRemainders \
+and FactorizationRemainders contain the matching off-cut differences, so \
+adding a remainder to its reduced expression recovers the original away from \
+the cut."}], "TechNoteText"],
+  Cell[TextData[{"Reduce both lists from the preceding example in one native \
+call. Adjust the executable path if you built it elsewhere."}],
+   "ExampleText"],
+  Cell[BoxData[RowBox[{"Get", "[",
+      "\"~/code/hepcat/csource/NativeAmplitude.wl\"", "]", ";", "\n",
+      "binary", " ", "=", " ", "ExpandFileName", "[", "\"~/code/hepcat/tests/\
+results/native-reduce-build/hepcat-reduce-amplitude\"", "]", ";", "\n",
+      "batch", " ", "=", " ", "HEPCATNative`ReduceNativeAmplitude", "[",
+      "rawAmplitudes", ",", " ", "channels", ",", " ", "binary", "]", ";",
+      "\n", "batch", "[", "\"Diagrams\"", "]"}]], "Input"],
+  Cell["This example writes files, starts a longer calculation, or requires \
+an optional external tool. Evaluate it when you want to perform that \
+operation.", "ExampleText"],
   Cell["Prepare Without Throwing Away Information", "TechNoteSection"],
   Cell[TextData[{ButtonBox["PrepareAmplitudes", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/PrepareAmplitudes"], " chooses the \

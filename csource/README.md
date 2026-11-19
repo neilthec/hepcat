@@ -18,6 +18,67 @@ int main() {
 
 Here the numerator shell is $(p_1+p_3)^2=m_e^2$. Since $p_1^2=m_e^2$ and $p_3^2=0$, the reduced dot product is zero. Its off-cut remainder is `MomProd[1,3]`. Omit the third constructor argument to use external masses and momentum conservation alone. The optional C interface is in [hepcat.h](hepcat.h), with a runnable short example in [c_api_test.c](c_api_test.c).
 
+## Reduce diagrams and factorization products in one batch
+
+Use `hepcat::amplitude` when several items have the same ordered external masses. Add the diagrams and the sewn factorization products before calling `reduce()`. Each diagram can have several internal numerator shells. Each factorization product has its own channel shell. A product stores the complete HEPCAT channel expression, including its original denominator. Duplicate rows and their individual exchanged masses keep their positions.
+
+```cpp
+#include "amplitude.hpp"
+
+hepcat::amplitude amp({"me", "me", "0", "0"});
+amp.add_diagram("MomProd[1,3]", {{{1,3}, "me"}});
+amp.add_factorization_product("MomProd[2,4]", {{2,4}, "me"});
+amp.reduce();
+
+const auto& diagram = amp.diagrams().front();
+const auto& product = amp.factorization_products().front();
+auto rest = diagram.expression.discarded_remainder();
+```
+
+In this small example both dot products reduce to zero. Adding the corresponding stored remainder recovers each input away from its cut. The two collections keep their original order when threads finish at different times. A successful call updates all pending items together. If one fails, the earlier visible expressions and remainders remain available. Adding an item after a successful call and calling `reduce()` again schedules just the new work.
+
+The combined queue starts larger input expressions first. The default worker count is the smaller of the number of pending items and the hardware thread count (at least one for a nonempty queue). `amp.reduce(1)` runs serially. Use a positive limit such as `amp.reduce(4)` when the intermediates are large relative to available memory. `last_worker_count()` reports the size of the dispatch team, including the caller.
+
+### Use the batch from Mathematica
+
+Build the native code with the commands below. From a kernel whose working directory is the repository root, evaluate
+
+```wolfram
+Get["csource/NativeAmplitude.wl"]
+```
+
+Then evaluate
+
+```wolfram
+qed = ReadModel["models", 3];
+qedFactorization = ReadModel["models", 4];
+binary = ExpandFileName["tests/results/native-reduce-build/hepcat-reduce-amplitude"];
+batch = ReduceNativeAmplitude[{"e", "E", "A.+", "A.+", "A.-"},
+  qed, qedFactorization, binary];
+batch["Diagrams"]
+batch["FactorizationProducts"]
+```
+
+The bridge loads HEPCAT if needed, generates both lists in Mathematica, and sends them to a single native amplitude. To reuse already generated rows, call `ReduceNativeAmplitude[diagramPairs, channelRows, binary]`. Mathematica contracts spin indices and resolves each row's explicit mass labels before transfer. By default, the batch keeps the reference spinors of its input. With at least two massless external legs, `"PolePreference" -> "Cyclic"` requests a common cyclic reference choice across the batch. `"Workers" -> 1` requests serial native reduction.
+
+The returned lists have the ordinary HEPCAT diagram and channel formats. `"DiagramRemainders"` and `"FactorizationRemainders"` hold the off-cut corrections in the same order, with zero for an empty remainder. A factorization product containing a cut-only object such as a massless exchanged-particle x factor has a physical interpretation on that pole. Its reduced form and remainder preserve the supplied symbolic continuation. Save the batch if a later step needs those corrections. Passing just the two lists to `CompleteFactorization` supplies the reduced rows only. `"ReductionSeconds"` measures the native `amp.reduce()` call. Wrap the Mathematica call in `AbsoluteTiming` to include generation, transfer and result reconstruction. This optional entry point can be called independently of `ConstructAmplitude`.
+
+### Combined queue benchmark
+
+These timings use the actual QED diagram and factorization rows on an Apple M3 with eight hardware threads. Each table entry is a median in milliseconds over seven interleaved runs after warmup. The two-queue timing adds the native time to reduce the diagrams in parallel and then the products in parallel. The combined queue uses the same reductions and worker limit. The caller columns time the complete Mathematica calls on pre-generated inputs, including conversion, process startup and reconstruction of the result.
+
+| Electron pair plus photons | Diagrams + products | Serial native | Two parallel queues, native | Combined queue, native | Two calls, caller | Combined call, caller |
+|---|---:|---:|---:|---:|---:|---:|
+| Two, ++ | 2 + 2 | 0.71 | 0.78 | 0.80 | 41.7 | 25.9 |
+| Three, ++− | 6 + 6 | 24.43 | 13.16 | 9.76 | 111.2 | 90.1 |
+| Four, ++++ | 24 + 14 | 129.49 | 45.28 | 41.95 | 313.7 | 298.8 |
+
+All three schedules returned identical ordered expressions, metadata and remainders. Mathematica independently checked every spin coefficient of each input against its reduction plus its remainder at four exact off-cut samples. Each of the 22 factorization products also retained its nonzero residue at a regular point on its own pole. Adding a term that vanishes on a chosen shell to a real diagram and to a different channel exercised nonzero remainders in each collection. See the [sample timings and validation counts](batch-benchmark-results.json).
+
+A separate SM check used the six WWWW diagrams from model 1 and six factorization products from model 2. Serial and eight-worker reductions agreed item by item. The full spin polynomials of all six diagrams and four massive-exchange products agreed at an exact conserved point after restoring remainders. One diagram had a nonzero remainder. All six products preserved their nonzero residues on their respective poles, including the two photon-exchange products with cut-dependent x factors.
+
+To reproduce the combined benchmark from the repository root, set `HEPCAT_BATCH_BINARY` to the absolute path of the built `hepcat-reduce-amplitude` executable and run `WolframKernel -script csource/batch_benchmark.wls`. This also writes its compact report under `tests/results/native-batch-benchmark`. With the same environment setting, run the focused bridge regressions using `WolframKernel -script csource/batch_bridge_tests.wls`.
+
 ## Representation and identities
 
 The reader accepts explicit Wolfram-style expression trees such as `Plus[x,Times[-1,y]]` and `SpinorChain[Spinor["Spin","Angle",1],Spinor["Spin","Angle",2]]`. Numeric algebra uses exact integers and rational numbers through GMP. Model parameters keep their full symbolic identity. Identical subexpressions have one node in an amplitude's storage. Candidate rewrites use temporary storage which is released at the end of a call. Input transfer parses the tree and interns identical nodes. Collection of like terms, algebraic normalization and identity selection occur inside the measured reduction.

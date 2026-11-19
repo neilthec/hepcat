@@ -124,6 +124,20 @@
         ]
       },
       {
+        "title": "Optional Native Batch Reduction",
+        "paragraphs": [
+          "After generating both lists, you can reduce them together with the experimental C++ reducer in csource. Build the hepcat-reduce-amplitude executable using the commands in csource/README.md, then load the optional Mathematica bridge. Its default worker count uses the available hardware threads and the number of items.",
+          "Each diagram uses its own numerator shells. Each factorization product uses its channel shell. The returned Diagrams and FactorizationProducts entries preserve the input row order. DiagramRemainders and FactorizationRemainders contain the matching off-cut differences, so adding a remainder to its reduced expression recovers the original away from the cut."
+        ],
+        "examples": [
+          {
+            "description": "Reduce both lists from the preceding example in one native call. Adjust the executable path if you built it elsewhere.",
+            "input": "Get[\"~/code/hepcat/csource/NativeAmplitude.wl\"];\nbinary = ExpandFileName[\"~/code/hepcat/tests/results/native-reduce-build/hepcat-reduce-amplitude\"];\nbatch = HEPCATNative`ReduceNativeAmplitude[rawAmplitudes, channels, binary];\nbatch[\"Diagrams\"]",
+            "evaluate": false
+          }
+        ]
+      },
+      {
         "title": "Prepare Without Throwing Away Information",
         "paragraphs": [
           "[PrepareAmplitudes](paclet:HEPCAT/ref/PrepareAmplitudes) chooses the requested reference-spinor form and simplifies each diagram with its own permitted assumptions. Its ordinary output is the prepared list. Requesting details here additionally keeps the raw expressions, retained remainders and the preparation history for the next stage.",
