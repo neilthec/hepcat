@@ -61,6 +61,34 @@ void testKinematics() {
     equal("Power[Mom[Multiparticle[1,2,5]],2]", "Power[Mom[Multiparticle[1,2,5]],2]");
     equal("SpinorChain[Spinor[\"Spin\",\"Angle\",1],Mom[Multiparticle[1,2,3,4]],"
           "Spinor[\"Spin\",\"Square\",2]]", "0");
+    // A determinant of two crossed sandwiches reduces on the declared cut.
+    // The two reference chiralities and a reversed two-slash word use the
+    // same rule. A numerator shell never propagates into an inverse power.
+    const Id m = a.atom("m"), z = a.integer(0);
+    const std::vector<Id> diracMasses{m, m, z, z};
+    for (auto c : {"Angle", "Square"}) {
+        bool ang = std::string(c) == "Angle";
+        auto polar = [&](int leg, bool angle) {
+            return a.call("Spinor", {a.atom("\"Helicity\""), a.atom(angle ? "\"Angle\"" : "\"Square\""),
+                                     a.integer(leg)});
+        };
+        auto mom = [&](int leg) { return a.call("Mom", {a.integer(leg)}); };
+        Id b = polar(3, ang), end = polar(4, ang);
+        auto word = [&](bool reversed) {
+            Id wide = a.call("SpinorChain", {end, mom(reversed ? 2 : 1), mom(reversed ? 1 : 2), end});
+            return a.mul({wide, a.call("SpinorChain", {b, mom(2), polar(4, !ang)})});
+        };
+        a.setKinematics(diracMasses, {});
+        Id uncrossed = a.simplify(word(false));
+        Id reciprocal = a.simplify(a.pow(word(false), -1));
+        a.setKinematics(diracMasses, {{{1, 3}, m}});
+        Id onCut =
+            a.simplify(a.mul({a.integer(-2), a.pow(m, 2), a.call("MomProd", {a.integer(2), a.integer(3)}),
+                              a.call("SpinorChain", {end, b})}));
+        if (a.simplify(word(false)) != onCut || a.simplify(word(true)) != a.mul({a.integer(-1), onCut}) ||
+            uncrossed == onCut || reciprocal != a.simplify(a.pow(word(false), -1)))
+            throw std::runtime_error("cut sandwich determinant, reversal, or denominator protection");
+    }
 }
 } // namespace hepcat
 

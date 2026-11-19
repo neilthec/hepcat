@@ -78,6 +78,15 @@ int main(int argc, char** argv) {
         rejects([&] { amplitude invalid(three, qed, wrong_scope); },
                 "conflicting external model masses were accepted");
         rejects([&] { amplitude invalid({"e", "E", "not-a-particle"}, qed, qf); }, "unknown particle accepted");
+        for (const std::string helicity : {"A.+", "A.-"}) {
+            amplitude same_helicity({"e","E",helicity,helicity},qed,qf,generation_references::physical);
+            const auto final = same_helicity.complete_high_energy().str();
+            require(same_helicity.diagrams().size() == 2 && same_helicity.factorization_products().size() == 2 &&
+                    same_helicity.last_high_energy().route == "Unchanged" && final != "0" &&
+                    final.find("],Mom[") == std::string::npos && final.find("MomProd[") == std::string::npos &&
+                    final.find("PropDen[") != std::string::npos && final.find("\"Xi\"") == std::string::npos,
+                    "same-helicity physical-reference generation and both completions");
+        }
         std::cout << "Native model-based generation integration tests passed.\n";
     } catch (const std::exception& e) {
         std::cerr << e.what() << '\n';

@@ -268,10 +268,72 @@ Id reduceInsertion(Algebra& algebra, Id id, bool useInternal) {
     return best;
 }
 
+// For four conserved momenta, [a|K P|a] = -[ab]<b|P|a], where a,b
+// are null. The determinant of the two crossed P sandwiches splits into
+// two diagonal sandwiches and P^2 times the bare brackets. If either
+// P.a or P.b vanishes on this numerator's cut, the diagonal product is zero,
+// leaving P^2 (K^2-P^2-2P.a-2P.b) [ab]. Angle parity obeys the same identity.
+Id fourPointCutMinor(Algebra& a, Id product) {
+    const auto& factors = a.node(product).args;
+    if (std::count_if(a.masses().begin(), a.masses().end(),
+                      [&](Id mass) { return a.node(mass).head == "0"; }) < 2) return product;
+    auto nullEnd = [&](Id x) {
+        const auto& n = a.node(x);
+        if (n.head != "Spinor" || n.args.size() != 3 || a.node(n.args[0]).head != "\"Helicity\"") return 0;
+        int i = a.leg(n.args[2]);
+        return external(a, i) && a.node(a.masses()[i - 1]).head == "0" ? i : 0;
+    };
+    auto legOfMom = [&](Id x) {
+        const auto& n = a.node(x);
+        return n.head == "Mom" && n.args.size() == 1 ? a.leg(n.args[0]) : 0;
+    };
+    for (size_t i = 0; i < factors.size(); ++i) {
+        const auto& wide = a.node(factors[i]);
+        if (wide.head != "SpinorChain" || wide.args.size() != 4 || wide.args.front() != wide.args.back())
+            continue;
+        int legA = nullEnd(wide.args[0]), left = legOfMom(wide.args[1]), right = legOfMom(wide.args[2]);
+        if (!legA || !external(a, left) || !external(a, right) || left == right || left == legA ||
+            right == legA)
+            continue;
+        const Id endA = wide.args.front(), chirality = a.node(endA).args[1];
+        for (size_t j = 0; j < factors.size(); ++j) {
+            const auto& shortChain = a.node(factors[j]);
+            if (shortChain.head != "SpinorChain" || shortChain.args.size() != 3) continue;
+            int p = legOfMom(shortChain.args[1]);
+            if (p != left && p != right) continue;
+            Id b = shortChain.args.front(), opposite = shortChain.args.back();
+            if (!nullEnd(b) || !nullEnd(opposite)) continue;
+            if (a.node(b).args[1] != chirality) std::swap(b, opposite);
+            int legB = nullEnd(b), other = p == right ? left : right;
+            if (nullEnd(opposite) != legA || a.node(opposite).args[1] == chirality ||
+                a.node(b).args[1] != chirality || legB == legA || legB == left || legB == right)
+                continue;
+            auto pa = knownDot(a, {p}, {legA}, true), pb = knownDot(a, {p}, {legB}, true);
+            Id zero = a.integer(0);
+            if (pa != zero && pb != zero) continue;
+            auto dot = [&](int x) {
+                return a.call("MomProd", {a.integer(std::min(p, x)), a.integer(std::max(p, x))});
+            };
+            auto mp2 = a.pow(a.masses()[p - 1], 2);
+            auto scalar = a.add({a.pow(a.masses()[other - 1], 2), a.mul({a.integer(-1), mp2}),
+                                 a.mul({a.integer(-2), pa.value_or(dot(legA))}),
+                                 a.mul({a.integer(-2), pb.value_or(dot(legB))})});
+            auto out = factors;
+            out[i] = a.mul({a.integer(p == right ? 1 : -1), mp2, scalar,
+                            reduceSpinor(a, a.call("SpinorChain", {endA, b}))});
+            out[j] = a.integer(1);
+            return a.mul(std::move(out));
+        }
+    }
+    return product;
+}
+
 } // namespace
 
 Id reduceKinematics(Algebra& algebra, Id id, bool useInternal) {
     const auto& n = algebra.node(id);
+    if (n.head == "Times" && useInternal && algebra.masses().size() == 4 && !algebra.shells().empty())
+        return fourPointCutMinor(algebra, id);
     if (n.head == "Mass" && n.args.size() == 1) {
         if (auto legs = members(algebra, n.args[0]))
             if (auto mass = directMass(algebra, *legs, useInternal))

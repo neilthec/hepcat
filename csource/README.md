@@ -42,6 +42,8 @@ The reader loads the particle, variable, function and interaction tables for the
 
 Automatic constructive references use a cycle of massless external particles when available and a massive spectator for a lone photon. Pass `hepcat::generation_references::keep` to keep explicit references or `hepcat::generation_references::physical` to request physical denominators where a suitable spectator exists. A factorization product is defined on its own pole. Its continuation can differ from the Mathematica representative while giving the same residue.
 
+For `e,E,A.+,A.+` and its negative-helicity partner, choose `generation_references::physical` for end-to-end completion. A four-point determinant identity removes the extra momentum insertions on each numerator's own shell. Both helicities then give a single term with two physical propagators and pass the high-energy check. The automatic cyclic choice for the positive-helicity pair still leaves its high-energy correction unresolved.
+
 From Mathematica, after loading HEPCAT and the optional bridge, the equivalent call is
 
 ```wolfram
@@ -57,7 +59,7 @@ In the Mathematica bridge, `"PolePreference" -> "AllSpurious"` requests the cycl
 
 The [generation benchmark](generation_benchmark.wls) compares individual diagram spin polynomials, including their remainders, at two conserved exact points. It compares each factorization product at two regular points on its own pole. It times the fused native generation and reduction separately from model loading and bridge transfer. Run it with a licensed Wolfram kernel after building the executable. The [model reader check](model_reader_oracle.wls) compares vertex expressions and factors with Mathematica for all shipped constructive and CalcHEP models. Additional checks cover [three identical fermion pairs](generation_six_fermion_checks.wls), [quark color coefficients](generation_color_checks.wls), [gluon channels](generation_gluon_checks.wls) and [off-shell Feynman tensors](generation_feynman_checks.wls).
 
-On the eight-worker release build, the electron pair with four positive-helicity photons took 1.01 s with one worker and 0.32 s with eight for its 24 diagrams and 14 channels. Peak RSS went from 5.8 to 12.2 MiB. For four W bosons the corresponding times were 7.91 s and 2.76 s, with 15.2 and 37.0 MiB peak RSS. These timings cover topology generation, sewing and reduction after loading the models. The [measurements for all eight processes](generation-benchmark-results.json) also report model read time and Wolfram raw generation time separately.
+On the eight-worker release build, the electron pair with four positive-helicity photons took 1.02 s with one worker and 0.32 s with eight for its 24 diagrams and 14 channels. Peak RSS went from 5.7 to 12.1 MiB. For four W bosons the corresponding times were 8.03 s and 2.51 s, with 15.1 and 37.3 MiB peak RSS. These timings cover topology generation, sewing and reduction after loading the models. The [measurements for all eight processes](generation-benchmark-results.json) also report model read time and Wolfram raw generation time separately.
 
 ## Reduce diagrams and factorization products in one batch
 
