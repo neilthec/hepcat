@@ -318,6 +318,31 @@ Id trace(Algebra& a, Id original) {
 }
 } // namespace
 
+// The determinant of a single external momentum bispinor is its mass squared.
+// HEPCAT's bracket order gives the minus sign in the uncrossed minor.
+std::optional<Id> commonMomentumSwap(Algebra& a, Id first, Id second) {
+    auto sandwich = [&](Id id) -> std::optional<std::array<Id,3>> {
+        const auto& n = a.node(id);
+        if (n.head != "SpinorChain" || n.args.size() != 3) return std::nullopt;
+        Id left = n.args.front(), right = n.args.back();
+        auto l = endpoint(a,left), r = endpoint(a,right);
+        if (l.kind == Kind::Unknown || r.kind == Kind::Unknown || l.angle == r.angle)
+            return std::nullopt;
+        if (l.angle) std::swap(left,right);
+        return std::array<Id,3>{left,n.args[1],right};
+    };
+    auto one = sandwich(first), two = sandwich(second);
+    if (!one || !two) return std::nullopt;
+    auto [u,p,v] = *one;
+    auto [w,q,x] = *two;
+    int leg = momentumLeg(a,p);
+    if (p != q || !external(a,leg) || u == w || v == x) return std::nullopt;
+    Id crossed = a.mul({chain(a,{u,p,x}), chain(a,{w,p,v})});
+    Id minor = a.mul({a.integer(-1), a.pow(a.masses()[leg-1],2),
+                      chain(a,{u,w}), chain(a,{v,x})});
+    return a.add({crossed,minor});
+}
+
 Id reduceSpinor(Algebra& a, Id id) {
     const auto& n=a.node(id);
     if (!n.compound) return id;

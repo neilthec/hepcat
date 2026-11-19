@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <deque>
 #include <map>
+#include <optional>
 #include <string>
 #include <vector>
 #include <unordered_map>
@@ -41,6 +42,8 @@ public:
     void setKinematics(std::vector<Id> masses, std::map<std::vector<int>,Id> shells);
     Id parse(const std::string& expression);
     std::string format(Id expression) const;
+    bool number(Id id, mpq_class& result) const;
+    Id exact(const mpq_class& value);
     Id simplify(Id expression);
 private:
     const Algebra* parent_;
@@ -51,8 +54,6 @@ private:
     std::unordered_multimap<std::size_t,Id> index_;
     std::vector<Id> masses_;
     std::map<std::vector<int>,Id> shells_;
-    bool number(Id id, mpq_class& result) const;
-    Id exact(const mpq_class& value);
     Id factorSum(Id expression);
 };
 
@@ -60,6 +61,7 @@ Id reduceInto(Algebra& storage, Id expression, const std::vector<Id>& masses,
               const std::map<std::vector<int>,Id>& shells);
 Id collectCandidate(Algebra&, Id);
 Id reduceSpinor(Algebra&, Id);
+std::optional<Id> commonMomentumSwap(Algebra&, Id first, Id second);
 Id reduceKinematics(Algebra&, Id, bool useInternal = true);
 
 } // namespace hepcat

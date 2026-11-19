@@ -1,6 +1,6 @@
 {
   "platform": "macOS 26.6.2 arm64",
-  "compiler": "AppleClang 21.0.3, CMake Release",
+  "compiler": "Apple clang 21.0.0 (clang-2100.3.34.2), CMake Release -O3 -DNDEBUG",
   "wolfram": "15.0.0 arm64",
   "repetitions": 3,
   "time": "Wall seconds inside the reduction, after import and before export. Fresh process for each run.",
@@ -43,129 +43,174 @@
           13
         ]
       ],
-      "agreement": "Exact equality to the common input of every coherent spin coefficient at all six samples. Each of the nine timed outputs checked.",
+      "nonzeroSpinCoefficientsPerSample": [
+        [
+          2,
+          2,
+          2
+        ],
+        [
+          2,
+          2,
+          2
+        ]
+      ],
+      "agreement": "Exact equality to the common input of the full external spin polynomial at all six samples. Each timed output checked.",
       "symbolicChartIdentity": true,
       "methods": {
-        "reduce": {
-          "medianSeconds": 0.01258,
-          "maxSampledRSSBytes": 326074368,
+        "native": {
+          "medianSeconds": 0.000441667,
+          "maxSampledRSSBytes": 2064384,
+          "maxAdditionalRSSBytes": 376832,
           "runs": [
             {
-              "Seconds": 0.01258,
+              "Seconds": 0.000441667,
+              "HighWaterRSSBeforeBytes": 1687552,
+              "HighWaterRSSAfterBytes": 2031616,
+              "ImportSeconds": 0.000132083,
+              "ExportSeconds": 0.000122167,
+              "OutputSHA256": "0513bf6a8dab61056189fca514a52832302e17bd42f60c9507f9a6ea15b1d284",
+              "BaselineRSSBytes": 1687552,
+              "SampledPeakRSSBytes": 2031616,
+              "AdditionalRSSBytes": 344064,
+              "RSSSamples": 4,
+              "OutputComplexity": 18
+            },
+            {
+              "Seconds": 0.000401708,
+              "HighWaterRSSBeforeBytes": 1703936,
+              "HighWaterRSSAfterBytes": 2048000,
+              "ImportSeconds": 7.675e-05,
+              "ExportSeconds": 0.000129583,
+              "OutputSHA256": "0513bf6a8dab61056189fca514a52832302e17bd42f60c9507f9a6ea15b1d284",
+              "BaselineRSSBytes": 1703936,
+              "SampledPeakRSSBytes": 2048000,
+              "AdditionalRSSBytes": 344064,
+              "RSSSamples": 6,
+              "OutputComplexity": 18
+            },
+            {
+              "Seconds": 0.0004745,
+              "HighWaterRSSBeforeBytes": 1687552,
+              "HighWaterRSSAfterBytes": 2064384,
+              "ImportSeconds": 7.5167e-05,
+              "ExportSeconds": 0.000116625,
+              "OutputSHA256": "0513bf6a8dab61056189fca514a52832302e17bd42f60c9507f9a6ea15b1d284",
+              "BaselineRSSBytes": 1687552,
+              "SampledPeakRSSBytes": 2064384,
+              "AdditionalRSSBytes": 376832,
+              "RSSSamples": 7,
+              "OutputComplexity": 18
+            }
+          ]
+        },
+        "reduce": {
+          "medianSeconds": 0.013864,
+          "maxSampledRSSBytes": 326975488,
+          "maxAdditionalRSSBytes": 1261568,
+          "runs": [
+            {
+              "Case": "qed",
+              "Method": "reduce",
+              "Seconds": 0.01532,
               "WolframEvaluationPeakAdditionalBytes": 156584,
+              "InputComplexity": 36,
               "OutputComplexity": 18,
+              "InputLeaves": 161,
               "OutputLeaves": 79,
+              "Version": "15.0.0 for Mac OS X ARM (64-bit) (May 19, 2026)",
               "OutputSHA256": "bee141e825287d99f57a310a05e4b5828a1b996837ffdf9f41ae41b4f9642f21",
-              "BaselineRSSBytes": 324812800,
-              "SampledPeakRSSBytes": 326074368,
+              "BaselineRSSBytes": 325713920,
+              "SampledPeakRSSBytes": 326975488,
+              "AdditionalRSSBytes": 1261568,
+              "RSSSamples": 51
+            },
+            {
+              "Case": "qed",
+              "Method": "reduce",
+              "Seconds": 0.013864,
+              "WolframEvaluationPeakAdditionalBytes": 156584,
+              "InputComplexity": 36,
+              "OutputComplexity": 18,
+              "InputLeaves": 161,
+              "OutputLeaves": 79,
+              "Version": "15.0.0 for Mac OS X ARM (64-bit) (May 19, 2026)",
+              "OutputSHA256": "bee141e825287d99f57a310a05e4b5828a1b996837ffdf9f41ae41b4f9642f21",
+              "BaselineRSSBytes": 324648960,
+              "SampledPeakRSSBytes": 325910528,
+              "AdditionalRSSBytes": 1261568,
+              "RSSSamples": 46
+            },
+            {
+              "Case": "qed",
+              "Method": "reduce",
+              "Seconds": 0.013726,
+              "WolframEvaluationPeakAdditionalBytes": 156584,
+              "InputComplexity": 36,
+              "OutputComplexity": 18,
+              "InputLeaves": 161,
+              "OutputLeaves": 79,
+              "Version": "15.0.0 for Mac OS X ARM (64-bit) (May 19, 2026)",
+              "OutputSHA256": "bee141e825287d99f57a310a05e4b5828a1b996837ffdf9f41ae41b4f9642f21",
+              "BaselineRSSBytes": 323567616,
+              "SampledPeakRSSBytes": 324829184,
               "AdditionalRSSBytes": 1261568,
               "RSSSamples": 48
-            },
-            {
-              "Seconds": 0.012266,
-              "WolframEvaluationPeakAdditionalBytes": 156584,
-              "OutputComplexity": 18,
-              "OutputLeaves": 79,
-              "OutputSHA256": "bee141e825287d99f57a310a05e4b5828a1b996837ffdf9f41ae41b4f9642f21",
-              "BaselineRSSBytes": 323436544,
-              "SampledPeakRSSBytes": 324698112,
-              "AdditionalRSSBytes": 1261568,
-              "RSSSamples": 47
-            },
-            {
-              "Seconds": 0.015382,
-              "WolframEvaluationPeakAdditionalBytes": 156584,
-              "OutputComplexity": 18,
-              "OutputLeaves": 79,
-              "OutputSHA256": "bee141e825287d99f57a310a05e4b5828a1b996837ffdf9f41ae41b4f9642f21",
-              "BaselineRSSBytes": 323682304,
-              "SampledPeakRSSBytes": 324943872,
-              "AdditionalRSSBytes": 1261568,
-              "RSSSamples": 47
             }
           ]
         },
         "prepare": {
-          "medianSeconds": 1.262907,
-          "maxSampledRSSBytes": 362872832,
+          "medianSeconds": 1.328011,
+          "maxSampledRSSBytes": 362856448,
+          "maxAdditionalRSSBytes": 39059456,
           "runs": [
             {
-              "Seconds": 1.338082,
-              "WolframEvaluationPeakAdditionalBytes": 19756224,
+              "Case": "qed",
+              "Method": "prepare",
+              "Seconds": 1.274213,
+              "WolframEvaluationPeakAdditionalBytes": 19758800,
+              "InputComplexity": 36,
               "OutputComplexity": 18,
+              "InputLeaves": 161,
               "OutputLeaves": 79,
+              "Version": "15.0.0 for Mac OS X ARM (64-bit) (May 19, 2026)",
               "OutputSHA256": "bee141e825287d99f57a310a05e4b5828a1b996837ffdf9f41ae41b4f9642f21",
-              "BaselineRSSBytes": 323567616,
-              "SampledPeakRSSBytes": 362708992,
-              "AdditionalRSSBytes": 39141376,
-              "RSSSamples": 3957
+              "BaselineRSSBytes": 323895296,
+              "SampledPeakRSSBytes": 362856448,
+              "AdditionalRSSBytes": 38961152,
+              "RSSSamples": 3943
             },
             {
-              "Seconds": 1.262907,
-              "WolframEvaluationPeakAdditionalBytes": 19756224,
+              "Case": "qed",
+              "Method": "prepare",
+              "Seconds": 1.328011,
+              "WolframEvaluationPeakAdditionalBytes": 19758800,
+              "InputComplexity": 36,
               "OutputComplexity": 18,
+              "InputLeaves": 161,
               "OutputLeaves": 79,
+              "Version": "15.0.0 for Mac OS X ARM (64-bit) (May 19, 2026)",
               "OutputSHA256": "bee141e825287d99f57a310a05e4b5828a1b996837ffdf9f41ae41b4f9642f21",
               "BaselineRSSBytes": 323633152,
-              "SampledPeakRSSBytes": 362594304,
-              "AdditionalRSSBytes": 38961152,
-              "RSSSamples": 3888
+              "SampledPeakRSSBytes": 362692608,
+              "AdditionalRSSBytes": 39059456,
+              "RSSSamples": 4092
             },
             {
-              "Seconds": 1.208259,
-              "WolframEvaluationPeakAdditionalBytes": 19756224,
+              "Case": "qed",
+              "Method": "prepare",
+              "Seconds": 1.500759,
+              "WolframEvaluationPeakAdditionalBytes": 19756976,
+              "InputComplexity": 36,
               "OutputComplexity": 18,
+              "InputLeaves": 161,
               "OutputLeaves": 79,
+              "Version": "15.0.0 for Mac OS X ARM (64-bit) (May 19, 2026)",
               "OutputSHA256": "bee141e825287d99f57a310a05e4b5828a1b996837ffdf9f41ae41b4f9642f21",
-              "BaselineRSSBytes": 323911680,
-              "SampledPeakRSSBytes": 362872832,
-              "AdditionalRSSBytes": 38961152,
-              "RSSSamples": 3717
-            }
-          ]
-        },
-        "native": {
-          "medianSeconds": 0.000330792,
-          "maxSampledRSSBytes": 1998848,
-          "runs": [
-            {
-              "Seconds": 0.000477625,
-              "HighWaterRSSBeforeBytes": 1687552,
-              "HighWaterRSSAfterBytes": 1998848,
-              "ImportSeconds": 0.000228791,
-              "ExportSeconds": 0.000108292,
-              "OutputSHA256": "0513bf6a8dab61056189fca514a52832302e17bd42f60c9507f9a6ea15b1d284",
-              "BaselineRSSBytes": 1687552,
-              "SampledPeakRSSBytes": 1998848,
-              "AdditionalRSSBytes": 311296,
-              "RSSSamples": 6,
-              "OutputComplexity": 18
-            },
-            {
-              "Seconds": 0.000313334,
-              "HighWaterRSSBeforeBytes": 1687552,
-              "HighWaterRSSAfterBytes": 1998848,
-              "ImportSeconds": 5.9375e-05,
-              "ExportSeconds": 9.0875e-05,
-              "OutputSHA256": "0513bf6a8dab61056189fca514a52832302e17bd42f60c9507f9a6ea15b1d284",
-              "BaselineRSSBytes": 1687552,
-              "SampledPeakRSSBytes": 1998848,
-              "AdditionalRSSBytes": 311296,
-              "RSSSamples": 5,
-              "OutputComplexity": 18
-            },
-            {
-              "Seconds": 0.000330792,
-              "HighWaterRSSBeforeBytes": 1703936,
-              "HighWaterRSSAfterBytes": 1998848,
-              "ImportSeconds": 5.6958e-05,
-              "ExportSeconds": 6.8416e-05,
-              "OutputSHA256": "0513bf6a8dab61056189fca514a52832302e17bd42f60c9507f9a6ea15b1d284",
-              "BaselineRSSBytes": 1703936,
-              "SampledPeakRSSBytes": 1998848,
-              "AdditionalRSSBytes": 294912,
-              "RSSSamples": 6,
-              "OutputComplexity": 18
+              "BaselineRSSBytes": 323616768,
+              "SampledPeakRSSBytes": 362512384,
+              "AdditionalRSSBytes": 38895616,
+              "RSSSamples": 4260
             }
           ]
         }
@@ -212,133 +257,714 @@
           13
         ]
       ],
-      "agreement": "Exact equality to the common input of every coherent spin coefficient at all six samples. Each of the nine timed outputs checked.",
+      "nonzeroSpinCoefficientsPerSample": [
+        [
+          75,
+          75,
+          75
+        ],
+        [
+          75,
+          75,
+          75
+        ]
+      ],
+      "agreement": "Exact equality to the common input of the full external spin polynomial at all six samples. Each timed output checked.",
       "symbolicChartIdentity": null,
       "methods": {
-        "reduce": {
-          "medianSeconds": 0.369912,
-          "maxSampledRSSBytes": 339656704,
+        "native": {
+          "medianSeconds": 2.288553042,
+          "maxSampledRSSBytes": 16007168,
+          "maxAdditionalRSSBytes": 13844480,
           "runs": [
             {
-              "Seconds": 0.433123,
-              "WolframEvaluationPeakAdditionalBytes": 2662192,
-              "OutputComplexity": 2232,
-              "OutputLeaves": 12241,
-              "BaselineRSSBytes": 330809344,
-              "SampledPeakRSSBytes": 337379328,
-              "AdditionalRSSBytes": 6569984,
-              "RSSSamples": 1178,
-              "OutputSHA256": "812f0270de19f45f2471196df16f3c7e534709466d13c66a86caf84470cd3ae5"
+              "Seconds": 2.293746375,
+              "HighWaterRSSBeforeBytes": 2146304,
+              "HighWaterRSSAfterBytes": 15908864,
+              "ImportSeconds": 0.001033375,
+              "ExportSeconds": 0.000325458,
+              "OutputSHA256": "9f02c14ee8bc8a1a7fb8e557d5aeb434e0adfde2d34e8ea71433881a1ca4f432",
+              "BaselineRSSBytes": 2146304,
+              "SampledPeakRSSBytes": 15908864,
+              "AdditionalRSSBytes": 13762560,
+              "RSSSamples": 7079,
+              "OutputComplexity": 695
             },
             {
-              "Seconds": 0.369912,
-              "WolframEvaluationPeakAdditionalBytes": 2662192,
-              "OutputComplexity": 2232,
-              "OutputLeaves": 12241,
-              "BaselineRSSBytes": 332742656,
-              "SampledPeakRSSBytes": 339656704,
-              "AdditionalRSSBytes": 6914048,
-              "RSSSamples": 901,
-              "OutputSHA256": "812f0270de19f45f2471196df16f3c7e534709466d13c66a86caf84470cd3ae5"
+              "Seconds": 2.288553042,
+              "HighWaterRSSBeforeBytes": 2162688,
+              "HighWaterRSSAfterBytes": 16007168,
+              "ImportSeconds": 0.001176042,
+              "ExportSeconds": 0.000362208,
+              "OutputSHA256": "9f02c14ee8bc8a1a7fb8e557d5aeb434e0adfde2d34e8ea71433881a1ca4f432",
+              "BaselineRSSBytes": 2162688,
+              "SampledPeakRSSBytes": 16007168,
+              "AdditionalRSSBytes": 13844480,
+              "RSSSamples": 7080,
+              "OutputComplexity": 695
             },
             {
-              "Seconds": 0.357165,
-              "WolframEvaluationPeakAdditionalBytes": 2662192,
+              "Seconds": 2.252409542,
+              "HighWaterRSSBeforeBytes": 2195456,
+              "HighWaterRSSAfterBytes": 15974400,
+              "ImportSeconds": 0.00109875,
+              "ExportSeconds": 0.00034825,
+              "OutputSHA256": "9f02c14ee8bc8a1a7fb8e557d5aeb434e0adfde2d34e8ea71433881a1ca4f432",
+              "BaselineRSSBytes": 2195456,
+              "SampledPeakRSSBytes": 15974400,
+              "AdditionalRSSBytes": 13778944,
+              "RSSSamples": 6993,
+              "OutputComplexity": 695
+            }
+          ]
+        },
+        "reduce": {
+          "medianSeconds": 0.134713,
+          "maxSampledRSSBytes": 338231296,
+          "maxAdditionalRSSBytes": 6307840,
+          "runs": [
+            {
+              "Case": "wwww",
+              "Method": "reduce",
+              "Seconds": 0.149587,
+              "WolframEvaluationPeakAdditionalBytes": 2662864,
+              "InputComplexity": 2232,
               "OutputComplexity": 2232,
+              "InputLeaves": 12763,
               "OutputLeaves": 12241,
-              "BaselineRSSBytes": 333119488,
-              "SampledPeakRSSBytes": 339361792,
+              "Version": "15.0.0 for Mac OS X ARM (64-bit) (May 19, 2026)",
+              "OutputSHA256": "812f0270de19f45f2471196df16f3c7e534709466d13c66a86caf84470cd3ae5",
+              "BaselineRSSBytes": 331661312,
+              "SampledPeakRSSBytes": 337903616,
               "AdditionalRSSBytes": 6242304,
-              "RSSSamples": 885,
-              "OutputSHA256": "812f0270de19f45f2471196df16f3c7e534709466d13c66a86caf84470cd3ae5"
+              "RSSSamples": 456
+            },
+            {
+              "Case": "wwww",
+              "Method": "reduce",
+              "Seconds": 0.134713,
+              "WolframEvaluationPeakAdditionalBytes": 2662864,
+              "InputComplexity": 2232,
+              "OutputComplexity": 2232,
+              "InputLeaves": 12763,
+              "OutputLeaves": 12241,
+              "Version": "15.0.0 for Mac OS X ARM (64-bit) (May 19, 2026)",
+              "OutputSHA256": "812f0270de19f45f2471196df16f3c7e534709466d13c66a86caf84470cd3ae5",
+              "BaselineRSSBytes": 331923456,
+              "SampledPeakRSSBytes": 338231296,
+              "AdditionalRSSBytes": 6307840,
+              "RSSSamples": 413
+            },
+            {
+              "Case": "wwww",
+              "Method": "reduce",
+              "Seconds": 0.123495,
+              "WolframEvaluationPeakAdditionalBytes": 2662864,
+              "InputComplexity": 2232,
+              "OutputComplexity": 2232,
+              "InputLeaves": 12763,
+              "OutputLeaves": 12241,
+              "Version": "15.0.0 for Mac OS X ARM (64-bit) (May 19, 2026)",
+              "OutputSHA256": "812f0270de19f45f2471196df16f3c7e534709466d13c66a86caf84470cd3ae5",
+              "BaselineRSSBytes": 330252288,
+              "SampledPeakRSSBytes": 336560128,
+              "AdditionalRSSBytes": 6307840,
+              "RSSSamples": 389
             }
           ]
         },
         "prepare": {
-          "medianSeconds": 63.343233,
-          "maxSampledRSSBytes": 472121344,
+          "medianSeconds": 37.457961,
+          "maxSampledRSSBytes": 454754304,
+          "maxAdditionalRSSBytes": 123715584,
           "runs": [
             {
-              "Seconds": 81.493135,
-              "WolframEvaluationPeakAdditionalBytes": 49926976,
-              "OutputComplexity": 898,
-              "OutputLeaves": 10342,
-              "BaselineRSSBytes": 333168640,
-              "SampledPeakRSSBytes": 378388480,
-              "AdditionalRSSBytes": 45219840,
-              "RSSSamples": 137994,
-              "OutputSHA256": "96eaae7dc230aa752e188f4b825a376905070956ac357aa5767f267bcee84568"
+              "Case": "wwww",
+              "Method": "prepare",
+              "Seconds": 37.871604,
+              "WolframEvaluationPeakAdditionalBytes": 142427872,
+              "InputComplexity": 2232,
+              "OutputComplexity": 760,
+              "InputLeaves": 12763,
+              "OutputLeaves": 8629,
+              "Version": "15.0.0 for Mac OS X ARM (64-bit) (May 19, 2026)",
+              "OutputSHA256": "536da0c797efe6f4bc9e8249b14d0207ebc03c0cd355e28257411c7bc595b19a",
+              "BaselineRSSBytes": 330678272,
+              "SampledPeakRSSBytes": 448839680,
+              "AdditionalRSSBytes": 118161408,
+              "RSSSamples": 114299
             },
             {
-              "Seconds": 63.343233,
-              "WolframEvaluationPeakAdditionalBytes": 90633680,
-              "OutputComplexity": 807,
-              "OutputLeaves": 8356,
-              "BaselineRSSBytes": 332775424,
-              "SampledPeakRSSBytes": 375750656,
-              "AdditionalRSSBytes": 42975232,
-              "RSSSamples": 144195,
-              "OutputSHA256": "5deaa78004cd936d271ca14870c269561aae07d820f514a5a8faf6f04761048b"
+              "Case": "wwww",
+              "Method": "prepare",
+              "Seconds": 37.457961,
+              "WolframEvaluationPeakAdditionalBytes": 146372000,
+              "InputComplexity": 2232,
+              "OutputComplexity": 760,
+              "InputLeaves": 12763,
+              "OutputLeaves": 8629,
+              "Version": "15.0.0 for Mac OS X ARM (64-bit) (May 19, 2026)",
+              "OutputSHA256": "536da0c797efe6f4bc9e8249b14d0207ebc03c0cd355e28257411c7bc595b19a",
+              "BaselineRSSBytes": 331038720,
+              "SampledPeakRSSBytes": 454754304,
+              "AdditionalRSSBytes": 123715584,
+              "RSSSamples": 113760
             },
             {
-              "Seconds": 41.804331,
-              "WolframEvaluationPeakAdditionalBytes": 114834512,
-              "OutputComplexity": 788,
-              "OutputLeaves": 8182,
-              "BaselineRSSBytes": 331055104,
-              "SampledPeakRSSBytes": 472121344,
-              "AdditionalRSSBytes": 141066240,
-              "RSSSamples": 117855,
-              "OutputSHA256": "57cd7042b6d82b7a2c9833cedb94e14d15f2a4346e706f0409b873aaa2b931a7"
-            }
-          ]
-        },
-        "native": {
-          "medianSeconds": 0.208696,
-          "maxSampledRSSBytes": 5931008,
-          "runs": [
-            {
-              "Seconds": 0.205729167,
-              "HighWaterRSSBeforeBytes": 2179072,
-              "HighWaterRSSAfterBytes": 5931008,
-              "ImportSeconds": 0.004326625,
-              "ExportSeconds": 0.000361208,
-              "OutputSHA256": "53735a191580c697fcabffd3eb9779755e0215f06bd9a8fd86d5eddfbc0a4ac9",
-              "BaselineRSSBytes": 2179072,
-              "SampledPeakRSSBytes": 5931008,
-              "AdditionalRSSBytes": 3751936,
-              "RSSSamples": 632,
-              "OutputComplexity": 1038
-            },
-            {
-              "Seconds": 0.212800041,
-              "HighWaterRSSBeforeBytes": 2162688,
-              "HighWaterRSSAfterBytes": 5898240,
-              "ImportSeconds": 0.001052708,
-              "ExportSeconds": 0.000359375,
-              "OutputSHA256": "53735a191580c697fcabffd3eb9779755e0215f06bd9a8fd86d5eddfbc0a4ac9",
-              "BaselineRSSBytes": 2162688,
-              "SampledPeakRSSBytes": 5898240,
-              "AdditionalRSSBytes": 3735552,
-              "RSSSamples": 625,
-              "OutputComplexity": 1038
-            },
-            {
-              "Seconds": 0.208696,
-              "HighWaterRSSBeforeBytes": 2162688,
-              "HighWaterRSSAfterBytes": 5898240,
-              "ImportSeconds": 0.001073917,
-              "ExportSeconds": 0.000330583,
-              "OutputSHA256": "53735a191580c697fcabffd3eb9779755e0215f06bd9a8fd86d5eddfbc0a4ac9",
-              "BaselineRSSBytes": 2162688,
-              "SampledPeakRSSBytes": 5898240,
-              "AdditionalRSSBytes": 3735552,
-              "RSSSamples": 639,
-              "OutputComplexity": 1038
+              "Case": "wwww",
+              "Method": "prepare",
+              "Seconds": 37.31895,
+              "WolframEvaluationPeakAdditionalBytes": 148742800,
+              "InputComplexity": 2232,
+              "OutputComplexity": 751,
+              "InputLeaves": 12763,
+              "OutputLeaves": 8214,
+              "Version": "15.0.0 for Mac OS X ARM (64-bit) (May 19, 2026)",
+              "OutputSHA256": "0779357e812eae49425d42d99ce51e0cc663e0745764b87aece38030879550ad",
+              "BaselineRSSBytes": 330465280,
+              "SampledPeakRSSBytes": 451641344,
+              "AdditionalRSSBytes": 121176064,
+              "RSSSamples": 114292
             }
           ]
         }
       }
+    },
+    "qed3": {
+      "process": [
+        "e",
+        "E",
+        "A.+",
+        "A.+",
+        "A.-"
+      ],
+      "diagramCount": 6,
+      "inputSHA256": "6a5b493ab9cc6328c89b0640f1dee8d2b57aff0baff880c058d5ce178d8eed69",
+      "inputComplexity": 1824,
+      "massAssignments": [
+        {
+          "Me": "2",
+          "EE": "1/3"
+        },
+        {
+          "Me": "3",
+          "EE": "2/7"
+        }
+      ],
+      "kinematicCoordinates": [
+        [
+          3,
+          5,
+          7,
+          11,
+          13
+        ],
+        [
+          5,
+          7,
+          11,
+          13,
+          17
+        ],
+        [
+          7,
+          11,
+          13,
+          17,
+          19
+        ]
+      ],
+      "nonzeroSpinCoefficientsPerSample": [
+        [
+          4,
+          4,
+          4
+        ],
+        [
+          4,
+          4,
+          4
+        ]
+      ],
+      "agreement": "Exact equality to the common input of the full external spin polynomial at all six samples. Each timed output checked.",
+      "symbolicChartIdentity": null,
+      "methods": {
+        "native": {
+          "medianSeconds": 0.020845958,
+          "maxSampledRSSBytes": 2932736,
+          "maxAdditionalRSSBytes": 1212416,
+          "runs": [
+            {
+              "Seconds": 0.020829291,
+              "HighWaterRSSBeforeBytes": 1720320,
+              "HighWaterRSSAfterBytes": 2899968,
+              "ImportSeconds": 0.000126833,
+              "ExportSeconds": 0.0032215,
+              "OutputSHA256": "c2b672a08cf3a0d517c22664a30f7be2f0cd2ff731e90c4455183422234be6d9",
+              "BaselineRSSBytes": 1720320,
+              "SampledPeakRSSBytes": 2899968,
+              "AdditionalRSSBytes": 1179648,
+              "RSSSamples": 68,
+              "OutputComplexity": 272
+            },
+            {
+              "Seconds": 0.021275917,
+              "HighWaterRSSBeforeBytes": 1720320,
+              "HighWaterRSSAfterBytes": 2932736,
+              "ImportSeconds": 0.000121875,
+              "ExportSeconds": 0.000126,
+              "OutputSHA256": "c2b672a08cf3a0d517c22664a30f7be2f0cd2ff731e90c4455183422234be6d9",
+              "BaselineRSSBytes": 1720320,
+              "SampledPeakRSSBytes": 2932736,
+              "AdditionalRSSBytes": 1212416,
+              "RSSSamples": 70,
+              "OutputComplexity": 272
+            },
+            {
+              "Seconds": 0.020845958,
+              "HighWaterRSSBeforeBytes": 1703936,
+              "HighWaterRSSAfterBytes": 2850816,
+              "ImportSeconds": 0.000120709,
+              "ExportSeconds": 9.45e-05,
+              "OutputSHA256": "c2b672a08cf3a0d517c22664a30f7be2f0cd2ff731e90c4455183422234be6d9",
+              "BaselineRSSBytes": 1703936,
+              "SampledPeakRSSBytes": 2850816,
+              "AdditionalRSSBytes": 1146880,
+              "RSSSamples": 68,
+              "OutputComplexity": 272
+            }
+          ]
+        },
+        "reduce": {
+          "medianSeconds": 5.058856,
+          "maxSampledRSSBytes": 201998336,
+          "maxAdditionalRSSBytes": 9273344,
+          "runs": [
+            {
+              "Case": "qed3",
+              "Method": "reduce",
+              "Seconds": 5.058888,
+              "WolframEvaluationPeakAdditionalBytes": 4992392,
+              "InputComplexity": 1824,
+              "OutputComplexity": 810,
+              "InputLeaves": 765,
+              "OutputLeaves": 987,
+              "Version": "15.0.0 for Mac OS X ARM (64-bit) (May 19, 2026)",
+              "OutputSHA256": "d9c69e16da8b383dc5033685f1b5e59008f3eac8fa0c30a3c9b29dd7f554c0d2",
+              "BaselineRSSBytes": 191807488,
+              "SampledPeakRSSBytes": 201064448,
+              "AdditionalRSSBytes": 9256960,
+              "RSSSamples": 15670
+            },
+            {
+              "Case": "qed3",
+              "Method": "reduce",
+              "Seconds": 5.05875,
+              "WolframEvaluationPeakAdditionalBytes": 4992392,
+              "InputComplexity": 1824,
+              "OutputComplexity": 810,
+              "InputLeaves": 765,
+              "OutputLeaves": 987,
+              "Version": "15.0.0 for Mac OS X ARM (64-bit) (May 19, 2026)",
+              "OutputSHA256": "d9c69e16da8b383dc5033685f1b5e59008f3eac8fa0c30a3c9b29dd7f554c0d2",
+              "BaselineRSSBytes": 191512576,
+              "SampledPeakRSSBytes": 200785920,
+              "AdditionalRSSBytes": 9273344,
+              "RSSSamples": 15365
+            },
+            {
+              "Case": "qed3",
+              "Method": "reduce",
+              "Seconds": 5.058856,
+              "WolframEvaluationPeakAdditionalBytes": 4986864,
+              "InputComplexity": 1824,
+              "OutputComplexity": 810,
+              "InputLeaves": 765,
+              "OutputLeaves": 987,
+              "Version": "15.0.0 for Mac OS X ARM (64-bit) (May 19, 2026)",
+              "OutputSHA256": "d9c69e16da8b383dc5033685f1b5e59008f3eac8fa0c30a3c9b29dd7f554c0d2",
+              "BaselineRSSBytes": 192790528,
+              "SampledPeakRSSBytes": 201998336,
+              "AdditionalRSSBytes": 9207808,
+              "RSSSamples": 15323
+            }
+          ]
+        },
+        "prepare": {
+          "medianSeconds": 15.944468,
+          "maxSampledRSSBytes": 318160896,
+          "maxAdditionalRSSBytes": 124567552,
+          "runs": [
+            {
+              "Case": "qed3",
+              "Method": "prepare",
+              "Seconds": 15.542972,
+              "WolframEvaluationPeakAdditionalBytes": 79631760,
+              "InputComplexity": 1824,
+              "OutputComplexity": 212,
+              "InputLeaves": 765,
+              "OutputLeaves": 789,
+              "Version": "15.0.0 for Mac OS X ARM (64-bit) (May 19, 2026)",
+              "OutputSHA256": "3198b698c5bced07dafce8b32328d605303673b36bf348487feab61c41332e22",
+              "BaselineRSSBytes": 191807488,
+              "SampledPeakRSSBytes": 305774592,
+              "AdditionalRSSBytes": 113967104,
+              "RSSSamples": 47152
+            },
+            {
+              "Case": "qed3",
+              "Method": "prepare",
+              "Seconds": 15.944468,
+              "WolframEvaluationPeakAdditionalBytes": 80320696,
+              "InputComplexity": 1824,
+              "OutputComplexity": 212,
+              "InputLeaves": 765,
+              "OutputLeaves": 789,
+              "Version": "15.0.0 for Mac OS X ARM (64-bit) (May 19, 2026)",
+              "OutputSHA256": "3198b698c5bced07dafce8b32328d605303673b36bf348487feab61c41332e22",
+              "BaselineRSSBytes": 192020480,
+              "SampledPeakRSSBytes": 296943616,
+              "AdditionalRSSBytes": 104923136,
+              "RSSSamples": 44241
+            },
+            {
+              "Case": "qed3",
+              "Method": "prepare",
+              "Seconds": 16.047789,
+              "WolframEvaluationPeakAdditionalBytes": 79892032,
+              "InputComplexity": 1824,
+              "OutputComplexity": 212,
+              "InputLeaves": 765,
+              "OutputLeaves": 788,
+              "Version": "15.0.0 for Mac OS X ARM (64-bit) (May 19, 2026)",
+              "OutputSHA256": "883c92a7eaf170732a9f37edc0eeaaa2415ab89179707d233f44dc51dab7e538",
+              "BaselineRSSBytes": 193593344,
+              "SampledPeakRSSBytes": 318160896,
+              "AdditionalRSSBytes": 124567552,
+              "RSSSamples": 48127
+            }
+          ]
+        }
+      }
+    },
+    "qed4": {
+      "process": [
+        "e",
+        "E",
+        "A.+",
+        "A.+",
+        "A.+",
+        "A.+"
+      ],
+      "diagramCount": 24,
+      "inputSHA256": "a173a3400f89629413218bbf9e964b5931f8677fe38d79c96b15b7f6ef9628fe",
+      "inputComplexity": 9792,
+      "massAssignments": [
+        {
+          "Me": "2",
+          "EE": "1/3"
+        },
+        {
+          "Me": "3",
+          "EE": "2/7"
+        }
+      ],
+      "kinematicCoordinates": [
+        [
+          3,
+          5,
+          7,
+          11,
+          13,
+          17,
+          19,
+          23
+        ],
+        [
+          5,
+          7,
+          11,
+          13,
+          17,
+          19,
+          23,
+          29
+        ],
+        [
+          7,
+          11,
+          13,
+          17,
+          19,
+          23,
+          29,
+          31
+        ]
+      ],
+      "nonzeroSpinCoefficientsPerSample": [
+        [
+          2,
+          2,
+          2
+        ],
+        [
+          2,
+          2,
+          2
+        ]
+      ],
+      "agreement": "Exact equality to the common input of the full external spin polynomial at all six samples. Each timed output checked.",
+      "symbolicChartIdentity": null,
+      "methods": {
+        "native": {
+          "medianSeconds": 0.469876875,
+          "maxSampledRSSBytes": 6897664,
+          "maxAdditionalRSSBytes": 5062656,
+          "runs": [
+            {
+              "Seconds": 0.49469425,
+              "HighWaterRSSBeforeBytes": 1835008,
+              "HighWaterRSSAfterBytes": 6848512,
+              "ImportSeconds": 0.000389125,
+              "ExportSeconds": 0.000290167,
+              "OutputSHA256": "63960416fa8b6a33e71870f2db4b393a36f87a417ed8d6e2550a0f488a616374",
+              "BaselineRSSBytes": 1835008,
+              "SampledPeakRSSBytes": 6848512,
+              "AdditionalRSSBytes": 5013504,
+              "RSSSamples": 1372,
+              "OutputComplexity": 932
+            },
+            {
+              "Seconds": 0.469876875,
+              "HighWaterRSSBeforeBytes": 1835008,
+              "HighWaterRSSAfterBytes": 6897664,
+              "ImportSeconds": 0.000436542,
+              "ExportSeconds": 0.000266542,
+              "OutputSHA256": "63960416fa8b6a33e71870f2db4b393a36f87a417ed8d6e2550a0f488a616374",
+              "BaselineRSSBytes": 1835008,
+              "SampledPeakRSSBytes": 6897664,
+              "AdditionalRSSBytes": 5062656,
+              "RSSSamples": 1443,
+              "OutputComplexity": 932
+            },
+            {
+              "Seconds": 0.447830375,
+              "HighWaterRSSBeforeBytes": 1851392,
+              "HighWaterRSSAfterBytes": 6864896,
+              "ImportSeconds": 0.000397375,
+              "ExportSeconds": 0.000263209,
+              "OutputSHA256": "63960416fa8b6a33e71870f2db4b393a36f87a417ed8d6e2550a0f488a616374",
+              "BaselineRSSBytes": 1851392,
+              "SampledPeakRSSBytes": 6864896,
+              "AdditionalRSSBytes": 5013504,
+              "RSSSamples": 1385,
+              "OutputComplexity": 932
+            }
+          ]
+        },
+        "reduce": {
+          "medianSeconds": 0.042766,
+          "maxSampledRSSBytes": 196968448,
+          "maxAdditionalRSSBytes": 3014656,
+          "runs": [
+            {
+              "Case": "qed4",
+              "Method": "reduce",
+              "Seconds": 0.042766,
+              "WolframEvaluationPeakAdditionalBytes": 508752,
+              "InputComplexity": 9792,
+              "OutputComplexity": 9792,
+              "InputLeaves": 3745,
+              "OutputLeaves": 2228,
+              "Version": "15.0.0 for Mac OS X ARM (64-bit) (May 19, 2026)",
+              "OutputSHA256": "2c06a2ea8b3198580b10910734a48fe6ccf50303878896f5c936ddcaa67d346b",
+              "BaselineRSSBytes": 193986560,
+              "SampledPeakRSSBytes": 196968448,
+              "AdditionalRSSBytes": 2981888,
+              "RSSSamples": 134
+            },
+            {
+              "Case": "qed4",
+              "Method": "reduce",
+              "Seconds": 0.042424,
+              "WolframEvaluationPeakAdditionalBytes": 508752,
+              "InputComplexity": 9792,
+              "OutputComplexity": 9792,
+              "InputLeaves": 3745,
+              "OutputLeaves": 2228,
+              "Version": "15.0.0 for Mac OS X ARM (64-bit) (May 19, 2026)",
+              "OutputSHA256": "2c06a2ea8b3198580b10910734a48fe6ccf50303878896f5c936ddcaa67d346b",
+              "BaselineRSSBytes": 191905792,
+              "SampledPeakRSSBytes": 194920448,
+              "AdditionalRSSBytes": 3014656,
+              "RSSSamples": 135
+            },
+            {
+              "Case": "qed4",
+              "Method": "reduce",
+              "Seconds": 0.044731,
+              "WolframEvaluationPeakAdditionalBytes": 508752,
+              "InputComplexity": 9792,
+              "OutputComplexity": 9792,
+              "InputLeaves": 3745,
+              "OutputLeaves": 2228,
+              "Version": "15.0.0 for Mac OS X ARM (64-bit) (May 19, 2026)",
+              "OutputSHA256": "2c06a2ea8b3198580b10910734a48fe6ccf50303878896f5c936ddcaa67d346b",
+              "BaselineRSSBytes": 191283200,
+              "SampledPeakRSSBytes": 194297856,
+              "AdditionalRSSBytes": 3014656,
+              "RSSSamples": 147
+            }
+          ]
+        },
+        "prepare": {
+          "medianSeconds": 12.575917,
+          "maxSampledRSSBytes": 367116288,
+          "maxAdditionalRSSBytes": 176160768,
+          "runs": [
+            {
+              "Case": "qed4",
+              "Method": "prepare",
+              "Seconds": 12.495792,
+              "WolframEvaluationPeakAdditionalBytes": 103226552,
+              "InputComplexity": 9792,
+              "OutputComplexity": 9792,
+              "InputLeaves": 3745,
+              "OutputLeaves": 2339,
+              "Version": "15.0.0 for Mac OS X ARM (64-bit) (May 19, 2026)",
+              "OutputSHA256": "c1656b3d7606e7e7aa9230d9a455dcb9a6bc833c222a61c7b81174dc3251e13a",
+              "BaselineRSSBytes": 194215936,
+              "SampledPeakRSSBytes": 329465856,
+              "AdditionalRSSBytes": 135249920,
+              "RSSSamples": 38105
+            },
+            {
+              "Case": "qed4",
+              "Method": "prepare",
+              "Seconds": 12.614191,
+              "WolframEvaluationPeakAdditionalBytes": 134611744,
+              "InputComplexity": 9792,
+              "OutputComplexity": 9792,
+              "InputLeaves": 3745,
+              "OutputLeaves": 2339,
+              "Version": "15.0.0 for Mac OS X ARM (64-bit) (May 19, 2026)",
+              "OutputSHA256": "c1656b3d7606e7e7aa9230d9a455dcb9a6bc833c222a61c7b81174dc3251e13a",
+              "BaselineRSSBytes": 190955520,
+              "SampledPeakRSSBytes": 367116288,
+              "AdditionalRSSBytes": 176160768,
+              "RSSSamples": 38080
+            },
+            {
+              "Case": "qed4",
+              "Method": "prepare",
+              "Seconds": 12.575917,
+              "WolframEvaluationPeakAdditionalBytes": 103228232,
+              "InputComplexity": 9792,
+              "OutputComplexity": 9792,
+              "InputLeaves": 3745,
+              "OutputLeaves": 2339,
+              "Version": "15.0.0 for Mac OS X ARM (64-bit) (May 19, 2026)",
+              "OutputSHA256": "c1656b3d7606e7e7aa9230d9a455dcb9a6bc833c222a61c7b81174dc3251e13a",
+              "BaselineRSSBytes": 192249856,
+              "SampledPeakRSSBytes": 327516160,
+              "AdditionalRSSBytes": 135266304,
+              "RSSSamples": 37731
+            }
+          ]
+        }
+      }
+    }
+  },
+  "wwwwTracedPreparation": {
+    "archivedResult": 788,
+    "archivedInputSHA256": "59af4a77575e12d31f2cd8a80cfc0e4148224f9f11f2d6e30edb4e1eae26f7be",
+    "details": "The archived 788 output did not retain a derivation. A separate detailed replay on the identical input had the following score-changing stages. Other recorded stages preserved the score.",
+    "scoreChangingStages": [
+      {
+        "operation": "OriginalFourLegTensorIdentities",
+        "before": 2232,
+        "after": 746
+      },
+      {
+        "operation": "OrdinaryFourLegTensorIdentities",
+        "before": 746,
+        "after": 742
+      }
+    ],
+    "internalShellConditions": [],
+    "archivedOutputComparison": {
+      "nativeScore": 695,
+      "archivedMathematicaScore": 788,
+      "exactSpinPolynomialsAgreeAtAllSixSamples": true,
+      "expandedNumeratorTermsByMomentumDegree": {
+        "degrees": [
+          0,
+          1,
+          2
+        ],
+        "native": [
+          51,
+          64,
+          36
+        ],
+        "archived": [
+          49,
+          83,
+          36
+        ]
+      }
+    },
+    "replayDetail": {
+      "Case": "wwww",
+      "Status": "PREPARED",
+      "InputComplexity": 2232,
+      "OutputComplexity": 742,
+      "Steps": [
+        {
+          "Operation": "OriginalFourLegTensorIdentities",
+          "BeforeComplexity": 2232,
+          "AfterComplexity": 755,
+          "RouteOperations": {
+            "TypedFrameFourLegTensorIdentities": 2,
+            "BoundedFourLegTensorIdentityQuotient": 2
+          },
+          "IdentityMethods": {
+            "OfficialSchoutenRewriteAndChainwiseExternalDirac": 2284
+          },
+          "TensorIdentityWitnesses": 2284
+        },
+        {
+          "Operation": "SharedMatrixOrdinaryCofactors",
+          "BeforeComplexity": 755,
+          "AfterComplexity": 755,
+          "RouteOperations": {
+            "OrdinaryNumeratorScalarFactorCollection": 14
+          },
+          "IdentityMethods": {},
+          "TensorIdentityWitnesses": 0
+        },
+        {
+          "Operation": "ReduceSpinorProducts",
+          "BeforeComplexity": 755,
+          "AfterComplexity": 755,
+          "RouteOperations": {},
+          "IdentityMethods": {},
+          "TensorIdentityWitnesses": 0
+        },
+        {
+          "Operation": "OrdinaryFourLegTensorIdentities",
+          "BeforeComplexity": 755,
+          "AfterComplexity": 742,
+          "RouteOperations": {
+            "TypedFrameFourLegTensorIdentities": 1,
+            "BoundedFourLegTensorIdentityQuotient": 1
+          },
+          "IdentityMethods": {
+            "OfficialSchoutenRewriteAndChainwiseExternalDirac": 789
+          },
+          "TensorIdentityWitnesses": 789
+        }
+      ]
     }
   }
 }

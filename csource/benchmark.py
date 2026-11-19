@@ -1,4 +1,4 @@
-"""Generate the two fixtures, time operations in fresh processes, and verify results."""
+"""Generate diagram fixtures, time operations in fresh processes, and verify results."""
 import argparse
 import ctypes
 import hashlib
@@ -69,6 +69,19 @@ def measure(command, environment, folder, log):
                      AdditionalRSSBytes=peak-baseline, RSSSamples=samples),output.read())
 
 
+def check_vector_regression(case, out):
+    # Only apply this historical target to the exact six-diagram input it measures.
+    if case != "wwww":
+        return
+    fixture = hashlib.sha256((out / "wwww-input.txt").read_bytes()).hexdigest()
+    if fixture != "59af4a77575e12d31f2cd8a80cfc0e4148224f9f11f2d6e30edb4e1eae26f7be":
+        return
+    scores = json.loads((out / "wwww-agreement.json").read_text())["Complexities"]
+    for name, score in scores.items():
+        if (name == "C++" or name.startswith("wwww-native-")) and score > 788:
+            raise RuntimeError(f"{name} scored {score} on the archived WWWW input (target 788)")
+
+
 def main():
     here = Path(__file__).resolve().parent
     parser = argparse.ArgumentParser(description=__doc__)
@@ -77,8 +90,8 @@ def main():
     parser.add_argument("--binary", type=Path, required=True)
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--repeats", type=int, default=3)
-    parser.add_argument("--cases", nargs="+", choices=["qed","wwww"], default=["qed","wwww"])
-    parser.add_argument("--modes", nargs="+", choices=["generate","reduce","prepare","native","validate"],
+    parser.add_argument("--cases", nargs="+", choices=["qed","wwww","qed3","qed4"], default=["qed","wwww","qed3","qed4"])
+    parser.add_argument("--modes", nargs="+", choices=["generate","reduce","prepare","native","validate","trace"],
                         default=["generate","reduce","prepare","native","validate"])
     args = parser.parse_args()
     if args.repeats<1:
@@ -87,12 +100,14 @@ def main():
     out.mkdir(parents=True,exist_ok=True)
     for case in args.cases:
         env=dict(os.environ, HEPCAT_ROOT=str(args.root.resolve()),HEPCAT_BENCH_DIR=str(out),
-                 HEPCAT_BENCH_CASE=case)
+                 HEPCAT_BENCH_CASE=case, HEPCAT_BENCH_REPEATS=str(args.repeats))
         for mode in args.modes:
             env["HEPCAT_BENCH_MODE"]=mode
             wolfram=[args.kernel,"-script",str(here/"benchmark.wls")]
-            if mode in ("generate","validate"):
+            if mode in ("generate","validate","trace"):
                 subprocess.run(wolfram,env=env,check=True)
+                if mode == "validate":
+                    check_vector_regression(case, out)
                 continue
             rows=[]
             for rep in range(1,args.repeats+1):

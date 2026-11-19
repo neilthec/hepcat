@@ -1,8 +1,11 @@
 // Compare exact sparse normal forms in a small number of external-momentum
 // bases. A basis choice is shared by every occurrence of an oriented chain.
 #include "reduce.hpp"
+#include "vector_basis.hpp"
 
 #include <algorithm>
+#include <array>
+#include <set>
 #include <limits>
 #include <optional>
 #include <unordered_map>
@@ -258,82 +261,282 @@ Id schoutenPair(Algebra& a, Id bracket, Id sandwich, bool cutAtRight) {
     return a.add({a.mul({a.integer(sign),t1}),a.mul({a.integer(-sign),t2})});
 }
 
-Id lookahead(Algebra& a, Id expanded) {
-    const auto& n=a.node(expanded);
-    if (n.head!="Plus" || n.args.size()>256) return expanded;
-    std::unordered_set<Id> present(n.args.begin(),n.args.end());
-    Terms added;
-    std::size_t trials=0;
-    // Compare changes against terms still available in the polynomial.
-    for (Id term : n.args) {
-        const auto& t=a.node(term);
-        if (trials>=8192) break;
-        if (!present.count(term) || t.head!="Times") continue;
-        bool changed=false;
-        for (std::size_t i=0; i<t.args.size() && !changed; ++i) {
-            Id bracket=t.args[i];
-            if (a.node(bracket).head!="SpinorChain" || a.node(bracket).args.size()!=2) continue;
-            for (std::size_t j=0; j<t.args.size() && !changed; ++j) {
-                Id sandwich=t.args[j];
-                if (a.node(sandwich).head!="SpinorChain" || a.node(sandwich).args.size()!=3) continue;
+// An exact sparse polynomial in spinor monomials. Isolating the rational
+// coefficient lets an identity cancel a fraction of a term or several terms
+// with different overall coefficients, as often occurs after sewing.
+using Polynomial = TensorCoordinates;
+
+void accumulate(Algebra& a, Polynomial& poly, Id expression, long sign=1) {
+    const auto& n=a.node(expression);
+    if (n.head=="Plus") {
+        for (auto term : n.args) accumulate(a,poly,term,sign);
+        return;
+    }
+    mpq_class coeff(1);
+    Id mono=expression;
+    if (a.number(expression,coeff)) mono=a.integer(1);
+    else if (n.head=="Times" && !n.args.empty() && a.number(n.args.front(),coeff))
+        mono=a.mul(Terms(n.args.begin()+1,n.args.end()));
+    auto& c=poly[mono];
+    c+=sign*coeff;
+    if (c==0) poly.erase(mono);
+}
+
+Id polynomialExpr(Algebra& a,const Polynomial& poly) {
+    Terms terms;
+    for (const auto& [monomial,coefficient] : poly)
+        terms.push_back(a.mul({a.exact(coefficient),monomial}));
+    return a.add(std::move(terms));
+}
+
+// Ordinary Schouten on two bare brackets, oriented to match their supplied
+// endpoints: (ab)(cd) = (ac)(bd) - (ad)(bc).
+std::optional<Id> bareExchange(Algebra& a, const Terms& u, const Terms& v) {
+    auto type=chirality(a,u.front());
+    if (!type || chirality(a,u.back())!=type || chirality(a,v.front())!=type ||
+        chirality(a,v.back())!=type) return std::nullopt;
+    auto bracket=[&](Id l,Id r) { return reduceSpinor(a,a.call("SpinorChain",{l,r})); };
+    return a.add({a.mul({bracket(u[0],v[0]),bracket(u[1],v[1])}),
+        a.mul({a.integer(-1),bracket(u[0],v[1]),bracket(u[1],v[0])})});
+}
+
+Terms rewrites(Algebra& a,Id unit) {
+    const auto& n=a.node(unit);
+    Terms factors=n.head=="Times" ? n.args : Terms{unit};
+    struct Factor { Id base; int power; std::size_t slot; };
+    std::vector<Factor> chains;
+    for (size_t i=0;i<factors.size();++i) {
+        Id base=factors[i];
+        int power=1;
+        const auto& f=a.node(base);
+        if (f.head=="Power" && f.args.size()==2) {
+            base=f.args[0];
+            power=a.leg(f.args[1]);
+        }
+        const auto& chain=a.node(base);
+        if (power>0 && chain.head=="SpinorChain" && (chain.args.size()==2 || chain.args.size()==3))
+            chains.push_back({base,power,i});
+    }
+    // Cap the quadratic pair enumeration independently of powers.
+    if (chains.size()>12) return {};
+    Terms alternatives;
+    auto withSwap=[&](const Factor& f,const Factor* g,Id replacement) {
+        auto rest=factors;
+        rest[f.slot]=a.pow(f.base,f.power-1);
+        if (g) rest[g->slot]=a.pow(g->base,g->power-1);
+        rest.push_back(replacement);
+        const auto alt=Expansion(a,-1).run(a.mul(std::move(rest)));
+        if (alt!=unit && std::find(alternatives.begin(),alternatives.end(),alt)==alternatives.end())
+            alternatives.push_back(alt);
+    };
+    for (size_t i=0;i<chains.size();++i) {
+        const auto& f=chains[i];
+        const auto& u=a.node(f.base).args;
+        if (u.size()==3 && ordinaryMomentum(a,u[1]) && a.node(a.node(u[1]).args[0]).args.empty() &&
+            chirality(a,u[0]) && chirality(a,u[0])==-chirality(a,u[2])) {
+            int leg=a.leg(a.node(u[1]).args[0]);
+            Terms sum;
+            for (size_t j=1;j<=a.masses().size();++j) {
+                if (int(j)==leg) continue;
+                sum.push_back(reduceSpinor(a,a.call("SpinorChain",{u[0],a.call("Mom",{a.integer(j)}),u[2]})));
+            }
+            withSwap(f,nullptr,a.mul({a.integer(-1),a.add(std::move(sum))}));
+        }
+        for (size_t j=i+1;j<chains.size();++j) {
+            const auto& g=chains[j];
+            const auto& v=a.node(g.base).args;
+            if (u.size()==3 && v.size()==3) {
+                if (auto exchange=commonMomentumSwap(a,f.base,g.base)) withSwap(f,&g,*exchange);
+            } else if (u.size()==2 && v.size()==2) {
+                auto exchange=bareExchange(a,u,v);
+                if (exchange) withSwap(f,&g,*exchange);
+            } else {
+                Id bare=u.size()==2 ? f.base : g.base;
+                Id slash=u.size()==3 ? f.base : g.base;
                 for (bool right : {false,true}) {
-                    ++trials;
-                    Id replaced=schoutenPair(a,bracket,sandwich,right);
-                    if (replaced==bracket) continue;
-                    Terms rest=t.args;
-                    rest[i]=a.integer(1);
-                    rest[j]=replaced;
-                    Id replacement=Expansion(a,-1).run(a.mul(std::move(rest)));
-                    std::size_t before=score(a,term);
-                    Terms keep, cancel;
-                    const auto& v=a.node(replacement);
-                    for (Id newTerm : (v.head=="Plus" ? v.args : Terms{replacement})) {
-                        Id opposite=a.mul({a.integer(-1),newTerm});
-                        if (opposite!=term && present.count(opposite)) {
-                            before+=score(a,opposite);
-                            cancel.push_back(opposite);
-                        } else keep.push_back(newTerm);
-                    }
-                    Id remain=a.add(std::move(keep));
-                    if (score(a,remain)>=before) continue;
-                    present.erase(term);
-                    for (Id other : cancel) present.erase(other);
-                    added.push_back(remain);
-                    changed=true;
-                    break;
+                    Id next=schoutenPair(a,bare,slash,right);
+                    if (next!=bare) withSwap(f,&g,next);
                 }
             }
         }
     }
-    if (added.empty()) return expanded;
-    for (Id term : n.args) if (present.count(term)) added.push_back(term);
-    return a.add(std::move(added));
+    return alternatives;
+}
+
+using Relations = std::map<Id,std::vector<Polynomial>>;
+Id sparseDescent(Algebra& a,Id source,Relations& relations) {
+    const auto& n=a.node(source);
+    if (n.head!="Plus" || n.args.size()>220) return source;
+    Polynomial value;
+    accumulate(a,value,source);
+    std::map<Id,long> weights;
+    auto weight=[&](Id mono) {
+        auto [it,added]=weights.emplace(mono,0L);
+        if (added) it->second=static_cast<long>(std::min<std::size_t>(1000000,score(a,mono)));
+        return it->second;
+    };
+    // Only a scale that zeros an existing coordinate can improve support.
+    // Compare the weight removed at each exact scale with the weight introduced.
+    for (int iteration=0;iteration<256;++iteration) {
+        long bestGain=0;
+        const Polynomial* best=nullptr;
+        mpq_class scale;
+        for (const auto& [sourceID,sourceCoeff] : value) {
+            auto [cache,fresh]=relations.try_emplace(sourceID);
+            if (fresh) {
+                for (Id alt : rewrites(a,sourceID)) {
+                    Polynomial direction;
+                    accumulate(a,direction,alt);
+                    accumulate(a,direction,sourceID,-1);
+                    if (!direction.empty() && direction.size()<=10) cache->second.push_back(std::move(direction));
+                }
+            }
+            for (const auto& direction : cache->second) {
+                long penalty=0;
+                std::map<mpq_class,long> hits;
+                for (const auto& [id,coef] : direction) {
+                    auto existing=value.find(id);
+                    if (existing==value.end()) penalty+=weight(id);
+                    else hits[-existing->second/coef]+=weight(id);
+                }
+                for (const auto& [candidate,saved] : hits) {
+                    if (saved-penalty>bestGain) {
+                        bestGain=saved-penalty;
+                        best=&direction;
+                        scale=candidate;
+                    }
+                }
+            }
+        }
+        if (!best) break;
+        for (const auto& [id,coef] : *best) {
+            auto& entry=value[id];
+            entry+=scale*coef;
+            if (entry==0) value.erase(id);
+        }
+    }
+    return polynomialExpr(a,value);
+}
+
+// Build an identity neighborhood only for ordinary coherent four-leg tensors.
+// Each massive spin state occurs exactly twice in every eligible monomial.
+bool coherentTensor(const Algebra& a,Id source) {
+    if (a.masses().size()!=4) return false;
+    for (Id mass : a.masses()) if (a.node(mass).head=="0") return false;
+    const auto& n=a.node(source);
+    auto check=[&](Id term) {
+        const auto& t=a.node(term);
+        std::array<unsigned,4> occurrences{};
+        for (Id f : (t.head=="Times" ? t.args : Terms{term})) {
+            Id base=f;
+            int power=1;
+            if (a.node(f).head=="Power" && a.node(f).args.size()==2) {
+                base=a.node(f).args[0];
+                power=a.leg(a.node(f).args[1]);
+            }
+            const auto& s=a.node(base);
+            if (s.head!="SpinorChain") continue;
+            if (power<1 || power>2 || s.args.size()<2 || s.args.size()>3) return false;
+            if (s.args.size()==3 && !ordinaryMomentum(a,s.args[1])) return false;
+            for (Id end : {s.args.front(),s.args.back()}) {
+                const auto& k=a.node(end);
+                if (k.head!="Spinor" || k.args.size()!=3 || a.node(k.args[0]).head!="\"Spin\"") return false;
+                int label=spinLeg(a,end);
+                if (!label) return false;
+                occurrences[label-1]+=power;
+            }
+        }
+        return std::all_of(occurrences.begin(),occurrences.end(),[](auto i){return i==2;});
+    };
+    return n.head=="Plus" && !n.args.empty() && n.args.size()<=256 &&
+           std::all_of(n.args.begin(),n.args.end(),check);
+}
+
+// Use a common momentum basis for the source and both sides of every identity.
+// Contracting the resulting Dirac endpoints merges different witnesses onto
+// the same sparse coordinates. Terms can then cancel across several identities.
+Id tensorSupport(Algebra& a,Id source,unsigned order) {
+    Id normalized=Expansion(a,order).run(source);
+    Polynomial coordinates;
+    accumulate(a,coordinates,normalized);
+    if (coordinates.empty() || coordinates.size()>150) return source;
+    std::vector<Polynomial> rows;
+    std::set<Polynomial> seenRows;
+    std::set<Id> visited, front;
+    std::map<Id,std::size_t> weights;
+    for (const auto& [id,c] : coordinates) {
+        front.insert(id);
+        weights[id]=score(a,id);
+    }
+    Polynomial best=coordinates;
+    for (int depth=0;depth<2;++depth) {
+        std::set<Id> next;
+        for (Id id : front) {
+            if (!visited.insert(id).second) continue;
+            for (Id alt : rewrites(a,id)) {
+                Id projected=Expansion(a,order).run(alt);
+                Polynomial row;
+                accumulate(a,row,projected);
+                accumulate(a,row,id,-1);
+                if (row.empty()) continue;
+                // Different exchange orders often give the same rational row.
+                const mpq_class leading=row.begin()->second;
+                for (auto& [key,c] : row) {
+                    c/=leading;
+                    if (!visited.count(key)) next.insert(key);
+                    if (!weights.count(key)) weights[key]=score(a,key);
+                }
+                if (!seenRows.insert(row).second) continue;
+                rows.push_back(std::move(row));
+                if (rows.size()>=1024) break;
+            }
+            if (rows.size()>=1024) break;
+        }
+        if (rows.empty()) break;
+        best=reduceTensorSupport(best,rows,weights);
+        if (next.empty() || weights.size()>400 || rows.size()>=1024) break;
+        front=std::move(next);
+    }
+    return polynomialExpr(a,best);
 }
 
 // An exchange diagram's different propagators can favour different momentum
-// bases. Keep terms with precisely the same inverse factors together and
-// choose the basis for each group independently.
+// bases. Group by inverse spectators, keeping external-mass powers inside a
+// group because the Dirac equation can change those powers.
 Id bestGroup(Algebra& a, Id group) {
+    Relations relations;
+    std::unordered_set<Id> seen;
     Id best=group;
     Rank rank{score(a,group),a.cost(group)};
+    auto consider = [&](Id expanded) {
+        const auto complexity=score(a,expanded);
+        if (complexity>rank.first) return;
+        Id candidate=factor(a,expanded);
+        Rank candidateRank{complexity,a.cost(candidate)};
+        if (candidateRank<rank) {
+            best=candidate;
+            rank=candidateRank;
+        }
+    };
     unsigned count=static_cast<unsigned>(a.masses().size());
     for (int basis=-1; basis<=static_cast<int>(count); ++basis) {
         try {
             Id expanded=basis<0 ? group : Expansion(a,basis).run(group);
             Id contracted=reduceSpinor(a,expanded);
             if (expanded!=contracted) expanded=Expansion(a,-1).run(contracted);
-            for (int pass=0; pass<2; ++pass) {
-                Id next=lookahead(a,expanded);
-                if (next==expanded) break;
-                expanded=next;
-            }
-            std::size_t complexity=score(a,expanded);
-            if (complexity>rank.first) continue;
-            Id candidate=factor(a,expanded);
-            Rank next{complexity,a.cost(candidate)};
-            if (next<rank) { best=candidate; rank=next; }
+            if (seen.insert(expanded).second) consider(sparseDescent(a,expanded,relations));
         } catch (const TooLarge&) {
             // A different elimination order may generate fewer terms.
+        }
+    }
+    if (coherentTensor(a,group)) {
+        for (unsigned pivot=0; pivot<count; ++pivot) {
+            try {
+                Id expanded=Expansion(a,-1).run(best);
+                consider(tensorSupport(a,expanded,pivot));
+            } catch (const TooLarge&) {
+                // Other completed frames remain usable when this one expands too far.
+            }
         }
     }
     return best;
@@ -353,7 +556,8 @@ Id collectCandidate(Algebra& a, Id input) {
             Terms numerator, inverses;
             for (Id f : (t.head=="Times" ? t.args : Terms{term})) {
                 const auto& n=a.node(f);
-                if (n.head=="Power" && n.args.size()==2 && !a.leg(n.args[1]))
+                if (n.head=="Power" && n.args.size()==2 && !a.leg(n.args[1]) &&
+                    std::find(a.masses().begin(),a.masses().end(),n.args[0])==a.masses().end())
                     inverses.push_back(f);
                 else numerator.push_back(f);
             }

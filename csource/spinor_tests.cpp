@@ -68,6 +68,17 @@ int main() {
             }
         }
     }
+    for (bool reverseLeft : {false,true}) for (bool reverseRight : {false,true}) {
+        std::vector<Id> left{spin(2,false),p2,a4}, right{s1,p2,spin(2,true)};
+        if (reverseLeft) std::reverse(left.begin(),left.end());
+        if (reverseRight) std::reverse(right.begin(),right.end());
+        auto swapped = hepcat::commonMomentumSwap(a,word(left),word(right));
+        if (!swapped) throw std::runtime_error("missing common-momentum minor");
+        check("massive momentum determinant",*swapped,
+              a.mul({reduceSpinor(a,word(left)),reduceSpinor(a,word(right))}));
+    }
+    if (hepcat::commonMomentumSwap(a,ab,ac) || hepcat::commonMomentumSwap(a,ab,ab))
+        throw std::runtime_error("inapplicable common-momentum identity");
     Id unsupported=word({a1,a.atom("UnknownInsertion"),s4});
     check("opaque insertion preserved",reduceSpinor(a,unsupported),unsupported);
     Id ref=spin(1,true,"\"Xi\"");
