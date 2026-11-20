@@ -20,6 +20,32 @@ numerical run tests the amplitudes at freshly generated points. A notebook
 construction tests the symbolic construction procedure. Each has its own
 purpose; none is labeled as another kind of test.
 
+## Seven-point QED validation
+
+The [construction table](qed-seven-point.tsv) covers all 12 helicity representatives
+in the electron-photon model for each pole preference. It records signed Feynman
+comparisons, physical channels, complexity scores and the shortest verified
+expression found. The [external comparison table](qed-seven-point-external.tsv)
+records comparisons of the generated C++ squared amplitudes at 100,000 phase-space
+points per row of each validator. CalcHEP checks the unpolarized sum. MadGraph
+checks each labeled photon-helicity assignment with the massive spins summed,
+and checks the unpolarized sum separately. The two-fermion, four-fermion and
+six-fermion families have 32, 8 and 2 labeled photon-helicity assignments.
+
+The seeds and maximum relative differences refer to each export and comparison.
+Where both exports use a common CalcHEP reference, the two C++ expressions are
+evaluated separately at the saved momenta. The four- and six-fermion processes
+use CalcHEP's standalone denominator helper for their 44 and 42 denominators.
+The SHA-256 column identifies each underlying comparison report.
+
+To repeat the comparisons, build the [native QED driver](../QED-6-point-construction.cpp)
+and run it from the repository root with the paths to your installations.
+
+```sh
+tests/results/native-reduce-build/hepcat-qed --legs 7 --skip-formulas --workers 1 \
+  --points 100000 --spinas ../spinas --calchep ../CalcHEP/calchep_3.9.2 --madgraph ../MadGraph
+```
+
 ## Check and plot the published timing data
 
 The maintained inputs are in `data/timings/one-pair/` and

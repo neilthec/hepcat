@@ -1,0 +1,13 @@
+family	pole_preference	engine	helicity_rows	spin_sum_rows	points_per_row	seed	max_relative_helicity	max_relative_spin_sum	mismatches	evaluation_errors	comparison_binding	receipt_sha256
+eeAAAAA	physical	CalcHEP	0	1	100000	774071		1.145049428280014e-08	0	0	direct native sqme; equivalent export	3d514ea2c915fa1f84b4beacdc6005cdfd593977cff2528251cbd7b3ca6ca702
+eeAAAAA	physical	MadGraph	32	1	100000	134791	2.7578379349387167e-08	3.633296056721962e-10	0	0	labeled helicities and total; equivalent export	087b6df5a2fe2575329854cce699ff528190548aba89cddd6a9ffa7afe45c8a2
+eeAAAAA	spurious	CalcHEP	0	1	100000	134791		3.6657799717133805e-10	0	0	native sqme in reproducible blocks; equivalent export	78044af67b8053c0a4e57c7b51e3463701008a071e3bd0ce55df49894c67e4a1
+eeAAAAA	spurious	MadGraph	32	1	100000	134791	2.0562472769415703e-08	3.597066986416147e-10	0	0	labeled helicities and total; equivalent export	0df001706fa72a6d7d09699149e1960736ccb8ad253df8e69e8019a3fbaeb54a
+eeeeAAA	physical	CalcHEP	0	1	100000	704721		6.288819961759747e-08	0	0	definitive export; shared independent CalcHEP points	f4d776b42a3f51e7c46c5985fb93a9341c0434835d4389973962e83410bd25ba
+eeeeAAA	physical	MadGraph	8	1	100000	704721	3.303644718938597e-10	2.0928996646752763e-10	0	0	labeled helicities and total; equivalent export	d1dc930e500c25f4bde9340026b25ac6fa9525f31cadcc044cbe136b6ab47d19
+eeeeAAA	spurious	CalcHEP	0	1	100000	704721		6.298856455935316e-08	0	0	definitive export; shared independent CalcHEP points	d2c407a9b7207b5ed94e27eb36b3a5ffea442e37359e8bb16ed6171b55dc815a
+eeeeAAA	spurious	MadGraph	8	1	100000	704721	6.38537929553207e-10	2.0926281000138415e-10	0	0	labeled helicities and total; equivalent export	bba707fa7eda7309571f2f3a2aac9a70558d1b3587378fb3e2c2e764b3d0dc82
+eeeeeeA	physical	CalcHEP	0	1	100000	704761		7.625953310351032e-09	0	0	standalone CalcHEP helper; equivalent export	b657b5235df7fa32c68bf7950fdfce0ceae391ee943ae2c6d226a248c316e1ad
+eeeeeeA	physical	MadGraph	2	1	100000	704761	6.709159031368476e-10	6.709148901871259e-10	0	0	both helicities and total; equivalent export	2bd421b80abb375d14829591a0858adef090b3dcdeae3b6c23f791b70e538de5
+eeeeeeA	spurious	CalcHEP	0	1	100000	704761		7.625953310351032e-09	0	0	common CalcHEP values; separate definitive spurious C++ evaluation	119b22a77ee0b9a03fabd2c35151309135fa80c2780d25b3060b20d81dea1c12
+eeeeeeA	spurious	MadGraph	2	1	100000	704761	6.709159031368476e-10	6.709148901871259e-10	0	0	both helicities and total; definitive spurious export	1d77aaeec2e83acdf68ae7e70aef3238a50b5f0887c396b34c4eaa1b538b4055
