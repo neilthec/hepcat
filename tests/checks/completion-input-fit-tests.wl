@@ -66,6 +66,102 @@ ciProposal[input_, opts___] := ConstructiveDiagrams`Private`completionInputPropo
   ciNormalized[input], opts];
 ciDirection[proposal_, mode_] := Lookup[SelectFirst[proposal["Proposals"],
   #["Mode"] === mode &, <||>], "Direction", Missing["NoProposal"]];
+(* The conservative timeout fallback retains one correlated input core
+   without expanding inverse-propagator polynomials or freeing bare contacts. *)
+ciCoreD1=PropDen[Mom[Multiparticle[1,3]],ciCoreMass];ciCoreD2=PropDen[Mom[Multiparticle[1,4]],ciCoreMass];
+ciCoreNormalize[expressions_List]:=<|"ExternalMassRules"->{Mass[1]->ciCoreMass,Mass[2]->ciCoreMass,Mass[3]->0,Mass[4]->0},"Records"->(<|"Expression"->#|>&/@expressions),"Expression"->Total[expressions]|>;
+ciCoreCollect[expressions_List]:=ConstructiveDiagrams`Private`completionCorrelatedInputProposals[ciCoreNormalize[expressions],2];
+ciCoreReport=ciCoreCollect[{ciCoreContact}];check["bare contact remains fixed",ciCoreReport["Status"]==="AVAILABLE"&&ciCoreReport["RegularExpression"]===ciCoreContact&&ciCoreReport["Proposals"]==={}];
+ciCoreReport=ciCoreCollect[{ciCoreA/ciCoreD1}];check["one pole remains one correlated direction",ciCoreReport["Status"]==="AVAILABLE"&&ciCoreReport["RegularExpression"]===0&&Length[ciCoreReport["Proposals"]]===1&&ciCoreReport["Proposals"][[1]]["Direction"]===ciCoreA/ciCoreD1&&ciCoreReport["Proposals"][[1]]["ColumnMode"]==="WholeCorrelatedColumn"];
+ciCoreReport=ciCoreCollect[{ciCoreContact+ciCoreA/ciCoreD1+ciCoreB/ciCoreD2}];check["explicit additive contact remains fixed",ciCoreReport["RegularExpression"]===ciCoreContact&&ciCoreReport["Proposals"][[1]]["Direction"]===ciCoreA/ciCoreD1+ciCoreB/ciCoreD2];
+ciCoreExpression=(ciCoreContact+ciCoreA/ciCoreD1)(ciCoreOtherContact+ciCoreB/ciCoreD2);ciCoreReport=ciCoreCollect[{ciCoreExpression}];check["contact inside factored product remains fixed",ciCoreReport["RegularExpression"]===ciCoreContact ciCoreOtherContact&&ciCoreReport["Proposals"][[1]]["Direction"]===ciCoreExpression-ciCoreContact ciCoreOtherContact];
+check["factored product is not expanded",Head[First[ciCoreReport["PoleBearingByRecord"]]]===Plus&&LeafCount[First[ciCoreReport["PoleBearingByRecord"]]]<60];
+ciCoreReport=ciCoreCollect[{ciCoreContact+ciCoreA/ciCoreD1,-ciCoreContact+ciCoreB/ciCoreD2}];check["individual regular records retained",ciCoreReport["RegularByRecord"]==={ciCoreContact,-ciCoreContact}&&ciCoreReport["RegularExpression"]===0&&Length[ciCoreReport["RecordCertificates"]]===2];
+ciCoreReport=ciCoreCollect[{(ciCoreContact+ciCoreA/ciCoreD1)^10000}];check["large power stays one bounded whole column",ciCoreReport["Status"]==="AVAILABLE"&&ciCoreReport["RegularExpression"]===ciCoreContact^10000&&Length[ciCoreReport["Proposals"]]===1&&LeafCount[ciCoreReport["Proposals"][[1]]["Direction"]]<50];
+ciCoreReport=ciCoreCollect[{ciCoreA/ciCoreD1^2}];check["higher inverse powers retained without dropping pole obligations",ciCoreReport["Status"]==="AVAILABLE"&&ciCoreReport["Proposals"][[1]]["Direction"]===ciCoreA/ciCoreD1^2];
+ciCoreReport=ciCoreCollect[{ciCoreContact/ciCoreOpaqueDenominator+ciCoreA/(ciCoreD1 ciCoreOpaqueDenominator)}];check["non-propagator inverse constants stay in fixed regular part",ciCoreReport["RegularExpression"]===ciCoreContact/ciCoreOpaqueDenominator];
+ciCoreReport=ciCoreCollect[{(ciCoreContact+ciCoreNumeratorCoefficient ciCoreD1)/ciCoreD2}];
+check["positive numerator propagator admitted only with an unavoidable distinct pole",
+  ciCoreReport["Status"] === "AVAILABLE" && ciCoreReport["RegularExpression"] === 0 &&
+    ciCoreReport["Proposals"][[1]]["Direction"] ===
+      (ciCoreContact+ciCoreNumeratorCoefficient ciCoreD1)/ciCoreD2 &&
+    ciCoreReport["RecordCertificates"][[1]]["UnavoidablePropagators"] === {ciCoreD2}];
+ciCoreReport=ciCoreCollect[{(ciCoreContact+ciCoreNumeratorCoefficient ciCoreD1)/ciCoreD1}];check["unexpanded numerator propagator rejected conservatively",ciCoreReport["Status"]==="UNRESOLVED"];
+ciCoreReport=ciCoreCollect[{ciCoreD1/ciCoreD1}];check["already canceled propagator is an ordinary contact",ciCoreReport["Status"]==="AVAILABLE"&&ciCoreReport["RegularExpression"]===1&&ciCoreReport["Proposals"]==={}];
+ciCoreReport=ciCoreCollect[{(1+1/ciCoreD1)^-1}];check["rational inverse-variable dependence rejected",ciCoreReport["Status"]==="UNRESOLVED"&&ciCoreReport["Reason"]==="UnsupportedInversePropagatorDependence"];
+ciCoreReport=ciCoreCollect[{Sqrt[1+1/ciCoreD1]}];check["noninteger inverse-variable power rejected",ciCoreReport["Status"]==="UNRESOLVED"];
+ciCoreReport=ciCoreCollect[{ciCoreOpaqueFunction[1/ciCoreD1]}];check["opaque dependence on inverse variables rejected",ciCoreReport["Status"]==="UNRESOLVED"];
+ciCoreReport=ciCoreCollect[{ciCoreContact ciCoreD1}];check["positive propagator alone rejected",ciCoreReport["Status"]==="UNRESOLVED"];
+ciCoreReport=ConstructiveDiagrams`Private`completionCorrelatedInputProposals[KeyDrop[ciCoreNormalize[{ciCoreA/ciCoreD1}],"Expression"],2];check["missing global expression rejected",ciCoreReport["Status"]==="UNRESOLVED"];
+ciCoreReport=ConstructiveDiagrams`Private`completionCorrelatedInputProposals[<|"Expression"->ciCoreA/ciCoreD1,"Records"->{ciCoreA/ciCoreD1}|>,2];check["malformed records rejected",ciCoreReport["Status"]==="UNRESOLVED"];
+ciCoreReport=ConstructiveDiagrams`Private`completionCorrelatedInputProposals[ciCoreNormalize[{ciCoreA/ciCoreD1}],0];check["zero budget never returns ciCoreA partial available core",ciCoreReport["Status"]==="UNRESOLVED"&&!ciCoreReport["CoreDecompositionComplete"]];
+ciCoreNormalized=ciCoreNormalize[{ciCoreContact+ciCoreA/ciCoreD1,ciCoreB/ciCoreD2}];ciCoreSaved=ciCoreNormalized;ciCoreReport=ConstructiveDiagrams`Private`completionCorrelatedInputProposals[ciCoreNormalized,2];check["source inputs remain unchanged",SameQ[ciCoreNormalized,ciCoreSaved]];
+check["every record roundtrip and exact decomposition certified",AllTrue[ciCoreReport["RecordCertificates"],#["InverseReplacementRoundtripExact"]&&#["OriginalEqualsRegularPlusCore"]&]];
+check["regular part has no propagator",FreeQ[ciCoreReport["RegularExpression"],_PropDen]];
+check["overlap coverage remains explicitly incomplete",ciCoreReport["CoreDecompositionComplete"]&&ciCoreReport["OverlapComplete"]===False&&ciCoreReport["OverlapEnumeration"]==="NotAttempted"];
+check["ordinary timeout provenance retained",ciCoreReport["OrdinaryCollectorStatus"]==="UNRESOLVED"&&ciCoreReport["OrdinaryCollectorDiagnostics"]=!={}];
+check["temporary formal inverse variables do not escape",Cases[ciCoreReport,s_Symbol/;StringStartsQ[SymbolName[s],"formalInput"],Infinity]==={}];
+ciCoreTrace=Trace[ConstructiveDiagrams`Private`completionCorrelatedInputProposals[ciCoreNormalize[{(ciCoreContact+ciCoreA/ciCoreD1)(ciCoreOtherContact+ciCoreB/ciCoreD2)}],2],HoldPattern[Expand[___]|ExpandAll[___]|ReduceSpinorProducts[___]|ConstructiveDiagrams`Private`completionCanonicalReduce[___]],TraceInternal->False];check["no expansion or spinor-reduction calls",ciCoreTrace==={}];
+ciCoreBad=ciCoreNormalize[{ciCoreA/ciCoreD1}];ciCoreBad["Expression"]=ciCoreBad["Expression"]+ciCoreInjectedContact;ciCoreReport=ConstructiveDiagrams`Private`completionCorrelatedInputProposals[ciCoreBad,2];check["injected global contact rejected",ciCoreReport["Status"]==="UNRESOLVED"&&ciCoreReport["Reason"]==="GlobalExpressionDoesNotMatchRecords"];
+ciCoreBad=ciCoreNormalize[{ciCoreA/ciCoreD1}];ciCoreBad["Expression"]=ciCoreBad["Expression"]+ciCoreInjectedPole/ciCoreD2;ciCoreReport=ConstructiveDiagrams`Private`completionCorrelatedInputProposals[ciCoreBad,2];check["injected global pole rejected",ciCoreReport["Status"]==="UNRESOLVED"&&ciCoreReport["Reason"]==="GlobalExpressionDoesNotMatchRecords"];
+
+(* Propagator-degree bounds admit the complete original column without
+   inventing a zero regular part when numerator cancellation could expose one. *)
+ciBound[value_] := ConstructiveDiagrams`Private`completionUnavoidableInputPole[value];
+ciBoundResult = ciBound[(ciCoreContact + ciCoreNumeratorCoefficient ciCoreD1)/ciCoreD2^2];
+check["Laurent bounds retain the full numerator degree range",
+  AssociationQ[ciBoundResult] && ciBoundResult["UnavoidablePropagators"] === {ciCoreD2} &&
+    MemberQ[ciBoundResult["MaximumExponentBounds"], -2]];
+check["formal numerator coefficients are left unexpanded",
+  ciBoundResult["SpinorCoefficientsExpanded"] === False &&
+    ciBoundResult["ExactPropagatorReplacementRoundtrip"] === True];
+check["a fully canceled contact is not certified as a pole core",
+  MissingQ[ciBound[ciCoreD1/ciCoreD1]]];
+check["possible regular part of an unexpanded numerator is never zeroed",
+  MissingQ[ciBound[(ciCoreContact + ciCoreD1)/ciCoreD1]]];
+check["mixed numerator can hide a regular term in every denominator",
+  ciCoreCollect[{(ciCoreContact + ciCoreD1 ciCoreD2)/(ciCoreD1 ciCoreD2)}]["Status"] === "UNRESOLVED"];
+check["an explicit regular addend is never lost to a numerator pole proof",
+  ciCoreCollect[{ciCoreOtherContact + ciCoreD1/ciCoreD2}]["Status"] === "UNRESOLVED"];
+check["opaque positive propagator dependence is rejected",
+  MissingQ[ciBound[ciCoreOpaqueFunction[ciCoreD1]/ciCoreD2]]];
+check["fractional positive propagator powers are rejected",
+  MissingQ[ciBound[Sqrt[ciCoreD1]/ciCoreD2]]];
+check["inverse propagator sums are not treated as Laurent monomials",
+  MissingQ[ciBound[ciCoreD1/(ciCoreD1 + ciCoreD2)]]];
+ciCoreReport = ciCoreCollect[{(ciCoreContact + ciCoreD1)^10000/ciCoreD2}];
+check["large positive powers need degree bounds rather than expansion",
+  ciCoreReport["Status"] === "AVAILABLE" && ciCoreReport["RegularExpression"] === 0 &&
+    LeafCount[ciCoreReport["Proposals"][[1]]["Direction"]] < 50];
+check["degree-certified records still retain the complete exact original",
+  AllTrue[ciCoreReport["RecordCertificates"], #["OriginalEqualsRegularPlusCore"] &] &&
+    ciCoreReport["OverlapComplete"] === False];
+ciCoreReport=ciCoreCollect[{ciCoreContact, ciCoreD1/ciCoreD2}];
+check["separate regular records remain fixed beside a numerator-propagator core",
+  ciCoreReport["RegularExpression"] === ciCoreContact &&
+    ciCoreReport["Proposals"][[1]]["Direction"] === ciCoreD1/ciCoreD2];
+check["nonfinite degree proofs are rejected",
+  MissingQ[ciBound[Indeterminate]]];
+check["a large distinct-propagator set respects its support bound",
+  MissingQ[ciBound[Times @@ Table[1/PropDen[Mom[Multiparticle[1, ciCoreIndex]], ciCoreMass],
+    {ciCoreIndex, 3, 67}]]]];
+ciDegreeTrace = Trace[ciBound[(ciCoreContact + ciCoreD1)^10000/ciCoreD2],
+  HoldPattern[Expand[___] | ExpandAll[___] | Together[___] | ReduceSpinorProducts[___]],
+  TraceInternal -> False];
+check["Laurent degree certification does not expand spinor or rational expressions", ciDegreeTrace === {}];
+
+ciCoreManyRecords = ciCoreNormalize[Table[(ciCoreIndex + 1)/(ciCoreD1 ciCoreD2) +
+  (-1)^ciCoreIndex ciCoreContact, {ciCoreIndex, 24}]];
+ciCoreManyResult = ConstructiveDiagrams`Private`completionCorrelatedInputProposals[ciCoreManyRecords, 2];
+check["all24 generic records admit the conservative core",
+  ciCoreManyResult["Status"] === "AVAILABLE" && Length[ciCoreManyResult["RecordCertificates"]] === 24];
+check["canceled explicit regular records remain exactly accounted for",
+  ciCoreManyResult["RegularExpression"] === 0 &&
+    ciCoreManyResult["RegularByRecord"] === Table[(-1)^ciCoreIndex ciCoreContact, {ciCoreIndex, 24}]];
+check["a many-record input remains one exact correlated direction",
+  Length[ciCoreManyResult["Proposals"]] === 1 &&
+    ciCoreManyResult["Proposals"][[1]]["Direction"] === ciCoreManyRecords["Expression"]];
+
 ciProposals = ciProposal[ciOverlapInput];
 check["bounded proposal collection is available for ordinary diagram records",
   ciProposals["Status"] === "AVAILABLE" &&
@@ -394,7 +490,7 @@ check["optional cleanup cannot replace a validated point or direction with a wor
   ciComplete[ciFPCleanupGuard] && ciFPCleanupGuard["RemainingBasis"] === {1} &&
     ciZero[ciCanonical[ciFPCleanupGuard["Amplitude"] - ciScalarTree - ciContact]]];
 
-check["the complete input-fit regression inventory ran", checks === 71];
+check["the complete input-fit regression inventory ran", checks === 117];
 Print[checks, " completion-input-fit checks; ", Length[failures], " failures."];
 If[failures =!= {}, Print[failures]; Quit[1]];
 Print["HEPCAT_TEST_COMPLETED:completion-input-fit-tests.wl"];

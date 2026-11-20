@@ -60,8 +60,8 @@ smgCheck["reference execution is optional while numerical parameter matching rem
   ("RunMadGraphValidation" /. Options[WriteSPINASProcess]) === False &&
     ("MadGraphParameterRules" /. Options[WriteSPINASProcess]) === Automatic &&
     ("MadGraphParameterMap" /. Options[WriteSPINASProcess]) === Automatic];
-smgCheck["the normal comparison uses 1000 points and a runtime time-based seed",
-  ("MadGraphPoints" /. Options[WriteSPINASProcess]) === 1000 &&
+smgCheck["the normal comparison uses 100000 points and a runtime time-based seed",
+  ("MadGraphPoints" /. Options[WriteSPINASProcess]) === 100000 &&
     ("MadGraphSeed" /. Options[WriteSPINASProcess]) === Automatic];
 smgCheck["the Mathematica entry point provides help and sensible report defaults",
   StringQ[ValidateMadGraph::usage] && StringLength[ValidateMadGraph::usage] > 40 &&

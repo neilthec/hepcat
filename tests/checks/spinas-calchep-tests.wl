@@ -52,7 +52,7 @@ check["CalcHEP requires explicit installation and model selection, with an autom
     ("CalcHEPModel" /. Options[WriteSPINASProcess]) === None &&
     ("CalcHEPAllowedParticles" /. Options[WriteSPINASProcess]) === All &&
     ("RunCalcHEPValidation" /. Options[WriteSPINASProcess]) === False &&
-    ("CalcHEPPoints" /. Options[WriteSPINASProcess]) === 1000 &&
+    ("CalcHEPPoints" /. Options[WriteSPINASProcess]) === 100000 &&
     ("CalcHEPSeed" /. Options[WriteSPINASProcess]) === Automatic];
 scIR = ConstructiveDiagrams`Private`spinasFamilyIR[scFamily, scModel,
   KeyTake[scOptions, {"IncomingLegs", "ParameterRules", "FixedHelicities"}]];

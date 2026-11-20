@@ -1,0 +1,74 @@
+{
+  "process": "e- e+ -> five positive-helicity photons",
+  "pole_preference": "AllSpurious",
+  "construction": {
+    "function": "ConstructAmplitude",
+    "diagram_model": 3,
+    "factorization_model": 5,
+    "feynman_model": "tests/reference-models/calchep, model 2",
+    "seed": 410073,
+    "weighted_complexity": 920,
+    "leaves_including_external_mass_rules": 7946,
+    "checks_passed": 43,
+    "spurious_channels": 10,
+    "signed_feynman_factor": 1,
+    "returned_amplitude_wxf_sha256": "7b4cabfce7745b66a8ff7efa87e0e9496339a6c4d9cd5bae79ac96678ef68ae3"
+  },
+  "export": {
+    "function": "WriteSPINASProcess",
+    "model": 5,
+    "incoming": [
+      "e",
+      "E"
+    ],
+    "outgoing": [
+      "A.+",
+      "A.+",
+      "A.+",
+      "A.+",
+      "A.+"
+    ],
+    "precision": "Apple arm64 long double, 53-bit mantissa",
+    "process_cpp_sha256": "787aac3dc5e50b35932c17b5f619b3f5ee760d56c3ad93b2b528819dd47d1803",
+    "process_hpp_sha256": "c23feabc730e342fa5281e7c129fc4ef37d3b27f4ee12f0a1d1cfe968b0c206c",
+    "manifest_sha256": "1a5f6499bef77a76b8bf48f589413c4b44ae2068e636085be1a44321c4238dcf"
+  },
+  "sample": {
+    "publication_commit": "aa676a9c198f9b50a682adc2bc98be590b4adb0e",
+    "publication_zip": "tests/benchmarks/benchmarks.zip",
+    "member": "tests/benchmarks/reproduction/100k/all-positive/results.json",
+    "row": "current, notebook export, photons 5, spurious",
+    "archived_rates_uncompressed_csv_sha256": "9b79003bfcfe401e806a7934aa4119d6f350f52f2688dec3e329a281f383ca16",
+    "generator": "make_random_validation_momenta, mt19937_64",
+    "seed": 26111905,
+    "electron_mass_GeV": 0.0005,
+    "electric_charge": 0.31333,
+    "center_of_mass_energy_GeV": [
+      1.5,
+      6
+    ],
+    "widths_enabled": false
+  },
+  "comparison": {
+    "reference": "Same-point live MadGraph evaluations for all four initial spin combinations at every event. All outgoing photon helicities fixed positive.",
+    "normalization": "For each point, average the four initial spin rates (divide by 4). Compare before the final-state identical-photon phase-space factor (multiply public amp2 by 5!).",
+    "madgraph_bridge_sha256": "e3dad4b9422ee67d61cad0a2a634445c2f12bcb17b3458f780ca78665ac3e0f8",
+    "madgraph_param_card_sha256": "079f89069484b944d08744a85a275f29a4a7ba99a41022f9247292b297b52500",
+    "madgraph_dylib_sha256": "523a51606ba59977a06f7ab51404d5d56a63c24cdb0e61e3ee055927027d342d",
+    "points": 100000,
+    "madgraph_matrix_evaluations": 400000,
+    "relative_error": "abs(a-b)/max(abs(a),abs(b)), with equal rates assigned zero",
+    "tolerance": 1e-07,
+    "explicit_spin_sum": {
+      "failures": 0,
+      "max_relative_error": 2.1333426752055506e-11,
+      "worst_point_one_based": 21639
+    },
+    "public_amp2": {
+      "failures": 0,
+      "max_relative_error": 2.1333426752055506e-11,
+      "worst_point_one_based": 21639
+    },
+    "live_vs_archived_madgraph_max_relative_error": 1.4909135385821488e-14
+  }
+}

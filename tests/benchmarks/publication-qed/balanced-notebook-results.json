@@ -1,0 +1,86 @@
+{
+  "process": [
+    "e",
+    "E",
+    "A.+",
+    "A.+",
+    "A.-",
+    "A.-"
+  ],
+  "diagram_model": 3,
+  "notebook": "tests/QED-6-point-construction.nb",
+  "constructors": {
+    "AllPhysical": {
+      "native_notebook_variable": "qed6PPMM",
+      "wolfram_function": "ConstructAmplitude",
+      "feynman_model": "tests/reference-models/calchep / 2",
+      "seed": 7013473251292091846,
+      "seconds_including_checks": 298.796423,
+      "complexity": 692,
+      "final_check_summary": {
+        "PASS": 17
+      },
+      "rows_by_type": {
+        "Physical": 14,
+        "HighEnergy": 1,
+        "Reference": 1,
+        "Feynman": 1
+      }
+    },
+    "AllSpurious": {
+      "native_notebook_variable": "qed6PPMM",
+      "wolfram_function": "ConstructAmplitude",
+      "feynman_model": "tests/reference-models/calchep / 2",
+      "seed": 9174171883195997300,
+      "seconds_including_checks": 217.59794,
+      "complexity": 712,
+      "final_check_summary": {
+        "PASS": 18
+      },
+      "rows_by_type": {
+        "Physical": 14,
+        "Spurious": 1,
+        "HighEnergy": 1,
+        "Reference": 1,
+        "Feynman": 1
+      }
+    }
+  },
+  "all_positive_native_recurrence_control": {
+    "method": "Evaluate the production equal-helicity line expression builder directly. At 32 independent physical phase and spin choices per photon multiplicity, compare both signed amplitudes with the original terminal-pair formulas at 160 nominal bits. This control skips generation and certification of all ordered diagrams.",
+    "mass": 1.5,
+    "charge": 0.35,
+    "points_per_multiplicity": 32,
+    "phase_seeds": "10000 * photon_count + 2611 + index, index=0..31",
+    "max_signed_relative": {
+      "2": {
+        "physical": 1.71902e-58,
+        "spurious": 1.99324e-58
+      },
+      "3": {
+        "physical": 1.32437e-58,
+        "spurious": 2.22676e-58
+      },
+      "4": {
+        "physical": 1.21499e-58,
+        "spurious": 3.97382e-58
+      },
+      "5": {
+        "physical": 1.42262e-58,
+        "spurious": 8.7726e-58
+      },
+      "6": {
+        "physical": 2.37707e-58,
+        "spurious": 9.32224e-58
+      },
+      "7": {
+        "physical": 3.53962e-58,
+        "spurious": 1.01217e-56
+      },
+      "8": {
+        "physical": 5.6588e-58,
+        "spurious": 2.10283e-56
+      }
+    }
+  }
+}

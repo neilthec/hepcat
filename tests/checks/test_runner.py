@@ -62,6 +62,8 @@ class RunnerTests(unittest.TestCase):
             " subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(10)'])\n"
             " print('child holds output pipe', flush=True)\n"
             " time.sleep(10)\n"
+            "if os.environ.get('HEPCAT_FAKE_MESSAGE'):\n"
+            " print(os.environ['HEPCAT_FAKE_MESSAGE'])\n"
             "if os.environ.get('HEPCAT_FAKE_NO_MARKER') != '1':\n"
             " print('HEPCAT_TEST_COMPLETED:' + Path(sys.argv[-1]).name)\n"
             "sys.exit(int(os.environ.get('HEPCAT_FAKE_EXIT', '0')))\n",
@@ -75,6 +77,7 @@ class RunnerTests(unittest.TestCase):
         environment.pop("HEPCAT_FAKE_EXIT", None)
         environment.pop("HEPCAT_FAKE_SLEEP", None)
         environment.pop("HEPCAT_FAKE_NO_MARKER", None)
+        environment.pop("HEPCAT_FAKE_MESSAGE", None)
         if env:
             environment.update(env)
         return subprocess.run(
@@ -143,6 +146,45 @@ class RunnerTests(unittest.TestCase):
         self.assertEqual(result.returncode, 1)
         self.assertEqual(len(self.records(result)), 1)
         self.assertIn("no completion marker", result.stdout)
+
+    def test_exhausted_evaluation_fails_despite_a_completion_marker(self):
+        messages = (
+            "$RecursionLimit::reclim: Recursion depth of 64 exceeded.",
+            "$RecursionLimit::reclim2: Recursion depth exceeded during evaluation.",
+            "$IterationLimit::itlim: Iteration limit of 64 exceeded.",
+            "  $RecursionLimit::reclim: Recursion depth of 64 exceeded.",
+            "During evaluation of In[7]:= $RecursionLimit::reclim: Recursion depth exceeded.",
+        )
+        for message in messages:
+            with self.subTest(message=message):
+                result = self.invoke("--suite", "legacy-package-tests.wl",
+                                     env={"HEPCAT_FAKE_MESSAGE": message})
+                self.assertEqual(result.returncode, 1, result.stdout)
+                self.assertIn("HEPCAT_TEST_COMPLETED:legacy-package-tests.wl", result.stdout)
+                self.assertIn("evaluation exhaustion", result.stdout)
+
+    def test_exhaustion_stops_before_starting_a_later_suite(self):
+        result = self.invoke("--suite", "legacy-package-tests.wl",
+                             "--suite", "legacy-algebra-tests.wl", env={
+                                 "HEPCAT_FAKE_MESSAGE": "$IterationLimit::itlim: Iteration limit exceeded."})
+        self.assertEqual(result.returncode, 1, result.stdout)
+        self.assertEqual(len(self.records(result)), 1)
+        self.assertNotIn("Running legacy-algebra-tests.wl", result.stdout)
+
+    def test_ordinary_warnings_and_quoted_message_names_are_not_exhaustion(self):
+        messages = (
+            "Warning: Assuming all indices are upper and uncontracted!",
+            "General::stop: Further output of a warning will be suppressed.",
+            "StringJoin::string: String expected at position 1.",
+            '\"$RecursionLimit::reclim: a quoted documentation example\"',
+            'InputForm[\"$IterationLimit::itlim: a quoted example\"]',
+            "A diagnostic mentions $RecursionLimit::reclim without emitting that message.",
+        )
+        for message in messages:
+            with self.subTest(message=message):
+                result = self.invoke("--suite", "legacy-package-tests.wl",
+                                     env={"HEPCAT_FAKE_MESSAGE": message})
+                self.assertEqual(result.returncode, 0, result.stdout)
 
     def test_thread_limits_are_local_to_the_child_environment(self):
         result = self.invoke("--suite", "legacy-package-tests.wl", env={
@@ -238,6 +280,16 @@ class WolframWrapperTests(unittest.TestCase):
         result = self.invoke_fixture('Print["A deliberately truncated test suite."];')
         self.assertEqual(result.returncode, 1, result.stdout)
         self.assertIn("returned without its final exit", result.stdout)
+
+    def test_real_recursion_exhaustion_is_detected_even_if_the_suite_exits_zero(self):
+        result = self.invoke_fixture(
+            'Clear[runnerRecursive]; runnerRecursive[x_] := runnerRecursive[x + 1];\n'
+            'Block[{$RecursionLimit = 64}, runnerRecursive[0]];\n'
+            'Print["HEPCAT_TEST_COMPLETED:fixture.wl"]; Quit[0];'
+        )
+        self.assertEqual(result.returncode, 0, result.stdout)
+        self.assertIn("HEPCAT_TEST_COMPLETED:fixture.wl", result.stdout)
+        self.assertIsNotNone(RUNNER.FATAL_EXHAUSTION_MESSAGE.search(result.stdout), result.stdout)
 
     def test_complete_valid_source_runs_normally(self):
         result = self.invoke_fixture('Print["HEPCAT_TEST_COMPLETED:fixture.wl"]; Quit[0];')

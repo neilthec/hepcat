@@ -1506,6 +1506,42 @@
     "guide": "IdentitiesAndSimplification"
   },
   {
+    "name": "CollectAmplitudeFactors",
+    "summary": "Collect repeating scalar factors in a spinor amplitude while preserving the order of each spinor chain.",
+    "syntaxes": [
+      {
+        "input": "CollectAmplitudeFactors[expr]",
+        "description": "groups terms that share a scalar factor."
+      },
+      {
+        "input": "CollectAmplitudeFactors[expr, seconds]",
+        "description": "sets a time budget for searching for an improvement. The default is two seconds."
+      }
+    ],
+    "details": [
+      "A sum of independently constructed currents often repeats the same spinor bracket or propagator in several terms. CollectAmplitudeFactors looks for those repeated factors inside sums and products. It uses only ordinary scalar algebra and requires no mass list or internal on-shell conditions.",
+      "The function keeps a candidate when it reduces LeafCount and its [SpinorExpressionComplexity](paclet:HEPCAT/ref/SpinorExpressionComplexity) is no larger. If the search finds no improvement within the budget, it returns the original expression. Ordered spinor chains and reciprocal factors are treated as units. Expressions containing noncommutative color tensors are left intact."
+    ],
+    "examples": [
+      {
+        "description": "Collect two terms that contain the same bracket. The common bracket then occurs once.",
+        "input": "bracket = SpinorChain[Spinor[\"Helicity\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 2]];\nCollectAmplitudeFactors[x bracket + y bracket]",
+        "evaluate": true
+      },
+      {
+        "description": "Check the exact scalar identity independently by expanding the difference.",
+        "input": "expr = a b + a c;\nExpand[expr - CollectAmplitudeFactors[expr]]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "SpinorExpressionComplexity",
+      "ReduceSpinorProducts",
+      "PrepareAmplitudes"
+    ],
+    "guide": "IdentitiesAndSimplification"
+  },
+  {
     "name": "SpinorExpressionComplexity",
     "summary": "Scores the size of a spinor expression, with extra weight for momentum insertions and scalar momentum products.",
     "syntaxes": [
@@ -1541,7 +1577,8 @@
     "related": [
       "ReduceSpinorProducts",
       "SpinorIdentityCandidates",
-      "PrepareAmplitudes"
+      "PrepareAmplitudes",
+      "CollectAmplitudeFactors"
     ],
     "guide": "IdentitiesAndSimplification"
   },

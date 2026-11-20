@@ -113,6 +113,11 @@ and momentum assumptions.", "ConstructiveDiagrams`ApplySpinorIdentity" -> "Ap\
 plySpinorIdentity[{massRules, expr}, edit, opts] validates and applies an \
 edit returned by SpinorIdentityCandidates.\nApplies one validated identity \
 step to a spinor expression.",
+ "ConstructiveDiagrams`CollectAmplitudeFactors" -> "CollectAmplitudeFactors[e\
+xpr] groups terms that share a scalar factor.\nCollectAmplitudeFactors[expr, \
+seconds] sets a time budget for searching for an improvement. The default is \
+two seconds.\nCollect repeating scalar factors in a spinor amplitude while \
+preserving the order of each spinor chain.",
  "ConstructiveDiagrams`SpinorExpressionComplexity" -> "SpinorExpressionComple\
 xity[expr] counts terms, momentum insertions and scalar momentum products \
 with the package's simplification weights.\nScores the size of a spinor \

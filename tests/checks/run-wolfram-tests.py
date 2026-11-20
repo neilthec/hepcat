@@ -23,6 +23,7 @@ import argparse
 import math
 import os
 import platform
+import re
 from pathlib import Path
 import shutil
 import signal
@@ -127,6 +128,7 @@ INTEGRATION_TEST_SUITES = ("covariant-current-source-tests.wl",
                           "seven-point-spurious-construction-integration-tests.wl",
                           "qed-spurious-model-export-tests.wl",
                           "eight-point-spurious-independent-tests.wl",
+                          "publication-qed-construction-tests.wl",
                           "five-point-construction-integration-tests.wl",
                           "spurious-construction-integration-tests.wl",
                           "fermion-construction-integration-tests.wl",
@@ -135,6 +137,15 @@ INTEGRATION_TEST_SUITES = ("covariant-current-source-tests.wl",
                           "spinas-chiral-integration-tests.wl",
                           "spinas-color-integration-tests.wl",
                           "spinas-madevent-integration-tests.wl")
+
+
+# An exhausted evaluation can skip the rest of an assertion yet leave a suite's
+# later completion marker and zero exit intact. Match only real message lines,
+# not quoted strings mentioning a message or ordinary diagnostic warnings.
+FATAL_EXHAUSTION_MESSAGE = re.compile(
+    r"(?m)^[ \t]*(?:During evaluation of In\[\d+\]:=[ \t]*)?"
+    r"\$(?:RecursionLimit::reclim2?|IterationLimit::itlim):"
+)
 
 
 def main():
@@ -180,6 +191,10 @@ def main():
         print(output)
         if process.returncode:
             return process.returncode
+        exhaustion = FATAL_EXHAUSTION_MESSAGE.search(output)
+        if exhaustion:
+            print(f"{test}: evaluation exhaustion ({exhaustion.group(0).strip()}); treating the run as incomplete.")
+            return 1
         if "HEPCAT_TEST_COMPLETED:" + test not in output.splitlines():
             print(f"{test}: no completion marker; treating the run as incomplete.")
             return 1

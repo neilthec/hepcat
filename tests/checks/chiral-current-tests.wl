@@ -70,6 +70,25 @@ check["omitting an ordered diagram rejects the direct current",
   MissingQ[ConstructiveDiagrams`Private`constructVectorLineForm[Most[graphs], process, diagramModel, external, "AllPhysical"]]];
 check["duplicating an ordered diagram rejects the direct current",
   MissingQ[ConstructiveDiagrams`Private`constructVectorLineForm[Append[Most[graphs], First[graphs]], process, diagramModel, external, "AllPhysical"]]];
+(* The four-emission public route must read the supplied cubic signs even
+   when the same 24 ordered cuts and external helicities are present. *)
+Do[
+  process4 = Join[{"e", "E"}, ConstantArray[helicity, 4]];
+  graphs4 = CreateDiagrams[process4, diagramModel];
+  external4 = Take[external, 6];
+  proposal4[data_] := ConstructiveDiagrams`Private`constructVectorLineForm[
+    data, process4, diagramModel, external4, "AllPhysical"];
+  check[helicity <> " four-emission diagrams select the physical subset current",
+    proposal4[graphs4]["Method"] === "PhysicalChiralSubsetCurrent"];
+  propagatorKey = First[Keys[First[graphs4]["Propagators"]]];
+  vertexKey = First[Keys[First[graphs4]["VertexStructures"]]];
+  check[helicity <> " changed propagator sign rejects the physical subset current",
+    MissingQ[proposal4[MapAt[-# &, graphs4,
+      {1, Key["Propagators"], Key[propagatorKey], Key["Factor"]}]]]];
+  check[helicity <> " changed cubic sign rejects the physical subset current",
+    MissingQ[proposal4[MapAt[-# &, graphs4,
+      {1, Key["VertexStructures"], Key[vertexKey], 1, Key["Expression"]}]]]],
+  {helicity, {"A.+", "A.-"}}];
 (* A dense rest-frame certificate of the ordinary two-emission identity.
    Both massive matrices have determinant proofMass^2; the two null momenta
    and spinors are independent and total momentum conservation is not used. *)
@@ -93,6 +112,37 @@ proofIdentity = proofF[3] proofL[3, 4] proofK[4] + proofF[4] proofL[4, 3] proofK
   proofMass^2 proofBracket[3, 4]^2 (proofU[3] proofU[4] - proofF[3] proofF[4]);
 check["the paired eikonal contraction is an exact external determinant identity",
   Cancel[Together[ConstructiveDiagrams`Private`residueEvaluateChart[proofIdentity, proofChart, {}]]] === 0];
+(* Four remaining vector legs are the first case with both recursive terms
+   in the collected mass correction. Compare to direct single/pair removal
+   on an exact, momentum-conserving chart with all massive spin components. *)
+regPhotons = Range[3, 8]; regLegs = Range[8];
+regRules = {mass -> 3/2, charge -> 2/7};
+regChannel = <|"ExternalLegs" -> regLegs, "ExternalMassRules" ->
+  Thread[Mass /@ regLegs -> Join[{mass, mass}, ConstantArray[0, 6]]],
+  "Cut" -> {1, 3}, "Complement" -> Complement[regLegs, {1, 3}], "Mass" -> mass,
+  "Propagator" -> PropDen[Mom[Multiparticle[1, 3]], mass]|>;
+regChart = ConstructiveDiagrams`Private`amplitudeRationalComparisonChart[
+  {regChannel}, 1, 2026111807, regRules];
+regValue[expr_] := regValue[expr] =
+  ConstructiveDiagrams`Private`residueEvaluateChart[expr, regChart, regRules];
+regSquare[i_, j_] := regValue[proofBracket[i, j]];
+regPole[endpoint_, labels_] := regValue[PropDen[Mom[Multiparticle @@ Prepend[labels, endpoint]], mass]];
+regDirect[{}] = 1;
+regDirect[labels_List] := regDirect[labels] =
+  (Total[Function[i, regDirect[DeleteCases[labels, i]]
+      Total[regValue[proofL[i, #]] & /@ Complement[regPhotons, labels]]] /@ labels] -
+    (mass^2 /. regRules) Total[Function[pair, (regSquare @@ pair)^2
+      regDirect[Complement[labels, pair]]] /@ Subsets[labels, {2}]])/regPole[2, labels];
+regMassive = SpinorChain[Spinor["Spin", "Angle", 1], Spinor["Spin", "Angle", 2]];
+regExpected = ((Sqrt[2] charge)^6 mass /. regRules) regValue[regMassive] /
+  (Times @@ (regPole[1, {#}] & /@ regPhotons)) *
+  Total[Function[pair, (regSquare @@ pair)^2 regDirect[Complement[regPhotons, pair]]] /@ Subsets[regPhotons, {2}]];
+regActual = regValue[current[regPhotons]];
+check["the collected four-emission mass correction agrees with direct removal on an exact chart",
+  TrueQ[regChart["OffCutKinematicValidation"]["Valid"]] &&
+  ConstructiveDiagrams`Private`residueFiniteQ[{regExpected, regActual}] &&
+  Cancel[Together[regExpected - regActual]] === 0];
+
 primitiveCalls = 0;
 Block[{ConstructiveDiagrams`Private`residueChartChain},
   ConstructiveDiagrams`Private`residueChartChain[_, chart_] := (primitiveCalls++; chart["Value"]);

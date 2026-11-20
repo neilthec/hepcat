@@ -45,6 +45,9 @@ inputForms = Join[
     Quiet[Check[ToExpression[text, InputForm, HoldComplete], $Failed]], Infinity],
   Cases[held, Cell[BoxData[boxes_], "Input", ___] :>
     Quiet[Check[ToExpression[boxes, StandardForm, HoldComplete], $Failed]], Infinity]];
+check["the QED notebook uses 100000 external validation points",
+  !FreeQ[inputForms, HoldPattern[Set[validationPoints, 100000]]] &&
+  FreeQ[inputForms, HoldPattern[Rule["CalcHEPPoints" | "MadGraphPoints", n_Integer /; n < 100000]]]];
 sevenSpuriousFormulaBindings = Cases[inputForms,
   HoldPattern[Set[target_Symbol, Part[qedAllPositiveSpuriousFormula[model_, 5], 2]]] :>
     HoldComplete[target, model], Infinity];
@@ -56,6 +59,13 @@ check["the seven-point AllSpurious formula and its explicit MadGraph validation 
   AnyTrue[sevenSpuriousValidatedBindings, MemberQ[sevenSpuriousFormulaBindings, #] &]];
 check["the independent eight-point prediction test is retained",
   !FreeQ[held, "All-Positive Photons: A General AllSpurious Formula"]];
+balancedAssignments = Cases[inputForms,
+  HoldPattern[Set[qed6PPMM, rhs_]] :> HoldComplete[rhs], Infinity];
+balancedPreferences = Cases[balancedAssignments,
+  HoldPattern[ConstructAmplitude[{"e", "E", "A.+", "A.+", "A.-", "A.-"},
+    _, _, ___, Rule["PolePreference", preference_String], ___]] :> preference, Infinity];
+check["both balanced four-photon exports use their own constructor result",
+  Length[balancedAssignments] === 2 && Sort[balancedPreferences] === {"AllPhysical", "AllSpurious"}];
 Print["QED NOTEBOOK STRUCTURE CHECKS: ", checks, "; FAILURES: ", Length[failures]];
 If[failures === {}, Print["HEPCAT_TEST_COMPLETED:qed-construction-notebook-tests.wl"], Print[failures]];
 Quit[If[failures === {}, 0, 1]];

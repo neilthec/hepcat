@@ -35,6 +35,38 @@ ci[n_] := ColorIndex[n];
 internal[n_, dimension_] := ConstructiveDiagrams`Private`colorInternalIndex[n, dimension];
 model = ReadModel[FileNameJoin[{root, "models"}], 1];
 before = model;
+cbRelabelInput = 7 ColorGenerator[ci[2], ci[1], ci[3]] ColorDelta[ci[1], ci[2]] +
+  5 ColorStructure[ci[3], ci[2], ci[1]];
+cbRelabelExpected = 7 ColorGenerator[ci[2], ci[3], ci[1]] ColorDelta[ci[3], ci[2]] +
+  5 ColorStructure[ci[1], ci[2], ci[3]];
+check["particle permutations relabel every external color slot",
+  PermuteParticles[cbRelabelInput, {1, 3}] === cbRelabelExpected];
+check["color relabeling remains valid inside conjugated tensor products",
+  PermuteParticles[Conjugate[cbRelabelInput], {1, 3}] === Conjugate[cbRelabelExpected]];
+cbFixedColor = ColorGenerator[1, 2, 3] ColorDelta[1, 2] internal[1, 8];
+check["fixed color components, coefficients and internal dummy labels stay intact",
+  PermuteParticles[7 cbFixedColor, {1, 2, 3}] === 7 cbFixedColor];
+check["the internal typed relabeler follows the same color permutation",
+  ConstructiveDiagrams`Private`relabelLegs[cbRelabelInput, <|1 -> 3, 3 -> 1|>] ===
+    cbRelabelExpected];
+check["statistics symmetry moves each color slot exactly once",
+  ConstructiveDiagrams`Private`completionBoseCycle[cbRelabelInput, {1, 3}] ===
+    cbRelabelExpected];
+cbColorFreeCycle = ConstructiveDiagrams`Private`completionBoseCycle[
+  SpinorChain[Spinor["Spin", "Upper", "Angle", 1, 3],
+    Spinor["Helicity", "Square", 2]] Mom[Multiparticle[1, 2]], {1, 3}];
+check["removing the extra color map is inert for color-free amplitudes",
+  FreeQ[cbColorFreeCycle, _ColorIndex] &&
+    (cbColorFreeCycle /. ColorIndex[label_] :> ColorIndex[If[label === 1, 3, label]]) ===
+      cbColorFreeCycle];
+check["external color relabeling is exactly reversible",
+  PermuteParticles[PermuteParticles[cbRelabelInput, {1, 3}], {1, 3}] === cbRelabelInput];
+cbTypedRelabel = ci[1] SpinorChain[Spinor["Spin", "Upper", "Angle", 1, 3],
+    Spinor["Helicity", "Square", 2]] Mom[Multiparticle[1, 2]];
+check["color and kinematic labels move together without changing spin indices",
+  PermuteParticles[cbTypedRelabel, {1, 3}] ===
+    ci[3] SpinorChain[Spinor["Spin", "Upper", "Angle", 3, 3],
+      Spinor["Helicity", "Square", 2]] Mom[Multiparticle[3, 2]]];
 t = ConstructiveDiagrams`Private`colorSU3Generators[];
 f = ConstructiveDiagrams`Private`colorSU3StructureConstants[];
 check["fundamental generators have the declared trace normalization",

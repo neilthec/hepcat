@@ -33,23 +33,23 @@ benchmark = ReadModel[FileNameJoin[{root, "tests", "reference-models", "calchep"
 cases = <|
   "PPP" -> {{"e", "E", "A.+", "A.+", "A.+"}, 8085212822663136897, 6, 3, 30},
   "MMM" -> {{"e", "E", "A.-", "A.-", "A.-"}, 1866157270020603678, 6, 3, 30},
-  "PPM" -> {{"e", "E", "A.+", "A.+", "A.-"}, 9188430219292690389, 6, 8, 133},
-  "PMM" -> {{"e", "E", "A.+", "A.-", "A.-"}, 3418550451434630771, 6, 8, 133},
+  "PPM" -> {{"e", "E", "A.+", "A.+", "A.-"}, 9188430219292690389, 6, 1, 63},
+  "PMM" -> {{"e", "E", "A.+", "A.-", "A.-"}, 3418550451434630771, 6, 1, 63},
   "P" -> {{"e", "E", "E", "e", "A.+"}, 8126805240028689964, 8, 0, 168},
   "M" -> {{"e", "E", "E", "e", "A.-"}, 5310282517098944578, 8, 0, 168},
   "PPPP6" -> {{"e", "E", "A.+", "A.+", "A.+", "A.+"}, 1658277745900164952, 14, 6, 120},
   "MMMM6" -> {{"e", "E", "A.-", "A.-", "A.-", "A.-"}, 4452583888334340141, 14, 6, 120},
-  "PPPM6" -> {{"e", "E", "A.+", "A.+", "A.+", "A.-"}, 4493323141101633411, 14, 4, 528},
-  "PMMM6" -> {{"e", "E", "A.+", "A.-", "A.-", "A.-"}, 3640391260799291343, 14, 4, 528},
-  "PPMM6" -> {{"e", "E", "A.+", "A.+", "A.-", "A.-"}, 202611040608, 14, 4, Infinity},
+  "PPPM6" -> {{"e", "E", "A.+", "A.+", "A.+", "A.-"}, 4493323141101633411, 14, 1, 416},
+  "PMMM6" -> {{"e", "E", "A.+", "A.-", "A.-", "A.-"}, 3640391260799291343, 14, 1, 416},
+  "PPMM6" -> {{"e", "E", "A.+", "A.+", "A.-", "A.-"}, 202611040608, 14, 1, 712},
   "FourFermionsPP6" -> {{"e", "E", "E", "e", "A.+", "A.+"}, 9008490858615875420, 20, 1, 1216},
   "FourFermionsPM6" -> {{"e", "E", "E", "e", "A.+", "A.-"}, 8315759881186794091, 20, 2, 1632},
   "FourFermionsMM6" -> {{"e", "E", "E", "e", "A.-", "A.-"}, 7049700354755523172, 20, 1, 1216},
   "SixF6" -> {{"e", "E", "e", "E", "e", "E"}, 579024387046450637, 18, 0, 3168}|>;
 sixPointMethods = <|"PPPP6" -> "SameChiralPairSplit",
   "MMMM6" -> "SameChiralPairSplit",
-  "PPPM6" -> "CommonChiralVectorLine", "PMMM6" -> "CommonChiralVectorLine",
-  "PPMM6" -> "OffShellVectorLine", "SixF6" -> "OffShellFermionExchange"|>;
+  "PPPM6" -> "Connected vector emissions", "PMMM6" -> "Connected vector emissions",
+  "PPMM6" -> "BalancedSpuriousTwoEmissionCurrents", "SixF6" -> "OffShellFermionExchange"|>;
 fourFermionForms = <|"FourFermionsPP6" -> {"PP", 1, 1360},
   "FourFermionsPM6" -> {"PM", 2, 1664}, "FourFermionsMM6" -> {"MM", 1, 1360}|>;
 sixPointCases = Join[Keys[sixPointMethods], Keys[fourFermionForms]];
@@ -75,8 +75,8 @@ Do[
       Length[checks["Channels"]] =!= physical ||
       checks["Summary"] =!= <|"PASS" -> physical + actualSpurious + 3|> ||
       KeyExistsQ[sixPointMethods, name] && Lookup[report["Stages"][
-        Switch[name, "PPMM6", "Off-shell vector form", "SixF6", "Off-shell fermion exchange",
-          _, "Compact spurious form"]], "Method", None] =!= sixPointMethods[name] ||
+        If[name === "SixF6", "Off-shell fermion exchange", "Compact spurious form"]],
+          "Method", None] =!= sixPointMethods[name] ||
       KeyExistsQ[fourFermionForms, name] &&
         Lookup[report["Stages"]["Grouped vector currents"], "Method", None] =!= "GroupedVectorCurrents" ||
       name === "SixF6" && (LeafCount[report["Amplitude"]] > 20500 ||
@@ -84,6 +84,27 @@ Do[
     AppendTo[failures, name]];
   Print[name, " ", report["Status"], " complexity ", report["Complexity"],
     " ", checks["Summary"], " seconds ", report["TotalTime"]];
+  If[name === "PPM",
+    mixedRules = First[report["AmplitudePair"]];
+    mixedGraphs = CreateDiagrams[process, diagrams];
+    mixedProposal[rows_, particles_:process, mdl_:diagrams] :=
+      ConstructiveDiagrams`Private`constructVectorLineForm[rows, particles, mdl, mixedRules, "AllSpurious"];
+    originalMixed = mixedProposal[mixedGraphs];
+    altered = mixedGraphs;
+    key = First[Keys[altered[[1, "Propagators"]]]];
+    altered[[1, "Propagators", Key[key], "Factor"]] *= -1;
+    alteredVertex = mixedGraphs;
+    key = First[Keys[alteredVertex[[1, "VertexStructures"]]]];
+    alteredVertex[[1, "VertexStructures", Key[key], 1, "Expression"]] *= -1;
+    If[!AllTrue[{Most[mixedGraphs], Append[Most[mixedGraphs], First[mixedGraphs]], altered, alteredVertex},
+        MissingQ[mixedProposal[#]] &], AppendTo[failures, "Incomplete or altered mixed line accepted"]];
+    names = Thread[{"e", "E", "A.+", "A.-"} -> {"f", "F", "u", "v"}];
+    scaledModel = diagrams /. names;
+    scaledModel[[2, All, -2]] *= 2;
+    renamed = process /. names;
+    scaled = mixedProposal[CreateDiagrams[renamed, scaledModel], renamed, scaledModel];
+    If[!AssociationQ[scaled] || Expand[scaled["Expression"] - 8 originalMixed["Expression"]] =!= 0,
+      AppendTo[failures, "Mixed current failed renamed states or cubic rescaling"]]];
   If[name === "SixF6" && report["Status"] === "COMPLETE",
     sixMasses = First[report["AmplitudePair"]];
     sixOrder = {2, 3, 4, 1, 6, 5};
@@ -106,7 +127,7 @@ Do[
     Get[FileNameJoin[{root, "tests", "checks", "fixtures", "QED-5-point-residues.wl"}]];
     If[name === "PPMM6",
       compact = QEDSixPointPPMMSpuriousExample[factorization];
-      {compactSpurious, compactCeiling} = {spurious, 1044},
+      {compactSpurious, compactCeiling} = {4, 1044},
       {helicities, compactSpurious, compactCeiling} = fourFermionForms[name];
       compact = QEDSixPointFourFermionSpuriousExample[factorization, helicities]];
     compactComplexity = SpinorExpressionComplexity[Last[compact]];

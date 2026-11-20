@@ -91,8 +91,10 @@ Evaluate loading in its own cell before the calculation.", "ExampleText"],
       BaseStyle -> "Link", ButtonData ->
        "paclet:HEPCAT/ref/SpinorIdentityCandidates"], "  \[Bullet]  ",
      ButtonBox["PrepareAmplitudes", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/PrepareAmplitudes"]}], "SeeAlso"],
-  Cell["Related Guides", "MoreAboutSection"],
+      ButtonData -> "paclet:HEPCAT/ref/PrepareAmplitudes"], "  \[Bullet]  ",
+     ButtonBox["CollectAmplitudeFactors", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/CollectAmplitudeFactors"]}],
+   "SeeAlso"], Cell["Related Guides", "MoreAboutSection"],
   Cell[TextData[{ButtonBox["Identities and Simplification",
       BaseStyle -> "Link", ButtonData ->
        "paclet:HEPCAT/guide/IdentitiesAndSimplification"], "  \[Bullet]  ",

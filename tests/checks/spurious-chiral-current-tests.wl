@@ -106,7 +106,8 @@ scVectors = Range[3, 7];
 scCandidates = {scExpression[scVectors, 1], scExpression[scVectors, 2]};
 scReferences = {scPhysical[scVectors, 1], scPhysical[scVectors, 2]};
 scCheck["seven-point compactness is bounded in either chirality",
-  (SpinorExpressionComplexity /@ scCandidates) === {1160, 1160}];
+  (SpinorExpressionComplexity /@ scCandidates) === {920, 920} &&
+    AllTrue[scCandidates, LeafCount[#] <= 9887 &]];
 scCheck["opposite helicity is the exact angle/square dual",
   Expand[ConstructiveDiagrams`Private`canonicalChains[
     Last[scCandidates] - (First[scCandidates] /. {"Angle" -> "Square", "Square" -> "Angle"})]] === 0];
@@ -134,6 +135,23 @@ Do[
     scRegular && TrueQ[scChart["OffCutKinematicValidation"]["Valid"]] &&
       AllTrue[Table[Cancel[Together[scValues[[kind]] - scValues[[kind + 2]]]], {kind, 2}], # === 0 &]],
   {scMassValue, {1, 3/2}}, {scSample, 1, 3}];
+
+(* Six emissions are the first case in which the remaining subset has
+   four labels. This exercises the general recursion beyond its factored
+   three-label base case, against the separate physical-pole recurrence. *)
+scSixVectors = Range[3, 8];
+scSixExternal = Thread[Mass /@ Range[8] -> Join[{scMass, scMass}, ConstantArray[0, 6]]];
+scSixTargets = ConstructiveDiagrams`Private`residueSimpleChannel[
+    Prepend[#, 1], scMass, Range[8], scSixExternal, scModel] & /@
+  Select[Subsets[scSixVectors], 0 < Length[#] < Length[scSixVectors] &];
+scSixRules = {scMass -> 3/2, scCharge -> 2/7};
+scSixChart = ConstructiveDiagrams`Private`amplitudeRationalComparisonChart[scSixTargets, 1, 20261119, scSixRules];
+scSixValues = ConstructiveDiagrams`Private`residueEvaluateChart[#, scSixChart, scSixRules] & /@
+  {scExpression[scSixVectors], scPhysical[scSixVectors]};
+scCheck["a four-label correction agrees exactly with the physical recurrence",
+  TrueQ[scSixChart["OffCutKinematicValidation"]["Valid"]] &&
+    FreeQ[scSixValues, Indeterminate | _DirectedInfinity | _Missing | $Failed] &&
+    First[scSixValues] =!= 0 && TrueQ[Cancel[Together[Subtract @@ scSixValues]] === 0]];
 
 scPermutation = AssociationThread[Range[7], {4, 2, 7, 3, 6, 1, 5}];
 scPermuted = ConstructiveDiagrams`Private`constructSameChiralSpuriousSubsetCurrent[

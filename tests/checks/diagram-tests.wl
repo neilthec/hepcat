@@ -512,9 +512,13 @@ photonReference = ubReference[photonTest["SourceName"], "A"];
 photonTestComponents = Join @@ (resolvedHelicityDiagrams /@ photonTestSelected);
 photonSingleSum = ReduceSpinContractions[Total[diagramAmplitude /@ photonTestComponents]];
 photonPairedSum = ReduceSpinContractions[Total[DiagramAmplitudes[photonTestSelected][[All, 2]]]];
+(* Before sewing, every surviving term still requires an unresolved x factor.
+   Setting these formal factors to zero distinguishes the unsewn expression
+   from the nonzero, x-independent reference without timing a simplifier. *)
 check["resolved photon components retain the internal x-factor obstruction",
   !FreeQ[photonSingleSum, _xFactor | _xTildeFactor] &&
-    ubCompare[photonSingleSum, photonReference, photonTest["Masses"]]["Equivalence"] === "Unresolved"];
+    Expand[photonSingleSum /. (_xFactor | _xTildeFactor) -> 0] === 0 &&
+    FreeQ[photonReference, _xFactor | _xTildeFactor] && Expand[photonReference] =!= 0];
 check["paired photon matches the manual reference using ordinary algebra",
   FreeQ[photonPairedSum, _xFactor | _xTildeFactor] &&
     Expand[ExtractMandelstahm[photonPairedSum] - photonReference] === 0];
@@ -599,10 +603,88 @@ Module[{model = ReadModel[FileNameJoin[{root, "models"}], 3],
         mapped = ConstructiveDiagrams`Private`relabelLegs[candidate["Expression"],
           AssociationThread[permutation, legs]];
         Expand[canonical[shuffledCandidate["Expression"]] + canonical[mapped]] === 0)];
+    Module[{physical, relabeled, inverse, canonicalCuts},
+      physical = ConstructiveDiagrams`Private`constructGroupedVectorCurrents[
+        graphs, process, model, rules, "AllPhysical"];
+      relabeled = ConstructiveDiagrams`Private`constructGroupedVectorCurrents[
+        CreateDiagrams[shuffled, model], shuffled, model, shuffledRules, "AllPhysical"];
+      check[{"physical line currents contain only propagator denominators", helicities},
+        AssociationQ[physical] && (
+          inverse = DeleteDuplicates[Cases[physical["Expression"], Power[b_, n_Integer?Negative] :> b, Infinity]];
+          canonicalCuts = DeleteDuplicates[Flatten[Map[Function[g, Map[Function[prop,
+            ConstructiveDiagrams`Private`residueCanonicalPropagators[
+              PropDen[Mom[prop["Index"]], prop["Mass"]], legs]], Values[g["Propagators"]]]], graphs]]];
+          inverse = ConstructiveDiagrams`Private`residueCanonicalPropagators[#, legs] & /@ inverse;
+          inverse =!= {} && Complement[inverse, canonicalCuts] === {})];
+      check[{"physical line currents follow signed external relabeling", helicities},
+        AssociationQ[physical] && AssociationQ[relabeled] && (
+          mapped = ConstructiveDiagrams`Private`relabelLegs[physical["Expression"],
+            AssociationThread[permutation, legs]];
+          Expand[canonical[relabeled["Expression"]] + canonical[mapped]] === 0)];
+      check[{"physical currents reject an incomplete diagram set", helicities},
+        MissingQ[ConstructiveDiagrams`Private`constructGroupedVectorCurrents[
+          Append[Most[graphs], First[graphs]], process, model, rules, "AllPhysical"]]]];
     check[{"grouped currents require each attachment exactly once", helicities},
       MissingQ[ConstructiveDiagrams`Private`constructGroupedVectorCurrents[
         Append[Most[graphs], First[graphs]], process, model, rules]]],
     {helicities, {{"A.+", "A.+"}, {"A.+", "A.-"}, {"A.-", "A.-"}}}]];
+(* The balanced physical current follows the charged line and its helicities
+   when massive and massless legs are interleaved. Its momentum denominators
+   must already occur among the propagators of the twenty-four input trees. *)
+Module[{model = ReadModel[FileNameJoin[{root, "models"}], 3],
+    process = {"e", "E", "A.+", "A.+", "A.-", "A.-"},
+    permutation = {5, 2, 3, 1, 6, 4}, legs = Range[6], mass, rules, graphs,
+    shifted, candidate, shuffled, mapped, canonical, inverse, cuts, altered, edge, vertex, scaledModel, scaled},
+  mass = ModelParameter[model, "Me"];
+  rules = Thread[(Mass /@ legs) -> {mass, mass, 0, 0, 0, 0}];
+  graphs = CreateDiagrams[process, model];
+  shifted = process[[permutation]];
+  candidate = ConstructiveDiagrams`Private`constructVectorLineForm[
+    graphs, process, model, rules, "AllPhysical"];
+  shuffled = ConstructiveDiagrams`Private`constructVectorLineForm[
+    CreateDiagrams[shifted, model], shifted, model,
+    Thread[(Mass /@ legs) -> (Last /@ rules)[[permutation]]], "AllPhysical"];
+  canonical[expr_] := ConstructiveDiagrams`Private`canonicalChains[
+    ConstructiveDiagrams`Private`residueCanonicalPropagators[Expand[expr], legs]];
+  check["balanced four-vector physical current contains only input particle poles",
+    AssociationQ[candidate] && candidate["Method"] === "BalancedPhysicalTwoEmissionCurrents" && (
+      inverse = DeleteDuplicates[Cases[candidate["Expression"], Power[b_, n_Integer?Negative] :> b, Infinity]];
+      cuts = DeleteDuplicates[Flatten[Function[g, Map[Function[prop,
+        ConstructiveDiagrams`Private`residueCanonicalPropagators[
+          PropDen[Mom[prop["Index"]], prop["Mass"]], legs]], Values[g["Propagators"]]]] /@ graphs]];
+      Length[cuts] === 14 && Sort[DeleteCases[inverse, mass]] === Sort[cuts])];
+  With[{single = ConstructiveDiagrams`Private`constructVectorLineForm[
+        graphs, process, model, rules, "AllSpurious"]},
+    check["balanced spurious current eliminates reference spinors at its worked complexity",
+      AssociationQ[single] && single["Method"] === "BalancedSpuriousTwoEmissionCurrents" &&
+      FreeQ[single["Expression"], _Xi] && SpinorExpressionComplexity[single["Expression"]] <= 712]];
+  check["balanced physical current follows off-shell external leg relabeling",
+    AssociationQ[candidate] && AssociationQ[shuffled] && (
+      mapped = ConstructiveDiagrams`Private`relabelLegs[candidate["Expression"],
+        AssociationThread[permutation, legs]];
+      Expand[canonical[shuffled["Expression"]] - canonical[mapped]] === 0)];
+  scaledModel = ReplacePart[model, 2 -> Map[Function[row,
+    Which[Take[row, 3] === {"e", "E", "A.+"}, ReplacePart[row, -2 -> 2 row[[-2]]],
+      Take[row, 3] === {"e", "E", "A.-"}, ReplacePart[row, -2 -> 3 row[[-2]]], True, row]], model[[2]]]];
+  scaled = ConstructiveDiagrams`Private`constructVectorLineForm[
+    CreateDiagrams[process, scaledModel], process, scaledModel, rules, "AllPhysical"];
+  check["balanced physical current inherits both independent cubic couplings",
+    AssociationQ[scaled] && AssociationQ[candidate] && scaled["Expression"] === 2^2 3^2 candidate["Expression"]];
+  check["balanced physical current requires each emission order",
+    MissingQ[ConstructiveDiagrams`Private`constructVectorLineForm[
+      Append[Most[graphs], First[graphs]], process, model, rules, "AllPhysical"]]];
+  altered = First[graphs]; edge = First[Keys[altered["Propagators"]]];
+  altered["Propagators", edge, "Factor"] = -altered["Propagators", edge, "Factor"];
+  check["balanced physical current rejects a nonstandard propagator normalization",
+    MissingQ[ConstructiveDiagrams`Private`constructVectorLineForm[
+      Prepend[Rest[graphs], altered], process, model, rules, "AllPhysical"]]];
+  altered = First[graphs]; vertex = First[Keys[altered["VertexStructures"]]];
+  altered["VertexStructures", vertex] = Map[
+    Append[#, "Expression" -> -#["Expression"]] &, altered["VertexStructures", vertex]];
+  check["balanced physical current rejects a changed cubic vertex normalization",
+    MissingQ[ConstructiveDiagrams`Private`constructVectorLineForm[
+      Prepend[Rest[graphs], altered], process, model, rules, "AllPhysical"]]]
+];
 sixFermionDiagrams = CreateDiagrams[{"e", "E", "e", "E", "e", "E"}, qedSignModel];
 check["six-fermion trees use all six matching determinant signs",
   Length[sixFermionDiagrams] === 36 &&
@@ -615,6 +697,75 @@ Do[
     Length[singleLineDiagrams] === 6 && AllTrue[singleLineDiagrams,
       ConstructiveDiagrams`diagramFermionSign[#] === 1 &]],
   {photonHelicities, Tuples[{"A.+", "A.-"}, 3]}
+];
+
+(* The two-line proposal keeps the phase of the supplied constructive
+   diagrams. With two species, interchanging antiparticle slots can change
+   the phase of an ordered Wick contraction while both diagrams retain +1. *)
+Module[{extend, model, feynman, mass, charge, process, rules, diagrams, candidate,
+    inputs, references, report, poles, crossed, crossedRules, crossedDiagrams, spurious},
+  extend[original_] := Module[{extended = original, rename},
+    rename = {"e" -> "f", "E" -> "F", "electron" -> "second fermion", 11 -> 13,
+      ModelParameter[original, "Me"] -> 2 ModelParameter[original, "Me"],
+      ModelParameter[original, "EE"] -> 3 ModelParameter[original, "EE"]};
+    extended[[1]] = Append[original[[1]], Last[original[[1]]] /. rename];
+    extended[[2]] = Join[original[[2]], original[[2]] /. rename];
+    extended];
+  model = extend[ReadModel[FileNameJoin[{root, "models"}], 3]];
+  feynman = extend[ReadModel[FileNameJoin[{root, "tests", "reference-models", "calchep"}], 2]];
+  mass = ModelParameter[model, "Me"]; charge = ModelParameter[model, "EE"];
+  rules = Thread[(Mass /@ Range[6]) -> {mass, mass, 2 mass, 2 mass, 0, 0}];
+  Do[
+    process = {"e", "E", "f", "F", "A.+", helicity};
+    diagrams = CreateDiagrams[process, model];
+    candidate = ConstructiveDiagrams`Private`constructGroupedVectorCurrents[
+      diagrams, process, model, rules, "AllPhysical"];
+    check[{"two distinct charged species retain only propagator poles", helicity},
+      Length[diagrams] === 20 && AssociationQ[candidate] && (
+        poles = DeleteDuplicates[Cases[candidate["Expression"], Power[den_, _Integer?Negative] :> den, Infinity]];
+        poles =!= {} && AllTrue[poles, MatchQ[#, _PropDen] &])];
+    check[{"two distinct charged species match signed Feynman amplitudes", helicity},
+      AssociationQ[candidate] && (
+        inputs = ConstructiveDiagrams`Private`residueSimpleInputs[{rules, candidate["Expression"]}, {}, model];
+        references = DiagramAmplitudes[CreateDiagrams[process, feynman]];
+        report = ConstructiveDiagrams`Private`amplitudeFeynmanReport[inputs, references, model, 1,
+          101812, {mass -> 1, charge -> 1}, {ModelParameter[feynman, "Me"] -> 1,
+            ModelParameter[feynman, "EE"] -> 1}, 60, 0];
+        report["Status"] === "PASS" && report["Samples"][[1]]["Difference"] === 0)];
+    crossed = process[[{1, 4, 2, 3, 5, 6}]];
+    crossedRules = Thread[(Mass /@ Range[6]) -> {mass, 2 mass, mass, 2 mass, 0, 0}];
+    crossedDiagrams = CreateDiagrams[crossed, model];
+    check[{"incompatible distinct-species phase declines the physical current", helicity},
+      MissingQ[ConstructiveDiagrams`Private`constructGroupedVectorCurrents[
+        crossedDiagrams, crossed, model, crossedRules, "AllPhysical"]]];
+    spurious = ConstructiveDiagrams`Private`constructGroupedVectorCurrents[
+      crossedDiagrams, crossed, model, crossedRules];
+    check[{"distinct-species phase guard leaves the spurious route available", helicity},
+      AssociationQ[spurious] && spurious["Method"] === "GroupedVectorCurrents" &&
+        spurious === ConstructiveDiagrams`Private`constructGroupedVectorCurrents[
+          crossedDiagrams, crossed, model, crossedRules, "AllSpurious"]],
+    {helicity, {"A.+", "A.-"}}]];
+
+Module[{factor = CollectAmplitudeFactors,
+    chain, bracket, pole, original, shorter, untouched, a, b, c, d},
+  chain = SpinorChain[Spinor["Spin", "Square", 1], Mom[2], Mom[3], Spinor["Spin", "Square", 4]];
+  bracket = SpinorChain[Spinor["Helicity", "Angle", 5], Spinor["Helicity", "Angle", 6]];
+  pole = PropDen[Mom[Multiparticle[1, 5]], 1];
+  original = a chain/pole - b chain/pole + c chain/bracket - d chain/bracket;
+  shorter = factor[original];
+  check["shared signed factors preserve a rational amplitude and reduce its tree",
+    Expand[original - shorter] === 0 && LeafCount[shorter] < LeafCount[original] &&
+      SpinorExpressionComplexity[shorter] <= SpinorExpressionComplexity[original]];
+  check["shared-factor grouping preserves momentum order and inverse pole primitives",
+    !FreeQ[shorter, chain] && MemberQ[Cases[shorter, Power[x_, _Integer?Negative] :> x, Infinity], pole] &&
+      MemberQ[Cases[shorter, Power[x_, _Integer?Negative] :> x, Infinity], bracket]];
+  untouched = chain/pole + bracket;
+  check["already compact or out of budget scalar expressions are unchanged",
+    factor[untouched] === untouched && factor[original, 0] === original];
+  check["a compacted sum cannot cancel an original reciprocal pole",
+    factor[(a pole + b pole)/pole] === (a pole + b pole)/pole];
+  check["ordered matrix products are excluded from scalar regrouping",
+    factor[original + NonCommutativeMultiply[a, b]] === original + NonCommutativeMultiply[a, b]]
 ];
 
 obsoleteDiagramTemporaryPatterns = {"ConstructiveDiagrams`state", "ConstructiveDiagrams`state$*",

@@ -84,15 +84,25 @@ check["held-out charts and sample seeds do not depend on scheduling",
     pcChartData[pcParallelValidation["Feedback"]["Samples"]] &&
   Lookup[pcSerialValidation["Feedback"]["Samples"], "RandomSeed"] ===
     Lookup[pcParallelValidation["Feedback"]["Samples"], "RandomSeed"]];
-check["zero-fitted directions remain in the raw validation constraints",
-  !FreeQ[pcParallelValidation["Feedback"]["Equations"], Last[pcVariables]]];
+check["certified solved-family passes omit only exactly canceled components",
+  pcParallelValidation["Feedback"]["Equations"] === {} &&
+    AllTrue[Flatten[Lookup[pcParallelValidation["Report"]["Channels"], "Samples", {}], 1],
+      AssociationQ[Lookup[#, "SolvedComponentCancellation", None]] &&
+        TrueQ[#["SolvedComponentCancellation"]["ExactFullFamilyCoefficientCancellation"]] &&
+        MemberQ[#["SolvedComponentCancellation"]["CanceledOriginalIndices"], Length[pcVariables] + 1] &]];
 pcWrong = pcValidate[True, <|"SolutionRules" -> Thread[pcVariables -> {0, 0}],
   "FreeParameters" -> {}|>];
-check["parallel validation rejects a wrong amplitude while retaining refinement equations",
+pcOriginalWrong = Block[{ConstructiveDiagrams`Private`completionSolvedComponentPlan =
+    Function[{components, variables, solution, free, external, seconds},
+      <|"UseGroupedValidation" -> False|>]},
+  pcValidate[False, <|"SolutionRules" -> Thread[pcVariables -> {0, 0}],
+    "FreeParameters" -> {}|>]];
+check["parallel validation rejects a wrong amplitude while retaining original refinement equations",
   pcWrong["FamilyPass"] === False &&
     MemberQ[Lookup[pcWrong["Report"]["Channels"], "Status"], "FAIL"] &&
     pcWrong["Feedback"]["Status"] === "COMPLETE" &&
-    pcWrong["Feedback"]["Equations"] === pcParallelValidation["Feedback"]["Equations"]];
+    pcWrong["Feedback"]["Equations"] === pcOriginalWrong["Feedback"]["Equations"] &&
+    !FreeQ[pcWrong["Feedback"]["Equations"], Last[pcVariables]]];
 pcPublic[parallel_] := CompleteFactorization[2 prH, prChannels, prFixtureModel,
   "CorrectionBasis" -> {prH}, "ChannelReferences" -> None,
   "BoseSymmetryGroups" -> {}, "Samples" -> 1, "ValidationSamples" -> 1,

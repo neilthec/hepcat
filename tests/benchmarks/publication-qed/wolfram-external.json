@@ -1,0 +1,294 @@
+{
+  "scope": "Current Mathematica WriteSPINASProcess export for e- e+ -> four photons, AllSpurious. The full replay streams the original binary64 momenta and publication MadGraph weights. Live MadGraph separately covers the 25 momenta flagged in the original publication. Comparisons of the standalone native HEPCAT C++ exporter are recorded separately in external-precision.tsv.",
+  "publication_reference": {
+    "commit": "aa676a9c198f9b50a682adc2bc98be590b4adb0e",
+    "catalog": "tests/benchmarks/benchmarks.zip :: tests/benchmarks/reproduction/100k/catalog/mixed-native-events.json",
+    "original_failed_helicity_events": 50,
+    "unique_failed_points": 25,
+    "binary64_momenta_sha256": "8cc1866d93fdb2c4dcdf878fdcb7c7848f69377eff3807cabcc7271ba163a113",
+    "binary64_reference_sha256": "f3faed0da396215153e4779d94351563ba954516fb422488dec2c3502a6994e2",
+    "original_flag_list_sha256": "72916f03d8492323588223c1c664373ea71345b7ead235f9cb0b529ecb932cf3"
+  },
+  "wolfram_generation": {
+    "entry_point": "WriteSPINASProcess",
+    "generator_working_tree_base": "eaee4638270267699dcefb4a6e7336e54bdbb97f",
+    "constructive_graph_model": 3,
+    "prepare_model": 5,
+    "export_model": 4,
+    "code_style": "Optimized",
+    "precision_option": "LongDouble",
+    "spin_sum_optimization": "CertifiedConjugation, partial",
+    "inputs": "The +++- expression is the WXF retained from a successful public ConstructAmplitude call. The other inputs come from CreateDiagrams and the same constructVectorLineForm and final PrepareAmplitudes selection as that public route. No publication model expression was supplied. The +++- selected candidate was also checked for exact equality to the saved wrapper expression. The balanced expression has 2,311 leaves before and after final preparation; equality of leaf counts retains the original. The QED notebook uses these same five helicity representatives.",
+    "representatives": [
+      {
+        "helicity": "++++",
+        "score": 120,
+        "expression_leaves": 1354,
+        "export_input_wxf_sha256": "47f9c6d22361d25ea7c5709f877b93d59fc17e10402308ec07a26f583ae57370",
+        "record_type": "external_mass_rules_and_expression"
+      },
+      {
+        "helicity": "+++-",
+        "score": 416,
+        "expression_leaves": 1599,
+        "export_input_wxf_sha256": "abbfac8b83f2c9b05dd8dd0473ac7050553a437b09a7da547f6f5c66de21287b",
+        "record_type": "expression"
+      },
+      {
+        "helicity": "++--",
+        "score": 712,
+        "expression_leaves": 2311,
+        "export_input_wxf_sha256": "027d741252543091f78a9027fef8bc12a0c0f397fa64ce0a229649fe6622ae99",
+        "record_type": "external_mass_rules_and_expression"
+      },
+      {
+        "helicity": "+---",
+        "score": 416,
+        "expression_leaves": 1599,
+        "export_input_wxf_sha256": "54b55a0f498e87422f322196df92b3986655e6c28ca03d66fa397e99641a980d",
+        "record_type": "external_mass_rules_and_expression"
+      },
+      {
+        "helicity": "----",
+        "score": 120,
+        "expression_leaves": 1354,
+        "export_input_wxf_sha256": "5a4867fe4e32e351693019373dcec2749bc4392df4a133c88ba973f52bf62f10",
+        "record_type": "external_mass_rules_and_expression"
+      }
+    ],
+    "model_sha256": {
+      "amps3.mdl": "24ac575267f0b7f4c7698636028479f6faee02c431f6ec3a9c1b6809d2066fff",
+      "prtcls3.mdl": "f1acd28ff3bfd428e6a7a32bd6622c9de06dbc118c2dbea26232440484d32357",
+      "func3.mdl": "d1c3434016a6e1fe56639577d4d21d8bbd0ef42ceadf14dbd68ac7d80de2dd86",
+      "vars3.mdl": "b956e668670476648d95f26816f6503dd03b94cb923b36798bf527f058713a36",
+      "amps4.mdl": "286be9d975ba05f6819fc7cdd4a20606cc3635e63ee36e1a7638a64777a9df17",
+      "prtcls4.mdl": "f1acd28ff3bfd428e6a7a32bd6622c9de06dbc118c2dbea26232440484d32357",
+      "func4.mdl": "d1c3434016a6e1fe56639577d4d21d8bbd0ef42ceadf14dbd68ac7d80de2dd86",
+      "vars4.mdl": "b956e668670476648d95f26816f6503dd03b94cb923b36798bf527f058713a36",
+      "amps5.mdl": "2c197b2d3ee464cbc19ddc3a1675cb39c9f49bc853d61f1c0c70880c86afffa5",
+      "prtcls5.mdl": "f1acd28ff3bfd428e6a7a32bd6622c9de06dbc118c2dbea26232440484d32357",
+      "func5.mdl": "d1c3434016a6e1fe56639577d4d21d8bbd0ef42ceadf14dbd68ac7d80de2dd86",
+      "vars5.mdl": "b956e668670476648d95f26816f6503dd03b94cb923b36798bf527f058713a36"
+    },
+    "generator_sha256": {
+      "source/HEPCAT-Base.wl": "ba0748a9a8c22225fc0fb827ab8ec5bf33029fa9cc9451129c274714a3c64b64",
+      "source/HEPCAT-Model.wl": "1da49c9db25bd513fd87507e44f23544e5031f9575d4853cea1b65f26e784b25",
+      "source/internal/HEPCAT-SPINAS.wl": "67225732ea2ca25c07df33ad4e48e9f6c1d8abab6cd1d1b508f40013f68883de",
+      "source/internal/HEPCAT-SPINAS-Optimize.wl": "af2775e526c3a7d0e1a103f2231e7203da44b95a5cdd05f339abb8d03f22009d"
+    },
+    "generated_source_sha256": {
+      "process.cpp": "4db7d084491d4a9771fabf9f672fb4e3f47a929775f84410dfc2a03548cb19da",
+      "process.hpp": "f0e8852e52ad3fc580755284ad9fe0083276ad0c8214928cbcbfd5f7d0a6d674",
+      "spinas-runtime.hpp": "9246fcb20dd6fcef617df2f910afda8dc512ecdc39b733100fcb68a68666f1b2",
+      "spinas-validation.hpp": "0b91e760e84e57529b0a1fc472a3219b6ef62e0a4607bed5974799ed7056447a",
+      "madgraph-runtime.hpp": "742f8d775449723301c46828573fc8ae52d066cee86b80bc2750c3c336f514e2"
+    }
+  },
+  "configuration": {
+    "seed": 861811,
+    "points": 100000,
+    "cms_energy_GeV": [
+      1.5,
+      6
+    ],
+    "electron_mass_GeV": 0.0005,
+    "electric_charge": 0.31333,
+    "widths": false,
+    "relative_tolerance": 1e-07,
+    "absolute_tolerance": 0,
+    "relative_error": "abs(a-b)/max(abs(a),abs(b))",
+    "external_normalization": "Sum norm(amp) over the four fermion-spin settings for each fixed photon helicity and divide by 4 * 4!. Photon helicities are labeled in lexicographic order from ---- (0) to ++++ (15).",
+    "conditioning": "Original momenta and photon labeling in every reported comparison. The generated Mathematica family has no per-event permutation selection. No reference projection or outlier suppression."
+  },
+  "native_full_sample": {
+    "architecture": "arm64",
+    "significand_bits": 53,
+    "reference": "Archived MadGraph weights at every shared point",
+    "fixed_helicity": {
+      "comparisons": 1600000,
+      "outside_tolerance": 0,
+      "max_relative": 2.506932577931577e-09,
+      "worst_helicity_index": 4,
+      "worst_point": 49783
+    },
+    "sum_of_labeled_rates": {
+      "helicity": "summed",
+      "compared": 100000,
+      "outside_tolerance": 0,
+      "max_relative": 2.5559431739861257e-12,
+      "worst_point": 53670
+    },
+    "generated_amp2": {
+      "helicity": "public_amp2",
+      "compared": 100000,
+      "outside_tolerance": 0,
+      "max_relative": 2.556169213621234e-12,
+      "worst_point": 53670
+    },
+    "per_helicity": [
+      {
+        "helicity": "0",
+        "compared": 100000,
+        "outside_tolerance": 0,
+        "max_relative": 1.008553476868003e-12,
+        "worst_point": 99083
+      },
+      {
+        "helicity": "1",
+        "compared": 100000,
+        "outside_tolerance": 0,
+        "max_relative": 1.8567838056348592e-09,
+        "worst_point": 97735
+      },
+      {
+        "helicity": "2",
+        "compared": 100000,
+        "outside_tolerance": 0,
+        "max_relative": 2.3549540703796665e-09,
+        "worst_point": 13147
+      },
+      {
+        "helicity": "3",
+        "compared": 100000,
+        "outside_tolerance": 0,
+        "max_relative": 1.2547734701641009e-11,
+        "worst_point": 73235
+      },
+      {
+        "helicity": "4",
+        "compared": 100000,
+        "outside_tolerance": 0,
+        "max_relative": 2.506932577931577e-09,
+        "worst_point": 49783
+      },
+      {
+        "helicity": "5",
+        "compared": 100000,
+        "outside_tolerance": 0,
+        "max_relative": 3.298707063392243e-11,
+        "worst_point": 84743
+      },
+      {
+        "helicity": "6",
+        "compared": 100000,
+        "outside_tolerance": 0,
+        "max_relative": 1.0854922471160808e-11,
+        "worst_point": 35504
+      },
+      {
+        "helicity": "7",
+        "compared": 100000,
+        "outside_tolerance": 0,
+        "max_relative": 2.668059447633984e-11,
+        "worst_point": 30644
+      },
+      {
+        "helicity": "8",
+        "compared": 100000,
+        "outside_tolerance": 0,
+        "max_relative": 2.6746948613778235e-11,
+        "worst_point": 30644
+      },
+      {
+        "helicity": "9",
+        "compared": 100000,
+        "outside_tolerance": 0,
+        "max_relative": 1.005363120047603e-09,
+        "worst_point": 45934
+      },
+      {
+        "helicity": "10",
+        "compared": 100000,
+        "outside_tolerance": 0,
+        "max_relative": 1.1986064025614617e-09,
+        "worst_point": 67492
+      },
+      {
+        "helicity": "11",
+        "compared": 100000,
+        "outside_tolerance": 0,
+        "max_relative": 2.506903667875583e-09,
+        "worst_point": 49783
+      },
+      {
+        "helicity": "12",
+        "compared": 100000,
+        "outside_tolerance": 0,
+        "max_relative": 5.065675362554613e-10,
+        "worst_point": 32905
+      },
+      {
+        "helicity": "13",
+        "compared": 100000,
+        "outside_tolerance": 0,
+        "max_relative": 2.354916084641015e-09,
+        "worst_point": 13147
+      },
+      {
+        "helicity": "14",
+        "compared": 100000,
+        "outside_tolerance": 0,
+        "max_relative": 1.8567680774775484e-09,
+        "worst_point": 97735
+      },
+      {
+        "helicity": "15",
+        "compared": 100000,
+        "outside_tolerance": 0,
+        "max_relative": 1.008553476868003e-12,
+        "worst_point": 99083
+      }
+    ],
+    "wall_seconds_for_all_three_streamed_comparisons": 1.76
+  },
+  "live_control": {
+    "phase_space_points": 25,
+    "helicity_comparisons": 400,
+    "madgraph_fixed_spin_evaluations": 1600,
+    "archive_vs_live_max_relative": 2.8121394949226734e-13,
+    "madgraph_library_sha256": "e1a67e04c9b43e5a217c73ec4058657c9571460eb94c140f863c166da3c66f93",
+    "madgraph_parameter_card_sha256": "079f89069484b944d08744a85a275f29a4a7ba99a41022f9247292b297b52500",
+    "reference_model": "sm-full restricted to electrons and photons"
+  },
+  "same_point_precision_replay_against_live_madgraph": {
+    "arm": {
+      "significand_bits": 53,
+      "all_16_helicities_at_25_points": {
+        "N": 400,
+        "over_1e-7": 0,
+        "max_relative": 2.3549904490293756e-09,
+        "point": 13147,
+        "helicity": 2
+      },
+      "original_50_flagged_helicity_events": {
+        "N": 50,
+        "over_1e-7": 0,
+        "max_relative": 2.3549904490293756e-09,
+        "point": 13147,
+        "helicity": 2
+      }
+    },
+    "x86": {
+      "significand_bits": 64,
+      "all_16_helicities_at_25_points": {
+        "N": 400,
+        "over_1e-7": 0,
+        "max_relative": 2.7595163519632066e-09,
+        "point": 13147,
+        "helicity": 13
+      },
+      "original_50_flagged_helicity_events": {
+        "N": 50,
+        "over_1e-7": 0,
+        "max_relative": 2.7595163519632066e-09,
+        "point": 13147,
+        "helicity": 13
+      }
+    }
+  },
+  "report_sha256": {
+    "full.csv": "6cc15c49e039cdb568127573b2e2175ec8f9014845573994b116041f560be538",
+    "arm.csv": "d6a5a0ee23c35a4b47e25e9245754cdb81b560d96535cefbd5c59e06ff9da1aa",
+    "x86.csv": "82308e5110ac57cd6c7332f5c749c95af74f1953eb03a3c54f69e5455bc7cb37"
+  }
+}

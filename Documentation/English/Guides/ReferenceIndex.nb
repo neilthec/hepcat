@@ -43,6 +43,10 @@ and reference-spinor conditions."}], "GuideText"],
       BaseStyle -> "Link", ButtonData ->
        "paclet:HEPCAT/ref/ChooseSpinIndices"], ": ", "Selects physical spin \
 projections for successive massive external particles."}], "GuideText"],
+  Cell[TextData[{ButtonBox["CollectAmplitudeFactors", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/CollectAmplitudeFactors"], ": ", "Coll\
+ect repeating scalar factors in a spinor amplitude while preserving the order \
+of each spinor chain."}], "GuideText"],
   Cell[TextData[{ButtonBox["ColorDelta", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/ColorDelta"], ": ",
      "Represents a Kronecker delta connecting two symbolic color indices."}],
@@ -50,20 +54,21 @@ projections for successive massive external particles."}], "GuideText"],
       BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/ref/ColorGenerator"],
      ": ", "Represents a fundamental SU(3) generator with ordered quark and \
 gluon color slots."}], "GuideText"],
-  Cell[TextData[{ButtonBox["ColorTrace", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/ColorTrace"], ": ",
-     "Represents an ordered fundamental SU(3) generator trace."}],
-   "GuideText"], Cell[TextData[{ButtonBox["ColorIndex", BaseStyle -> "Link",
+  Cell[TextData[{ButtonBox["ColorIndex", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/ColorIndex"], ": ",
      "Identifies the external leg associated with a symbolic color index."}],
    "GuideText"], Cell[TextData[{ButtonBox["ColorStructure",
       BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/ref/ColorStructure"],
      ": ", "Represents the SU(3) structure constant with three ordered \
 adjoint color indices."}], "GuideText"],
-  Cell[TextData[{ButtonBox["CompleteFactorization", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/CompleteFactorization"], ": ", "Add \
-corrections that make a candidate amplitude reproduce all supplied physical \
-factorization channels together."}], "GuideText"],
+  Cell[TextData[{ButtonBox["ColorTrace", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ColorTrace"], ": ",
+     "Represents an ordered fundamental SU(3) generator trace."}],
+   "GuideText"], Cell[TextData[{ButtonBox["CompleteFactorization",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/CompleteFactorization"], ": ", "Add corrections \
+that make a candidate amplitude reproduce all supplied physical factorization \
+channels together."}], "GuideText"],
   Cell[TextData[{ButtonBox["CompleteHighEnergy", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/CompleteHighEnergy"], ": ", "Use \
 high-energy and other full-amplitude conditions to fix freedom left after \

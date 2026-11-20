@@ -75,7 +75,7 @@ inline std::uint64_t validation_seed_from_time() {
 } // namespace detail
 
 struct ValidationOptions {
-  std::size_t points = 1000;
+  std::size_t points = 100000;
   // Assign a specific seed, including zero, to reproduce a previous run.
   std::uint64_t seed = detail::validation_seed_from_time();
   ldouble relative_tolerance = 1e-7L;

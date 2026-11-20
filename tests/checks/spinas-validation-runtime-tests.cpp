@@ -41,7 +41,7 @@ bool random_kinematics(const std::array<ldouble, N>& masses,
   std::mt19937_64 random(1729);
   hepcat_spinas::ValidationOptions options;
   const auto range = hepcat_spinas::detail::validation_energy_range(masses, incoming, options);
-  for (unsigned index = 0; index < 1000; ++index) {
+  for (unsigned index = 0; index < 100000; ++index) {
     const auto point = hepcat_spinas::make_random_validation_momenta(masses, incoming, random, options);
     if (!hepcat_spinas::validate_momenta(point, masses, incoming).valid) return false;
     const ldouble energy = point[incoming[0]][0] + point[incoming[1]][0];
@@ -61,11 +61,11 @@ int main() {
   try {
     const std::array<ldouble, 4> masses = {{1, 1, 0, 0}};
     const std::array<std::size_t, 2> incoming = {{0, 1}};
-    check("1000 four-point random points share exact double inputs and conserve momenta",
+    check("100000 four-point random points share exact double inputs and conserve momenta",
       random_kinematics(masses, incoming));
-    check("1000 fully massive five-point points satisfy every external shell",
+    check("100000 fully massive five-point points satisfy every external shell",
       random_kinematics(std::array<ldouble, 5>{{1, 2, 0.3L, 0.4L, 0.5L}}, incoming));
-    check("1000 mixed six-point points support non-leading incoming labels",
+    check("100000 mixed six-point points support non-leading incoming labels",
       random_kinematics(std::array<ldouble, 6>{{0, 1, 0.2L, 0.3L, 2, 0}},
         std::array<std::size_t, 2>{{1, 4}}));
 
@@ -298,22 +298,22 @@ int main() {
         identical_inputs = identical_inputs && shared == point;
         return value(point);
       }, options, &progress);
-    check("all 1000 random points agree for equal evaluators",
-      equal.passed && equal.status == "PASS" && equal.requested_points == 1000
-      && equal.generated_points == 1000 && equal.compared_points == 1000
+    check("all 100000 random points agree for equal evaluators",
+      equal.passed && equal.status == "PASS" && equal.requested_points == 100000
+      && equal.generated_points == 100000 && equal.compared_points == 100000
       && equal.mismatches == 0 && equal.evaluation_errors == 0);
-    check("both implementations receive all 1000 bit-identical common points",
-      first_calls == 1000 && second_calls == 1000 && identical_inputs);
+    check("both implementations receive all 100000 bit-identical common points",
+      first_calls == 100000 && second_calls == 100000 && identical_inputs);
     check("successful comparison has no hidden failing point or errors",
       !equal.has_first_failure && equal.errors.empty() && equal.maximum_relative_error == 0);
     check("progress reaches the full requested count",
-      progress.str().find("1000/1000") != std::string::npos);
+      progress.str().find("100000/100000") != std::string::npos);
 
     const auto wrong = compare_squared_amplitudes(masses, incoming, value,
       [&](const Momenta<4>& point) { return 2 * value(point); }, options);
     check("a wrong normalization fails every point without fitting or resampling",
-      !wrong.passed && wrong.status == "FAIL" && wrong.mismatches == 1000
-      && wrong.compared_points == 1000 && wrong.generated_points == 1000
+      !wrong.passed && wrong.status == "FAIL" && wrong.mismatches == 100000
+      && wrong.compared_points == 100000 && wrong.generated_points == 100000
       && wrong.evaluation_errors == 0 && wrong.maximum_relative_error == ldouble(0.5));
     check("a mismatch preserves the first point and both raw results",
       wrong.has_first_failure && wrong.first_failure.point_index == 1
@@ -330,34 +330,34 @@ int main() {
       [](const Momenta<4>&) { return ldouble(1e-30L); },
       [](const Momenta<4>&) { return ldouble(0); }, options);
     check("small higher-point-sized amplitudes cannot pass because of a fixed absolute floor",
-      !tiny_wrong.passed && tiny_wrong.mismatches == 1000
+      !tiny_wrong.passed && tiny_wrong.mismatches == 100000
       && tiny_wrong.maximum_relative_error == 1);
     const auto zeros = compare_squared_amplitudes(masses, incoming,
       [](const Momenta<4>&) { return ldouble(0); },
       [](const Momenta<4>&) { return ldouble(0); }, options);
     check("two exact zero squared amplitudes pass without an undefined relative error",
-      zeros.passed && zeros.maximum_relative_error == 0 && zeros.compared_points == 1000);
+      zeros.passed && zeros.maximum_relative_error == 0 && zeros.compared_points == 100000);
 
     std::size_t surviving_calls = 0;
     const auto exception = compare_squared_amplitudes(masses, incoming,
       [](const Momenta<4>&) -> ldouble { throw std::runtime_error("known evaluator failure"); },
       [&](const Momenta<4>&) { ++surviving_calls; return ldouble(1); }, options);
     check("evaluation exceptions never count as passed or compared points",
-      !exception.passed && exception.status == "ERROR" && exception.evaluation_errors == 1000
-      && exception.compared_points == 0 && exception.generated_points == 1000
-      && surviving_calls == 1000 && !exception.errors.empty());
+      !exception.passed && exception.status == "ERROR" && exception.evaluation_errors == 100000
+      && exception.compared_points == 0 && exception.generated_points == 100000
+      && surviving_calls == 100000 && !exception.errors.empty());
     check("exceptions retain a replay point and the other implementation's value",
       exception.has_first_failure && exception.first_failure.reference_value == 1
       && exception.first_failure.message.find("known evaluator failure") != std::string::npos);
     const auto nonfinite = compare_squared_amplitudes(masses, incoming, value,
       [](const Momenta<4>&) { return std::numeric_limits<ldouble>::quiet_NaN(); }, options);
     check("nonfinite reference amplitudes explicitly fail all affected points",
-      !nonfinite.passed && nonfinite.evaluation_errors == 1000
+      !nonfinite.passed && nonfinite.evaluation_errors == 100000
       && nonfinite.compared_points == 0 && nonfinite.status == "ERROR");
     const auto negative = compare_squared_amplitudes(masses, incoming,
       [](const Momenta<4>&) { return ldouble(-1); }, value, options);
     check("negative squared amplitudes cannot silently pass",
-      !negative.passed && negative.evaluation_errors == 1000 && negative.compared_points == 0);
+      !negative.passed && negative.evaluation_errors == 100000 && negative.compared_points == 0);
 
     ValidationOptions invalid = options;
     invalid.points = 0;

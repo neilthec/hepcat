@@ -45,12 +45,14 @@ check["the ordinary AllSpurious seven-point call completes",
 If[AssociationQ[report] && report["Status"] === "COMPLETE",
   finalChecks = report["Checks"];
   spuriousCount = Length[finalChecks["SpuriousChecks"]];
-  check["model four supplies all thirty physical channels",
+  check["the factorization model supplies all thirty physical channels",
     Length[finalChecks["Channels"]] === 30];
   check["all physical, spurious, energy, reference and Feynman checks pass",
     spuriousCount === 10 && finalChecks["Summary"] === <|"PASS" -> 33 + spuriousCount|>];
-  check["the automatic expression reaches the verified compactness benchmark",
-    IntegerQ[report["Complexity"]] && report["Complexity"] <= 1160];
+  check["the automatic expression reaches the factored subset-current score",
+    IntegerQ[report["Complexity"]] && report["Complexity"] <= 920];
+  check["the public result preserves the compact factored expression tree",
+    LeafCount[report["Amplitude"]] <= 7946];
   check["the resolved reference choice really gives spurious poles without Xi",
     !TrueQ[report["AchievedPhysicalDenominators"]] &&
       FreeQ[report["Amplitude"], (Spinor | SpinorHat)["Xi", ___]]];

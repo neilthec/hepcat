@@ -734,7 +734,7 @@ CalcHEP fails. A failed requested reference returns Failure with both reports \
 retained in ExportResult."}], "TableText"]},
       {Cell[TextData[{Cell[BoxData[RowBox[{"\"CalcHEPPoints\""}]],
            "InlineFormula"]}], "TableText"],
-       Cell[TextData[{Cell[BoxData[RowBox[{"1000"}]], "InlineFormula"]}],
+       Cell[TextData[{Cell[BoxData[RowBox[{"100000"}]], "InlineFormula"]}],
         "TableText"], Cell[TextData[{"Number of random physical phase-space \
 points compared by the generated independent CalcHEP validation executable. \
 This tests both implementations at the same points."}], "TableText"]},
@@ -804,10 +804,11 @@ source-export result. If CalcHEP is also requested, both checks are attempted \
 and their reports remain in ExportResult."}], "TableText"]},
       {Cell[TextData[{Cell[BoxData[RowBox[{"\"MadGraphPoints\""}]],
            "InlineFormula"]}], "TableText"],
-       Cell[TextData[{Cell[BoxData[RowBox[{"1000"}]], "InlineFormula"]}],
+       Cell[TextData[{Cell[BoxData[RowBox[{"100000"}]], "InlineFormula"]}],
         "TableText"], Cell[TextData[{"Number of common random phase-space \
-points compared for each massless-helicity combination. The default is 1000."}\
-], "TableText"]}, {Cell[TextData[{Cell[BoxData[RowBox[{"\"MadGraphSeed\""}]],
+points compared for each massless-helicity combination. The default is \
+100000."}], "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"MadGraphSeed\""}]],
            "InlineFormula"]}], "TableText"],
        Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
            "InlineFormula"]}], "TableText"],

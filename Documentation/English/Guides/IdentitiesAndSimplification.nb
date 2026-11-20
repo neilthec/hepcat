@@ -97,6 +97,10 @@ spinor chains using a chosen generalized Schouten identity."}], "GuideText"],
       ButtonData -> "paclet:HEPCAT/ref/SchoutenCandidates"], ": ", "Finds the \
 generalized Schouten replacements that can be applied to products of chains \
 in an expression."}], "GuideText"],
+  Cell[TextData[{ButtonBox["CollectAmplitudeFactors", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/CollectAmplitudeFactors"], ": ", "Coll\
+ect repeating scalar factors in a spinor amplitude while preserving the order \
+of each spinor chain."}], "GuideText"],
   Cell[TextData[{ButtonBox["SpinorExpressionComplexity", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/SpinorExpressionComplexity"], ": ", "S\
 cores the size of a spinor expression, with extra weight for momentum \

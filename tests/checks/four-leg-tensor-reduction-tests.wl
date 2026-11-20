@@ -172,8 +172,9 @@ ftChartChecks[input_, output_, externalRules_] := Module[
 ftReports = <||>;
 Do[
   ftCase = ftInputs[ftName];
-  ftReport = ftReduce[ftCase["Amplitude"], ftCase["ExternalMassRules"], True,
-    If[ftName === "WWWW", 6, 8], None];
+  (* Allow the reducer its full ten-second search budget for both fixtures.
+     The zero- and exhausted-budget cases below check deadline behavior. *)
+  ftReport = ftReduce[ftCase["Amplitude"], ftCase["ExternalMassRules"], True, 10, None];
   AssociateTo[ftReports, ftName -> ftReport];
   check[ftName <> ": bounded search finds a strictly smaller input-derived expression",
     ftReport["Status"] === "IMPROVED" &&
@@ -307,6 +308,153 @@ check["public completed preparation keeps the improved original tensor checkpoin
     ftPublicTensor["InternalOnShellIdentity"] === False &&
     ftPublicTensor["OnShellChannels"] === {} &&
     ftReplay[<|"Route" -> ftPublicTensor["IdentityRoute"]|>]];
+
+(* Existing-term dependence compaction uses a sampled proposal followed by a
+   generic symbolic identity certificate. No stored process answer is used. *)
+ftDependence = ConstructiveDiagrams`Private`preparationExistingTermCompaction;
+ftDependenceMass = ModelParameter[ftModel, "MW"];
+ftDependenceRules = Thread[Mass /@ Range[4] -> ftDependenceMass];
+ftDependenceTensor = ftA[1, 3]^2 ftA[2, 4]^2;
+ftDependencePole13 = PropDen[Mom[Multiparticle[1, 3]], ftDependenceMass];
+ftDependencePole14 = PropDen[Mom[Multiparticle[1, 4]], ftDependenceMass];
+ftDependenceInput = Expand[
+  (ftDependenceMass^2 + 2 MomProd[1, 3]) ftDependenceTensor/ftDependencePole13 +
+  2 (ftDependenceMass^2 + 2 MomProd[1, 4]) ftDependenceTensor/ftDependencePole14];
+ftDependenceReport = ftDependence[ftDependenceInput, ftDependenceRules, 4];
+ftDependenceRoute = First[Lookup[ftDependenceReport, "Route", {<||>}]];
+check["ordinary term dependence compacts regular pieces across physical pole sectors",
+  ftDependenceReport["Status"] === "IMPROVED" &&
+  SpinorExpressionComplexity[ftDependenceReport["Amplitude"]] <
+    SpinorExpressionComplexity[ftDependenceInput] &&
+  ftNoNewPoles[ftDependenceInput, ftDependenceReport["Amplitude"]]];
+check["the compactor reweights only its own terms and certifies all parameters symbolically",
+  ftDependenceRoute["After"] === Expand[
+    ftDependenceRoute["ConstantReweights"].ftDependenceRoute["OriginalTerms"]] &&
+  AllTrue[ftDependenceRoute["ConstantReweights"], NumberQ[#] && FreeQ[#, _Real] &] &&
+  ftDependenceRoute["ExactGenericResidual"] === 0 &&
+  ftDependenceRoute["InternalOnShellConditions"] === {} &&
+  ftDependenceRoute["KnownAmplitudeOrAddedTensorUsed"] === False &&
+  AllTrue[First /@ ftDependenceRoute["AbstractParameterRules"], MatchQ[#, _ModelParameter] &]];
+(* PermuteParticles takes a cycle, so apply the same nontrivial cycle to the
+   expression and its mass metadata. *)
+ftDependencePermutation = {3, 1, 4, 2};
+ftDependencePermuted = PermuteParticles[ftDependenceInput, ftDependencePermutation];
+ftDependencePermutedRules = PermuteParticles[ftDependenceRules, ftDependencePermutation];
+ftDependencePermutedReport = ftDependence[ftDependencePermuted, ftDependencePermutedRules, 4];
+check["the same compactor handles ordinary relabeled four-vector expressions",
+  ftDependencePermuted =!= ftDependenceInput &&
+  ftDependencePermutedReport["Status"] === "IMPROVED" &&
+  First[ftDependencePermutedReport["Route"]]["ExactGenericResidual"] === 0 &&
+  ftNoNewPoles[ftDependencePermuted, ftDependencePermutedReport["Amplitude"]]];
+ftDependenceWidthInput = ftDependenceInput /. PropDen[p_, m_] :> PropDen[p, m, ftWidth];
+check["finite-width inverse objects are preserved by the unsupported-input fallback",
+  ftDependence[ftDependenceWidthInput, ftDependenceRules, 1]["Amplitude"] === ftDependenceWidthInput];
+check["higher multiplicity and non-vector inputs bypass term dependence compaction",
+  ftDependence[ftDependenceInput, Append[ftDependenceRules, Mass[5] -> ftDependenceMass], 1]["Amplitude"] === ftDependenceInput &&
+  ftDependence[ftA[1, 2] ftS[3, 4], ftDependenceRules, 1]["Amplitude"] === ftA[1, 2] ftS[3, 4]];
+check["zero budget returns the original expression",
+  ftDependence[ftDependenceInput, ftDependenceRules, 0]["Amplitude"] === ftDependenceInput];
+check["a huge powered chain is rejected before repeated-chain allocation",
+  TimeConstrained[
+    ftDependence[ftA[1, 2]^100000000, ftDependenceRules, 1]["Amplitude"] ===
+      ftA[1, 2]^100000000, 2, False]];
+check["prospective expansion is guarded before a huge power is distributed",
+  TimeConstrained[
+    ftDependence[(ftA[1, 2] + ftA[1, 3])^100000000, ftDependenceRules, 1]["Amplitude"] ===
+      (ftA[1, 2] + ftA[1, 3])^100000000, 2, False]];
+(* This polynomial vanishes on every deliberately small parameter sample,
+   but is not identically zero. Numeric fitting alone would drop it. *)
+ftDependenceCharge = ModelParameter[ftModel, "EE"];
+ftAdversarialPolynomial = Expand[Times @@ (ftDependenceCharge - Prime[#] & /@ Range[1, 12])];
+ftAdversarialInput = Expand[ftAdversarialPolynomial ftDependenceTensor/ftDependencePole13];
+ftAdversarialReport = ftDependence[ftAdversarialInput, ftDependenceRules, 4];
+check["a sample-only cancellation is rejected by the generic symbolic proof",
+  ftAdversarialReport["Status"] === "UNCHANGED" &&
+  ftAdversarialReport["StopReason"] === "GenericOrdinaryProofDidNotClose" &&
+  ftAdversarialReport["Amplitude"] === ftAdversarialInput];
+check["the exact certificate records a dense chart and every coherent spin-one component",
+  ftDependenceRoute["DenseFourMassiveExternalChart"] === True &&
+  ftDependenceRoute["CovariantTypedScalar"] === True &&
+  ftDependenceRoute["FullTypedMapCoverage"] === True &&
+  ftDependenceRoute["CoherentDegreeBounds"] === {2, 2, 2, 2} &&
+  ftDependenceRoute["SymmetricSpinOneTensorInterpretation"] === True &&
+  ftDependenceRoute["NumericalSamplesProposeConstantsOnly"] === True &&
+  AllTrue[ftDependenceRoute["MassiveBasisCertificates"], TrueQ[#["Validated"]] &] &&
+  AllTrue[ftDependenceRoute["OriginalDenominatorRegularityWitnesses"],
+    TrueQ[#["EveryOriginalDenominatorRegular"]] &]];
+ftBadBasisChart = ConstructiveDiagrams`Private`completionHESymbolicExternalChart[ftDependenceRules];
+ftBadBasisChart["AngleBasis"] = Join[ftBadBasisChart["AngleBasis"], <|1 -> ConstantArray[0, {2, 2}]|>];
+ftBadBasisReport = Internal`InheritedBlock[
+  {ConstructiveDiagrams`Private`completionHESymbolicExternalChart},
+  Clear[ConstructiveDiagrams`Private`completionHESymbolicExternalChart];
+  ConstructiveDiagrams`Private`completionHESymbolicExternalChart[___] := ftBadBasisChart;
+  ftDependence[ftDependenceInput, ftDependenceRules, 1]];
+check["a singular or malformed massive-spin basis fails closed",
+  ftBadBasisReport["Status"] === "UNCHANGED" &&
+  ftBadBasisReport["StopReason"] === "InvalidMassiveSpinBasis" &&
+  ftBadBasisReport["Amplitude"] === ftDependenceInput];
+ftExcessSpinDegree = ftA[1, 2]^3 ftA[3, 4] + 2 ftA[1, 3]^3 ftA[2, 4];
+ftExcessSpinReport = ftDependence[ftExcessSpinDegree, ftDependenceRules, 1];
+check["non-spin-one slot degrees are rejected before coherent fitting",
+  ftExcessSpinReport["Status"] === "UNCHANGED" &&
+  ftExcessSpinReport["StopReason"] === "NotFourCoherentVectorSlots"];
+ftUnsupportedMapReport = Internal`InheritedBlock[
+  {ConstructiveDiagrams`Private`spuriousEvaluateCurve},
+  Clear[ConstructiveDiagrams`Private`spuriousEvaluateCurve];
+  ConstructiveDiagrams`Private`spuriousEvaluateCurve[___] := Missing["ForcedUnsupportedMap"];
+  ftDependence[ftDependenceInput, ftDependenceRules, 1]];
+check["unsupported typed maps are rejected rather than converted to zero rows",
+  ftUnsupportedMapReport["Status"] === "UNCHANGED" &&
+  ftUnsupportedMapReport["StopReason"] === "InsufficientRegularCharts" &&
+  ftUnsupportedMapReport["Amplitude"] === ftDependenceInput];
+
+(* Source and factorization preparation deliberately defer optional final
+   polishing. Observe the caller's scope without performing a second fit. *)
+ftCompactionScopeCalls = {};
+ftCompactionScope[deferred_] := Internal`InheritedBlock[
+  {ConstructiveDiagrams`Private`preparationExistingTermCompaction},
+  Clear[ConstructiveDiagrams`Private`preparationExistingTermCompaction];
+  ConstructiveDiagrams`Private`preparationExistingTermCompaction[body_, _, _] := (
+    AppendTo[ftCompactionScopeCalls,
+      TrueQ[ConstructiveDiagrams`Private`$deferExactTensorSupportPolish]];
+    <|"Status" -> "UNCHANGED", "Amplitude" -> body, "Route" -> {}|>);
+  Block[{ConstructiveDiagrams`Private`$deferExactTensorSupportPolish = deferred},
+    PrepareAmplitudes[{ftDependenceRules, ftDependenceInput}, ftModel,
+      "MaxSteps" -> 0, "InternalOnShell" -> False, "PolePreference" -> None,
+      "TimeConstraint" -> 6, "ReturnDetails" -> True,
+      "Parallelization" -> False, "ProgressReporting" -> False]]];
+ftCompactionDeferred = ftCompactionScope[True];
+check["deferred source preparation skips the final term-dependence fit",
+  ftCompactionScopeCalls === {} && AssociationQ[ftCompactionDeferred]];
+ftCompactionFinal = ftCompactionScope[False];
+check["normal final preparation still invokes exactly one term-dependence fit",
+  ftCompactionScopeCalls === {False} && AssociationQ[ftCompactionFinal]];
+
+(* A retained original rational input used to consume its entire proof cap
+   while testing polynomiality of an unsimplified rational zero. Model values
+   remain symbolic in the certificate; numerical charts only propose a point. *)
+ftRationalCertificateCase = ftInputs["ZZWWRationalCertificateInput"];
+ftRationalCertificateReport = ftDependence[
+  ftRationalCertificateCase["Amplitude"], ftRationalCertificateCase["ExternalMassRules"], 15];
+check["rational cancellation precedes expensive generic coherent classification",
+  ftRationalCertificateReport["Status"] === "IMPROVED" &&
+  SpinorExpressionComplexity[ftRationalCertificateReport["Amplitude"]] <
+    SpinorExpressionComplexity[ftRationalCertificateCase["Amplitude"]] &&
+  First[ftRationalCertificateReport["Route"]]["ExactGenericResidual"] === 0 &&
+  First[ftRationalCertificateReport["Route"]]["InternalOnShellConditions"] === {} &&
+  First[ftRationalCertificateReport["Route"]]["KnownAmplitudeOrAddedTensorUsed"] === False];
+ftRationalTinyBudget = ftDependence[ftRationalCertificateCase["Amplitude"],
+  ftRationalCertificateCase["ExternalMassRules"], 0.001];
+check["a positive exhausted proof budget preserves the complete original input",
+  ftRationalTinyBudget["Status"] === "UNCHANGED" && TrueQ[ftRationalTinyBudget["TimedOut"]] &&
+  ftRationalTinyBudget["Amplitude"] === ftRationalCertificateCase["Amplitude"]];
+ftIndependentTerms = ftDependenceTensor/ftDependencePole13 +
+  ftA[1, 2]^2 ftA[3, 4]^2/ftDependencePole14;
+ftIndependentReport = ftDependence[ftIndependentTerms, ftDependenceRules, 2];
+check["independent existing monomials remain unchanged without a strict improvement",
+  ftIndependentReport["Status"] === "UNCHANGED" &&
+  ftIndependentReport["StopReason"] === "NoStrictRankImprovement" &&
+  ftIndependentReport["Amplitude"] === ftIndependentTerms];
 
 Print["Four-leg tensor reduction: ", checks, " checks; ", Length[failures], " failures."];
 If[failures =!= {}, Print[failures]; Quit[1]];
