@@ -9,3 +9,6 @@ spinas-output/
 __pycache__/
 *.py[cod]
 /.venv/
+
+# Local working manuscripts
+/drafts/
