@@ -11,6 +11,8 @@ struct permutation_sum {
     Id kernel;
     std::vector<std::size_t> orbit_sizes;
 };
+// Preserves the sum over all permutations of legs. Individual summands can change.
+Id simplify_permutation_kernel(Algebra& a, Id summand, const std::vector<int>& legs);
 std::optional<permutation_sum> compact_permutations(Algebra& a, Id expression);
 
 } // namespace hepcat

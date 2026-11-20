@@ -27,7 +27,7 @@ struct numerator_shell {
 struct permutation_formula {
     std::vector<int> legs;
     std::string summand;
-    std::vector<std::size_t> orbit_sizes;
+    std::vector<std::size_t> orbit_sizes; // Empty for a kernel derived from ordered diagrams.
 };
 
 // FullForm input preserves model-local symbolic masses. External particle
@@ -71,6 +71,9 @@ private:
     void set_from(const Algebra& source, std::uint32_t result);
     std::uint32_t apply_in_trial(Algebra& trial, const identity_candidate& edit) const;
     struct context;
+    // This representation belongs to a certified complete graph sum. Propagate
+    // it through exact reductions and drop it if completion changes the amplitude.
+    std::shared_ptr<const permutation_formula> ordered_formula_;
     struct cached_permutations;
     const cached_permutations& reduced_permutations() const; // caller holds context lock
     mutable std::shared_ptr<const cached_permutations> permutations_;

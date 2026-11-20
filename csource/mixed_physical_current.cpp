@@ -57,6 +57,90 @@ struct dirac_recursion {
             std::swap(i, j);
         return a.pow(chain(swapped, vectors[i], {l}, vectors[j]), 2);
     }
+    // Sum the insertions of the only opposite-helicity photon into a fixed
+    // ordering of its companions. Their common chiral reference makes every
+    // orbital numerator independent of the position of the insertion.
+    Id ward_summand() {
+        const int n = static_cast<int>(vectors.size()) - 1;
+        const int h = vectors.back();
+        auto prefix = [](int k) -> mask { return (mask{1} << k) - 1; };
+        const mask companions = prefix(n);
+        auto virtuality = [&](bool left, int k) {
+            const mask before = prefix(k);
+            return pole(left ? l : r,left ? before : companions ^ before);
+        };
+        // Q_k = p_l + p_0 + ... + p_(k-1). Its complementary routing
+        // differs by -p_h, which annihilates the spinor at the right endpoint.
+        auto sandwich = [&](int leg, int k) {
+            legs before{l}, after{r};
+            for (int j = 0; j < n; ++j)
+                if (vectors[j] != leg) (j < k ? before : after).push_back(vectors[j]);
+            bool reverse = after.size() < before.size();
+            auto& momenta = reverse ? after : before;
+            std::sort(momenta.begin(),momenta.end());
+            std::vector<Id> labels;
+            for (int i : momenta) labels.push_back(a.integer(i));
+            const Id label = labels.size() == 1 ? labels.front() : a.call("Multiparticle",labels);
+            Id value = a.call("SpinorChain",{ep(!swapped,leg),a.call("Mom",{label}),ep(swapped,h)});
+            return reverse ? neg(value) : value;
+        };
+        auto difference = [&](int k) {
+            if (k == 0) return pole(l,mask{1} << n);
+            if (k == n) return neg(pole(r,mask{1} << n));
+            return sandwich(h,k);
+        };
+        const Id spin = a.mul({chain(swapped,l,{},h),chain(swapped,h,{},r)});
+        const Id unit = chain(swapped,l,{},r);
+        auto inv = [&](Id x) { return a.pow(x,-1); };
+        auto tail = [&](bool left, int marked) {
+            const int end = left ? l : r;
+            const int count = left ? marked : n-1-marked;
+            if (count == 2 || count == 3) {
+                // Sum the permutations of three orbital emissions before attaching
+                // them. The disconnected product has six equal images. A marked
+                // determinant has two; its recoil can use either leg of the pair.
+                const int step = left ? 1 : -1;
+                const int i = left ? 0 : n-1, j = i+step;
+                auto bit = [](int i) { return mask{1} << i; };
+                auto single = [&](int index) {
+                    const int v = vectors[index];
+                    const Id numerator = chain(!swapped,v,{end},h);
+                    return a.mul({left ? numerator : neg(numerator),inv(pole(end,bit(index))),
+                                  inv(chain(swapped,h,{},v))});
+                };
+                const Id pair = neg(a.mul({a.pow(mass,2),a.pow(chain(!swapped,vectors[i],{},vectors[j]),2),
+                                      inv(pole(end,bit(i))),inv(pole(end,bit(j))),inv(pole(end,bit(i)|bit(j)))}));
+                if (count == 2)
+                    return a.mul({inv(a.integer(2)),a.add({a.mul({single(i),single(j)}),pair})});
+                const int k = j+step;
+                const Id recoil = a.mul({a.integer(left ? -1 : 1),chain(!swapped,vectors[k],{},vectors[i]),
+                                         chain(!swapped,vectors[k],{end},vectors[i]),inv(pole(end,bit(k)))});
+                const mask three = bit(i)|bit(j)|bit(k);
+                const bool shorter_complement = std::bitset<32>(full ^ three).count() < 3;
+                const Id total_pole = shorter_complement ? pole(left ? r : l,full ^ three) : pole(end,three);
+                return a.add({a.mul({single(i),single(j),single(k),inv(a.integer(6))}),
+                              a.mul({pair,inv(a.integer(2)),
+                                     a.add({single(k),a.mul({a.integer(2),recoil,inv(total_pole)})})})});
+            }
+            std::vector<Id> factors;
+            for (int j = left ? 0 : marked+1; j < (left ? marked : n); ++j)
+                factors.push_back(a.mul({sandwich(vectors[j],j),inv(chain(swapped,h,{},vectors[j])),
+                                         inv(virtuality(left,left ? j+1 : j))}));
+            return a.mul(factors);
+        };
+        std::vector<Id> marked;
+        for (int k = 0; k < n; ++k) {
+            const int leg = vectors[k];
+            const Id momentum = sandwich(leg,k);
+            // Consecutive insertion weights differ by Schouten. Their
+            // longitudinal parts telescope, including the two external ends.
+            marked.push_back(a.mul({tail(true,k),tail(false,k),momentum,
+                    a.add({a.mul({unit,momentum}),neg(a.mul({spin,chain(!swapped,h,{},leg)}))}),
+                    inv(difference(k)),inv(difference(k+1))}));
+        }
+        return a.mul({neg(g),inv(mass),a.add(marked)});
+    }
+
     Id grouped_one_minority() {
         const size_t hidx = vectors.size() - 1;
         int h = vectors[hidx];
@@ -515,7 +599,7 @@ struct balanced_line : dirac_recursion {
         return a.mul({weight, dot(extend(true, start), extend(false, end))});
     }
 
-    Id run() {
+    Id run(std::optional<permutation_sum>* presentation = nullptr) {
         const size_t half = vectors.size() / 2;
         const bool odd = vectors.size() % 2;
         // Centering on the only Pauli emission leaves two purely orbital
@@ -523,6 +607,26 @@ struct balanced_line : dirac_recursion {
         // involving the central photon, so the determinant form stays small.
         const bool marked = !physical && length(minority) == 1;
         std::vector<Id> terms;
+        std::vector<Id> ordered;
+        auto add_split = [&](Id value, mask start, mask center) {
+            terms.push_back(value);
+            if (!presentation || value == zero()) return;
+            // Choose one allocation of the like-helicity legs to the left
+            // current, central vertex and right current. Each current has
+            // already summed all internal orderings in its own block.
+            int previous = -1;
+            unsigned counts[3]{};
+            long repetitions = 1;
+            for (std::size_t i = 0; i < vectors.size(); ++i) {
+                if (minor[i]) continue;
+                const mask bit = 1u << i;
+                const int block = (start & bit) ? 0 : (center & bit) ? 1 : 2;
+                if (block < previous) return;
+                previous = block;
+                repetitions *= ++counts[block];
+            }
+            ordered.push_back(a.mul({a.pow(a.integer(repetitions),-1),value}));
+        };
         for (mask start = 0; start < full; ++start) {
             const auto count = length(start);
             if (marked) {
@@ -535,7 +639,7 @@ struct balanced_line : dirac_recursion {
             }
             if (count == half && odd) {
                 for (size_t i = 0; i < vectors.size(); ++i)
-                    if (!(start & (1u << i))) terms.push_back(join_emission(start, i));
+                    if (!(start & (1u << i))) add_split(join_emission(start,i),start,1u<<i);
             }
             if (count == half && !odd) {
                 // Both currents carry the joining propagator. Amputate one.
@@ -543,23 +647,31 @@ struct balanced_line : dirac_recursion {
                 const auto den = denominator(false, end);
                 current amputated;
                 for (const auto& [k, x] : extend(false, end)) amputated[k] = a.mul({den, x});
-                terms.push_back(dot(extend(true, start), amputated));
+                add_split(dot(extend(true,start),amputated),start,0);
             }
             if (count + 1 == half || (odd && count == half)) {
                 for (size_t i = 0; i < vectors.size(); ++i)
                     if (!(start & (1u << i)))
                         for (size_t j = 0; j < i; ++j)
-                            if (!(start & (1u << j))) terms.push_back(join_contact(start, i, j));
+                            if (!(start & (1u << j))) add_split(join_contact(start,i,j),start,(1u<<i)|(1u<<j));
             }
         }
         std::vector<Id> prefactors{neg(g), a.pow(mass, -1), a.add(terms)};
         for (size_t i = 0; i < vectors.size(); ++i) prefactors.push_back(a.pow(norm(i), -1));
+        if (presentation && !ordered.empty()) {
+            auto seed = prefactors;
+            seed[2] = a.add(ordered);
+            legs permuted;
+            for (std::size_t i = 0; i < vectors.size(); ++i)
+                if (!minor[i]) permuted.push_back(vectors[i]);
+            *presentation = permutation_sum{permuted,a.mul(seed),{}};
+        }
         return a.mul(prefactors);
     }
 };
 } // namespace
-std::optional<Id> mixed_physical_current(Algebra& a, int l, int r, Id mass, const std::vector<int>& plus,
-                                         const std::vector<int>& minus, Id coefficient) {
+std::optional<Id> physical_current_with_presentation(Algebra& a, int l, int r, Id mass, const std::vector<int>& plus,
+                                         const std::vector<int>& minus, Id coefficient, std::optional<permutation_sum>* presentation) {
     if (plus.empty() || minus.empty() || plus.size() + minus.size() < 3 || plus.size() + minus.size() > 6)
         return {};
     bool swapped = minus.size() > plus.size();
@@ -576,8 +688,13 @@ std::optional<Id> mixed_physical_current(Algebra& a, int l, int r, Id mass, cons
       return d.grouped_one_minority();
     if (minor.size() == 2 && major.size() == 4)
       return d.midpoint(true);
-    return balanced_line(std::move(d), true).run();
+    return balanced_line(std::move(d), true).run(minor.size() == 1 ? presentation : nullptr);
 }
+std::optional<Id> mixed_physical_current(Algebra& a, int l, int r, Id mass,
+        const legs& plus, const legs& minus, Id coefficient) {
+    return physical_current_with_presentation(a,l,r,mass,plus,minus,coefficient,nullptr);
+}
+
 std::optional<Id> mixed_spurious_current(Algebra& a, int l, int r, Id mass, const std::vector<int>& plus,
                                          const std::vector<int>& minus, Id coefficient) {
   if (plus.empty() || minus.empty() || plus.size() + minus.size() < 3 ||
@@ -593,6 +710,18 @@ std::optional<Id> mixed_spurious_current(Algebra& a, int l, int r, Id mass, cons
                     minor, swapped,     (1u << vectors.size()) - 1};
   if (vectors.size() > 4) return balanced_line(std::move(d), false).run();
   return other.size() == 1 ? d.connected_emissions(false) : d.midpoint(false);
+}
+
+std::optional<permutation_sum> ordered_minority_sum(Algebra& a, int l, int r, Id mass,
+        const legs& plus, const legs& minus, Id coefficient) {
+    const bool swapped = minus.size() > plus.size();
+    const auto& companions = swapped ? minus : plus;
+    const auto& minority = swapped ? plus : minus;
+    if (minority.size() != 1 || companions.size() < 3 || companions.size() > 6) return {};
+    auto vectors = companions;
+    vectors.push_back(minority.front());
+    dirac_recursion line{a,l,r,mass,coefficient,vectors,{},swapped,(1u << vectors.size())-1};
+    return permutation_sum{companions,line.ward_summand(),{}};
 }
 
 } // namespace hepcat

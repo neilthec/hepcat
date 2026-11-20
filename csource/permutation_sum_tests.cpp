@@ -3,6 +3,7 @@
 // of the symbolic relabeling used by the reducer.
 #include "amp_expression.hpp"
 #include "line_current.hpp"
+#include "mixed_physical_current.hpp"
 #include "permutation_sum.hpp"
 #include "validation_numeric.hpp"
 
@@ -61,6 +62,44 @@ void test_massive_scalar_legs() {
             "failed to collect identical massive scalar legs");
 }
 
+void test_single_minority(std::vector<int> majority, int minority, bool conjugate) {
+    // Keep the fermion legs interleaved with the photons. At odd and even
+    // multiplicity the center of the line is a vertex or a propagator.
+    const int n = static_cast<int>(majority.size())+3;
+    const int left = 2, right = 5;
+    Algebra a;
+    const auto mass = a.integer(1), zero = a.integer(0);
+    std::vector<Id> masses(n,zero);
+    masses[left-1] = masses[right-1] = mass;
+    a.setKinematics(masses,{});
+    std::vector<real> numerical_masses(n,0);
+    numerical_masses[left-1] = numerical_masses[right-1] = 1;
+    const std::vector<int> lone{minority};
+    const auto& plus = conjugate ? lone : majority;
+    const auto& minus = conjugate ? majority : lone;
+    std::optional<permutation_sum> physical;
+    const auto reference = physical_current_with_presentation(a,left,right,mass,plus,minus,mass,&physical);
+    const auto ward = ordered_minority_sum(a,left,right,mass,plus,minus,mass);
+    require(reference && ward && ward->legs == majority,"missing ordered minority-photon formula");
+    if (majority.size() >= 4) require(physical.has_value(),"missing midpoint permutation sum");
+    const expression_evaluator full(a,*reference,{});
+    for (const auto& sum : {physical,ward}) {
+        if (!sum) continue;
+        const Id reduced = simplify_permutation_kernel(a,sum->kernel,majority);
+        const expression_evaluator kernel(a,reduced,{});
+        for (unsigned sample = 0; sample < 5; ++sample) {
+            const auto p = sample_point(numerical_masses,553171+sample);
+            const auto expected = full(p);
+            complex total{};
+            auto order = majority;
+            do { total += kernel(permute(p,majority,order)); }
+            while (std::next_permutation(order.begin(),order.end()));
+            require(std::abs(total-expected) <= 1e-7L*std::abs(expected),
+                    "the ordered minority-photon formula disagrees with the signed current");
+        }
+    }
+}
+
 void test_current(const model& qed, bool physical) {
     std::vector<std::string> particles{"e","E","A.+","A.+","A.+","A.+","A.+"};
     std::vector<std::string> masses;
@@ -101,7 +140,9 @@ void test_current(const model& qed, bool physical) {
 
     amp_expression broken("Plus[" + amp.str() + ",SpinorChain[Spinor[\"Helicity\",\"Square\",3],"
                           "Spinor[\"Helicity\",\"Square\",4]]]",masses);
-    require(!broken.reduce().permutation_form(),"assumed symmetry after breaking a signed orbit");
+    const auto residual_symmetry = broken.reduce().permutation_form();
+    require(!residual_symmetry || residual_symmetry->legs == std::vector<int>({5,6,7}),
+            "permuted a leg whose signed orbit was broken");
     amp_expression on_cut(amp.str(),masses,{{{1,3},masses.front()}});
     require(!on_cut.reduce().permutation_form(),"permuted a diagram-local shell");
 }
@@ -111,6 +152,10 @@ int main(int argc, char** argv) {
     if (argc != 2) return 2;
     try {
         test_massive_scalar_legs();
+        test_single_minority({1,3,4},6,false);
+        test_single_minority({1,3,4,6},7,false);
+        test_single_minority({1,3,4,6},7,true);
+        test_single_minority({1,3,4,6,7},8,true);
         model qed(argv[1],3);
         test_current(qed,true);
         test_current(qed,false);

@@ -724,9 +724,11 @@ const amp_expression& amplitude::complete_factorization(const factorization_opti
     work.report.channels = work.cuts.size();
     auto workers = options.workers ? options.workers : std::max(1u, std::thread::hardware_concurrency());
     work.report.workers = std::min(workers, work.cuts.size());
-    auto publish = [&](Id answer) -> const amp_expression& {
+    auto publish = [&](Id answer, const std::optional<permutation_sum>& ordered = {}) -> const amp_expression& {
         amp_expression result("0", masses_);
         result.set_from(a, answer);
+        if (ordered) result.ordered_formula_ = std::make_shared<permutation_formula>(
+            permutation_formula{ordered->legs,a.format(ordered->kernel),ordered->orbit_sizes});
         construction_.reset();
         completed_ = std::move(result);
         high_energy_result_.reset();
@@ -740,9 +742,11 @@ const amp_expression& amplitude::complete_factorization(const factorization_opti
         references_ != generation_references::keep && !has_manual_contribution) {
         const bool physical = references_ == generation_references::physical;
         try {
-            auto candidate = dirac_line_proposal(a, *vertices_model_, particles_, generated_diagrams, physical);
+            std::optional<permutation_sum> ordered;
+            auto candidate = dirac_line_proposal(a, *vertices_model_, particles_, generated_diagrams, physical, &ordered);
             const char* name = "DiracLineCurrent";
             if (!candidate) {
+                ordered.reset();
                 candidate = fermion_current_proposal(a, *vertices_model_, particles_, generated_diagrams, physical);
                 name = "ContractedDiracCurrents";
             }
@@ -750,7 +754,7 @@ const amp_expression& amplitude::complete_factorization(const factorization_opti
                 auto proposed = trees.canonical(*candidate);
                 if (work.verified(proposed)) {
                     work.report.route = name;
-                    return publish(proposed);
+                    return publish(proposed,ordered);
                 }
             }
         } catch (const residue_unsupported&) {

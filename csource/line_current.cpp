@@ -300,7 +300,8 @@ public:
 
 std::optional<Id> dirac_line_proposal(Algebra &a, const model &vertices,
                                       const std::vector<std::string> &external,
-                                      std::size_t count, bool physical) {
+                                      std::size_t count, bool physical, std::optional<permutation_sum>* presentation) {
+  if (presentation) presentation->reset();
   int left = 0, right = 0;
   std::vector<int> photons;
   for (std::size_t i = 0; i < external.size(); ++i) {
@@ -408,13 +409,14 @@ std::optional<Id> dirac_line_proposal(Algebra &a, const model &vertices,
   for (std::size_t i = 0; i < photons.size(); ++i)
     (square[i] ? negative : positive).push_back(photons[i]);
   if (physical) {
-    return mixed_physical_current(a, left, right, current.mass, positive,
-                                  negative, current.coefficient);
+    return physical_current_with_presentation(a, left, right, current.mass, positive,
+                                  negative, current.coefficient,presentation);
   }
-  if (auto joined =
-          mixed_spurious_current(a, left, right, current.mass, positive,
-                                 negative, current.coefficient))
+  if (auto joined = mixed_spurious_current(a,left,right,current.mass,positive,negative,current.coefficient)) {
+    if (presentation)
+      *presentation = ordered_minority_sum(a,left,right,current.mass,positive,negative,current.coefficient);
     return joined;
+  }
   {
     mask angles = 0;
     for (unsigned i = 0; i < square.size(); ++i)
