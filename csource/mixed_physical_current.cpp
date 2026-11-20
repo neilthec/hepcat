@@ -170,81 +170,184 @@ struct dirac_recursion {
             pref.push_back(a.integer(-1));
         return a.mul(pref);
     }
+    // Combine the two orders of a correlated same-chirality pair before
+    // attaching the other emissions. At most one such pair occurs here.
+    Id connected_emissions(bool physical) {
+      const size_t h_index = vectors.size() - 1;
+      const int h = vectors[h_index], ref = vectors.front();
+      auto x = [&](int end, int i) { return chain(swapped, h, {end}, i); };
+      auto right_sigma = [&](int i, int j) {
+        return chain(!swapped, i, {}, j);
+      };
+      auto inv = [&](Id d) { return a.pow(d, -1); };
+      Id spin = a.mul({chain(swapped, l, {}, h), chain(swapped, r, {}, h)});
+      Id unit = chain(swapped, l, {}, r);
+      Id norm = physical ? pole(l, 1u << h_index) : right_sigma(h, ref);
+      Id left_weight =
+          physical ? spin : a.add({spin, a.mul({unit, x(l, ref), inv(norm)})});
+      Id right_spin = physical ? chain(swapped, h, {l, r}, h) : neg(x(r, ref));
+      Id right_weight = a.add({spin, a.mul({unit, right_spin, inv(norm)})});
+      mask companions = full ^ (1u << h_index);
+      auto unattached = [&](int end, mask set) {
+        Id weight = end == l ? left_weight : right_weight;
+        std::vector<Id> product{weight}, terms;
+        std::vector<std::pair<Id, Id>> factors;
+        for (size_t i = 0; i < h_index; ++i)
+          if (set & (1u << i)) {
+            int v = vectors[i];
+            Id delta = a.mul({chain(!swapped, v, {r, l}, v),
+                              inv(pole(l, 1u << i)), inv(pole(r, 1u << i))});
+            Id projected = physical ? x(l, v) : right_sigma(v, ref);
+            Id shift = a.mul({unit, projected, x(end, v), inv(norm),
+                              inv(pole(end, 1u << i))});
+            product.push_back(delta);
+            factors.emplace_back(delta, shift);
+          }
+        terms.push_back(a.mul(product));
+        for (size_t j = 0; j < factors.size(); ++j) {
+          product = {factors[j].second};
+          for (size_t i = 0; i < factors.size(); ++i)
+            if (i != j)
+              product.push_back(factors[i].first);
+          terms.push_back(a.mul(product));
+        }
+        return a.add(terms);
+      };
+      std::vector<Id> result{unattached(l, companions)};
+      for (size_t i = 0; i < h_index; ++i)
+        for (size_t j = i + 1; j < h_index; ++j) {
+          mask pair = (1u << i) | (1u << j), rest = companions ^ pair;
+          for (int end : {l, r}) {
+            const int other = end == l ? r : l;
+            auto pair_factor = a.mul(
+                {a.pow(mass, 2), a.pow(right_sigma(vectors[i], vectors[j]), 2),
+                 inv(pole(end, 1u << i)), inv(pole(end, 1u << j)),
+                 inv(pole(end, pair))});
+            Id tail = unattached(other, rest);
+            if (rest) {
+              int k = vectors[first_member(rest)];
+              std::vector<Id> insertions;
+              for (auto p : {vectors[i], vectors[j]})
+                insertions.push_back(
+                    a.mul({right_sigma(p, k), chain(swapped, p, {end}, k)}));
+              Id recoil = a.mul({a.add(insertions), inv(pole(end, rest)),
+                                 inv(pole(end, companions))});
+              tail = a.add(
+                  {tail, a.mul({end == l ? right_weight : neg(left_weight),
+                                recoil})});
+            }
+            result.push_back(neg(a.mul({pair_factor, tail})));
+          }
+        }
+      return a.mul({g, inv(mass), a.add(result)});
+    }
     // A cut at the middle of an ordered fermion line either separates two
     // two-emission currents or crosses a seagull. Sum both orders in each
     // two-emission current before performing the spinor contraction.
-    Id midpoint(int main_ref, int spin_ref) {
-        using current = std::map<int, Id>;
-        auto square = [&](int i, int j) { return chain(!swapped, i, {}, j); };
-        auto angle = [&](int i, int j) { return chain(swapped, i, {}, j); };
-        auto inv = [&](Id x) { return a.pow(x, -1); };
-        auto ar = [&](size_t i) { return minor[i] ? vectors[i] : main_ref; };
-        auto sr = [&](size_t i) { return minor[i] ? spin_ref : vectors[i]; };
-        auto gauge = [&](size_t i) {
-            return minor[i] ? square(spin_ref, vectors[i]) : angle(vectors[i], main_ref);
-        };
-        auto x = [&](size_t i, int p) { return a.mul({chain(!swapped, sr(i), {p}, ar(i)), inv(gauge(i))}); };
-        auto polarization_contact = [&](size_t i, size_t j) {
-            return neg(a.mul({angle(ar(i), ar(j)), square(sr(i), sr(j)), inv(gauge(i)), inv(gauge(j))}));
-        };
-        auto single = [&](int p, size_t i) {
-            current v{{p, x(i, p)}};
-            if (minor[i])
-                v[vectors[i]] = neg(angle(vectors[i], p));
-            return v;
-        };
-        auto pair = [&](int end, size_t i, size_t j) {
-            if (minor[i] && !minor[j])
-                std::swap(i, j);
-            int I = vectors[i], J = vectors[j];
-            Id di = pole(end, 1u << i), dj = pole(end, 1u << j), dij = pole(end, (1u << i) | (1u << j));
-            Id xi = x(i, end), xj = x(j, end), den = a.mul({inv(di), inv(dj)});
-            Id scalar = a.mul({xi, xj, dij});
-            current v;
-            if (minor[i] == minor[j]) {
-                Id ij2 = a.pow(minor[i] ? angle(I, J) : square(I, J), 2);
-                scalar = a.add({scalar, neg(a.mul({a.pow(mass, 2), ij2}))});
-                if (minor[i]) {
-                    auto shift = [&](int k, Id spectator) {
-                        return a.mul({den, a.add({neg(a.mul({angle(k, end), spectator, dij})),
-                                                  a.mul({mass, ij2, square(k, end)})})});
-                    };
-                    v[I] = shift(I, xj);
-                    v[J] = shift(J, xi);
-                }
-            } else {
-                Id chi = chain(!swapped, I, {end}, J);
-                scalar = a.add({scalar, a.pow(chi, 2)});
-                v[J] =
-                    neg(a.mul({den, angle(J, end), a.add({a.mul({xi, dij}), a.mul({square(I, J), chi})})}));
-            }
-            v[end] = a.mul({den, scalar});
-            return v;
-        };
-        auto dot = [&](const current& left, const current& right) {
-            std::vector<Id> terms;
-            for (auto [i, lv] : left)
-                for (auto [j, rv] : right)
-                    if (i != j)
-                        terms.push_back(a.mul({lv, rv, angle(i, j)}));
-            return a.add(terms);
-        };
-        std::vector<Id> all;
-        for (size_t i = 0; i < vectors.size(); ++i)
-            for (size_t j = i + 1; j < vectors.size(); ++j) {
-                mask chosen = (1u << i) | (1u << j), rest = full ^ chosen;
-                size_t k = first_member(rest), t = first_member(rest ^ (1u << k));
-                all.push_back(a.mul({dot(pair(l, i, j), pair(r, k, t)), inv(pole(l, chosen))}));
-                Id c = polarization_contact(i, j);
-                if (c != zero()) {
-                    auto regular = [&](size_t u, size_t v) {
-                        return a.mul(
-                            {dot(single(l, u), single(r, v)), inv(pole(l, 1u << u)), inv(pole(r, 1u << v))});
-                    };
-                    all.push_back(a.mul({c, a.add({regular(k, t), regular(t, k)})}));
-                }
-            }
-        return neg(a.mul({g, inv(mass), a.add(all)}));
+    Id midpoint(bool physical) {
+      using current = std::map<int, Id>;
+      auto square = [&](int i, int j) { return chain(!swapped, i, {}, j); };
+      auto angle = [&](int i, int j) { return chain(swapped, i, {}, j); };
+      auto inv = [&](Id x) { return a.pow(x, -1); };
+      auto sandwich = [&](int i, int p, int j) {
+        return chain(!swapped, i, {p}, j);
+      };
+      const auto first_negative = static_cast<size_t>(
+          std::find(minor.begin(), minor.end(), true) - minor.begin());
+      const auto last_negative = minor.size() - 1;
+      auto x = [&](size_t i, int p) {
+        const int v = vectors[i];
+        if (!physical && i == last_negative)
+          return a.mul(
+              {sandwich(vectors[0], p, v), inv(square(vectors[0], v))});
+        const int endpoint = (!physical && i == first_negative) ? r : l;
+        if (p == endpoint)
+          return zero();
+        Id emission = minor[i] ? chain(swapped, v, {endpoint, p}, v)
+                               : chain(!swapped, v, {p, endpoint}, v);
+        return a.mul({emission, inv(pole(endpoint, 1u << i))});
+      };
+      auto polarization_contact = [&](size_t i, size_t j) {
+        const int u = vectors[i], v = vectors[j], ref = vectors[0];
+        Id di = inv(pole(l, 1u << i)), dj = inv(pole(l, 1u << j));
+        if (physical || !minor[j]) {
+          if (minor[i] == minor[j])
+            return a.mul({a.pow(mass, 2),
+                          a.pow(minor[j] ? angle(u, v) : square(u, v), 2), di,
+                          dj});
+          return neg(a.mul({a.pow(sandwich(u, l, v), 2), di, dj}));
+        }
+        if (!minor[i] && j == first_negative)
+          return neg(a.mul({sandwich(u, l, v), sandwich(u, r, v), di,
+                            inv(pole(r, 1u << j))}));
+        if (!minor[i])
+          return a.mul(
+              {sandwich(u, l, v), square(u, ref), di, inv(square(ref, v))});
+        return neg(a.mul({angle(u, v), chain(swapped, u, {r}, ref),
+                          inv(pole(r, 1u << i)), inv(square(ref, v))}));
+      };
+      auto single = [&](int p, size_t i) {
+        current v{{p, x(i, p)}};
+        if (minor[i])
+          v[vectors[i]] = neg(angle(vectors[i], p));
+        return v;
+      };
+      auto pair = [&](int end, size_t i, size_t j) {
+        if (minor[i] && !minor[j])
+          std::swap(i, j);
+        int I = vectors[i], J = vectors[j];
+        Id di = pole(end, 1u << i), dj = pole(end, 1u << j),
+           dij = pole(end, (1u << i) | (1u << j));
+        Id xi = x(i, end), xj = x(j, end), den = a.mul({inv(di), inv(dj)});
+        Id scalar = a.mul({xi, xj, dij});
+        current v;
+        if (minor[i] == minor[j]) {
+          Id ij2 = a.pow(minor[i] ? angle(I, J) : square(I, J), 2);
+          scalar = a.add({scalar, neg(a.mul({a.pow(mass, 2), ij2}))});
+          if (minor[i]) {
+            auto shift = [&](int k, Id spectator) {
+              return a.mul(
+                  {den, a.add({neg(a.mul({angle(k, end), spectator, dij})),
+                               a.mul({mass, ij2, square(k, end)})})});
+            };
+            v[I] = shift(I, xj);
+            v[J] = shift(J, xi);
+          }
+        } else {
+          Id chi = chain(!swapped, I, {end}, J);
+          scalar = a.add({scalar, a.pow(chi, 2)});
+          v[J] = neg(
+              a.mul({den, angle(J, end),
+                     a.add({a.mul({xi, dij}), a.mul({square(I, J), chi})})}));
+        }
+        v[end] = a.mul({den, scalar});
+        return v;
+      };
+      auto dot = [&](const current &left, const current &right) {
+        std::vector<Id> terms;
+        for (auto [i, lv] : left)
+          for (auto [j, rv] : right)
+            if (i != j)
+              terms.push_back(a.mul({lv, rv, angle(i, j)}));
+        return a.add(terms);
+      };
+      std::vector<Id> all;
+      for (size_t i = 0; i < vectors.size(); ++i)
+        for (size_t j = i + 1; j < vectors.size(); ++j) {
+          mask chosen = (1u << i) | (1u << j), rest = full ^ chosen;
+          size_t k = first_member(rest), t = first_member(rest ^ (1u << k));
+          all.push_back(
+              a.mul({dot(pair(l, i, j), pair(r, k, t)), inv(pole(l, chosen))}));
+          Id c = polarization_contact(i, j);
+          if (c != zero()) {
+            auto regular = [&](size_t u, size_t v) {
+              return a.mul({dot(single(l, u), single(r, v)),
+                            inv(pole(l, 1u << u)), inv(pole(r, 1u << v))});
+            };
+            all.push_back(a.mul({c, a.add({regular(k, t), regular(t, k)})}));
+          }
+        }
+      return neg(a.mul({g, inv(mass), a.add(all)}));
     }
     Id run() {
         std::vector<Id> terms, prefactors{g, a.pow(mass, -1)};
@@ -277,18 +380,29 @@ std::optional<Id> mixed_physical_current(Algebra& a, int l, int r, Id mass, cons
         chi.push_back(true);
     }
     dirac_recursion d{a, l, r, mass, coefficient, major, chi, swapped, (1u << major.size()) - 1, {}};
-    return minor.size() == 1 && major.size() <= 4 ? d.grouped_one_minority() : d.run();
+    if (minor.size() == 1 && major.size() == 3)
+      return d.connected_emissions(true);
+    if (minor.size() == 1 && major.size() == 4)
+      return d.grouped_one_minority();
+    if (minor.size() == 2 && major.size() == 4)
+      return d.midpoint(true);
+    return d.run();
 }
 std::optional<Id> mixed_spurious_current(Algebra& a, int l, int r, Id mass, const std::vector<int>& plus,
                                          const std::vector<int>& minus, Id coefficient) {
-    if (plus.size() != 2 || minus.size() != 2)
-        return {};
-    legs vectors = plus;
-    vectors.insert(vectors.end(), minus.begin(), minus.end());
-    dirac_recursion d{
-        a, l, r, mass, coefficient, vectors, {false, false, true, true}, false, (1u << vectors.size()) - 1,
-        {}};
-    return d.midpoint(minus.front(), plus.front());
+  if (plus.empty() || minus.empty() || plus.size() + minus.size() < 3 ||
+      plus.size() + minus.size() > 4)
+    return {};
+  bool swapped = minus.size() > plus.size();
+  legs vectors = swapped ? minus : plus, other = swapped ? plus : minus;
+  std::vector<bool> minor(vectors.size(), false);
+  vectors.insert(vectors.end(), other.begin(), other.end());
+  minor.resize(vectors.size(), true);
+  dirac_recursion d{a,     l,           r,
+                    mass,  coefficient, vectors,
+                    minor, swapped,     (1u << vectors.size()) - 1,
+                    {}};
+  return other.size() == 1 ? d.connected_emissions(false) : d.midpoint(false);
 }
 
 } // namespace hepcat

@@ -44,6 +44,8 @@ struct Amplitudes {
 // The input is e- e+ -> N photons, with positive-energy physical momenta.
 // All photons have fixed positive helicity. Only the two massive spin labels
 // remain. The all-ingoing formulas are crossed exactly once in this class.
+enum class PoleEvaluation { ExternalShellExpansion, SummedMomentum };
+
 template<std::size_t N>
 class Formulas {
  public:
@@ -53,7 +55,8 @@ class Formulas {
   using Mask = std::uint32_t;
   static constexpr std::size_t subset_count = std::size_t(1) << N;
 
-  Formulas(const Momenta& momenta, ldouble mass, ldouble charge)
+  Formulas(const Momenta& momenta, ldouble mass, ldouble charge,
+           PoleEvaluation pole_mode = PoleEvaluation::ExternalShellExpansion)
       : mass_(mass), charge_(charge), left_pole_(subset_count, 0),
         right_pole_(subset_count, 0), physical_current_(subset_count),
         physical_ready_(subset_count, false),
@@ -66,8 +69,9 @@ class Formulas {
       particles_[leg].set_momentum(momenta[leg].data());
     }
     initialize_brackets();
-    initialize_poles(momenta);
-    physical_coefficient_ = physical_formula();
+    if (pole_mode == PoleEvaluation::SummedMomentum) initialize_summed_poles(momenta);
+    else initialize_poles(momenta);
+    physical_coefficient_ = physical_formula([this](Mask subset) { return physical_current(subset); });
     spurious_coefficient_ = spurious_formula(false);
   }
 
@@ -77,6 +81,23 @@ class Formulas {
   }
 
   cdouble physical_coefficient() const { return physical_coefficient_; }
+  // Evaluate the determinant-collected form with one mass correction per subset.
+  // The historical physical coefficient above remains available for timing replays.
+  cdouble collected_physical_amplitude(int spin1, int spin2) {
+    if (!collected_ready_) {
+      endpoint_products_.resize(subset_count);
+      endpoint_products_[0] = cdouble(1, 0);
+      for (std::size_t i = 0; i < N; ++i)
+        for (Mask smaller = 0; smaller < bit(i); ++smaller)
+          endpoint_products_[smaller | bit(i)] = endpoint_products_[smaller] * endpoint_sandwich_[i];
+      physical_correction_.resize(subset_count);
+      correction_ready_.assign(subset_count, false);
+      collected_coefficient_ = physical_formula([this](Mask subset) { return collected_current(subset); });
+      collected_ready_ = true;
+    }
+    return collected_coefficient_ * angle12_[spin_index(spin1) * 2 + spin_index(spin2)];
+  }
+
   cdouble spurious_coefficient() const { return spurious_coefficient_; }
 
   // An ordinary ordered-current recursion checks the determinant-collected
@@ -104,7 +125,10 @@ class Formulas {
   std::vector<cdouble> physical_current_, spurious_current_, ordered_current_;
   std::vector<bool> physical_ready_, spurious_ready_, ordered_ready_;
   std::unordered_map<std::uint64_t, cdouble> physical_weight_, spurious_weight_;
-  cdouble physical_coefficient_, spurious_coefficient_;
+  bool collected_ready_ = false;
+  std::vector<cdouble> physical_correction_, endpoint_products_;
+  std::vector<bool> correction_ready_;
+  cdouble physical_coefficient_, spurious_coefficient_, collected_coefficient_;
 
   static Mask bit(std::size_t i) { return Mask(1) << i; }
   static Mask all() { return Mask(subset_count - 1); }
@@ -168,6 +192,22 @@ class Formulas {
             photon_insertion_[i][k][j] = middle.v();
           }
         }
+      }
+    }
+  }
+
+  // The publication's SPINAS process evaluates K^2-m^2 from the measured
+  // momentum components. On rounded inputs this can differ from expanding
+  // K^2 with external on-shell identities. Select the same prescription for
+  // a pointwise comparison with that process and its MadGraph reference.
+  void initialize_summed_poles(const Momenta& momenta) {
+    for (Mask set = 1; set < subset_count; ++set) {
+      for (std::size_t end = 0; end < 2; ++end) {
+        FourMomentum k = momenta[end];
+        for (std::size_t i = 0; i < N; ++i) if (contains(set, i))
+          for (unsigned mu = 0; mu < 4; ++mu) k[mu] -= momenta[i+2][mu];
+        (end ? right_pole_ : left_pole_)[set] =
+            k[0]*k[0] - k[1]*k[1] - k[2]*k[2] - k[3]*k[3] - mass_*mass_;
       }
     }
   }
@@ -242,12 +282,50 @@ class Formulas {
     physical_ready_[subset] = true;
     return physical_current_[subset] = result.value;
   }
+  cdouble physical_removal(std::size_t i, Mask subset) const {
+    return N - count(subset) <= count(subset) ? physical_emission(i, all() & ~subset)
+      : endpoint_sandwich_[i] - physical_emission(i, subset & ~bit(i));
+  }
+  cdouble correction_pair(std::size_t i, std::size_t j) const {
+    return square_[i][j] * square_[i][j] * left_pole_[bit(i)] * left_pole_[bit(j)];
+  }
+  cdouble physical_correction(Mask subset) {
+    if (correction_ready_[subset]) return physical_correction_[subset];
+    const auto size = count(subset);
+    if (size < 2) return cdouble(0, 0);
+    ComplexSum result;
+    for (std::size_t i = 0; i < N; ++i) if (contains(subset, i)) {
+      if (size >= 4)
+        result.add(physical_removal(i, subset) * right_pole_[bit(i)] *
+                   physical_correction(subset & ~bit(i)));
+      for (std::size_t j = i + 1; j < N; ++j) if (contains(subset, j)) {
+        const Mask pair = bit(i) | bit(j), remaining = subset & ~pair;
+        cdouble lead = endpoint_products_[remaining];
+        if (size == 3) {
+          for (std::size_t k = 0; k < N; ++k) if (contains(remaining, k)) {
+            lead += divide(physical_removal(k, subset) * right_pole_[bit(k)], right_pole_[pair]);
+            break;
+          }
+        }
+        result.add(correction_pair(i, j) * lead);
+        if (size >= 4)
+          result.add(-mass_ * mass_ * square_[i][j] * square_[i][j] *
+                     right_pole_[bit(i)] * right_pole_[bit(j)] * physical_correction(remaining));
+      }
+    }
+    correction_ready_[subset] = true;
+    return physical_correction_[subset] = divide(result.value, right_pole_[subset]);
+  }
+  cdouble collected_current(Mask subset) {
+    return divide(endpoint_products_[subset] - mass_ * mass_ * physical_correction(subset),
+                  single_pole_product(subset));
+  }
   ldouble single_pole_product(Mask subset) const {
     ldouble result = 1;
     for (std::size_t i = 0; i < N; ++i) if (contains(subset, i)) result *= right_pole_[bit(i)];
     return result;
   }
-  cdouble physical_formula() {
+  template<class Current> cdouble physical_formula(Current current) {
     ComplexSum result;
     ldouble denominator = 1, coupling = 1;
     const ldouble vertex = std::sqrt(ldouble(2)) * charge_;
@@ -255,7 +333,7 @@ class Formulas {
       denominator *= left_pole_[bit(i)];
       coupling *= vertex;
       for (std::size_t j = i + 1; j < N; ++j)
-        result.add(square_[i][j] * square_[i][j] * physical_current(all() & ~bit(i) & ~bit(j)));
+        result.add(square_[i][j] * square_[i][j] * current(all() & ~bit(i) & ~bit(j)));
     }
     return divide(coupling * mass_ * result.value, denominator);
   }

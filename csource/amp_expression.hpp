@@ -34,6 +34,7 @@ public:
     std::string str() const;
     std::size_t particle_count() const;
     std::size_t complexity() const;
+    std::size_t leaf_count() const;
 private:
     friend class amplitude;
     friend std::uint32_t validation_detail::import_expression(Algebra&, const amp_expression&, bool);

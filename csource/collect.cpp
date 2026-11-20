@@ -600,6 +600,40 @@ Id collectCandidate(Algebra& a, Id input) {
     }
     return input;
 }
+// Collect shared scalar factors inside existing sums as well as at the root.
+// Ordered chains, color tensors and reciprocal factors are opaque.
+Id collect_scalar_factors(Algebra &a, Id input) {
+  if (a.cost(input) > 24000)
+    return input;
+  std::unordered_map<Id, Id> cache;
+  auto visit = [&](auto &self, Id id) -> Id {
+    if (auto at = cache.find(id); at != cache.end())
+      return at->second;
+    const auto &n = a.node(id);
+    Id result = id;
+    if (n.head == "Times" || n.head == "Plus") {
+      Terms args;
+      for (Id k : n.args)
+        args.push_back(self(self, k));
+      result = n.head == "Times" ? a.mul(args) : factor(a, a.add(args));
+    } else if (n.head == "Power" && n.args.size() == 2 && a.leg(n.args[1])) {
+      result = a.pow(self(self, n.args[0]), a.leg(n.args[1]));
+    }
+    return cache.emplace(id, result).first->second;
+  };
+  auto result = visit(visit, input);
+  if (a.cost(result) >= a.cost(input))
+    return input;
+  // Check the public metric explicitly, including hidden chain momentum
+  // branches.
+  try {
+    if (expression_complexity(a, result) <= expression_complexity(a, input))
+      return result;
+  } catch (const std::length_error &) {
+  } catch (const std::overflow_error &) {
+  }
+  return input;
+}
 std::size_t expression_complexity(const Algebra& source, Id root) {
     Algebra trial(&source);
     try {

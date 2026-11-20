@@ -1,7 +1,6 @@
 #include "line_current.hpp"
 #include "generation_plan.hpp"
 #include "mixed_physical_current.hpp"
-#include "photon_reference_basis.hpp"
 #include <algorithm>
 #include <map>
 #include <set>
@@ -73,43 +72,67 @@ public:
       return a.mul({chain(!primary, i, {}, j), chain(primary, j, {left}, i)});
     }));
   }
-  Id physical_weight(mask set, mask pair) {
-    auto key = std::make_tuple(0, set, pair);
+  // Sum the coefficient of the determinant over its marked photon pair
+  // first. Every smaller subset then has only one scalar correction.
+  Id physical_correction(mask set) {
+    if (!(set & (set - 1)))
+      return a.integer(0);
+    auto key = std::make_tuple(0, set, 0);
     if (auto it = weights.find(key); it != weights.end())
       return it->second;
-    auto rest = set ^ pair;
-    std::vector<Id> terms{
-        a.mul(each(rest, [&](mask, int j) { return endpoint(j); }))};
-    auto singles = each(rest, [&](mask i, int leg) {
-      return a.mul({emission(leg, full ^ set), pole(right, i),
-                    inv(pole(right, set ^ i)), physical_weight(set ^ i, pair)});
+    auto pair_numerator = [&](mask ij, int i, int j) {
+      return a.mul({pair_square(i, j), a.mul(each(ij, [&](mask k, int) {
+                      return pole(left, k);
+                    }))});
+    };
+    auto projected = [&](mask i, int leg) {
+      if (bit_count(full ^ set) <= bit_count(set))
+        return emission(leg, full ^ set);
+      return a.add({endpoint(leg), minus(emission(leg, set ^ i))});
+    };
+    auto terms = pairs(set, [&](mask ij, int i, int j) {
+      mask rest = set ^ ij;
+      Id tail = a.mul(each(rest, [&](mask, int k) { return endpoint(k); }));
+      if (rest && !(rest & (rest - 1))) {
+        auto insertion = each(rest, [&](mask k, int leg) {
+          return a.mul(
+              {projected(k, leg), pole(right, k), inv(pole(right, ij))});
+        });
+        tail = a.add({tail, insertion.front()});
+      }
+      return a.mul({pair_numerator(ij, i, j), tail});
     });
-    auto doubles = pairs(rest, [&](mask ij, int i, int j) {
-      return minus(
-          a.mul({a.pow(mass, 2), pair_square(i, j),
-                 a.mul(each(ij, [&](mask k, int) { return pole(right, k); })),
-                 inv(pole(right, set ^ ij)), physical_weight(set ^ ij, pair)}));
-    });
-    terms.insert(terms.end(), singles.begin(), singles.end());
-    terms.insert(terms.end(), doubles.begin(), doubles.end());
-    return weights.emplace(key, a.add(terms)).first->second;
+    if (bit_count(set) >= 4) {
+      auto singles = each(set, [&](mask i, int leg) {
+        return a.mul(
+            {projected(i, leg), pole(right, i), physical_correction(set ^ i)});
+      });
+      auto pairs_correction = pairs(set, [&](mask ij, int i, int j) {
+        return minus(
+            a.mul({a.pow(mass, 2), pair_square(i, j),
+                   a.mul(each(ij, [&](mask k, int) { return pole(right, k); })),
+                   physical_correction(set ^ ij)}));
+      });
+      terms.insert(terms.end(), singles.begin(), singles.end());
+      terms.insert(terms.end(), pairs_correction.begin(),
+                   pairs_correction.end());
+    }
+    return weights.emplace(key, a.mul({a.add(terms), inv(pole(right, set))}))
+        .first->second;
+  }
+  static unsigned bit_count(mask set) {
+    unsigned count = 0;
+    for (; set; set &= set - 1)
+      ++count;
+    return count;
   }
   Id physical_current(mask set) {
-    auto leading = a.mul(each(set, [&](mask i, int leg) {
-      return a.mul({endpoint(leg), inv(pole(right, i))});
-    }));
-    if (!(set & (set - 1)))
-      return leading;
-    auto pair_terms = pairs(set, [&](mask ij, int i, int j) {
-      return a.mul({pair_square(i, j),
-                    a.mul(each(ij, [&](mask k, int) { return pole(left, k); })),
-                    physical_weight(set, ij)});
-    });
-    return a.add({leading, minus(a.mul({a.pow(mass, 2), a.add(pair_terms),
-                                        inv(pole(right, set)),
-                                        a.mul(each(set, [&](mask i, int) {
-                                          return inv(pole(right, i));
-                                        }))}))});
+    Id leading = a.mul(each(set, [&](mask, int i) { return endpoint(i); }));
+    Id numerator = a.add(
+        {leading, minus(a.mul({a.pow(mass, 2), physical_correction(set)}))});
+    return a.mul({numerator, a.mul(each(set, [&](mask i, int) {
+                    return inv(pole(right, i));
+                  }))});
   }
   Id ratio(int ref, int i, int p) {
     if (p == ref || p == i)
@@ -388,16 +411,10 @@ std::optional<Id> dirac_line_proposal(Algebra &a, const model &vertices,
     return mixed_physical_current(a, left, right, current.mass, positive,
                                   negative, current.coefficient);
   }
-  // For a three-emission mixed line the compact Dirac current consists of
-  // diagonal sandwiches and one spin insertion. Expose its massless-reference
-  // form before falling back to the ordered emission recurrence below.
-  if (photons.size() == 3) {
-    auto compact = mixed_physical_current(a, left, right, current.mass, positive,
-                                          negative, current.coefficient);
-    if (compact)
-      if (auto expanded = photon_reference_basis(a, *compact, photons))
-        return expanded;
-  }
+  if (auto joined =
+          mixed_spurious_current(a, left, right, current.mass, positive,
+                                 negative, current.coefficient))
+    return joined;
   {
     mask angles = 0;
     for (unsigned i = 0; i < square.size(); ++i)
@@ -413,6 +430,6 @@ std::optional<Id> dirac_line_proposal(Algebra &a, const model &vertices,
       }
     }
   }
-  return mixed_spurious_current(a, left, right, current.mass, positive, negative, current.coefficient);
+  return {};
 }
 } // namespace hepcat

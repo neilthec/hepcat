@@ -1,5 +1,5 @@
 // Re-evaluate every raw all-positive outlier using the same measured momenta.
-// The comparison retains the original MadGraph rate and all unrounded residuals.
+// Record unchanged-input MadGraph comparisons and a separate projected-input identity check.
 #pragma once
 #include "QED-all-positive-reference.hpp"
 #include "validation_precision_parameters.hpp"
@@ -68,9 +68,39 @@ inline long double relative(const precise::number& a, const precise::number& b) 
     auto scale = std::max(a.magnitude(), b.magnitude());
     return scale == 0 ? 0 : precise::narrow_real(scalar((a - b).magnitude() / scale, precise::bits));
 }
-inline std::size_t replay_formulas(const hepcat::model& vertices, unsigned n,
-                                   const std::filesystem::path& prefix, size_t requested, double m,
-                                   long double tolerance = 1e-7L) {
+struct formula_precision_report {
+    std::size_t replayed = 0, unchanged_failures = 0, projected_identity_failures = 0;
+    long double worst_unchanged_mg = 0, worst_projected_identity = 0, largest_shift = 0;
+};
+
+// The unmodified event may have small residuals in its shells and momentum
+// conservation. Preserve its measured momenta even when evaluating invariants.
+inline precise::phase_point unchanged_chart(std::vector<precise::four> p, const scalar& mass) {
+    std::vector<scalar> masses(p.size(), scalar(0, precise::bits));
+    masses[0] = masses[1] = mass;
+    for (std::size_t i = 2; i < p.size(); ++i)
+        for (auto& component : p[i]) component = -component;
+    auto chart = precise::from_momenta(std::move(p), std::move(masses), 0);
+    for (std::size_t i = 0; i < chart.momenta.size(); ++i)
+        for (std::size_t j = 0; j <= i; ++j) {
+            const auto &a = chart.momenta[i], &b = chart.momenta[j];
+            scalar dot(a[0]*b[0]-a[1]*b[1]-a[2]*b[2]-a[3]*b[3], precise::bits);
+            chart.scalar_products[i * chart.momenta.size() + j] = dot;
+            chart.scalar_products[j * chart.momenta.size() + i] = dot;
+        }
+    return chart;
+}
+inline formula_precision_report replay_formulas(const hepcat::model& vertices, unsigned n,
+        const std::filesystem::path& prefix, size_t requested, double m, long double tolerance = 1e-7L,
+        bool sparse = false, bool expanded_poles = true, mpq_class charge_value = mpq_class(1, 3),
+        unsigned input_bits = std::numeric_limits<long double>::digits) {
+    if (input_bits > std::numeric_limits<long double>::digits)
+        throw std::invalid_argument("this host cannot reconstruct the original event component precision");
+    auto component = [input_bits](const std::string& text) {
+        if (input_bits <= std::numeric_limits<double>::digits)
+            return precise::wide_real(std::stod(text));
+        return precise::wide_real(std::stold(text));
+    };
     std::ifstream points(prefix.string() + "-points.csv"), values(prefix.string() + "-values.csv");
     std::ofstream evidence(prefix.string() + "-precision.tsv");
     if (!points || !values || !evidence)
@@ -78,80 +108,91 @@ inline std::size_t replay_formulas(const hepcat::model& vertices, unsigned n,
     std::string point_line, rate_line;
     std::getline(points, point_line);
     std::getline(values, rate_line);
-    evidence
-        << "point\traw_max\tphysical_mg\tspurious_mg\tcomplex_forms\tordered_current\tkinematic_shift\n"
-        << std::setprecision(17);
-    all_positive_reference formulas(vertices, n);
+    evidence << "point\traw_max\tunchanged_physical_mg\tunchanged_spurious_mg\tunchanged_collected_mg"
+                "\tunchanged_physical_spurious\tunchanged_ordered_spurious\tunchanged_collected_physical"
+                "\tprojected_physical_spurious\tprojected_ordered_spurious\tprojected_collected_physical"
+                "\tprojected_kinematic_shift\n" << std::setprecision(17);
+    all_positive_reference formulas(vertices, n, expanded_poles);
     hepcat::validation::parameters inputs;
     hepcat::validation::wide_parameters exact;
-    const scalar mass(m, precise::bits), charge(mpq_class(1, 3), precise::bits);
+    const scalar mass(m, precise::bits), charge(charge_value, precise::bits);
     for (const auto& p : vertices.variables()) {
-        auto key = vertices.algebra().format(p.symbol);
         if (p.name == "EE" || p.name == "Me") {
+            auto key = vertices.algebra().format(p.symbol);
             auto val = p.name == "EE" ? charge : mass;
             inputs[key] = precise::narrow_real(val);
             exact.emplace(key, precise::number(val));
         }
     }
     std::vector<hepcat::validation::expression_evaluator> compiled;
-    size_t row = 0, replayed = 0, failed = 0;
+    hepcat::validation::point labels;
+    labels.momenta.resize(n + 2);
+    auto coefficients = [&](const precise::phase_point& chart) {
+        std::array<precise::number, 4> result;
+        for (std::size_t i = 0; i < result.size(); ++i) result[i] = compiled[i].precise(labels, chart);
+        return result;
+    };
+    formula_precision_report report;
+    size_t rows = 0, previous = 0;
     while (std::getline(values, rate_line)) {
-        ++row;
+        ++rows;
         auto r = csv_row(rate_line);
-        if (r.size() != 8 || std::stoull(r[0]) != row)
-            throw std::runtime_error("invalid formula validation row");
+        if (r.size() != 8 && r.size() != 11) throw std::runtime_error("invalid formula validation row");
+        const auto event = std::stoull(r[0]);
+        if (event <= previous || event > requested || (!sparse && event != rows))
+            throw std::runtime_error("invalid formula validation event index");
+        previous = event;
         long double worst = 0;
-        for (size_t j = 4; j < 8; ++j) {
+        for (size_t j = 4; j < r.size(); ++j) {
+            if (j == 8) continue; // The collected rate, followed by its two residuals.
             auto err = std::stold(r[j]);
-            if (!std::isfinite(err))
-                throw std::runtime_error("nonfinite formula residual");
+            if (!std::isfinite(err) || err < 0) throw std::runtime_error("invalid formula residual");
             worst = std::max(worst, err);
         }
+        if (sparse && worst <= tolerance) throw std::runtime_error("non-outlier in sparse precision file");
         std::vector<precise::four> p;
         for (unsigned i = 0; i < n + 2; ++i) {
-            if (!std::getline(points, point_line))
-                throw std::runtime_error("missing phase-space point");
-            if (worst <= tolerance)
-                continue;
+            if (!std::getline(points, point_line)) throw std::runtime_error("missing phase-space point");
+            if (worst <= tolerance) continue;
             auto v = csv_row(point_line);
-            if (v.size() != 6 || std::stoull(v[0]) != row || std::stoul(v[1]) != i + 1)
+            if (v.size() != 6 || std::stoull(v[0]) != event || std::stoul(v[1]) != i + 1)
                 throw std::runtime_error("invalid replay leg");
-            p.push_back({scalar(v[2], precise::bits), scalar(v[3], precise::bits),
-                         scalar(v[4], precise::bits), scalar(v[5], precise::bits)});
+            precise::four momentum;
+            for (unsigned k = 0; k < 4; ++k) momentum[k] = component(v[k+2]);
+            p.push_back(std::move(momentum));
         }
-        if (worst <= tolerance)
-            continue;
-        ++replayed;
-        if (compiled.empty()) {
-            auto physical = formulas.coefficient(false), spurious = formulas.coefficient(true),
-                 ordered = formulas.coefficient(true, true);
-            for (auto id : {physical, spurious, ordered})
+        if (worst <= tolerance) continue;
+        ++report.replayed;
+        if (compiled.empty())
+            for (auto id : {formulas.coefficient(false), formulas.coefficient(true),
+                            formulas.coefficient(true, true), formulas.coefficient(false, false, true)})
                 compiled.emplace_back(formulas.arena(), id, inputs, std::vector<int>{}, &exact);
-        }
+        auto same = unchanged_chart(p, mass);
+        auto u = coefficients(same);
+        auto spin = precise::number(scalar(2 * same.scalar_products[1], precise::bits));
+        precise::number mg(scalar(r[3], precise::bits));
+        auto rate_error = [&](const precise::number& z) { return relative(z * z.conj() * spin, mg); };
+        std::array<long double, 6> unchanged{rate_error(u[0]), rate_error(u[1]), rate_error(u[3]),
+               relative(u[0], u[1]), relative(u[2], u[1]), relative(u[3], u[0])};
+        report.worst_unchanged_mg = std::max({report.worst_unchanged_mg, unchanged[0], unchanged[1], unchanged[2]});
+        if (*std::max_element(unchanged.begin(), unchanged.end()) > tolerance) ++report.unchanged_failures;
         long double shift = 0;
-        auto chart = replay_chart(std::move(p), mass, shift);
-        // The chart must still describe this recorded MadGraph point. Its
-        // kinematic roundoff grows with the number of final-state momenta.
+        auto proj = coefficients(replay_chart(std::move(p), mass, shift));
         if (shift > 64 * n * std::numeric_limits<double>::epsilon())
-            throw std::runtime_error("formula replay would substantially change the recorded momenta");
-        hepcat::validation::point labels;
-        labels.momenta.resize(n + 2);
-        auto physical = compiled[0].precise(labels, chart),
-             spurious = compiled[1].precise(labels, chart), ordered = compiled[2].precise(labels, chart);
-        // Sum over both massive spin indices of |<12>|^2 = 2 p1.p2.
-        precise::number spin(scalar(2 * chart.scalar_products[1], precise::bits)),
-            mg(scalar(r[3], precise::bits));
-        auto pm = relative(physical * physical.conj() * spin, mg),
-             sm = relative(spurious * spurious.conj() * spin, mg);
-        auto cm = relative(physical, spurious), om = relative(ordered, spurious);
-        if (std::max({pm, sm, cm, om}) > tolerance)
-            ++failed;
-        evidence << row << '\t' << worst << '\t' << pm << '\t' << sm << '\t' << cm << '\t' << om << '\t'
-                 << shift << '\n';
+            throw std::runtime_error("formula replay would substantially change the measured momenta");
+        report.largest_shift = std::max(report.largest_shift, shift);
+        std::array<long double, 3> identities{relative(proj[0], proj[1]), relative(proj[2], proj[1]),
+                                               relative(proj[3], proj[0])};
+        auto max_id = *std::max_element(identities.begin(), identities.end());
+        report.worst_projected_identity = std::max(report.worst_projected_identity, max_id);
+        if (max_id > tolerance) ++report.projected_identity_failures;
+        evidence << event << '\t' << worst;
+        for (auto d : unchanged) evidence << '\t' << d;
+        for (auto d : identities) evidence << '\t' << d;
+        evidence << '\t' << shift << '\n';
     }
-    if (row != requested || !replayed || std::getline(points, point_line) || failed)
-        throw std::runtime_error("incomplete or failed same-point extended formula replay: " +
-                                 prefix.string());
-    return replayed;
+    if ((!sparse && rows != requested) || !report.replayed || std::getline(points, point_line))
+        throw std::runtime_error("incomplete extended formula replay: " + prefix.string());
+    return report;
 }
 } // namespace qed_notebook

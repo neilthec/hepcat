@@ -60,6 +60,7 @@ private:
 Id reduceInto(Algebra& storage, Id expression, const std::vector<Id>& masses,
               const std::map<std::vector<int>,Id>& shells);
 Id collectCandidate(Algebra&, Id);
+Id collect_scalar_factors(Algebra&, Id);
 std::size_t expression_complexity(const Algebra&, Id);
 Id reduceSpinor(Algebra&, Id);
 std::optional<Id> commonMomentumSwap(Algebra&, Id first, Id second);

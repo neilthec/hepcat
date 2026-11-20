@@ -14,6 +14,7 @@ class all_positive_reference {
     hepcat::Algebra a;
     Id mass, charge;
     unsigned photons;
+    bool expanded_poles;
     Mask all;
     std::map<std::tuple<unsigned, Mask, Mask>, Id> weights;
     Id bracket(bool angle, int first, int last, const std::vector<int>& momenta = {}, bool same = true) {
@@ -42,6 +43,16 @@ class all_positive_reference {
         return a.mul(std::move(factors));
     }
     Id tau(int leg, Mask set) {
+        if (expanded_poles) {
+            std::vector<Id> dots;
+            each(set, [&](int i, Mask) {
+                dots.push_back(a.call("MomProd", {a.integer(leg), a.integer(i)}));
+            });
+            pairs(set, [&](int i, int j, Mask, Mask) {
+                dots.push_back(a.call("MomProd", {a.integer(i), a.integer(j)}));
+            });
+            return a.mul({a.integer(2), a.add(dots)});
+        }
         std::vector<Id> v{a.integer(leg)};
         each(set, [&](int i, Mask) { v.push_back(a.integer(i)); });
         return a.call("PropDen", {a.call("Mom", {a.call("Multiparticle", std::move(v))}), mass});
@@ -107,6 +118,37 @@ class all_positive_reference {
             result = a.mul({result, a.pow(tau(1, set), -1)});
         return weights.emplace(key, result).first->second;
     }
+    // Sum the fixed-pair weights before recurring. All terms with the same
+    // first removed leg or pair share the correction of the smaller subset.
+    std::map<Mask, Id> corrections;
+    Id collected_correction(Mask set) {
+        if (!(set & (set - 1))) return a.integer(0);
+        if (auto it = corrections.find(set); it != corrections.end()) return it->second;
+        std::vector<Id> terms;
+        pairs(set, [&](int i, int j, Mask b, Mask c) {
+            Mask rest = set ^ b ^ c;
+            terms.push_back(a.mul({a.pow(bracket(false, i, j), 2), tau(1, b), tau(1, c),
+                                   leading(0, rest)}));
+            if (rest & (rest - 1))
+                terms.push_back(a.mul({a.integer(-1), a.pow(mass, 2), a.pow(bracket(false, i, j), 2),
+                                       tau(2, b), tau(2, c), collected_correction(rest)}));
+        });
+        each(set, [&](int i, Mask b) {
+            Mask rest = set ^ b;
+            if (!(rest & (rest - 1))) return;
+            std::vector<Id> emissions;
+            each(all ^ set, [&](int j, Mask) {
+                emissions.push_back(a.mul({bracket(false, i, j), bracket(true, j, i, {1}, false)}));
+            });
+            terms.push_back(a.mul({a.add(emissions), tau(2, b), collected_correction(rest)}));
+        });
+        return corrections[set] = a.mul({a.add(terms), a.pow(tau(2, set), -1)});
+    }
+    Id collected_current(Mask set) {
+        return a.mul({product(set, [&](int, Mask b) { return a.pow(tau(2, b), -1); }),
+                      a.add({leading(0, set), a.mul({a.integer(-1), a.pow(mass, 2),
+                                                     collected_correction(set)})})});
+    }
     Id current(int r, Mask set) {
         auto single_poles = product(set, [&](int, Mask b) { return a.pow(tau(r ? 1 : 2, b), -1); });
         std::vector<Id> terms;
@@ -123,8 +165,8 @@ class all_positive_reference {
     }
 
   public:
-    all_positive_reference(const hepcat::model& vertices, unsigned n)
-        : a(&vertices.algebra()), mass(a.parse(vertices.particle("e").mass)), charge(0), photons(n),
+    all_positive_reference(const hepcat::model& vertices, unsigned n, bool expanded = false)
+        : a(&vertices.algebra()), mass(a.parse(vertices.particle("e").mass)), charge(0), photons(n), expanded_poles(expanded),
           all(0) {
         if (n < 2 || n > 8)
             throw std::invalid_argument("all-positive benchmark accepts two to eight photons");
@@ -137,7 +179,7 @@ class all_positive_reference {
         throw std::invalid_argument("QED benchmark requires the EE input");
     }
     const hepcat::Algebra& arena() const { return a; }
-    Id coefficient(bool spurious, bool ordered = false) {
+    Id coefficient(bool spurious, bool ordered = false, bool collected = false) {
         std::vector<Id> contributions;
         pairs(all, [&](int i, int j, Mask b, Mask c) {
             auto rest = all & ~b & ~c;
@@ -148,7 +190,7 @@ class all_positive_reference {
                     a.add({a.mul({jr(i), a.pow(tau(2, b), -1)}), a.mul({jr(j), a.pow(tau(2, c), -1)})});
                 contributions.push_back(a.mul({sq, a.pow(bracket(true, i, j), -1), endpoints}));
             } else
-                contributions.push_back(a.mul({a.pow(sq, 2), current(0, rest)}));
+                contributions.push_back(a.mul({a.pow(sq, 2), collected ? collected_current(rest) : current(0, rest)}));
         });
         Id coupling = a.mul({a.integer(spurious ? -1 : 1),
                              a.call("Power", {a.integer(2), a.exact(mpq_class(1, 2))}), charge});

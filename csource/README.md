@@ -64,20 +64,25 @@ The native writer currently supports color-singlet external particles. For anoth
 
 For event generation, enter a generated family's `spinas` directory and run `cmake --build build`. This builds the Monte Carlo targets as well as the validators. For an installed SPINAS library with no precision setting in its CMake cache, first configure the generated project with `cmake -S . -B build -DSPINAS_PRECISION=DOUBLE` or `LONG_DOUBLE` to match its ABI. For the two-photon example, launch CalcHEP with `(cd build/results && ./n_calchep)` or MadEvent with `(cd build/PROC_eeAA && ./bin/madevent)`. Type `generate_events` at the MadEvent prompt. Each integration uses the exported HEPCAT amplitude through SPINAS. Its independent validator uses the external generator's own matrix element.
 
-### QED reference run
+### Compare with the publication catalog
 
-Both pole preferences met the notebook complexity bound in every one of the 42 constructions. All 42 used the automatically constructed expression. Each passed the physical residues, spurious-pole, high-energy and reference checks, and 10,000 signed comparisons with both the Feynman sum and the notebook reference. The scores below count expanded numerator terms and momentum insertions with the same weights as Mathematica's `SpinorExpressionComplexity`.
+From the repository root, run the automatic construction and its signed benchmarks with
 
-| Process and pole choice | C++ | Mathematica reference |
-| --- | ---: | ---: |
-| Electron pair and three photons, mixed, physical | 71 | 71 |
-| Electron pair and three photons, mixed, spurious | 86 | 94 |
-| Electron pair and four photons, two of each helicity, physical | 1,662 | 2,238 |
-| Electron pair and four photons, two of each helicity, spurious | 1,044 | 1,044 |
-| Four fermions and two opposite-helicity photons, physical | 1,600 | 2,576 |
-| Electron pair and five positive-helicity photons, spurious | 920 | 1,160 |
+```sh
+tests/results/native-reduce-build/hepcat-qed --root . --publication --construct-only
+```
 
-The independent numerical exports passed 140,000 CalcHEP summed comparisons and 900,000 MadGraph helicity and sum comparisons. Each reported row used 10,000 phase-space points. The separate fixed-helicity formula study extends through eight photons. Two native-precision outliers there agreed with MadGraph to within `1.2e-14` after 160-bit replay of the on-shell kinematics. The QED driver keeps raw discrepancies and the replay results.
+The test reads the signed expressions from publication commit `aa676a9` after selecting the validation reference for each helicity. Candidate generation uses only the vertices and lower-point amplitudes. The publication comparison requires at least 100,000 points, uses seed 861811 by default and fails if the automatic expression misses a complexity target. Each result records the weighted score, syntax tree size, wall time and check counts.
+
+| Photon helicities | C++ physical | C++ spurious | Best published physical | Best published spurious |
+| --- | ---: | ---: | ---: | ---: |
+| Three photons, one opposite | 62 | 63 | 62 | 63 |
+| Four photons, one opposite | 327 | 416 | 327 | 416 |
+| Four photons, two of each | 692 | 712 | 692 | 712 |
+| Four fermions and two opposite photons | 1,600 | 1,632 | 1,600 | 1,632 |
+| Five positive photons | 820 | 920 | 820 | 1,160 |
+
+The [publication reference and reproduction instructions](../tests/benchmarks/publication-qed/publication-catalog.md) identify the model conventions and the separate, earlier worked expressions. The [full comparison](../tests/benchmarks/publication-qed/complexities.tsv) gives the Wolfram-measured score and leaf count for each representation. On these 42 entries, 31 native weighted scores equal the validated catalog and 11 are lower. Ten native expressions have more Mathematica leaves despite meeting their weighted targets.
 
 ## Generate from HEPCAT model files
 

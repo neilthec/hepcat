@@ -178,6 +178,10 @@ std::string amp_expression::str() const {
     std::lock_guard<std::mutex> guard(*kinematics_->lock);
     return arena_->format(root_);
 }
+std::size_t amp_expression::leaf_count() const {
+    std::lock_guard<std::mutex> guard(*kinematics_->lock);
+    return arena_->cost(root_);
+}
 std::size_t amp_expression::complexity() const {
     std::lock_guard<std::mutex> guard(*kinematics_->lock);
     return expression_complexity(*arena_, root_);

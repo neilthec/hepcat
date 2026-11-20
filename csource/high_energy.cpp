@@ -355,6 +355,7 @@ const amp_expression& amplitude::complete_high_energy(const amp_expression& expr
         result.set_from(a, answer);
         auto original = result; // The two roots share the original interned tree.
         result.reduce();
+        result.root_=collect_scalar_factors(*result.arena_, result.root_);
         work.report.nodes_before_final_reduction = original.arena_->cost(original.root_);
         work.report.nodes_after_final_reduction = result.arena_->cost(result.root_);
         before_final_reduction_ = std::move(original);

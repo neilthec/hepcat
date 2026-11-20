@@ -1,0 +1,8 @@
+comparison	significand_bits	subset	counts	over_tolerance	max_relative	worst_point	worst_helicity_index
+physical_vs_MG	53	full	1600000	0	9.991712554098435e-10	65405	1
+spurious_vs_MG	53	full	1600000	0	1.5849413899186465e-09	59077	13
+physical_vs_spurious	53	full	1600000	0	1.24624509887895e-09	59077	13
+physical_vs_MG	64	publication-50-outliers	50	0	2.7075024721414513e-10	36616	13
+spurious_vs_MG	64	publication-50-outliers	50	0	1.0183793205396557e-08	20405	2
+physical_vs_spurious	64	publication-50-outliers	50	0	1.0117843250714307e-08	20405	2
+restored_physical_vs_restored_spurious	64	publication-50-outliers	50	0	5.202181267519852e-12	20405	2

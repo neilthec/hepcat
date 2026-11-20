@@ -7,15 +7,18 @@
 #include <chrono>
 #include <fstream>
 #include <iostream>
+#include <map>
 #include <set>
 #include <sstream>
+#include <tuple>
 
 namespace fs = std::filesystem;
 using namespace hepcat;
 namespace {
 struct example {
     std::string helicities;         // Photon helicities in the all-incoming HEPCAT convention.
-    std::size_t physical, spurious; // Measured notebook complexity (including its final worked forms).
+    std::size_t physical, spurious; // Best verified weighted complexity,
+                                    // including the publication worked forms.
 };
 struct family {
     std::string name;
@@ -23,47 +26,70 @@ struct family {
     std::vector<example> examples;
 };
 const std::vector<family> notebook = {
-    {"eeAA", {"e", "E"}, {{"++", 1, 1}, {"+-", 10, 10}, {"-+", 10, 10}, {"--", 1, 1}}},
+    {"eeAA",
+     {"e", "E"},
+     {{"++", 1, 1}, {"+-", 10, 10}, {"-+", 10, 10}, {"--", 1, 1}}},
     {"eeee", {"e", "E", "E", "e"}, {{"", 8, 8}}},
-    {"eeAAA", {"e", "E"}, {{"+++", 27, 30}, {"++-", 71, 117}, {"+--", 71, 117}, {"---", 27, 30}}},
+    {"eeAAA",
+     {"e", "E"},
+     {{"+++", 27, 30}, {"++-", 62, 63}, {"+--", 62, 63}, {"---", 27, 30}}},
     {"eeeeA", {"e", "E", "E", "e"}, {{"+", 160, 160}, {"-", 160, 160}}},
     {"eeAAAA",
      {"e", "E"},
      {{"++++", 108, 120},
-      {"+++-", 1173, 528},
-      // Re-evaluating the notebook's literal qed6PPMM gives 2238 with its current score.
-      {"++--", 2238, 1044},
-      {"+---", 327, 528},
+      {"+++-", 327, 416},
+      {"++--", 692, 712},
+      {"+---", 327, 416},
       {"----", 108, 120}}},
-    {"eeeeAA", {"e", "E", "E", "e"}, {{"++", 2592, 1216}, {"+-", 2576, 2272}, {"--", 2592, 1216}}},
-    {"eeeeee", {"e", "E", "e", "E", "e", "E"}, {{"", 3960, 3168}}},
-    {"eeAAAAA", {"e", "E"}, {{"+++++", 820, 0}}}};
+    {"eeeeAA",
+     {"e", "E", "E", "e"},
+     {{"++", 1200, 1216}, {"+-", 1600, 1632}, {"--", 1200, 1216}}},
+    {"eeeeee", {"e", "E", "e", "E", "e", "E"}, {{"", 3168, 3168}}},
+    {"eeAAAAA", {"e", "E"}, {{"+++++", 820, 920}}}};
 struct settings {
     fs::path root = fs::current_path(), output, spinas;
     external_options engines;
     std::string family_filter, preference = "both", helicity_filter;
-    bool list = false, construct_only = false, formula_only = false, no_formulas = false;
+    bool publication = false, list = false, construct_only = false,
+         formula_only = false, no_formulas = false;
+    fs::path formula_replay;
+    bool model_formula_replay = false, summed_formula_replay = false;
     std::optional<unsigned> photons;
     std::size_t workers = 0;
     std::uint64_t seed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
 };
 
 void usage() {
-    std::cout
-        << "hepcat-qed [--root HEPCAT] [--output DIRECTORY] [--seed N] [--points N>=10000]\n"
-           "  --list                         Show the notebook cases without calculating them.\n"
-           "  --family eeAA|eeee|eeAAA|eeeeA|eeAAAA|eeeeAA|eeeeee|eeAAAAA\n"
-           "  --helicity ++-                 Select a notebook cell (construction only).\n"
-           "  --preference physical|spurious|both   --workers N\n"
-           "  --construct-only               Run constructive, Feynman and signed reference checks.\n"
-           "  --formulas-only [--photons N]  Compare both all-positive predictions with MadGraph "
-           "(N=3..8).\n"
-           "  --skip-formulas                Omit that separate formula study.\n"
-           "  --spinas DIR --calchep DIR --madgraph DIR [--python EXE] [--cmake EXE]\n"
-           "  --python overrides the interpreter in MadGraph's launcher (fallback: python3 on PATH).\n"
-           "Every complete family is exported and compared with both engines by default.\n"
-           "One run directory contains expression files, scores, check counts and generated numerical "
-           "projects.\n";
+  std::cout
+      << "hepcat-qed [--root HEPCAT] [--output DIRECTORY] [--seed N] [--points "
+         "N>=10000]\n"
+         "  --list                         Show the notebook cases without "
+         "calculating them.\n"
+         "  --family eeAA|eeee|eeAAA|eeeeA|eeAAAA|eeeeAA|eeeeee|eeAAAAA\n"
+         "  --helicity ++-                 Select a notebook cell "
+         "(construction only).\n"
+         "  --preference physical|spurious|both   --workers N\n"
+         "  --publication                  Test the automatic result against "
+         "the frozen publication catalog (100000 points).\n"
+         "  --construct-only               Run constructive, Feynman and "
+         "signed reference checks.\n"
+         "  --formulas-only [--photons N]  Compare both all-positive "
+         "predictions with MadGraph "
+         "(N=2..8).\n"
+         "  --replay-general PREFIX | --replay-model PREFIX  Replay sparse "
+         "formula outliers at 160 bits.\n"
+         "      Specify the original --photons and --points for this archived "
+         "publication sample.\n"
+         "  --skip-formulas                Omit that separate formula study.\n"
+         "  --spinas DIR --calchep DIR --madgraph DIR [--python EXE] [--cmake "
+         "EXE]\n"
+         "  --python overrides the interpreter in MadGraph's launcher "
+         "(fallback: python3 on PATH).\n"
+         "Every complete family is exported and compared with both engines by "
+         "default.\n"
+         "One run directory contains expression files, scores, check counts "
+         "and generated numerical "
+         "projects.\n";
 }
 unsigned long long integer_option(const std::string& value) {
     if (value.empty() || value.find_first_not_of("0123456789") != value.npos)
@@ -72,12 +98,17 @@ unsigned long long integer_option(const std::string& value) {
 }
 settings options(int argc, char** argv) {
     settings s;
-    bool explicit_python = false;
+    bool explicit_python = false, explicit_seed = false,
+         explicit_points = false;
     for (int i = 1; i < argc; ++i) {
         std::string key = argv[i];
         if (key == "--help") {
             usage();
             std::exit(0);
+        }
+        if (key == "--publication") {
+          s.publication = true;
+          continue;
         }
         if (key == "--list") {
             s.list = true;
@@ -104,12 +135,14 @@ settings options(int argc, char** argv) {
             s.output = v;
         else if (key == "--workers")
             s.workers = integer_option(v);
-        else if (key == "--points")
-            s.engines.points = integer_option(v);
-        else if (key == "--seed")
-            s.seed = integer_option(v);
-        else if (key == "--family")
-            s.family_filter = v;
+        else if (key == "--points") {
+          s.engines.points = integer_option(v);
+          explicit_points = true;
+        } else if (key == "--seed") {
+          s.seed = integer_option(v);
+          explicit_seed = true;
+        } else if (key == "--family")
+          s.family_filter = v;
         else if (key == "--helicity")
             s.helicity_filter = v;
         else if (key == "--preference")
@@ -125,13 +158,34 @@ settings options(int argc, char** argv) {
             explicit_python = true;
         } else if (key == "--cmake")
             s.engines.cmake_executable = v;
-        else if (key == "--photons") {
-            auto n = integer_option(v);
-            if (n < 3 || n > 8)
-                throw std::invalid_argument("formula multiplicity must be 3..8");
-            s.photons = n;
+        else if (key == "--replay-general" || key == "--replay-model" ||
+                 key == "--replay-model-summed") {
+          s.formula_replay = fs::absolute(v);
+          s.model_formula_replay = key != "--replay-general";
+          s.summed_formula_replay = key == "--replay-model-summed";
+        } else if (key == "--photons") {
+          auto n = integer_option(v);
+          if (n < 2 || n > 8)
+            throw std::invalid_argument("formula multiplicity must be 2..8");
+          s.photons = n;
         } else
-            throw std::invalid_argument("unknown option " + key);
+          throw std::invalid_argument("unknown option " + key);
+    }
+    if (s.publication) {
+      if (!explicit_points)
+        s.engines.points = 100000;
+      if (!explicit_seed)
+        s.seed = 861811;
+      if (s.engines.points < 100000)
+        throw std::invalid_argument(
+            "--publication requires at least 100000 comparison points");
+    }
+    if (!s.formula_replay.empty()) {
+      if (!s.photons || !s.engines.points)
+        throw std::invalid_argument(
+            "a formula replay requires --photons and a positive point count");
+      s.root = fs::absolute(s.root).lexically_normal();
+      return s;
     }
     if (s.preference != "physical" && s.preference != "spurious" && s.preference != "both")
         throw std::invalid_argument("pole preference must be physical, spurious or both");
@@ -233,7 +287,7 @@ void list() {
                       << (e.spurious ? std::to_string(e.spurious) : "formula") << ")  ";
         std::cout << '\n';
     }
-    std::cout << "Scores are AllPhysical/AllSpurious. All-positive formula comparisons use 3 through 8 "
+    std::cout << "Scores are AllPhysical/AllSpurious. All-positive formula comparisons use 2 through 8 "
                  "photons.\n";
 }
 void print_checks(std::ostream& out, const validation_report& report) {
@@ -255,120 +309,185 @@ std::string clean_cell(std::string text) {
     return text;
 }
 
-bool construct_family(const settings& s, const model& vertices, const model& catalog, const model& rules,
-                      const family& f, bool spurious, std::ostream& scores) {
-    std::string policy = spurious ? "spurious" : "physical";
-    auto directory = s.output / policy / f.name;
-    fs::create_directories(directory);
-    auto cells = file(directory / "checks.txt");
-    std::vector<spinas_component> rows;
-    bool passed = true;
-    for (auto& e : f.examples) {
-        if (!s.helicity_filter.empty() && e.helicities != s.helicity_filter)
-            continue;
-        auto legs = process(f, e);
-        std::string branch = e.helicities.empty() ? "massive" : e.helicities;
-        std::cout << policy << ' ' << f.name << ' ' << branch << '\n' << std::flush;
-        auto baseline = spurious ? e.spurious : e.physical;
-        try {
-            const bool seven = legs.size() == 7;
-            auto ref = seven ? qed_notebook::all_positive_reference(vertices, 5).expression(spurious)
-                             : catalog_reference(catalog, legs);
-            // The catalog contains the final hand simplified representation for
-            // the notebook cells that explicitly replace their automatic result.
-            auto catalog_score = ref.complexity();
-            auto target = baseline ? std::min(baseline, catalog_score) : catalog_score;
-            const model& cuts = legs.size() == 4 ? vertices : catalog;
-            amplitude amp(legs, vertices, cuts, rules);
-            construct_options opts;
-            opts.workers = s.workers;
-            opts.pole_preference =
-                spurious ? generation_references::cyclic : generation_references::physical;
-            opts.validation.seed = s.seed;
-            opts.validation.points = s.engines.points;
-            opts.reference_amplitude = ref;
-            auto result = amp.construct(opts);
-            std::optional<std::size_t> complexity;
-            try {
-                complexity = result.complexity();
-            } catch (const std::length_error& err) {
-                cells << branch << " complexity unavailable: " << err.what() << '\n';
-            } catch (const std::overflow_error& err) {
-                cells << branch << " complexity unavailable: " << err.what() << '\n';
-            }
-            cells << branch << " signed reference and Feynman comparisons\n";
-            print_checks(cells, amp.last_construction().validation);
-            file(directory / (branch + ".expr")) << result.str() << '\n';
-            bool simple = complexity && *complexity <= target;
-            const auto measured = complexity ? std::to_string(*complexity) : "UNMEASURED";
-            scores << policy << '\t' << f.name << '\t' << branch << '\t'
-                   << (simple       ? "PASS"
-                       : complexity ? "VALID_BUT_LONGER"
-                                    : "VALID_SCORE_UNAVAILABLE")
-                   << '\t' << measured << '\t' << target << '\t' << catalog_score << '\t'
-                   << s.engines.points << '\t' << amp.last_construction().total_seconds << "\t\n"
-                   << std::flush;
-            std::cout << "  validated " << s.engines.points << " points; complexity " << measured
-                      << " vs " << target << '\n';
-            if (!simple && catalog_score <= target) {
-                // The author selected shorter verified forms after construction
-                // in the notebook. Keep that step visible, with its own checks.
-                auto verified = amp.validate(ref, opts.validation);
-                cells << branch << " worked representative, independently checked\n";
-                print_checks(cells, verified);
-                if (!verified.passed())
-                    throw std::runtime_error("worked representative failed its own validation");
-                file(directory / (branch + ".selected.expr")) << ref.str() << '\n';
-                scores << policy << '\t' << f.name << '\t' << branch << "\tWORKED_FORM_PASS\t"
-                       << catalog_score << '\t' << target << '\t' << catalog_score << '\t'
-                       << s.engines.points << "\t\tvalidated after construction\n"
-                       << std::flush;
-                rows.push_back({std::move(legs), std::move(ref)});
-            } else {
-                passed &= simple;
-                rows.push_back({std::move(legs), std::move(result)});
-            }
-        } catch (const std::exception& err) {
-            scores << policy << '\t' << f.name << '\t' << branch << "\tUNRESOLVED\t\t" << baseline
-                   << "\t\t\t\t" << clean_cell(err.what()) << '\n'
-                   << std::flush;
-            if (auto failure = dynamic_cast<const construction_validation_error*>(&err))
-                print_checks(cells, failure->report);
-            std::cerr << "  " << err.what() << '\n';
-            passed = false;
-        }
+struct publication_row {
+  std::size_t weighted, leaves;
+  std::string expression;
+};
+using publication_key = std::tuple<std::string, std::string, std::string>;
+using publication_table = std::map<publication_key, publication_row>;
+
+publication_table read_publication(const fs::path &path,
+                                   const std::string &scope) {
+  std::ifstream input(path);
+  std::string line;
+  if (!std::getline(input, line) ||
+      line != "form\tfamily\thelicity\tweighted\tleaves\texpression")
+    throw std::runtime_error("missing or invalid publication catalog: " +
+                             path.string());
+  publication_table table;
+  while (std::getline(input, line)) {
+    std::istringstream stream(line);
+    std::string mode, family, helicity, weighted, leaves, expression;
+    for (auto column : {&mode, &family, &helicity, &weighted, &leaves})
+      if (!std::getline(stream, *column, '\t'))
+        throw std::runtime_error("incomplete publication reference");
+    if (!std::getline(stream, expression) || expression.empty())
+      throw std::runtime_error("missing signed publication expression");
+    const std::string placeholder = "\"PUBLICATION\"";
+    const std::string replacement = "\"" + scope + "\"";
+    std::size_t pos = 0;
+    while ((pos = expression.find(placeholder, pos)) != std::string::npos) {
+      expression.replace(pos, placeholder.size(), replacement);
+      pos += replacement.size();
     }
-    if (s.construct_only)
-        return passed;
-    if (rows.size() != f.examples.size()) {
-        std::cerr << "  Cannot export a complete " << f.name
-                  << " helicity sum: a construction failed.\n";
-        return false;
+    publication_row row{integer_option(weighted), integer_option(leaves),
+                        std::move(expression)};
+    if (!table.emplace(publication_key{mode, family, helicity}, std::move(row))
+             .second)
+      throw std::runtime_error("duplicate publication reference");
+  }
+  std::size_t expected = 0;
+  for (const auto &f : notebook)
+    expected += 2 * f.examples.size();
+  if (table.size() != expected)
+    throw std::runtime_error("incomplete publication catalog");
+  return table;
+}
+
+bool construct_family(const settings &s, const model &vertices,
+                      const model &catalog, const model &rules, const family &f,
+                      bool spurious, std::ostream &scores,
+                      const publication_table &publication) {
+  std::string policy = spurious ? "spurious" : "physical";
+  auto directory = s.output / policy / f.name;
+  fs::create_directories(directory);
+  auto cells = file(directory / "checks.txt");
+  std::vector<spinas_component> rows;
+  bool passed = true;
+  for (auto &e : f.examples) {
+    if (!s.helicity_filter.empty() && e.helicities != s.helicity_filter)
+      continue;
+    auto legs = process(f, e);
+    std::string branch = e.helicities.empty() ? "massive" : e.helicities;
+    std::cout << policy << ' ' << f.name << ' ' << branch << '\n' << std::flush;
+    auto baseline = spurious ? e.spurious : e.physical;
+    try {
+      const bool seven = legs.size() == 7;
+      const model &cuts = legs.size() == 4 ? vertices : catalog;
+      amplitude amp(legs, vertices, cuts, rules);
+      const auto *published =
+          s.publication ? &publication.at({policy, f.name, branch}) : nullptr;
+      auto ref = published ? amp_expression(published->expression,
+                                            amp.external_masses())
+                 : seven   ? qed_notebook::all_positive_reference(vertices, 5)
+                               .expression(spurious)
+                         : catalog_reference(catalog, legs);
+      auto catalog_score = ref.complexity();
+      if (published && catalog_score != published->weighted)
+        throw std::runtime_error("native and publication complexity "
+                                 "measures "
+                                 "disagree on the reference");
+      auto target =
+          baseline ? std::min(baseline, catalog_score) : catalog_score;
+      construct_options opts;
+      opts.workers = s.workers;
+      opts.pole_preference = spurious ? generation_references::cyclic
+                                      : generation_references::physical;
+      opts.validation.seed = s.seed;
+      opts.validation.points = s.engines.points;
+      opts.reference_amplitude = ref;
+      auto result = amp.construct(opts);
+      std::optional<std::size_t> complexity;
+      try {
+        complexity = result.complexity();
+      } catch (const std::length_error &err) {
+        cells << branch << " complexity unavailable: " << err.what() << '\n';
+      } catch (const std::overflow_error &err) {
+        cells << branch << " complexity unavailable: " << err.what() << '\n';
+      }
+      cells << branch << " signed reference and Feynman comparisons\n";
+      print_checks(cells, amp.last_construction().validation);
+      file(directory / (branch + ".expr")) << result.str() << '\n';
+      bool simple = complexity && *complexity <= target;
+      const auto measured =
+          complexity ? std::to_string(*complexity) : "UNMEASURED";
+      scores << policy << '\t' << f.name << '\t' << branch << '\t'
+             << (simple       ? "PASS"
+                 : complexity ? "VALID_BUT_LONGER"
+                              : "VALID_SCORE_UNAVAILABLE")
+             << '\t' << measured << '\t' << target << '\t' << catalog_score
+             << '\t' << s.engines.points << '\t'
+             << amp.last_construction().total_seconds << "\t\t"
+             << result.leaf_count() << '\t'
+             << (published ? published->leaves : ref.leaf_count()) << '\n'
+             << std::flush;
+      std::cout << "  validated " << s.engines.points << " points; complexity "
+                << measured << " vs " << target << '\n';
+      if (!s.publication && !simple && catalog_score <= target) {
+        // The author selected shorter verified forms after construction
+        // in the notebook. Keep that step visible, with its own checks.
+        auto verified = amp.validate(ref, opts.validation);
+        cells << branch << " worked representative, independently checked\n";
+        print_checks(cells, verified);
+        if (!verified.passed())
+          throw std::runtime_error(
+              "worked representative failed its own validation");
+        file(directory / (branch + ".selected.expr")) << ref.str() << '\n';
+        scores << policy << '\t' << f.name << '\t' << branch
+               << "\tWORKED_FORM_PASS\t" << catalog_score << '\t' << target
+               << '\t' << catalog_score << '\t' << s.engines.points
+               << "\t\tvalidated after construction\n"
+               << std::flush;
+        rows.push_back({std::move(legs), std::move(ref)});
+      } else {
+        passed &= simple;
+        rows.push_back({std::move(legs), std::move(result)});
+      }
+    } catch (const std::exception &err) {
+      scores << policy << '\t' << f.name << '\t' << branch << "\tUNRESOLVED\t\t"
+             << baseline << "\t\t\t\t" << clean_cell(err.what()) << '\n'
+             << std::flush;
+      if (auto failure =
+              dynamic_cast<const construction_validation_error *>(&err))
+        print_checks(cells, failure->report);
+      std::cerr << "  " << err.what() << '\n';
+      passed = false;
     }
-    spinas_export_options write;
-    write.name = f.name;
-    write.spinas_directory = s.spinas;
-    write.runtime_directory = s.engines.runtime_directory;
-    auto backends = s.engines;
-    if (f.name == "eeAAAAA") {
-        // The notebook has only the all-positive five-photon row. CalcHEP
-        // sums over all photon polarizations; that observable needs 32 rows.
-        backends.run_calchep = false;
-        backends.calchep_directory.clear();
-        backends.calchep_model_directory.clear();
-        for (std::size_t i = 2; i < 7; ++i)
-            write.fixed_helicities[i] = 2;
-    }
-    auto project = write_spinas_process(directory / "spinas", vertices, rows, write);
-    write_external_project(project, vertices, backends);
-    const auto ext = validate_external_project(project, backends);
-    if (backends.run_calchep)
-        cells << "CalcHEP summed report " << ext.calchep_report << " exit=" << ext.calchep << '\n';
-    else
-        cells << "CalcHEP unpolarized comparison requires the full helicity family.\n";
-    cells << "MadGraph polarized and summed report " << ext.madgraph_report << " exit=" << ext.madgraph
-          << '\n';
-    return ext.passed() && passed;
+  }
+  if (s.construct_only)
+    return passed;
+  if (rows.size() != f.examples.size()) {
+    std::cerr << "  Cannot export a complete " << f.name
+              << " helicity sum: a construction failed.\n";
+    return false;
+  }
+  spinas_export_options write;
+  write.name = f.name;
+  write.spinas_directory = s.spinas;
+  write.runtime_directory = s.engines.runtime_directory;
+  auto backends = s.engines;
+  if (f.name == "eeAAAAA") {
+    // The notebook has only the all-positive five-photon row. CalcHEP
+    // sums over all photon polarizations; that observable needs 32 rows.
+    backends.run_calchep = false;
+    backends.calchep_directory.clear();
+    backends.calchep_model_directory.clear();
+    for (std::size_t i = 2; i < 7; ++i)
+      write.fixed_helicities[i] = 2;
+  }
+  auto project =
+      write_spinas_process(directory / "spinas", vertices, rows, write);
+  write_external_project(project, vertices, backends);
+  const auto ext = validate_external_project(project, backends);
+  if (backends.run_calchep)
+    cells << "CalcHEP summed report " << ext.calchep_report
+          << " exit=" << ext.calchep << '\n';
+  else
+    cells << "CalcHEP unpolarized comparison requires the full helicity "
+             "family.\n";
+  cells << "MadGraph polarized and summed report " << ext.madgraph_report
+        << " exit=" << ext.madgraph << '\n';
+  return ext.passed() && passed;
 }
 
 // MadGraph supplies its own generator and Fortran matrix-element evaluator.
@@ -394,6 +513,12 @@ void command(std::vector<std::string> args, const fs::path& log) {
     if (run_external_command(args, log) != 0)
         throw std::runtime_error("command failed; see " + log.string());
 }
+unsigned formula_precision_bits(const std::string& receipt) {
+    const std::string key = "\"FormulaPrecisionBits\":";
+    const auto pos = receipt.find(key);
+    if (pos == receipt.npos) throw std::runtime_error("missing source precision in the formula receipt");
+    return static_cast<unsigned>(std::stoul(receipt.substr(pos + key.size())));
+}
 void formula_study(const settings& s) {
     auto out = s.output / "all-positive";
     fs::create_directories(out);
@@ -403,71 +528,101 @@ void formula_study(const settings& s) {
              "-DCMAKE_BUILD_TYPE=Release", "-DSPINAS_ROOT=" + s.spinas.string()},
             out / "configure.log");
     command({cmake, "--build", build.string(), "--target", "qed-all-positive"}, out / "compile.log");
-    for (unsigned n = 3; n <= 8; ++n) {
-        if (s.photons && n != *s.photons)
-            continue;
-        std::cout << "Independent MadGraph comparison of both all-positive formulas, N=" << n << '\n'
-                  << std::flush;
-        auto dir = out / ("N" + std::to_string(n));
-        fs::create_directories(dir);
-        auto config = dir / "config.json", reference = dir / "madgraph";
-        // These mass and charge values match the direct formula studies,
-        // which test the relation beyond the constructive catalog.
-        double mass = n == 8 ? 1.5 : 1.0;
-        {
-            auto data = file(config);
-            data << "{\"MadGraphDirectory\":" << json_string(s.engines.madgraph_directory.string())
-                 << ",\"MadGraphModel\":" << json_string(s.engines.madgraph_model)
-                 << ",\"AllowedParticlePDGs\":[11,22],\"PhysicalPDGs\":[11,-11";
-            for (unsigned i = 0; i < n; ++i)
-                data << ",22";
-            data << "],\"Masses\":[" << mass << ',' << mass;
-            for (unsigned i = 0; i < n; ++i)
-                data << ",0";
-            data << "],\"Parameters\":[{\"Name\":\"Me\",\"Value\":" << mass
-                 << "},{\"Name\":\"EE\",\"Value\":0.3333333333333333}],"
-                 << "\"ParameterMap\":{},\"ParameterRules\":{},\"ZeroWidths\":true,"
-                    "\"OptimizationLevel\":0,"
-                 << "\"TimeConstraint\":7200,\"JampSplit\":" << (n >= 7 ? 128 : 0) << "}";
-        }
-        command({s.engines.python_executable,
-                 (s.engines.runtime_directory / "madgraph-runtime.py").string(), "--config",
-                 config.string(), "--output", reference.string()},
-                dir / "madgraph.log");
-        auto library = reference / "libhepcat_madgraph.so";
-        if (!fs::exists(library))
-            library = reference / "libhepcat_madgraph.dylib";
-        auto status =
-            run_external_command({(build / "qed-all-positive").string(), "--photons", std::to_string(n),
-                                  "--points", std::to_string(s.engines.points), "--seed",
-                                  std::to_string(s.seed), "--mass", std::to_string(mass), "--reference",
-                                  library.string(), "--output", (dir / "check").string()},
-                                 dir / "comparison.log");
-        // Some Fortran runtimes can terminate a caller with STOP 0. Require a
-        // fresh, complete numerical receipt as well as the child exit code.
-        auto receipt = contents(dir / "check.json");
-        for (const auto& token : std::vector<std::string>{
-                 "\"Points\":" + std::to_string(s.engines.points) + ",",
-                 "\"Photons\":" + std::to_string(n) + ",", "\"Seed\":" + std::to_string(s.seed) + ","})
-            if (receipt.find(token) == receipt.npos)
-                throw std::runtime_error("incomplete formula comparison at N=" + std::to_string(n));
-        if (status == 1 && receipt.find(R"("Status":"FAIL",)") != receipt.npos) {
-            const model vertices(s.root / "models", 3);
-            auto count = qed_notebook::replay_formulas(vertices, n, dir / "check", s.engines.points, mass);
-            if (receipt.find("\"Failures\":" + std::to_string(count) + ",") == receipt.npos)
-                throw std::runtime_error("raw outlier count and precision replay disagree");
-            file(dir / "outcome.txt") << "PASS " << s.engines.points << " points, " << count
-                                      << " checked at 160 bits\n";
-        } else if (status == 0 && receipt.find(R"("Status":"PASS",)") != receipt.npos &&
-                   receipt.find(R"("Failures":0,)") != receipt.npos) {
-            file(dir / "outcome.txt") << "PASS " << s.engines.points << " points at native precision\n";
-        } else {
-            throw std::runtime_error("failed or incomplete formula comparison: " + dir.string());
-        }
-        // Formula references can occupy gigabytes at N=8. Keep the config,
-        // independent receipt, values, points and logs for this run.
-        fs::copy_file(reference / "result.json", dir / "reference.json");
-        fs::remove_all(reference);
+    command({(build / "qed-all-positive").string(), "--self-test"},
+            out / "small-formula-controls.log");
+    for (unsigned n = 2; n <= 8; ++n) {
+      if (s.photons && n != *s.photons)
+        continue;
+      std::cout
+          << "Independent MadGraph comparison of both all-positive formulas, N="
+          << n << '\n'
+          << std::flush;
+      auto dir = out / ("N" + std::to_string(n));
+      fs::create_directories(dir);
+      auto config = dir / "config.json", reference = dir / "madgraph";
+      // These mass and charge values match the direct formula studies,
+      // which test the relation beyond the constructive catalog.
+      double mass = n == 8 ? 1.5 : 1.0;
+      {
+        auto data = file(config);
+        data << "{\"MadGraphDirectory\":"
+             << json_string(s.engines.madgraph_directory.string())
+             << ",\"MadGraphModel\":" << json_string(s.engines.madgraph_model)
+             << ",\"AllowedParticlePDGs\":[11,22],\"PhysicalPDGs\":[11,-11";
+        for (unsigned i = 0; i < n; ++i)
+          data << ",22";
+        data << "],\"Masses\":[" << mass << ',' << mass;
+        for (unsigned i = 0; i < n; ++i)
+          data << ",0";
+        data << "],\"Parameters\":[{\"Name\":\"Me\",\"Value\":" << mass
+             << "},{\"Name\":\"EE\",\"Value\":0.3333333333333333}],"
+             << "\"ParameterMap\":{},\"ParameterRules\":{},\"ZeroWidths\":true,"
+                "\"OptimizationLevel\":0,"
+             << "\"TimeConstraint\":7200,\"JampSplit\":" << (n >= 7 ? 128 : 0)
+             << "}";
+      }
+      command({s.engines.python_executable,
+               (s.engines.runtime_directory / "madgraph-runtime.py").string(),
+               "--config", config.string(), "--output", reference.string()},
+              dir / "madgraph.log");
+      auto library = reference / "libhepcat_madgraph.so";
+      if (!fs::exists(library))
+        library = reference / "libhepcat_madgraph.dylib";
+      auto status = run_external_command(
+          {(build / "qed-all-positive").string(), "--photons",
+           std::to_string(n), "--points", std::to_string(s.engines.points),
+           "--seed", std::to_string(s.seed), "--mass", std::to_string(mass),
+           "--control-points", "0", "--output-mode", "outliers", "--reference",
+           library.string(), "--output", (dir / "check").string()},
+          dir / "comparison.log");
+      // Some Fortran runtimes can terminate a caller with STOP 0. Require a
+      // fresh, complete numerical receipt as well as the child exit code.
+      auto receipt = contents(dir / "check.json");
+      for (const auto &token : std::vector<std::string>{
+               "\"Points\":" + std::to_string(s.engines.points) + ",",
+               "\"Photons\":" + std::to_string(n) + ",",
+               "\"Seed\":" + std::to_string(s.seed) + ","})
+        if (receipt.find(token) == receipt.npos)
+          throw std::runtime_error("incomplete formula comparison at N=" +
+                                   std::to_string(n));
+      if (status == 1 && receipt.find(R"("Status":"FAIL",)") != receipt.npos) {
+        const model vertices(s.root / "models", 3);
+        auto replay = qed_notebook::replay_formulas(
+            vertices, n, dir / "check", s.engines.points, mass, 1e-7L, true, true, mpq_class(1, 3),
+                                                         formula_precision_bits(receipt));
+        auto count = std::to_string(replay.replayed) + ",";
+        if (receipt.find("\"Failures\":" + count) == receipt.npos ||
+            receipt.find("\"StoredRows\":" + count) == receipt.npos)
+          throw std::runtime_error(
+              "raw outlier count and precision replay disagree");
+        bool pass = replay.unchanged_failures == 0 &&
+                    replay.projected_identity_failures == 0;
+        file(dir / "outcome.txt")
+            << (pass ? "PASS " : "FAIL ") << s.engines.points << " points, "
+            << replay.replayed << " replayed at 160 bits. "
+            << replay.unchanged_failures
+            << " unresolved on original momenta (worst relative MG "
+            << replay.worst_unchanged_mg << "). Separate on-shell projection, "
+            << replay.projected_identity_failures
+            << " failed signed identities (worst relative "
+            << replay.worst_projected_identity << ").\n";
+        if (!pass)
+          throw std::runtime_error(
+              "formula precision comparison exceeds tolerance: " +
+              dir.string());
+      } else if (status == 0 &&
+                 receipt.find(R"("Status":"PASS",)") != receipt.npos &&
+                 receipt.find(R"("Failures":0,)") != receipt.npos) {
+        file(dir / "outcome.txt")
+            << "PASS " << s.engines.points << " points at native precision\n";
+      } else {
+        throw std::runtime_error("failed or incomplete formula comparison: " +
+                                 dir.string());
+      }
+      // Formula references can occupy gigabytes at N=8. Keep the config,
+      // independent receipt, values, points and logs for this run.
+      fs::copy_file(reference / "result.json", dir / "reference.json");
+      fs::remove_all(reference);
     }
 }
 } // namespace
@@ -475,6 +630,29 @@ void formula_study(const settings& s) {
 int main(int argc, char** argv) {
     try {
         auto s = options(argc, argv);
+        if (!s.formula_replay.empty()) {
+          const unsigned n = *s.photons;
+          const bool model = s.model_formula_replay;
+          auto result = qed_notebook::replay_formulas(
+              hepcat::model(s.root / "models", 3), n, s.formula_replay,
+              s.engines.points, model ? 0.0005 : (n == 8 ? 1.5 : 1.0), 1e-7L,
+              true, !s.summed_formula_replay,
+              model ? mpq_class(31333, 100000) : mpq_class(1, 3),
+                formula_precision_bits(contents(s.formula_replay.string() + ".json")));
+          std::cout << "Replayed " << result.replayed
+                    << " events at 160 bits. Original momenta: "
+                    << result.unchanged_failures
+                    << " failures, maximum MG relative difference "
+                    << result.worst_unchanged_mg
+                    << ". Separately projected momenta: "
+                    << result.projected_identity_failures
+                    << " signed identity failures, maximum "
+                    << result.worst_projected_identity << ", maximum shift "
+                    << result.largest_shift << '\n';
+          return result.unchanged_failures || result.projected_identity_failures
+                     ? 1
+                     : 0;
+        }
         if (s.list) {
             list();
             return 0;
@@ -490,9 +668,18 @@ int main(int argc, char** argv) {
         bool all = true;
         if (!s.formula_only) {
             const model vertices(s.root / "models", 3), rules(s.engines.calchep_model_directory, 2);
+            const auto publication =
+                s.publication
+                    ? read_publication(
+                          s.root /
+                              "tests/benchmarks/publication-qed/catalog.tsv",
+                          vertices.parameter_scope())
+                    : publication_table{};
             auto scores = file(s.output / "construction.tsv");
-            scores << "preference\tfamily\thelicity\tstatus\tcpp_complexity\tthreshold\treference_"
-                      "complexity\tpoints\tseconds\tdetail\n";
+            scores << "preference\tfamily\thelicity\tstatus\tcpp_"
+                      "complexity\tthreshold\treference_"
+                      "complexity\tpoints\tseconds\tdetail\tcpp_"
+                      "leaves\treference_leaves\n";
             for (bool spurious : {false, true}) {
                 if ((spurious && s.preference == "physical") ||
                     (!spurious && s.preference == "spurious"))
@@ -501,8 +688,9 @@ int main(int argc, char** argv) {
                 for (auto& f : notebook)
                     if (s.family_filter.empty() || s.family_filter == f.name) {
                         try {
-                            if (!construct_family(s, vertices, catalog, rules, f, spurious, scores))
-                                all = false;
+                          if (!construct_family(s, vertices, catalog, rules, f,
+                                                spurious, scores, publication))
+                            all = false;
                         } catch (const std::exception& err) {
                             all = false;
                             std::cerr << f.name << " " << err.what() << '\n';
