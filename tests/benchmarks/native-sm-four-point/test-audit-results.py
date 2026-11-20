@@ -63,11 +63,49 @@ class Receipts(unittest.TestCase):
         with self.assertRaises(ValueError):
             run(report)
 
+    def test_wolfram_cross_score_binds_native_bytes_and_checks_leaf_ceiling(self):
+        example = dict(expression_sha256="abc", family="sm01", native_weight="2", native_leaves="18",
+                       wolfram_weight="2", wolfram_leaves="19", notebook_weight="3", notebook_leaves="20",
+                       wolfram_version="15.0.0")
+        case = {k: example[k] for k in ("family", "notebook_weight", "notebook_leaves")}
+        native = dict(weight="2", leaves="18")
+        self.assertEqual(audit.wolfram_score(example, case, native, "abc")["wolfram_leaves"], "19")
+        for invalid in (dict(example, expression_sha256="abd"), dict(example, wolfram_leaves="21"),
+                        dict(example, native_weight="5"), dict(example, wolfram_weight="4")):
+            with self.assertRaises(ValueError):
+                audit.wolfram_score(invalid, case, native, "abc")
+
     def test_absolute_complexity_and_leaf_count_must_both_pass(self):
         case = dict(notebook_weight="2", notebook_leaves="4")
         for weight, leaves in ((2, 5), (3, 4)):
             with self.assertRaisesRegex(ValueError, "complexity"):
                 audit.native_case(dict(case, status="PASS", weight=weight, leaves=leaves), case, [])
+
+    def test_calchep_common_chart_replays_both_backends_at_every_captured_point(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            folder = Path(tmpdir)
+            momenta = {f"p{i}_{j}": str(x) for i,p in enumerate(((2,0,0,2),(2,0,0,-2),(2,2,0,0),(2,-2,0,0)),1)
+                       for j,x in enumerate(p)}
+            path = folder / "calchep-chart.csv"
+            path.write_text("point," + ",".join(momenta) + "\n" +
+                            "".join(str(index) + "," + ",".join(momenta.values()) + "\n" for index in (42,51)))
+            original = {index: dict(momenta, hepcat="1", calchep="1.1") for index in (42,51)}
+            rows = [dict(Point=index, RawSPINAS=1, RawCalcHEP=1.1, UnprojectedCalcHEP=0.9, SPINAS="1.0",
+                         CalcHEP="1.0", RelativeError=0, ComponentChangeOverECM=0, RawToRefinedSPINASRelativeChange=0) for index in original]
+            h = audit.digest(path)
+            chart = dict(Status="PASS", Seed=15, RequestedPoints=2, ComparedPoints=2, Errors=0, Mismatches=0,
+                         SPINASMantissaBits=113, CalcHEPMantissaBits=113, RelativeTolerance=1e-7, Masses=[0]*4,
+                         InputSHA256=h, SPINASInputSHA256=h, CalcHEPInputSHA256=h, SourceOutliersSHA256="raw",
+                         MaximumComponentChangeOverECM=0, ComponentChangeLimitOverECM=16*2**-52, MaximumRelativeError=0, MaximumSPINASRelativeChange=0, Rows=rows)
+            replay = dict(RelativeTolerance=1e-7, PointsSHA256="raw", SameChartReplay=chart,
+                          Results={"GCC128": dict(Status="FAIL", Mismatches=2, MaximumRelativeError=0.1)})
+            self.assertEqual(audit.calchep_chart(folder, replay, original, 15)["calchep_chart_points"], 2)
+            for change in (dict(SPINASInputSHA256="raw"), dict(Rows=rows[:-1]), dict(Seed=16), dict(Masses=[0,1,0,0]),
+                           dict(Rows=[dict(rows[0], ComponentChangeOverECM=0.5), rows[1]]),
+                           dict(Rows=[dict(rows[0], CalcHEP="0.9"), rows[1]]),
+                           dict(Rows=[dict(rows[0], SPINAS="2.0", CalcHEP="2.0"), rows[1]])):
+                with self.assertRaises(ValueError):
+                    audit.calchep_chart(folder, dict(replay, SameChartReplay=dict(chart, **change)), original, 15)
 
     def test_calchep_precision_replay_covers_the_captured_points(self):
         with tempfile.TemporaryDirectory() as tempdir:
@@ -79,13 +117,13 @@ class Receipts(unittest.TestCase):
             capture.write_text("point,hepcat,calchep\n7,1,1.1\n42,2.3,2.0\n")
             replay = dict(Status="PRECISION_REPLAY_PASS", Seed=12, Points=2, ExternalCount=4,
                           NativeControlReproducesCapture=True, PointsSHA256=audit.digest(capture),
-                          Results={"Native": dict(Points=2, OriginalBitMatches=2),
+                          Results={"Native": dict(Points=2, OriginalBitMatches=2, Mismatches=2, Errors=0, Status="FAIL"),
                                    "GCC128": dict(Points=2, Errors=0, Mismatches=0, Status="PASS",
                                                   MantissaBits=113, REALBytes=16)})
             path = folder / "calchep-precision.json"
             path.write_text(json.dumps(replay))
             case = {"incoming": "a,b", "outgoing": "c,d"}
-            self.assertEqual(audit.calchep(folder, case), (12, 10000, 2))
+            self.assertEqual(audit.calchep(folder, case), (12, 10000, 2, {}))
             replay["Results"]["GCC128"]["Points"] = 1
             path.write_text(json.dumps(replay))
             with self.assertRaises(ValueError):

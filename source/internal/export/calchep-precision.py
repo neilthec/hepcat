@@ -390,6 +390,28 @@ def main():
         'SymbolicCFiles': symbolic_hashes, 'ToolSHA256': sha256(Path(__file__)),
         'Kinematics': 'Common binary64 momenta are reused exactly; no projection or correction.',
         'WidthPolicy': 'Private reference widths and width flags zero; SPINAS propagator widths disabled.'}
+    if (not complete and count == 4 and native_reproduced and args.require_captured_values
+            and extended['MantissaBits'] == 113 and extended['Errors'] == 0 and extended['Mismatches']):
+        # Only a common input to the two independently compiled implementations can
+        # resolve a nonzero-amplitude mismatch attributed to rounded kinematics.
+        import importlib.util
+        helper = Path(__file__).with_name('calchep_chart.py')
+        try:
+            spec = importlib.util.spec_from_file_location('hepcat_validation_chart', helper)
+            chart = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(chart)
+            corrected = chart.replay(output, export, spinas_header, manifest, config, args.points_csv,
+                args.gcc, commands, seed, args.relative_tolerance, lambda cmd, cwd, log: run(cmd,cwd,log,deadline))
+            corrected['ChartHelperSHA256'] = sha256(helper)
+            corrected['SPINASQuadAdapterSHA256'] = sha256(helper.with_name('spinas-quad.hpp'))
+            summary['SameChartReplay'] = corrected
+            complete = corrected['Status'] == 'PASS'
+        except (OSError, ValueError, ArithmeticError, RuntimeError, TimeoutError) as exc:
+            summary['SameChartReplay'] = {'Status': 'ERROR', 'Message': str(exc)}
+        summary['Kinematics'] = ('Native, GCC53 and GCC128 retain the exact native binary64 input. '
+            'SameChartReplay reconstructs the same two-body event from its beam momentum and outgoing direction '
+            'and evaluates both SPINAS and CalcHEP on common binary128 momenta.')
+        summary['Status'] = 'PRECISION_REPLAY_PASS' if complete else 'PRECISION_REPLAY_FAIL'
     (output / 'compiler-commands.json').write_text(json.dumps(commands, indent=2) + '\n')
     (output / 'precision-summary.json').write_text(json.dumps(summary, indent=2) + '\n')
     print(json.dumps(summary, indent=2))

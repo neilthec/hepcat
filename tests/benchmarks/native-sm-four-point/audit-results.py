@@ -9,16 +9,19 @@ import os
 import re
 import sys
 from collections import defaultdict
+from decimal import Decimal, InvalidOperation, localcontext
 from functools import lru_cache
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 FIELDS = ("case", "family", "status", "weight", "notebook_weight", "leaves", "notebook_leaves",
+          "wolfram_weight", "wolfram_leaves", "wolfram_version",
           "expression_sha256", "commutative_sha256", "external_sha256", "external_match", "native_seed", "notebook_points", "feynman_points", "final_reduction_points",
-          "feynman_precision_replays", "external_seed", "calchep_points", "calchep_quad_points", "mg_helicity",
+          "feynman_precision_replays", "external_seed", "calchep_points", "calchep_quad_points", "calchep_chart_points", "calchep_chart_delta",
+          "calchep_unprojected_quad_max_rel", "calchep_chart_max_rel", "calchep_spinas_refinement_max_rel", "mg_helicity",
           "mg_fixed_points", "mg_sum_points", "mg_precision_bits", "mg_exact_zero_chart_delta",
           "mg_zero_raw_max_abs", "mg_zero_unprojected_quad_max_abs", "mg_zero_final_max_abs", "external_run")
-INVALID = (OSError, ValueError, KeyError, TypeError)
+INVALID = (OSError, ValueError, KeyError, TypeError, InvalidOperation)
 
 
 def require(ok, message):
@@ -154,6 +157,96 @@ def native_case(row, case, lines):
                 feynman_precision_replays=counts["Feynman"][1], final_reduction_points=counts.get("FinalReduction", ("",))[0])
 
 
+def wolfram_score(cross, case, native, fingerprint):
+    require(cross["expression_sha256"] == fingerprint and cross["family"] == case["family"]
+            and cross["native_weight"] == native["weight"] and cross["native_leaves"] == native["leaves"]
+            and cross["notebook_weight"] == case["notebook_weight"] and cross["notebook_leaves"] == case["notebook_leaves"],
+            "Wolfram cross-score does not match this native expression and notebook reference")
+    require(cross["wolfram_version"] and cross["wolfram_weight"] == native["weight"]
+            and 0 < int(cross["wolfram_leaves"]) <= int(case["notebook_leaves"]),
+            "Wolfram complexity cross-check failed")
+    return {key: cross[key] for key in ("wolfram_weight", "wolfram_leaves", "wolfram_version")}
+
+
+def csv_records(path):
+    with path.open() as stream:
+        return indexed(list(csv.DictReader(stream)), lambda row: int(row["point"]))
+
+
+def finite_decimal(value):
+    number = Decimal(str(value))
+    require(number.is_finite(), "nonfinite precision comparison")
+    return number
+
+
+def calchep_chart(directory, replay, original, seed):
+    chart = replay["SameChartReplay"]
+    wide = replay["Results"]["GCC128"]
+    path = directory / "calchep-chart.csv"
+    expected_hash = digest(path)
+    require(chart["Status"] == "PASS" and chart["Seed"] == seed and chart["Mismatches"] == chart["Errors"] == 0
+            and chart["SPINASMantissaBits"] == chart["CalcHEPMantissaBits"] == 113
+            and chart["RequestedPoints"] == chart["ComparedPoints"] == len(original)
+            and chart["SourceOutliersSHA256"] == replay["PointsSHA256"]
+            and expected_hash == chart["InputSHA256"] == chart["SPINASInputSHA256"] == chart["CalcHEPInputSHA256"],
+            "missing or one-sided CalcHEP common-input precision replay")
+    require(wide["Status"] == "FAIL" and 0 < wide["Mismatches"] <= len(original), "missing failed unprojected binary128 control")
+    inputs = csv_records(path)
+    rows = indexed(chart["Rows"], lambda r: int(r["Point"]))
+    require(inputs.keys() == original.keys() == rows.keys(), "CalcHEP chart replay lost or substituted an outlier")
+    tolerance = finite_decimal(replay["RelativeTolerance"])
+    limit = finite_decimal(chart["ComponentChangeLimitOverECM"])
+    require(tolerance == finite_decimal(chart["RelativeTolerance"]) and 0 < tolerance <= Decimal("1e-7")
+            and 0 < limit <= Decimal(str(16 * sys.float_info.epsilon)), "invalid CalcHEP chart tolerance")
+    observed, shifts, unprojected, generated_changes = [], [], [], []
+    masses = [Decimal.from_float(float(x)) for x in chart["Masses"]]
+    require(len(masses) == 4 and all(m.is_finite() and m >= 0 for m in masses), "invalid CalcHEP chart masses")
+    with localcontext() as ctx:
+        ctx.prec = 64
+        for index, row in rows.items():
+            raw = original[index]
+            require(float(row["RawSPINAS"]) == float(raw["hepcat"]) and float(row["RawCalcHEP"]) == float(raw["calchep"]),
+                    "CalcHEP chart control changed the original amplitudes")
+            old_reference = float(row["UnprojectedCalcHEP"])
+            old_value = float(raw["hepcat"])
+            require(math.isfinite(old_reference) and old_reference >= 0 and math.isfinite(old_value) and old_value >= 0,
+                    "invalid unprojected CalcHEP control")
+            scale_before = max(old_reference, old_value)
+            unprojected.append(abs(old_reference - old_value) / scale_before if scale_before else 0)
+            a, b = finite_decimal(row["SPINAS"]), finite_decimal(row["CalcHEP"])
+            require(min(a, b) >= 0, "invalid squared amplitude")
+            error = abs(a-b) / max(a, b) if max(a, b) else Decimal(0)
+            require(error <= tolerance and math.isclose(error, finite_decimal(row["RelativeError"]), rel_tol=1e-8, abs_tol=1e-32),
+                    "common-input CalcHEP amplitudes disagree")
+            observed.append(error)
+            original_result = finite_decimal(row["RawSPINAS"])
+            scale_result = max(original_result, a)
+            generated_change = abs(a - original_result) / scale_result if scale_result else Decimal(0)
+            require(generated_change <= tolerance and math.isclose(generated_change, finite_decimal(row["RawToRefinedSPINASRelativeChange"]),
+                    rel_tol=1e-8, abs_tol=1e-32), "SPINAS result changed beyond tolerance after refinement")
+            generated_changes.append(generated_change)
+            points = [[finite_decimal(inputs[index][f"p{i}_{j}"]) for j in range(4)] for i in range(1,5)]
+            scale = points[0][0] + points[1][0]
+            require(scale > 0 and all(abs(points[0][j]+points[1][j]-points[2][j]-points[3][j]) <= Decimal("1e-32")*scale
+                                      for j in range(4)), "common CalcHEP input violates momentum conservation")
+            require(all(abs(p[0]**2 - sum(x**2 for x in p[1:]) - m**2) <= Decimal("1e-32") * scale**2
+                        for p, m in zip(points, masses)), "common CalcHEP input violates an external mass shell")
+            shift = max(abs(p[j] - Decimal.from_float(float(raw[f"p{i}_{j}"])))
+                        for i, p in enumerate(points, 1) for j in range(4)) / scale
+            require(shift <= limit and math.isclose(shift, finite_decimal(row["ComponentChangeOverECM"]), rel_tol=1e-10, abs_tol=1e-32),
+                    "excessive or misreported CalcHEP kinematic displacement")
+            shifts.append(shift)
+    require(sum(e > float(tolerance) for e in unprojected) == wide["Mismatches"]
+            and math.isclose(max(unprojected), wide["MaximumRelativeError"], rel_tol=1e-8, abs_tol=2e-15)
+            and math.isclose(max(observed), finite_decimal(chart["MaximumRelativeError"]), rel_tol=1e-8, abs_tol=1e-32)
+            and math.isclose(max(generated_changes), finite_decimal(chart["MaximumSPINASRelativeChange"]), rel_tol=1e-8, abs_tol=1e-32)
+            and math.isclose(max(shifts), finite_decimal(chart["MaximumComponentChangeOverECM"]), rel_tol=1e-10, abs_tol=1e-32),
+            "CalcHEP common-input summary conflicts with individual rows")
+    return dict(calchep_chart_points=len(original), calchep_chart_delta=chart["MaximumComponentChangeOverECM"],
+                calchep_unprojected_quad_max_rel=wide["MaximumRelativeError"], calchep_chart_max_rel=chart["MaximumRelativeError"],
+                calchep_spinas_refinement_max_rel=chart["MaximumSPINASRelativeChange"])
+
+
 def calchep(directory, case):
     log = (directory / "calchep-comparison.log").read_text()
     def field(pattern):
@@ -169,7 +262,7 @@ def calchep(directory, case):
     require(not errors, "CalcHEP evaluation errors")
     if mismatches == 0:
         require(status == "PASS", "raw CalcHEP did not pass")
-        return seed, n, 0
+        return seed, n, 0, {}
     require(status == "FAIL", "raw CalcHEP status conflicts with its mismatch count")
     replay = json.loads((directory / "calchep-precision.json").read_text())
     native, wide = replay["Results"]["Native"], replay["Results"]["GCC128"]
@@ -177,13 +270,17 @@ def calchep(directory, case):
     require(replay["Status"] == "PRECISION_REPLAY_PASS" and replay["NativeControlReproducesCapture"] is True
             and replay["Seed"] == seed and replay["ExternalCount"] == 4 and replay["PointsSHA256"] == digest(capture),
             "CalcHEP replay does not match the raw capture")
-    with capture.open() as stream:
-        samples = [int(r["point"]) for r in csv.DictReader(stream)]
-    require(len(samples) == len(set(samples)) == mismatches and all(1 <= p <= n for p in samples)
-            and replay["Points"] == native["Points"] == native["OriginalBitMatches"] == wide["Points"] == mismatches
-            and wide["Status"] == "PASS" and wide["Errors"] == wide["Mismatches"] == 0
+    samples = csv_records(capture)
+    require(len(samples) == mismatches and all(1 <= p <= n for p in samples)
+            and replay["Points"] == native["Points"] == native["OriginalBitMatches"] == native["Mismatches"] == wide["Points"] == mismatches
+            and native["Status"] == "FAIL" and native["Errors"] == wide["Errors"] == 0
             and wide["MantissaBits"] == 113 and wide["REALBytes"] == 16, "incomplete CalcHEP binary128 replay")
-    return seed, n, mismatches
+    details = {}
+    if "SameChartReplay" in replay:
+        details = calchep_chart(directory, replay, samples, seed)
+    else:
+        require(wide["Status"] == "PASS" and wide["Mismatches"] == 0, "CalcHEP binary128 outliers still disagree")
+    return seed, n, mismatches, details
 
 
 def mg_rows(report, expected, passing):
@@ -278,6 +375,7 @@ def audit(args):
     pdgs, helicities = model_particles()
     native = args.native_run.resolve()
     scores = indexed([r for r in table(native / "scores.tsv") if r["case"] != "external"], lambda r: (r["family"], r["case"]))
+    cross = indexed(table(args.wolfram_scores), lambda r: r["case"]) if args.wolfram_scores else None
     external = defaultdict(list)
     for run in find_runs([native, *args.external_root]):
         for row in table(run / "scores.tsv"):
@@ -298,6 +396,8 @@ def audit(args):
                 raw, canonical = fingerprints(folder / (i + ".expr"))
                 rows[i].update(native_case(row, c, blocks[i]), weight=row["weight"], leaves=row["leaves"],
                                expression_sha256=raw, commutative_sha256=canonical)
+                if cross is not None:
+                    rows[i].update(wolfram_score(cross[i], c, row, raw))
             for row in rows.values():
                 row["status"] = "EXTERNAL_INCOMPLETE"
             physical = {c["case_id"]: physical_helicity(c, helicities) for c in cases}
@@ -312,7 +412,7 @@ def audit(args):
                     compared = {i: fingerprints(directory / (i + ".expr")) for i in ids}
                     different = [i for i in sorted(ids) if compared[i][1] != rows[i]["commutative_sha256"]]
                     require(not different, "different expression(s): " + ",".join(different))
-                    seed, points, replayed = calchep(directory, cases[0])
+                    seed, points, replayed, ch_chart = calchep(directory, cases[0])
                     bits, change, zero_errors = madgraph(directory, set(physical.values()), zero_helicities, cases[0], pdgs, seed, points)
                     for i, helicity in physical.items():
                         identical = compared[i][0] == rows[i]["expression_sha256"]
@@ -323,7 +423,7 @@ def audit(args):
                                        mg_exact_zero_chart_delta=change if i in zeros else None,
                                        mg_zero_raw_max_abs=zero_errors[0].get(helicity),
                                        mg_zero_unprojected_quad_max_abs=zero_errors[1].get(helicity),
-                                       mg_zero_final_max_abs=zero_errors[2].get(helicity), external_run=run.name)
+                                       mg_zero_final_max_abs=zero_errors[2].get(helicity), external_run=run.name, **ch_chart)
                     break
                 except INVALID as error:
                     reasons.append(f"{run.name}: {error}")
@@ -349,6 +449,7 @@ if __name__ == "__main__":
     p.add_argument("--native-run", required=True, type=Path, help="final native run containing scores.tsv")
     p.add_argument("--external-root", action="append", default=[], type=Path, help="search recursively for backend runs")
     p.add_argument("--receipt", "--output", required=True, type=Path, help="write one TSV row per construction")
+    p.add_argument("--wolfram-scores", type=Path, help="require and record independent cross-score.wls measurements")
     p.add_argument("--missing-families", type=Path, help="write family names needing new evidence")
     p.add_argument("--notebook-only", action="store_true")
     p.add_argument("--family", action="append", default=[], help="audit one family (repeatable)")

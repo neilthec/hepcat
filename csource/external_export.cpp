@@ -585,6 +585,8 @@ void write_external_project(const spinas_project &p, const model &m,
            << ",\"IndependentMassParameters\":" << list(mass_names, true) << "}}\n";
     write(p.directory / "calchep-replay.json", replay.str());
     copy_to(runtime / "calchep-precision.py", p.directory / "calchep-precision.py");
+    copy_to(runtime / "calchep_chart.py", p.directory / "calchep_chart.py");
+    copy_to(runtime / "spinas-quad.hpp", p.directory / "spinas-quad.hpp");
   }
   write(p.directory / "external-model.hpp", h.str());
   write(p.directory / "madevent-config.json", js.str());
@@ -726,6 +728,9 @@ external_report validate_external_project(const spinas_project &p,
           build / "calchep-precision.log");
       if (fs::is_regular_file(job / "precision-summary.json"))
         fs::copy_file(job / "precision-summary.json", build / "calchep-precision.json",
+                      fs::copy_options::overwrite_existing);
+      if (fs::is_regular_file(job / "calchep-chart.csv"))
+        fs::copy_file(job / "calchep-chart.csv", build / "calchep-chart.csv",
                       fs::copy_options::overwrite_existing);
       std::ofstream log(result.calchep_report, std::ios::app);
       log << "CalcHEP binary128 replay of every saved raw outlier: "

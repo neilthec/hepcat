@@ -66,6 +66,11 @@ if(BUILD_TESTING)
     add_test(NAME construct COMMAND test_construct "${HEPCAT_TEST_MODELS}")
     add_test(NAME qed_inventory COMMAND hepcat-qed --list)
     add_test(NAME sm_four_point_inventory COMMAND hepcat-sm-four-point --root "${HEPCAT_MODEL_ROOT}" --list)
+    find_package(Python3 3.8 QUIET COMPONENTS Interpreter)
+    if(Python3_Interpreter_FOUND)
+        add_test(NAME sm_four_point_receipts COMMAND "${Python3_EXECUTABLE}" -B
+                 "${HEPCAT_MODEL_ROOT}/tests/benchmarks/native-sm-four-point/test-audit-results.py")
+    endif()
     foreach(family IN ITEMS sm11_eEMm sm61_UdZWp)
         add_test(NAME sm_four_point_${family} COMMAND hepcat-sm-four-point --root "${HEPCAT_MODEL_ROOT}"
                  --output "${CMAKE_CURRENT_BINARY_DIR}/Testing/sm-four-point" --family ${family}

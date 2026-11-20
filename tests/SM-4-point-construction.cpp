@@ -250,6 +250,7 @@ bool run_family(const std::vector<notebook_case> &family, const model &sm, const
     for (const auto *filename :
          {"external-configure.log", "external-build-calchep.log", "external-build-madgraph.log",
           "calchep-comparison.log", "calchep-precision.json", "calchep-precision.log", "calchep-outliers.csv",
+          "calchep-chart.csv",
           "madgraph-comparison.log", "madgraph-comparison.json"})
         if (fs::is_regular_file(build / filename))
             fs::copy_file(build / filename, directory / filename);
