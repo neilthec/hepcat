@@ -25,7 +25,7 @@ purpose; none is labeled as another kind of test.
 The [construction table](qed-seven-point.tsv) covers all 12 helicity representatives
 in the electron-photon model for each pole preference. It records signed Feynman
 comparisons, physical channels, complexity scores and the shortest verified
-expression found. The [external comparison table](qed-seven-point-external.tsv)
+expression found in that run. The [five-positive-photon formulas](publication-qed/seven-point-all-positive.md) give the subsequent reduction and the exact permutation sums. The [external comparison table](qed-seven-point-external.tsv)
 records comparisons of the generated C++ squared amplitudes at 100,000 phase-space
 points per row of each validator. CalcHEP checks the unpolarized sum. MadGraph
 checks each labeled photon-helicity assignment with the massive spins summed,

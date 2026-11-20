@@ -22,6 +22,14 @@ struct numerator_shell {
     std::string mass;
 };
 
+// Apply every permutation of legs to the native FullForm summand and add
+// the results. Multiplicities of identical images are already normalized.
+struct permutation_formula {
+    std::vector<int> legs;
+    std::string summand;
+    std::vector<std::size_t> orbit_sizes;
+};
+
 // FullForm input preserves model-local symbolic masses. External particle
 // labels are 1 through masses.size(), in the all-incoming convention.
 class amp_expression {
@@ -37,6 +45,7 @@ public:
     // Readable spinor brackets and invariants for display. str() preserves exact FullForm.
     std::string plain_text() const;
     std::string latex() const;
+    std::optional<permutation_formula> permutation_form() const;
     // Load HEPCAT, then evaluate the result in a Wolfram kernel. By default
     // the expression is paired with its external and diagram-local mass rules.
     std::string mathematica(bool include_mass_rules = true) const;
@@ -62,6 +71,9 @@ private:
     void set_from(const Algebra& source, std::uint32_t result);
     std::uint32_t apply_in_trial(Algebra& trial, const identity_candidate& edit) const;
     struct context;
+    struct cached_permutations;
+    const cached_permutations& reduced_permutations() const; // caller holds context lock
+    mutable std::shared_ptr<const cached_permutations> permutations_;
     static std::string format_plain_text(const Algebra&, std::uint32_t);
     static std::string format_latex(const Algebra&, std::uint32_t);
     std::shared_ptr<const context> kinematics_;

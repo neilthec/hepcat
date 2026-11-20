@@ -2,6 +2,7 @@
 #include "hepcat.h"
 #include "identities_detail.hpp"
 #include "mathematica.hpp"
+#include "permutation_sum.hpp"
 #include "reduce.hpp"
 
 #include <algorithm>
@@ -108,6 +109,11 @@ amp_expression& amp_expression::reduce_with_factor_passes(unsigned passes) {
         root_=reduce_and_retain(*arena_,root_,kinematics_->masses,kinematics_->shells,remainder_);
         if (kinematics_->shells.empty())
             root_=collect_scalar_factors(*arena_,root_,passes);
+        if (passes > 1 && kinematics_->shells.empty()) {
+            const auto original_size = arena_->size();
+            Algebra trial(arena_.get());
+            root_ = retain_borrowed(*arena_, trial, collect_simple_fractions(trial, root_), original_size);
+        }
         reduced_=true;
     }
     return *this;
@@ -195,12 +201,56 @@ std::string amp_expression::str() const {
     std::lock_guard<std::mutex> guard(*kinematics_->lock);
     return arena_->format(root_);
 }
+struct amp_expression::cached_permutations {
+    Id source;
+    std::optional<permutation_sum> sum;
+};
+
+const amp_expression::cached_permutations& amp_expression::reduced_permutations() const {
+    if (permutations_ && permutations_->source == root_) return *permutations_;
+    Algebra trial(arena_.get());
+    trial.setKinematics(kinematics_->masses, {});
+    auto sum = compact_permutations(trial, root_);
+    if (sum) sum->kernel = retain_borrowed(*arena_, trial, sum->kernel, arena_->size());
+    permutations_ = std::make_shared<cached_permutations>(cached_permutations{root_,std::move(sum)});
+    return *permutations_;
+}
+
+std::optional<permutation_formula> amp_expression::permutation_form() const {
+    std::lock_guard<std::mutex> guard(*kinematics_->lock);
+    if (!reduced_ || !kinematics_->shells.empty()) return {};
+    const auto& sum = reduced_permutations().sum;
+    if (!sum) return {};
+    return permutation_formula{sum->legs,arena_->format(sum->kernel),sum->orbit_sizes};
+}
+
+namespace {
+std::string leg_list(const std::vector<int>& legs) {
+    std::string out;
+    for (int i : legs) {
+        if (!out.empty()) out += ",";
+        out += std::to_string(i);
+    }
+    return out;
+}
+}
+
 std::string amp_expression::plain_text() const {
     std::lock_guard<std::mutex> guard(*kinematics_->lock);
+    if (reduced_ && kinematics_->shells.empty()) {
+        if (const auto& sum = reduced_permutations().sum)
+            return "Sum over all permutations of external legs (" + leg_list(sum->legs) +
+                   ") applied to\n" + format_plain_text(*arena_, sum->kernel);
+    }
     return format_plain_text(*arena_, root_);
 }
 std::string amp_expression::latex() const {
     std::lock_guard<std::mutex> guard(*kinematics_->lock);
+    if (reduced_ && kinematics_->shells.empty()) {
+        if (const auto& sum = reduced_permutations().sum)
+            return "\\sum_{\\pi\\in S_{\\{" + leg_list(sum->legs) +
+                   "\\}}}\\pi\\!\\left[" + format_latex(*arena_, sum->kernel) + "\\right]";
+    }
     return format_latex(*arena_, root_);
 }
 std::string amp_expression::mathematica(bool include_mass_rules) const {

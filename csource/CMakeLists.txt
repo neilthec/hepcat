@@ -13,7 +13,7 @@ add_library(hepcat_reduce
     high_energy.cpp high_energy_chart.cpp high_energy_contacts.cpp
     validation.cpp validation_checks.cpp validation_numeric.cpp validation_feynman.cpp
     validation_precision_chart.cpp validation_precision_parameters.cpp
-    collect.cpp presentation.cpp algebra.cpp amp_expression.cpp plain_text.cpp mathematica.cpp
+    collect.cpp permutation_sum.cpp presentation.cpp algebra.cpp amp_expression.cpp plain_text.cpp mathematica.cpp
     identities.cpp identity_check.cpp kinematics.cpp spinor.cpp vector_basis.cpp vector_compact.cpp)
 target_compile_features(hepcat_reduce PUBLIC cxx_std_17)
 target_include_directories(hepcat_reduce PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
@@ -54,6 +54,10 @@ if(BUILD_TESTING)
     target_include_directories(test_generation_plan SYSTEM PRIVATE ${GMP_INCLUDE_DIR})
     target_link_libraries(test_generation_plan PRIVATE hepcat_reduce)
     set(HEPCAT_TEST_MODELS "${CMAKE_CURRENT_SOURCE_DIR}/../models" CACHE PATH "HEPCAT model files for native tests")
+    add_executable(test_permutation_sum permutation_sum_tests.cpp)
+    target_include_directories(test_permutation_sum SYSTEM PRIVATE ${GMP_INCLUDE_DIR})
+    target_link_libraries(test_permutation_sum PRIVATE hepcat_reduce)
+    add_test(NAME permutation_sum COMMAND test_permutation_sum "${HEPCAT_TEST_MODELS}")
     add_test(NAME six_point_derivation COMMAND hepcat-derive-example "${HEPCAT_TEST_MODELS}")
     add_test(NAME generation_plan COMMAND test_generation_plan "${HEPCAT_TEST_MODELS}")
     add_executable(test_generation generation_tests.cpp)

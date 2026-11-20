@@ -1,0 +1,122 @@
+// Evaluate the returned permutation sum on relabeled phase-space points.
+// This exercises the sign, stabilizer and momentum ordering independently
+// of the symbolic relabeling used by the reducer.
+#include "amp_expression.hpp"
+#include "line_current.hpp"
+#include "permutation_sum.hpp"
+#include "validation_numeric.hpp"
+
+#include <algorithm>
+#include <iostream>
+#include <numeric>
+#include <stdexcept>
+
+using namespace hepcat;
+using namespace hepcat::validation;
+
+namespace {
+void require(bool ok, const char* reason) {
+    if (!ok) throw std::runtime_error(reason);
+}
+
+point permute(const point& p, const std::vector<int>& legs, const std::vector<int>& order) {
+    auto q = p;
+    std::vector<std::size_t> from(p.masses.size());
+    std::iota(from.begin(),from.end(),0);
+    for (std::size_t i = 0; i < legs.size(); ++i) from[legs[i]-1] = order[i]-1;
+    for (std::size_t i = 0; i < from.size(); ++i) {
+        const auto j = from[i];
+        q.momenta[i] = p.momenta[j];
+        q.angles[i] = p.angles[j];
+        q.squares[i] = p.squares[j];
+        q.angle_basis[i] = p.angle_basis[j];
+        q.square_basis[i] = p.square_basis[j];
+        for (std::size_t k = 0; k < from.size(); ++k)
+            q.scalar_products[from.size()*i+k] = p.scalar_products[from.size()*j+from[k]];
+    }
+    return q;
+}
+
+void test_massive_scalar_legs() {
+    Algebra a;
+    const auto m = a.parse("m");
+    a.setKinematics({a.parse("M1"),a.parse("M2"),m,m,m,m}, {});
+    auto inverse_pole = [&](int spectator, int leg) {
+        const auto labels = a.call("Multiparticle",{a.integer(spectator),a.integer(leg)});
+        return a.pow(a.call("PropDen",{a.call("Mom",{labels}),m}),-1);
+    };
+    std::vector<Id> ordered;
+    for (int i = 3; i <= 6; ++i)
+        for (int j = 3; j <= 6; ++j)
+            for (int k = 3; k <= 6; ++k)
+                if (i != j && i != k && j != k)
+                    ordered.push_back(a.mul({inverse_pole(1,i),inverse_pole(2,j),
+                                             a.pow(inverse_pole(1,k),2)}));
+    const auto sum = compact_permutations(a,a.add(ordered));
+    require(sum && sum->legs == std::vector<int>({3,4,5,6}) &&
+            sum->orbit_sizes == std::vector<std::size_t>{24} &&
+            std::any_of(ordered.begin(),ordered.end(),[&](Id term) {
+                return compact_commuting_products(a,term) == sum->kernel;
+            }),
+            "failed to collect identical massive scalar legs");
+}
+
+void test_current(const model& qed, bool physical) {
+    std::vector<std::string> particles{"e","E","A.+","A.+","A.+","A.+","A.+"};
+    std::vector<std::string> masses;
+    for (const auto& p : particles) masses.push_back(qed.particle(p).mass);
+    Algebra a(&qed.algebra());
+    std::vector<Id> mass_ids;
+    for (const auto& mass : masses) mass_ids.push_back(a.parse(mass));
+    a.setKinematics(mass_ids, {});
+    const auto original = dirac_line_proposal(a,qed,particles,120,physical);
+    require(original.has_value(),"missing seven-point amplitude");
+    amp_expression amp(a.format(*original),masses);
+    amp.reduce();
+    const auto compact = amp.permutation_form();
+    require(compact.has_value(),"missing compact permutation sum");
+    auto lengths = compact->orbit_sizes;
+    std::sort(lengths.begin(),lengths.end());
+    require(lengths == (physical ? std::vector<std::size_t>{10,30,60}
+                                 : std::vector<std::size_t>{20,60,60,60}), "wrong signed orbit sizes");
+    require(amp.complexity() == (physical ? 820u : 920u), "expanded complexity changed");
+    const amp_expression kernel(compact->summand,masses);
+    require(kernel.complexity() == (physical ? 39u : 24u), "wrong summand complexity");
+    require(amp.plain_text().find("Sum over all permutations") == 0 &&
+            amp.latex().find("\\sum_") == 0, "missing typeset permutation sum");
+
+    const auto parameters = model_parameters(qed);
+    expression_evaluator full(a,*original,parameters), seed(a,a.parse(compact->summand),parameters);
+    const auto mass = evaluate_scalar(a,a.parse(masses.front()),parameters).real();
+    for (unsigned sample = 0; sample < 8; ++sample) {
+        const auto p = sample_point({mass,mass,0,0,0,0,0},88031+sample);
+        auto order = compact->legs;
+        complex sum = 0;
+        do { sum += seed(permute(p,compact->legs,order)); }
+        while (std::next_permutation(order.begin(),order.end()));
+        const auto expected = full(p);
+        require(std::abs(expected) > 0 && std::abs(sum-expected) <= 1e-7L*std::abs(expected),
+                "explicit permutation sum disagrees with the original signed amplitude");
+    }
+
+    amp_expression broken("Plus[" + amp.str() + ",SpinorChain[Spinor[\"Helicity\",\"Square\",3],"
+                          "Spinor[\"Helicity\",\"Square\",4]]]",masses);
+    require(!broken.reduce().permutation_form(),"assumed symmetry after breaking a signed orbit");
+    amp_expression on_cut(amp.str(),masses,{{{1,3},masses.front()}});
+    require(!on_cut.reduce().permutation_form(),"permuted a diagram-local shell");
+}
+} // namespace
+
+int main(int argc, char** argv) {
+    if (argc != 2) return 2;
+    try {
+        test_massive_scalar_legs();
+        model qed(argv[1],3);
+        test_current(qed,true);
+        test_current(qed,false);
+        std::cout << "Both seven-point kernels reconstruct the signed amplitudes.\n";
+    } catch (const std::exception& e) {
+        std::cerr << e.what() << '\n';
+        return 1;
+    }
+}

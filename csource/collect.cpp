@@ -656,6 +656,116 @@ Id collect_scalar_factors(Algebra &a, Id input, unsigned max_passes) {
   }
   return best;
 }
+namespace {
+// For a single existing propagator d, carry both F and the pole-free numerator
+// d F. A sum can use a common denominator even across nested sums. A product
+// can cancel d against a spectator without distributing any spinor expression.
+struct fraction_forms {
+    Id value, numerator;
+    unsigned order;
+};
+
+class simple_fraction {
+    Algebra& a;
+    const Id pole, inverse;
+    std::unordered_map<Id,fraction_forms> memo;
+public:
+    simple_fraction(Algebra& a, Id pole) : a(a), pole(pole), inverse(a.pow(pole,-1)) {}
+    fraction_forms visit(Id id) {
+        if (auto it = memo.find(id); it != memo.end()) return it->second;
+        const auto& n = a.node(id);
+        fraction_forms out{id, a.mul({pole,id}), 0};
+        if (id == inverse) {
+            out = {id,a.integer(1),1};
+        } else if (n.head == "Power" && n.args.size() == 2 && n.args.front() == pole && !a.leg(n.args.back())) {
+            // Fractional and higher-order poles are outside this identity.
+            out.order = 2;
+        } else if (n.head == "Plus" || n.head == "Times") {
+            Terms values, numerators;
+            std::size_t carrier = 0;
+            for (Id child : n.args) {
+                const auto item = visit(child);
+                if (item.order) carrier = values.size();
+                values.push_back(item.value);
+                numerators.push_back(item.numerator);
+                out.order = n.head == "Plus" ? std::max(out.order,item.order)
+                                            : std::min(2u,out.order + item.order);
+            }
+            if (out.order == 1) {
+                out.value = a.call(n.head,values);
+                if (n.head == "Plus") {
+                    out.numerator = a.add(std::move(numerators));
+                } else {
+                    values[carrier] = numerators[carrier];
+                    out.numerator = a.mul(std::move(values));
+                }
+                Id fraction = a.mul({inverse,out.numerator});
+                if (a.cost(fraction) < a.cost(out.value)) out.value = fraction;
+            }
+        }
+        return memo.emplace(id,out).first->second;
+    }
+};
+} // namespace
+
+Id collect_simple_fractions(Algebra& a, Id input) {
+    if (a.cost(input) < 50 || a.cost(input) > 16000) return input;
+    std::set<Id> poles;
+    std::unordered_set<Id> seen;
+    Terms pending{input}, spectators;
+    bool has_sum = false;
+    while (!pending.empty()) {
+        const auto id = pending.back();
+        pending.pop_back();
+        if (!seen.insert(id).second) continue;
+        const auto& n = a.node(id);
+        if (n.head == "Plus" || n.head == "Times") {
+            has_sum |= n.head == "Plus";
+            pending.insert(pending.end(),n.args.begin(),n.args.end());
+        } else if (n.head == "Power" && n.args.size() == 2 &&
+                   a.node(n.args[0]).head == "PropDen" && a.node(n.args[1]).head == "-1") {
+            poles.insert(n.args[0]);
+        } else if (n.compound && n.head != "PropDen") {
+            spectators.insert(spectators.end(),n.args.begin(),n.args.end());
+        }
+    }
+    if (!has_sum || poles.empty()) return input;
+    // A pole inside an opaque coefficient, power or reciprocal sum might
+    // have higher order. Leave this particular denominator in its input form.
+    const auto arithmetic_nodes = seen.size();
+    seen.clear();
+    while (!spectators.empty() && !poles.empty()) {
+        const auto id = spectators.back();
+        spectators.pop_back();
+        if (!seen.insert(id).second) continue;
+        const auto& n = a.node(id);
+        if (n.head == "PropDen") poles.erase(id);
+        else spectators.insert(spectators.end(),n.args.begin(),n.args.end());
+    }
+    // Bound work by distinct arithmetic nodes, rather than printed term count.
+    if (poles.empty() || arithmetic_nodes * poles.size() > 24000) return input;
+    Id best = input;
+    for (Id pole : poles) {
+        auto choice = simple_fraction(a,pole).visit(best);
+        if (choice.order == 1 && a.cost(choice.value) < a.cost(best)) best = choice.value;
+    }
+    if (best != input) {
+        // A shared denominator can expose a second common scalar factor.
+        // Keep the fraction improvement even if the extra factoring loses.
+        try {
+            const auto limit = expression_complexity(a,input);
+            const Id factored = collect_scalar_factors(a,best,3);
+            if (a.cost(factored) < a.cost(best) && expression_complexity(a,factored) <= limit)
+                return factored;
+            if (expression_complexity(a,best) <= limit) return best;
+        } catch (const std::length_error&) {
+            return input;
+        } catch (const std::overflow_error&) {
+            return input;
+        }
+    }
+    return input;
+}
 std::size_t expression_complexity(const Algebra& source, Id root) {
     Algebra trial(&source);
     try {

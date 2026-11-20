@@ -95,5 +95,21 @@ int main() {
     if (collect_scalar_factors(a,related,3)!=a.mul({a.add({leg_a,leg_b}),shared}))
         throw std::runtime_error("Newly exposed common subcurrent was missed");
 
+    // Clear one existing simple pole across a nested sum. One regular
+    // term acquires d in its numerator and remains present away from the cut.
+    Id d = a.parse("PropDen[Mom[Multiparticle[1,2]],m]");
+    Id inverse = a.pow(d,-1);
+    Id nested = a.add({a.mul({u,a.add({x,a.mul({inverse,y})})}),
+                       a.mul({inverse,v,mx}),a.mul({inverse,leg_a,leg_b})});
+    Id cleared = a.mul({inverse,a.add({a.mul({u,a.add({a.mul({d,x}),y})}),
+                                       a.mul({v,mx}),a.mul({leg_a,leg_b})})});
+    if (collect_simple_fractions(a,nested) != cleared || a.cost(cleared) >= a.cost(nested))
+        throw std::runtime_error("Lost the regular numerator term when clearing a shared pole");
+    for (Id hidden : {a.pow(d,-2), a.pow(a.add({inverse,x}),-1)}) {
+        Id mixed = a.add({nested,hidden});
+        if (collect_simple_fractions(a,mixed) != mixed)
+            throw std::runtime_error("Reorganized an unsupported or higher-order pole");
+    }
+
     std::cout << "Sparse collection identities passed\n";
 }

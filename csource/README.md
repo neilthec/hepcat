@@ -28,6 +28,8 @@ Here the numerator shell is $(p_1+p_3)^2=m_e^2$. Since $p_1^2=m_e^2$ and $p_3^2=
 | `expr.str()` | `.expr` | Read the exact native expression back into `amp_expression` with the original masses and any applicable shells. |
 | `write_spinas_process(...)` | SPINAS project | Export one or more helicity expressions with their model and physical incoming legs as numerical C++. |
 
+A reduced expression with repeated external masses can have a compact permutation sum. HEPCAT checks the action of adjacent leg swaps on every signed term, including spinor-chain reversal signs. When the sum shortens the formula, `plain_text()` and `latex()` print one summand and the legs to permute. Use `permutation_form()` to retrieve that summand in native syntax and the number of distinct terms represented by each orbit. The sum runs over every permutation with its normalization included. The complexity reported by `complexity()` is the weight of the full expression. The [seven-point QED example](../tests/benchmarks/publication-qed/seven-point-all-positive.md) gives both weights.
+
 The Wolfram export preserves each model parameter's name, scope and type. To
 combine it with a separate Mathematica `ReadModel`, give both readers the
 same scope. For example, obtain it with `ModelParameter[qed, "Me"][[2]]`

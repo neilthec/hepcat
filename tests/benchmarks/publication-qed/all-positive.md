@@ -1,6 +1,6 @@
 # Same-helicity QED formulas
 
-These checks evaluate the two arbitrary-multiplicity expressions directly for two massive fermions and two through eight equal-helicity photons. The direct formula evaluator, the independent signed low-point controls and MadGraph test different parts of the calculation. The constructive catalog has its own tests.
+These checks evaluate the two arbitrary-multiplicity expressions directly for two massive fermions and two through eight equal-helicity photons. The direct formula evaluator, the independent signed low-point controls and MadGraph test different parts of the calculation. The constructive catalog has its own tests. For five photons, the [compact signed permutation sums](seven-point-all-positive.md) give the two explicit summands and their full complexity scores.
 
 The physical formula originally assigned a weight to each terminal pair in a photon subset. One can sum those weighted pairs before applying the recursion. Every possible first single removal multiplies the correction of the subset with that leg removed. Every possible first double removal multiplies the correction of the subset with that pair removed. The leading determinant term closes the recurrence. The collected version therefore caches one correction per subset. The driver evaluates the original and collected complex amplitudes for each of the four massive spin pairs and compares each spin-summed rate with MadGraph. It also compares the ordered and compact spurious-current recursions.
 
