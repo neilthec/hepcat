@@ -51,6 +51,8 @@ The call generates and reduces the tree diagrams and factorization products, com
 
 ### Run the QED examples and external comparisons
 
+Both C++ notebooks save each amplitude twice. Open the `.txt` file to read the spinor brackets and propagators, or the matching `.expr` file to reuse the exact symbolic expression. In your own C++ code, use `amp.final_amplitude().plain_text()` for the displayed formula and `amp.final_amplitude().str()` for the exact expression. The terminal shows short amplitudes inline. Each validation table gives the check, its outcome and the number of checks or phase-space points covered.
+
 The [C++ QED example](../tests/QED-6-point-construction.cpp) covers the notebook's helicity families through six external legs, the seven-leg all-positive example, and the separate all-positive formula study. From the HEPCAT repository root, run one complete family with
 
 ```sh

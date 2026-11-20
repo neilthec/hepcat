@@ -32,6 +32,8 @@ public:
     // expression recovers the input away from the cut.
     std::optional<amp_expression> discarded_remainder() const;
     std::string str() const;
+    // Readable spinor brackets and invariants for display. str() preserves exact FullForm.
+    std::string plain_text() const;
     std::size_t particle_count() const;
     std::size_t complexity() const;
     std::size_t leaf_count() const;
@@ -44,6 +46,7 @@ private:
     void reduce_from(Algebra& worker, std::uint32_t source, std::optional<std::uint32_t> original = {});
     void set_from(const Algebra& source, std::uint32_t result);
     struct context;
+    static std::string format_plain_text(const Algebra&, std::uint32_t);
     std::shared_ptr<const context> kinematics_;
     std::shared_ptr<Algebra> arena_;
     std::uint32_t root_;

@@ -186,6 +186,10 @@ std::string amp_expression::str() const {
     std::lock_guard<std::mutex> guard(*kinematics_->lock);
     return arena_->format(root_);
 }
+std::string amp_expression::plain_text() const {
+    std::lock_guard<std::mutex> guard(*kinematics_->lock);
+    return format_plain_text(*arena_, root_);
+}
 std::size_t amp_expression::leaf_count() const {
     std::lock_guard<std::mutex> guard(*kinematics_->lock);
     return arena_->cost(root_);

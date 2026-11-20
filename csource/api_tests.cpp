@@ -1,5 +1,7 @@
 #include "amp_expression.hpp"
 
+#include <algorithm>
+#include <cctype>
 #include <iostream>
 #include <stdexcept>
 
@@ -8,8 +10,57 @@ void check(bool ok, const char* message) {
     if (!ok) throw std::runtime_error(message);
 }
 
+// The notebook display may wrap long formulas. Check their mathematical
+// punctuation separately from whitespace and from the exact exchange format.
+void check_plain_text(const std::string& input, const std::string& expected, std::size_t legs = 4) {
+    const amp_expression amp(input, std::vector<std::string>(legs, "0"));
+    auto text = amp.plain_text();
+    text.erase(std::remove_if(text.begin(), text.end(), [](unsigned char c) {
+        return std::isspace(c);
+    }), text.end());
+    if (text != expected)
+        throw std::runtime_error("plain_text(" + input + ") produced " + text + ", expected " + expected);
+    check(amp.str() == input, "display changed the exact expression");
+}
+
+void test_plain_text() {
+    check_plain_text(R"(SpinorChain[Spinor["Helicity","Angle",1],Spinor["Helicity","Angle",2]])", "<12>");
+    check_plain_text(R"(SpinorChain[Spinor["Helicity","Square",1],Spinor["Helicity","Square",2]])", "[12]");
+    check_plain_text(R"(SpinorChain[Spinor["Helicity","Square",2],Mom[1],Spinor["Helicity","Angle",3]])",
+                     "[213>");
+    check_plain_text(R"(SpinorChain[Spinor["Helicity","Angle",2],Mom[1],Spinor["Helicity","Square",3]])",
+                     "<213]");
+    check_plain_text(R"(SpinorChain[Spinor["Helicity","Square",1],Mom[2],Mom[3],Spinor["Helicity","Square",4]])",
+                     "[1234]");
+    check_plain_text(R"(SpinorChain[Spinor["Spin","Upper","Angle",1,i],Spinor["Spin","Lower","Angle",2,j]])",
+                     "<1^{i},2_{j}>");
+    check_plain_text(R"(SpinorChain[Spinor["Xi","Square",3],Spinor["Helicity","Square",2]])",
+                     "[xi_{3},2]");
+    check_plain_text(R"(SpinorChain[Spinor["Helicity","Angle",1],Spinor["Helicity","Angle",10]])",
+                     "<1,10>", 10);
+
+    const std::string momentum = "Mom[Multiparticle[1,3]]";
+    const std::string mass = R"(ModelParameter["Me","QED","Real"])";
+    check_plain_text("PropDen[" + momentum + ",0]", "s_13");
+    check_plain_text("Power[PropDen[" + momentum + "," + mass + "],-1]", "1/(s_13-Me^2)");
+    check_plain_text("PropDen[" + momentum + "," + mass + ",width]", "s_13-Me^2+I*Me*width");
+    check_plain_text("Power[Plus[x,y],-2]", "1/(x+y)^2");
+    check_plain_text("Power[-0.5,2]", "(-0.5)^2");
+    check_plain_text("Power[Power[x,y],z]", "(x^y)^z");
+    check_plain_text("Plus[x,Times[-1,y]]", "x-y");
+    check_plain_text("Times[-1,Times[-1,x]]", "x");
+
+    // Distinct model scopes and color-index positions must remain distinguishable.
+    const std::string other_mass = R"(ModelParameter["Me","SM","Real"])";
+    check_plain_text("Plus[" + mass + "," + other_mass + "]", mass + "+" + other_mass);
+    check_plain_text("ColorGenerator[ColorIndex[2],ColorIndex[1],colorInternalIndex[List[1,2],8]]",
+                     "(T^{a_{1,2}})_{c_{2},c_{1}}");
+    check_plain_text("UnknownHead[Plus[x,y],1]", "UnknownHead[Plus[x,y],1]");
+}
+
 int main() {
     try {
+        test_plain_text();
         const std::vector<std::string> masses{"0","0","0","0"};
         const std::string f="MomProd[1,2]", g="MomProd[1,3]";
         const std::string pole="PropDen[Mom[Multiparticle[1,2]],2]";
