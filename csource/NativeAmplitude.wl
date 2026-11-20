@@ -4,8 +4,9 @@ If[!MemberQ[$Packages, "ConstructiveDiagrams`"],
 BeginPackage["HEPCATNative`", {"ConstructiveDiagrams`"}];
 
 GenerateNativeAmplitude::usage =
-  "GenerateNativeAmplitude[particles, directory, vertexModelNumber, factorizationModelNumber, executable] reads both constructive models in C++, generates the diagram amplitudes and lower-point products, and reduces each with its own numerator shells on the worker that sewed it. The result can be passed to CompleteNativeFactorization. Separate {directory, number} pairs can also be supplied. With one model number the function generates diagrams only, including raw tensors when reading a Feynman model. Workers selects the worker count. Generate selects Both, Diagrams or Channels.";
-Options[GenerateNativeAmplitude] = {"Workers" -> Automatic, "PolePreference" -> Automatic, "Generate" -> "Both"};
+  "GenerateNativeAmplitude[particles, directory, vertexModelNumber, factorizationModelNumber, executable] reads both constructive models in C++, generates the diagram amplitudes and lower-point products, and reduces each with its own numerator shells on the worker that sewed it. The result can be passed to CompleteNativeFactorization. Separate {directory, number} pairs can also be supplied. With one model number the function generates diagrams only, including raw tensors when reading a Feynman model. With \"FeynmanModel\" -> {directory, number}, the result also includes raw off-shell FeynmanDiagrams from that model, with its own external mass rules. Workers selects the worker count. Generate selects Both, Diagrams or Channels.";
+Options[GenerateNativeAmplitude] = {"Workers" -> Automatic, "PolePreference" -> Automatic, "Generate" -> "Both",
+  "FeynmanModel" -> None};
 
 ReduceNativeAmplitude::usage =
   "ReduceNativeAmplitude[process, diagramModel, factorizationModel, executable] generates all diagrams and factorization products, then reduces both together in C++. ReduceNativeAmplitude[diagramPairs, channelRows, executable] accepts existing HEPCAT rows. For example, with loaded models qed and qedFactorization, run ReduceNativeAmplitude[{\"e\", \"E\", \"A.+\", \"A.+\"}, qed, qedFactorization, binary]. The result contains Diagrams, FactorizationProducts, their aligned DiagramRemainders and FactorizationRemainders, WorkersUsed and ReductionSeconds. The remainders restore each spin-contracted input away from its numerator cuts in the chosen reference. Workers -> Automatic uses the available native workers; 1 requests serial reduction. PolePreference -> None keeps supplied references. Cyclic uses a common massless reference cycle. ExternalMasses can provide the ordered masses for empty collections.";
@@ -338,7 +339,7 @@ CompleteNativeHighEnergy[input_, channels_List, model_List, executable_String, o
     If[TrueQ[OptionValue["ReturnDetails"]],
       Join[result,<|"ValidationReport" -> report, "ValidationSeconds" -> elapsed|>],result["Amplitude"]]], $batchFailure];
 
-(* The two model scope strings let native rows be combined directly with rows
+(* The model scope strings let native rows be combined directly with rows
    from ReadModel. Only file locations and particle names cross the input bridge. *)
 GenerateNativeAmplitude[particles : {__String}, directory_String, vertex_Integer,
     executable_String, opts : OptionsPattern[]] :=
@@ -354,14 +355,19 @@ GenerateNativeAmplitude[particles : {__String}, directory_String, vertex_Integer
 GenerateNativeAmplitude[particles : {__String}, {vd_String, vn_Integer}, {fd_String, fn_Integer},
     executable_String, OptionsPattern[]] := Catch[Module[
   {work = OptionValue["Workers"], refs = OptionValue["PolePreference"], mode = OptionValue["Generate"],
+   feynman = OptionValue["FeynmanModel"], specs, marker, feynmanRules, feynmanCount, extra = <||>,
    input, temp, res, lines, counters, numbers, masses, next = 7, rows, diagrams, products, rules, make, root},
   If[work =!= Automatic && !(IntegerQ[work] && work >= 1), fail["NativeWorkers","Workers must be Automatic or a positive integer."]];
   If[!MemberQ[{None, Automatic, "Cyclic", "AllSpurious", "AllPhysical"},refs] || !MemberQ[{"Both","Diagrams","Channels"},mode],
     fail["NativeGeneration","Choose Automatic, Cyclic, AllSpurious, AllPhysical or None for PolePreference and Both, Diagrams or Channels for Generate."]];
   If[!FileExistsQ[executable] || DirectoryQ[executable],fail["NativeExecutable","Could not find the native generation executable."]];
   If[vn<0 || fn<0,fail["NativeModel","Model numbers must be nonnegative."]];
-  input=Join[{"HEPCAT_GENERATE_1"},Flatten[Function[spec,{ExpandFileName[First[spec]],ToString[Last[spec]],
-    ConstructiveDiagrams`Private`modelParameterScope[ExpandFileName[First[spec]],Last[spec]]}]/@{{vd,vn},{fd,fn}}],
+  If[feynman =!= None && !MatchQ[feynman,{_String,_Integer?NonNegative}],
+    fail["NativeModel","FeynmanModel must be None or {directory, model number}."]];
+  specs = If[feynman === None, {{vd,vn},{fd,fn}}, {{vd,vn},{fd,fn},feynman}];
+  marker = If[feynman === None, "_1", "_FEYNMAN_1"];
+  input=Join[{"HEPCAT_GENERATE"<>marker},Flatten[Function[spec,{ExpandFileName[First[spec]],ToString[Last[spec]],
+    ConstructiveDiagrams`Private`modelParameterScope[ExpandFileName[First[spec]],Last[spec]]}]/@specs],
     {mode,Switch[refs,None,"Keep","AllPhysical","Physical",_,"Automatic"],ToString[Length[particles]]},particles];
   If[!AllTrue[input,StringQ[#] && StringFreeQ[#, "\n"|"\r"]&],fail["NativeModel","Invalid path, model scope or particle label."]];
   temp=CreateDirectory[];
@@ -372,7 +378,7 @@ GenerateNativeAmplitude[particles : {__String}, {vd_String, vn_Integer}, {fd_Str
     If[!AssociationQ[res] || res["ExitCode"]=!=0,fail["NativeGeneration","Native model generation failed.",
       If[AssociationQ[res],KeyTake[res,{"ExitCode","StandardError"}],<||>]]];
     lines=Import[root["output"],"Lines",CharacterEncoding->"UTF-8"];
-    If[!ListQ[lines] || Length[lines]<8 || First[lines]=!="HEPCAT_GENERATED_1",fail["NativeProtocol","Incomplete generation output."]];
+    If[!ListQ[lines] || Length[lines]<8 || First[lines]=!=("HEPCAT_GENERATED"<>marker),fail["NativeProtocol","Incomplete generation output."]];
     counters[x_] := If[StringMatchQ[x,DigitCharacter..],FromDigits[x],fail["NativeProtocol","Expected a row or worker count."]];
     numbers[x_] := If[StringMatchQ[x,RegularExpression["[0-9]+(?:\\.[0-9]+)?(?:[Ee][+-]?[0-9]+)?"]],
       ToExpression[StringReplace[x,{"e"|"E"->"*^"}]],fail["NativeProtocol","Invalid duration."]];
@@ -382,14 +388,23 @@ GenerateNativeAmplitude[particles : {__String}, {vd_String, vn_Integer}, {fd_Str
       If[next+3 n-1>Length[lines],fail["NativeProtocol","Missing generated rows."]];
       data=Table[Table[decode[lines[[next++]]],3],n];data];
     diagrams=rows[];products=rows[];
+    If[feynman =!= None,
+      If[next+1>Length[lines],fail["NativeProtocol","Missing Feynman mass rules or diagram count."]];
+      feynmanRules=decode[lines[[next++]]];
+      If[!ListQ[feynmanRules] || Length[feynmanRules]=!=Length[particles],
+        fail["NativeProtocol","Invalid Feynman external masses."]];
+      feynmanRules=Thread[(Mass/@Range[Length[particles]])->feynmanRules];
+      feynmanCount=counters[lines[[next++]]];
+      If[next+feynmanCount-1>Length[lines],fail["NativeProtocol","Missing Feynman diagram rows."]];
+      extra=<|"FeynmanDiagrams"->Table[{feynmanRules,decode[lines[[next++]]]},{feynmanCount}]|>];
     If[next=!=Length[lines]+1,fail["NativeProtocol","Unexpected trailing generation output."]];
     make[entry_]:={Join[rules,(Mass[Multiparticle@@First[#]]->Last[#]& /@ First[entry])],entry[[2]]};
-    <|"Diagrams"->(make /@ diagrams),"DiagramRemainders"->(Last/@diagrams),
+    Join[<|"Diagrams"->(make /@ diagrams),"DiagramRemainders"->(Last/@diagrams),
       "FactorizationProducts"->(Function[entry,With[{shell=First[First[entry]]},
         Join[masses,{Multiparticle@@First[shell],Last[shell],entry[[2]]}]]]/@products),
       "FactorizationRemainders"->(Last/@products),"WorkersUsed"->counters[lines[[2]]],
       "ModelReadSeconds"->numbers[lines[[3]]],"GenerationAndReductionSeconds"->numbers[lines[[4]]],
-      "ProcessPeakRSSBytes"->If[lines[[5]]==="-1",Missing["Unavailable"],counters[lines[[5]]]]|>,
+      "ProcessPeakRSSBytes"->If[lines[[5]]==="-1",Missing["Unavailable"],counters[lines[[5]]]]|>, extra],
     DeleteDirectory[temp,DeleteContents->True]]], $batchFailure];
 
 End[];

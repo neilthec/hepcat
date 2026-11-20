@@ -1,9 +1,11 @@
 // File bridge for the optional Mathematica front end. Parsing and output are
 // deliberately outside the timer used to compare native reduction schedules.
 #include "amplitude.hpp"
+#include "generation_feynman.hpp"
 #include "reduce.hpp"
 #include "process_memory.hpp"
 
+#include <algorithm>
 #include <charconv>
 #include <chrono>
 #include <filesystem>
@@ -107,7 +109,7 @@ void write_result(const fs::path& path, Writer write) {
     output.close();
     fs::rename(temporary, path);
 }
-void generate_from_models(std::istream& input, const fs::path& path, std::size_t workers) {
+void generate_from_models(std::istream& input, const fs::path& path, std::size_t workers, bool with_feynman) {
     struct source {
         std::string directory;
         unsigned number;
@@ -115,6 +117,7 @@ void generate_from_models(std::istream& input, const fs::path& path, std::size_t
     };
     auto spec = [&] { return source{line(input), read_integer<unsigned>(line(input)), line(input)}; };
     const auto vertices = spec(), channels = spec();
+    const auto benchmark = with_feynman ? std::optional<source>(spec()) : std::nullopt;
     const auto mode = line(input), refs = line(input);
     if (refs != "Automatic" && refs != "Keep" && refs != "Physical")
         throw std::invalid_argument("unknown generation reference policy");
@@ -134,6 +137,15 @@ void generate_from_models(std::istream& input, const fs::path& path, std::size_t
     auto choice = refs == "Keep"       ? hepcat::generation_references::keep
                   : refs == "Physical" ? hepcat::generation_references::physical
                                        : hepcat::generation_references::automatic;
+    std::optional<hepcat::model> feynman;
+    std::vector<std::string> feynman_masses;
+    if (benchmark) {
+        feynman.emplace(benchmark->directory, benchmark->number, benchmark->scope);
+        for (const auto& name : names) {
+            const auto external = hepcat::generation::feynman_external(*feynman, name);
+            feynman_masses.push_back(feynman->particle(external).mass);
+        }
+    }
     auto amp = [&] {
         if (mode == "Diagrams") return hepcat::amplitude(std::move(names), vm, choice);
         auto fm = vertices.directory == channels.directory && vertices.number == channels.number &&
@@ -142,18 +154,23 @@ void generate_from_models(std::istream& input, const fs::path& path, std::size_t
                       : hepcat::model(channels.directory, channels.number, channels.scope);
         return hepcat::amplitude(std::move(names), vm, fm, choice);
     }();
+    if (feynman) amp.set_feynman_model(*feynman);
     auto start = clock::now();
-    if (mode == "Both")
-        amp.generate(workers);
-    else if (mode == "Diagrams")
-        amp.generate_diagrams(workers);
-    else
+    std::size_t used_workers = 0;
+    if (mode == "Channels") {
         amp.generate_factorization_products(workers);
+        used_workers = amp.last_worker_count();
+        if (feynman) amp.generate_feynman_diagrams(workers);
+    } else {
+        // The Diagrams-only instance has no factorization model attached.
+        amp.generate(workers);
+    }
+    used_workers = std::max(used_workers, amp.last_worker_count());
     auto finish = clock::now();
     auto peak = highWaterRSS();
     write_result(path, [&](std::ostream& out) {
-        out << "HEPCAT_GENERATED_1\n"
-            << amp.last_worker_count() << '\n'
+        out << (benchmark ? "HEPCAT_GENERATED_FEYNMAN_1\n" : "HEPCAT_GENERATED_1\n")
+            << used_workers << '\n'
             << std::chrono::duration<double>(start - begin).count() << '\n'
             << std::chrono::duration<double>(finish - start).count() << '\n'
             << peak << "\nList[";
@@ -181,6 +198,15 @@ void generate_from_models(std::istream& input, const fs::path& path, std::size_t
                 out << (rest ? rest->str() : "0") << '\n';
             }
         }
+        if (benchmark) {
+            out << "List[";
+            for (std::size_t i = 0; i < feynman_masses.size(); ++i) {
+                if (i) out << ',';
+                out << feynman_masses[i];
+            }
+            out << "]\n" << amp.feynman_diagrams().size() << '\n';
+            for (const auto& row : amp.feynman_diagrams()) out << row.expression.str() << '\n';
+        }
     });
 }
 } // namespace
@@ -195,8 +221,8 @@ int main(int argc, char** argv) {
         if (fs::exists(argv[2]) && fs::equivalent(argv[1], argv[2]))
             throw std::invalid_argument("input and output paths must differ");
         const auto format = line(input);
-        if (format == "HEPCAT_GENERATE_1") {
-            generate_from_models(input, argv[2], workers);
+        if (format == "HEPCAT_GENERATE_1" || format == "HEPCAT_GENERATE_FEYNMAN_1") {
+            generate_from_models(input, argv[2], workers, format == "HEPCAT_GENERATE_FEYNMAN_1");
             return 0;
         }
         bool energy = format == "HEPCAT_HIGH_ENERGY_1";

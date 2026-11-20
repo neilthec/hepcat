@@ -1,4 +1,4 @@
-# Native amplitude generation, reduction and completion
+# Native amplitude generation, reduction, completion and validation
 
 `hepcat::amp_expression` holds a symbolic expression, the ordered external masses, and any internal numerator shells declared for that expression. Its particle count is the length of the mass list. Labels start at 1 and all momenta are incoming. Construct it once, then call `amp.reduce()` to simplify it in place. To keep the original for comparison, copy the object before reduction. Copies share their stored expression nodes. An ordinary native process needs no Wolfram installation.
 
@@ -60,6 +60,44 @@ In the Mathematica bridge, `"PolePreference" -> "AllSpurious"` requests the cycl
 The [generation benchmark](generation_benchmark.wls) compares individual diagram spin polynomials, including their remainders, at two conserved exact points. It compares each factorization product at two regular points on its own pole. It times the fused native generation and reduction separately from model loading and bridge transfer. Run it with a licensed Wolfram kernel after building the executable. The [model reader check](model_reader_oracle.wls) compares vertex expressions and factors with Mathematica for all shipped constructive and CalcHEP models. Additional checks cover [three identical fermion pairs](generation_six_fermion_checks.wls), [quark color coefficients](generation_color_checks.wls), [gluon channels](generation_gluon_checks.wls) and [off-shell Feynman tensors](generation_feynman_checks.wls).
 
 On the eight-worker release build, the electron pair with four positive-helicity photons took 1.02 s with one worker and 0.32 s with eight for its 24 diagrams and 14 channels. Peak RSS went from 5.7 to 12.1 MiB. For four W bosons the corresponding times were 8.03 s and 2.51 s, with 15.1 and 37.3 MiB peak RSS. These timings cover topology generation, sewing and reduction after loading the models. The [measurements for all eight processes](generation-benchmark-results.json) also report model read time and Wolfram raw generation time separately.
+
+## Validate the final amplitude
+
+Give the process its elementary model, lower-point amplitude model and, optionally, a separate CalcHEP model. Here the first two external legs are the incoming electron and positron. The stored analytic expression uses all momenta incoming.
+
+```cpp
+#include "amplitude.hpp"
+#include <iostream>
+
+int main() {
+    hepcat::model vertices("models", 3), channels("models", 4);
+    hepcat::model rules("tests/reference-models/calchep", 2);
+    hepcat::amplitude amp({"e", "E", "A.+", "A.+"}, vertices, channels, rules,
+                          hepcat::generation_references::physical);
+    amp.generate();
+    amp.complete_high_energy();  // Includes factorization and final external-only reduction.
+    auto report = amp.validate();
+    std::cout << "Validation seed " << report.seed << '\n';
+    for (const auto& check : report.checks)
+        std::cout << check.kind << " " << check.label << ": " << check.detail << '\n';
+    for (const auto& check : report.numerical)
+        std::cout << check.kind << ": " << check.compared << " points, " << check.failures
+                  << " mismatches, max relative error " << check.max_relative_error
+                  << " " << check.detail << '\n';
+    if (!report.passed()) return 1;
+    std::cout << amp.final_amplitude().str() << '\n';
+}
+```
+
+`generate()` schedules the independent Feynman diagrams alongside the constructive work. `amp.feynman_diagrams()` returns the raw tensors. To attach the model to an existing process, call `amp.set_feynman_model(rules)`. Each Feynman tree uses off-shell internal momenta. Its Dirac and Lorentz contractions are performed once per validation before the numerical loop. In the optional Mathematica bridge, pass `"FeynmanModel" -> {directory, number}` to `GenerateNativeAmplitude` and inspect `batch["FeynmanDiagrams"]`.
+
+Physical residues use the signed lower-point products on their cuts. The checker searches the expression for other kinematic denominators and tests their cancellation. Fixed-angle checks examine the powers of energy above the bound. These checks run on dedicated kinematic charts. The separate numerical sweep draws **10,000 distinct conserved scattering points by default**, with two incoming particles, the model masses, fixed specified helicities and sampled coherent massive-spin states. Colored numerical amplitudes share the same external colors. A remaining reference spinor is varied with momenta and spin states held fixed. When the final reduction changes the expression, the sweep also compares its values before and after reduction. A sweep with only a finiteness check is identified as `FiniteAmplitude`.
+
+Use `amp.validate(candidate, options)` to check a proposed result directly. This overload accepts a mass-tagged `amp_expression`. It leaves the completion result available. Options include `points` (at least 10,000), `workers`, `seed`, `relative_tolerance` and `absolute_tolerance`. Both models evaluate their numerical parameters from their own files. Use `options.parameters["Me"]` for a common override or the complete scoped name for a model-specific one. The residue and energy charts use exact parameter assignments, independently configurable through `exact_parameter_points`. Both tolerances apply to the complex amplitude itself. The defaults are relative tolerance `1e-8` and absolute tolerance zero. Every out-of-tolerance comparison is repeated using 160-bit GMP arithmetic. The replay regenerates the physical momenta, spins and references from the original random draws, resolves supported model relations at that precision and reevaluates the signed difference. This matters near cancellations where rounding the external kinematics alone can exceed the comparison tolerance. The report keeps both sets of maxima, the replay count, the first raw outlier seed and the first unresolved or confirmed failure seed. The separate `samples_per_cut` and `energy_directions` options control the dedicated charts. A mismatch, unsupported operation or incomplete point count prevents a passing report. Real scattering samples require four or more external legs.
+
+The independent comparison matters for contact interactions. For example, adding a constant to the four-Higgs result preserves its residues and allowed high-energy power. The Feynman comparison detects the shift. For external quarks and antiquarks the dedicated checks can project every SU(3) color assignment onto scalar components. The numerical evaluator also handles external adjoint colors. An exact check outside the supported color basis reports `unresolved`. Raw Feynman diagrams use the tree-level propagators with zero widths.
+
+The mixed five-point QED, four-W and ZZWW end-to-end tests carry the CTest label `integration`. Run `ctest -L integration -V` in the build directory to see the pre- and post-reduction expression sizes, numerical errors and replay counts. The [Wolfram comparison](validation_feynman_bridge.wls) checks the signed conversion of individual native Feynman diagrams, including four-gluon and four-W diagrams.
 
 ## Reduce diagrams and factorization products in one batch
 

@@ -145,6 +145,10 @@ Id amp_expression::import_into(Algebra& destination, bool remainder) const {
     return copy_tree(*arena_, destination, remainder ? *remainder_ : root_);
 }
 
+Id validation_detail::import_expression(Algebra& a, const amp_expression& exp, bool remainder) {
+    return exp.import_into(a, remainder);
+}
+
 std::vector<Id> amp_expression::import_masses(Algebra& destination) const {
     std::lock_guard<std::mutex> guard(*kinematics_->lock);
     std::vector<Id> result;

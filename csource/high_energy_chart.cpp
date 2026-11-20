@@ -1,8 +1,11 @@
 #include "high_energy_chart.hpp"
 #include "chart_scalar.hpp"
+#include "regularity_field.hpp"
 #include <algorithm>
 #include <limits>
+#include <functional>
 #include <random>
+#include <numeric>
 
 namespace hepcat {
 namespace {
@@ -106,6 +109,41 @@ std::vector<Frame> make_chart(const std::vector<Q>& masses, std::size_t sample) 
     return f;
 }
 
+// With Q the total momentum of a pair, L=1+zN and R=1-z Q^-1 N Q
+// satisfy L Q R = Q when N^2=0. Both have unit determinant. Applying
+// L and R^T to the two spin frames gives a polynomial, on-shell curve
+// through generic kinematics for massive and massless legs alike.
+struct shear {
+    Matrix angle{}, square{};
+};
+Matrix product(Matrix m, Matrix n) {
+    return {m.a * n.a + m.b * n.c, m.a * n.b + m.b * n.d, m.c * n.a + m.d * n.c, m.c * n.b + m.d * n.d};
+}
+std::vector<shear> pair_shears(const std::vector<Frame>& frame, std::size_t sample, std::size_t pairing) {
+    std::vector<shear> result(frame.size());
+    std::vector<std::size_t> legs(frame.size() + frame.size() % 2);
+    std::iota(legs.begin(), legs.end(), 0);
+    auto turn = pairing % (legs.size() - 1);
+    std::rotate(legs.begin() + 1, legs.begin() + 1 + turn, legs.end());
+    Generator draw{std::mt19937_64(mix(sample ^ 0x399c71aULL))};
+    auto momentum = [&](std::size_t i) {
+        return outer(frame[i].l, frame[i].r) + outer(frame[i].b, frame[i].h);
+    };
+    for (std::size_t i = 0; i < legs.size() / 2; ++i) {
+        auto left = legs[i], right = legs[legs.size() - 1 - i];
+        if (left == frame.size() || right == frame.size())
+            continue;
+        auto q = momentum(left) + momentum(right);
+        Q det = q.a * q.d - q.b * q.c;
+        if (!det)
+            throw residue_singular("null total momentum in rotation chart");
+        auto v = draw.vector();
+        Matrix n{v[0] * v[1], -v[0] * v[0], v[1] * v[1], -v[0] * v[1]};
+        auto b = product(product({-q.d / det, q.b / det, q.c / det, -q.a / det}, n), q);
+        result[left] = result[right] = {n, {b.a, b.c, b.b, b.d}};
+    }
+    return result;
+}
 // Sparse exact Laurent coefficients. unknown marks the highest power that
 // truncation might still affect. No term at or below it can establish a pass.
 constexpr int exact = std::numeric_limits<int>::min() / 2;
@@ -211,7 +249,14 @@ class Evaluation {
     const std::vector<Frame>& f;
     Jets jets;
     std::size_t sample;
+    const std::vector<shear>* shears;
     std::vector<JMat> p;
+    Jet component(int energy_power, const Q& value) const { return qmon(shears ? 0 : energy_power, value); }
+    JVec transform(const JVec& v, Matrix slope) const {
+        auto t = [&](const Q& k, const Jet& x) { return jets.mul(qmon(1, k), x); };
+        return {jets.add(v[0], jets.add(t(slope.a, v[0]), t(slope.b, v[1]))),
+                jets.add(v[1], jets.add(t(slope.c, v[0]), t(slope.d, v[1])))};
+    }
     std::map<Id, Jet> memo;
     std::map<Id, JVec> spinors;
     std::map<Id, JMat> insertions;
@@ -281,12 +326,18 @@ class Evaluation {
             Generator draw{std::mt19937_64(mix(hashText(a.format(id)) ^ mix(sample + 0x1fb793)))};
             auto v = draw.vector();
             out = {qmon(0, v[0]), qmon(0, v[1])};
+            if (shears) {
+                auto slope = draw.vector();
+                for (int s = 0; s < 2; ++s)
+                    out[s].add(1, Scalar(slope[s]));
+            }
         } else {
             int j = leg(label);
             const auto& k = f[j];
             if (kind == "\"Helicity\"" && n.args.size() <= 4 && !k.mass) {
                 for (int s = 0; s < 2; ++s)
-                    out[s] = ang ? qmon(1, k.l[s]) : jets.add(qmon(1, k.r[s]), qmon(-3, k.x * k.h[s]));
+                    out[s] = ang ? component(1, k.l[s])
+                                 : jets.add(component(1, k.r[s]), component(-3, k.x * k.h[s]));
             } else if (kind == "\"Spin\"" && k.mass && (n.args.size() == 3 || n.args.size() == 5)) {
                 // Angle frame A=[u*l,(m/det(l,b))*b/u].
                 // The square frame is epsilon*adj(P)*A/m, giving S=[-m*h/(det(r,h)*u),u*r].
@@ -306,10 +357,12 @@ class Evaluation {
                 }
                 Q da = k.mass / wedge(k.l, k.b), ds = -k.mass / wedge(k.r, k.h);
                 for (int s = 0; s < 2; ++s)
-                    out[s] = ang ? jets.add(qmon(1, w1 * k.l[s]), qmon(-1, w2 * da * k.b[s]))
-                                 : jets.add(qmon(-1, w1 * ds * k.h[s]), qmon(1, w2 * k.r[s]));
+                    out[s] = ang ? jets.add(component(1, w1 * k.l[s]), component(-1, w2 * da * k.b[s]))
+                                 : jets.add(component(-1, w1 * ds * k.h[s]), component(1, w2 * k.r[s]));
             } else
                 throw residue_unsupported("spinor metadata inconsistent with high-energy mass");
+            if (shears)
+                out = transform(out, ang ? (*shears)[j].angle : (*shears)[j].square);
         }
         return spinors.emplace(id, out).first->second;
     }
@@ -359,7 +412,7 @@ class Evaluation {
             auto v = det(momentum(n.args[0]));
             // A zero leading multi-leg invariant describes a collinear or
             // exceptional direction, outside the fixed-angle scattering chart.
-            if (internal_partition(n.args[0]) && v.degree() != 4)
+            if (!shears && internal_partition(n.args[0]) && v.degree() != 4)
                 throw residue_singular("nongeneric fixed-angle propagator");
             return jets.add(std::move(v), qmon(0, -m * m));
         }
@@ -384,10 +437,26 @@ class Evaluation {
 
   public:
     Evaluation(const Algebra& tree, Parameters& parameters, const std::vector<Frame>& frame, std::size_t seed,
-               int width)
-        : a(tree), params(parameters), f(frame), jets(width), sample(seed) {
+               int width, const std::vector<shear>* deformation = nullptr)
+        : a(tree), params(parameters), f(frame), jets(width), sample(seed), shears(deformation) {
         for (auto& k : f) {
             Matrix large = outer(k.l, k.r), small = outer(k.b, k.h);
+            if (shears) {
+                auto& shift = (*shears)[p.size()];
+                auto base = large + small;
+                Matrix right{shift.square.a, shift.square.c, shift.square.b, shift.square.d};
+                auto linear = product(shift.angle, base) + product(base, right);
+                auto quadratic = product(product(shift.angle, base), right);
+                auto entry = [&](const Q& v, const Q& l, const Q& q) {
+                    Jet j = qmon(0, v);
+                    j.add(1, Scalar(l));
+                    j.add(2, Scalar(q));
+                    return j;
+                };
+                p.push_back({entry(base.a, linear.a, quadratic.a), entry(base.b, linear.b, quadratic.b),
+                             entry(base.c, linear.c, quadratic.c), entry(base.d, linear.d, quadratic.d)});
+                continue;
+            }
             JMat v{qmon(2, large.a), qmon(2, large.b), qmon(2, large.c), qmon(2, large.d)};
             std::array<Q, 4> sub{small.a, small.b, small.c, small.d};
             for (int j = 0; j < 4; ++j)
@@ -395,6 +464,7 @@ class Evaluation {
             p.push_back(v);
         }
     }
+    Jet invariant(Id mom) { return det(momentum(mom)); }
     void forget_spin(const std::vector<Id>& affected) {
         for (Id id : affected) {
             memo.erase(id);
@@ -538,5 +608,82 @@ energy_chart_validation high_energy_validate_chart(const Algebra& algebra, Id ex
         }
     }
     throw residue_unsupported("unable to certify the requested Laurent powers within the series budget");
+}
+regular_chart_validation regularity_chart(const Algebra& a, Id cleared, const std::vector<Id>& probes,
+                                          std::size_t sample, std::size_t pairing,
+                                          const std::map<Id, Q>& fixed) {
+    Parameters parameters(a, sample, fixed);
+    std::vector<Q> masses;
+    for (auto id : a.masses())
+        masses.push_back(parameters.rational(id));
+    auto frame = make_chart(masses, sample);
+    auto shears = pair_shears(frame, sample, pairing);
+    // Only primitive Lorentz and spin contractions use the Laurent engine.
+    // On this deformation all are polynomials. Combine rational expressions
+    // by exact polynomial division in a sampled finite field; nested rational
+    // continuations would otherwise produce very long GMP Laurent tails.
+    polynomial_field field(pairing + 4 * mix(sample));
+    using fraction = polynomial_field::fraction;
+    for (int width = 8; width <= 256; width *= 2) {
+        Evaluation ev(a, parameters, frame, sample, width, &shears);
+        std::map<Id, fraction> memo;
+        std::function<const fraction&(Id)> evaluate = [&](Id id) -> const fraction& {
+            if (auto it = memo.find(id); it != memo.end())
+                return it->second;
+            const auto& n = a.node(id);
+            fraction value;
+            Q exp;
+            if (n.head == "Times" || n.head == "Plus") {
+                bool sum = n.head == "Plus";
+                if (!sum)
+                    value.num = {1};
+                for (auto arg : n.args)
+                    value = sum ? field.add(value, evaluate(arg)) : field.multiply(value, evaluate(arg));
+            } else if (n.head == "Power" && n.args.size() == 2 && a.number(n.args[1], exp) &&
+                       exp.get_den() == 1 && exp.get_num().fits_slong_p() &&
+                       a.node(n.args[0]).head != "Mom") {
+                value = field.pow(evaluate(n.args[0]), exp.get_num().get_si());
+            } else {
+                // Re-express Mom[...]^(2 k) as its polynomial invariant to the
+                // power k. Inverse powers must pass through the GCD operation.
+                if (n.head == "Power" && n.args.size() == 2 && a.node(n.args[0]).head == "Mom" &&
+                    a.number(n.args[1], exp) && exp.get_den() == 1 && exp.get_num().fits_slong_p()) {
+                    long exponent = exp.get_num().get_si();
+                    if (exponent % 2)
+                        throw residue_unsupported("odd momentum power in regularity test");
+                    const auto& j = ev.invariant(n.args[0]);
+                    if (j.unknown != exact)
+                        throw MoreTerms{};
+                    for (const auto& [i, c] : j.terms) {
+                        value.num.resize(i + 1);
+                        value.num[i] = field.coefficient(c);
+                    }
+                    value = field.pow(field.reduced(std::move(value.num), {1}), exponent / 2);
+                } else {
+                    const auto& j = ev.get(id);
+                    if (j.unknown != exact)
+                        throw MoreTerms{};
+                    for (const auto& [i, c] : j.terms) {
+                        if (i < 0)
+                            throw residue_unsupported("nonpolynomial chart primitive");
+                        value.num.resize(i + 1);
+                        value.num[i] = field.coefficient(c);
+                    }
+                    value = field.reduced(std::move(value.num), {1});
+                }
+            }
+            return memo.emplace(id, std::move(value)).first->second;
+        };
+        try {
+            regular_chart_validation result{evaluate(cleared).den.size() == 1, {}};
+            for (Id id : probes) {
+                const auto& fraction = evaluate(id);
+                result.varied.push_back(fraction.num.size() > 1 || fraction.den.size() > 1);
+            }
+            return result;
+        } catch (const MoreTerms&) {
+        }
+    }
+    throw residue_unsupported("regularity primitive exceeds the polynomial chart budget");
 }
 } // namespace hepcat

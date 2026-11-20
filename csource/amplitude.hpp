@@ -2,6 +2,7 @@
 
 #include "amp_expression.hpp"
 #include "model.hpp"
+#include "validation.hpp"
 
 #include <cstddef>
 #include <optional>
@@ -42,6 +43,8 @@ struct high_energy_report {
     bool exhaustive_spin = false;
     std::size_t workers = 0, candidates = 0, rank = 0;
     std::size_t training_samples = 0, validation_samples = 0;
+    // Leaf counts include repeated occurrences of shared expression nodes.
+    std::size_t nodes_before_final_reduction = 0, nodes_after_final_reduction = 0;
     std::string route;
 };
 
@@ -70,6 +73,11 @@ public:
               generation_references references = generation_references::automatic);
     amplitude(std::vector<std::string> particles, model vertex_model, model factorization_model,
               generation_references references = generation_references::automatic);
+    amplitude(std::vector<std::string> particles, model vertex_model, model factorization_model,
+              model feynman_model, generation_references references = generation_references::automatic);
+    // A separate CalcHEP model supplies the independent, off-shell diagrams.
+    amplitude& set_feynman_model(model rules);
+    amplitude& generate_feynman_diagrams(std::size_t workers = 0);
     amplitude& generate_diagrams(std::size_t workers = 0);
     amplitude& generate_factorization_products(std::size_t workers = 0);
     // Generate the collections for the supplied models in one worker queue.
@@ -97,6 +105,11 @@ public:
     const amp_expression& complete_high_energy(const amp_expression& seed, const high_energy_options& options = {});
     const high_energy_report& last_high_energy() const;
 
+    // The externally reduced expression from the last successful high-energy completion.
+    const amp_expression& final_amplitude() const;
+    validation_report validate(const validation_options& options = {});
+    validation_report validate(const amp_expression& candidate, const validation_options& options = {});
+
     // Zero workers selects the hardware concurrency. One runs on the caller.
     // A successful call publishes all reduced expressions and their remainders
     // together. Later calls reduce only entries appended since the last call.
@@ -105,21 +118,25 @@ public:
     const std::vector<std::string>& particles() const { return particles_; }
     const std::vector<std::string>& external_masses() const { return masses_; }
     const std::vector<amplitude_item>& diagrams() const { return diagrams_; }
+    bool factorization_products_generated() const { return channels_generated_; }
     const std::vector<amplitude_item>& factorization_products() const { return products_; }
+    const std::vector<amplitude_item>& feynman_diagrams() const { return feynman_rows_; }
     std::size_t last_worker_count() const { return last_workers_; }
 
 private:
-    amplitude& generate_rows(bool diagrams, bool products, std::size_t workers);
-    void bind_model_parameters(Algebra&, std::uint32_t seed, high_energy_options&) const;
+    validation_report validate_impl(amp_expression candidate, const amp_expression* original,
+                                    const validation_options&);
+    amplitude& generate_rows(bool diagrams, bool products, bool feynman, std::size_t workers);
+    void bind_model_parameters(Algebra&, std::uint32_t seed, high_energy_options&, bool include_targets = false) const;
     std::vector<std::string> masses_, particles_;
-    std::optional<model> vertices_model_, channels_model_;
+    std::optional<model> vertices_model_, channels_model_, feynman_model_;
     generation_references references_ = generation_references::automatic;
-    bool diagrams_generated_ = false, channels_generated_ = false;
-    std::vector<amplitude_item> diagrams_, products_;
+    bool diagrams_generated_ = false, channels_generated_ = false, feynman_generated_ = false;
+    std::vector<amplitude_item> diagrams_, products_, feynman_rows_;
     std::size_t last_workers_ = 0;
     std::optional<amp_expression> completed_;
     factorization_report report_;
-    std::optional<amp_expression> high_energy_result_;
+    std::optional<amp_expression> high_energy_result_, before_final_reduction_;
     high_energy_report high_energy_report_;
 };
 

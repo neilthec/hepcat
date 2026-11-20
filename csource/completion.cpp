@@ -2,6 +2,7 @@
 #include "native_fit.hpp"
 #include "continuations.hpp"
 #include "residue.hpp"
+#include "validation_inventory.hpp"
 
 #include <algorithm>
 #include <atomic>
@@ -417,6 +418,65 @@ struct completion {
 };
 } // namespace
 
+validation_detail::cut_inventory validation_detail::validation_inventory(Algebra& a, const amplitude& process,
+                                                                         const amp_expression& candidate) {
+    expressions trees(a);
+    auto zero = a.integer(0);
+    auto input = [&](const amp_expression& e, bool remainder = false) {
+        return trees.canonical(validation_detail::import_expression(a, e, remainder));
+    };
+    auto root = input(candidate);
+    std::map<Cut, Id> targets;
+    std::set<Cut> supplied;
+    for (const auto& item : process.diagrams()) {
+        for (const auto& shell : item.shells)
+            targets.emplace(key(a, shell.legs, trees.canonical(a.parse(shell.mass))), zero);
+        add_poles(a, input(item.expression), targets, zero);
+        add_poles(a, input(item.expression, true), targets, zero);
+    }
+    for (const auto& row : process.factorization_products()) {
+        const auto& shell = row.shells.at(0);
+        auto cut = key(a, shell.legs, trees.canonical(a.parse(shell.mass)));
+        Id full = a.add({input(row.expression), input(row.expression, true)});
+        add_poles(a, full, targets, zero);
+        auto& target = targets.try_emplace(cut, zero).first->second;
+        target = a.add({target, sewn(a, full)});
+        supplied.insert(cut);
+    }
+    std::set<Cut> model_cuts;
+    for (const auto& entry : targets) model_cuts.insert(entry.first);
+    add_poles(a, root, targets, zero);
+    cut_inventory out{root, {}, {}};
+    for (const auto& [cut, target] : targets) {
+        std::vector<Id> slots;
+        for (int leg : cut.first)
+            slots.push_back(a.integer(leg));
+        auto p = a.call("Mom", {a.call("Multiparticle", std::move(slots))});
+        out.channels.push_back({{cut.first, a.format(cut.second)},
+                                a.call("PropDen", {p, cut.second}),
+                                target,
+                                supplied.count(cut) != 0, model_cuts.count(cut) != 0});
+    }
+    std::set<Id> extras;
+    std::function<void(Id)> denominator = [&](Id base) {
+        const auto& factor = a.node(base);
+        if (factor.head == "Times") {
+            for (Id child : factor.args)
+                denominator(child);
+        } else if (factor.head != "PropDen" && trees.has_kinematics(base)) {
+            extras.insert(base);
+        }
+    };
+    contains(a, root, [&](const Node& n) {
+        Q exponent;
+        if (n.head == "Power" && n.args.size() == 2 && a.number(n.args[1], exponent) && exponent < 0)
+            denominator(n.args[0]);
+        return false;
+    });
+    out.other_denominators.assign(extras.begin(), extras.end());
+    return out;
+}
+
 const amp_expression& amplitude::complete_factorization(std::size_t workers) {
     factorization_options options;
     options.workers = workers;
@@ -505,6 +565,7 @@ const amp_expression& amplitude::complete_factorization(const factorization_opti
         result.set_from(a, answer);
         completed_ = std::move(result);
         high_energy_result_.reset();
+        before_final_reduction_.reset();
         report_ = std::move(work.report);
         return *completed_;
     };

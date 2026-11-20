@@ -94,14 +94,24 @@ terms undetermined. Use ", ButtonBox["CheckAmplitudes", BaseStyle -> "Link",
 factorization result and the model. It expands the amplitude at fixed angles \
 and looks for powers above the expected limit, E^(4-n) for n external legs. \
 If needed, it adds local spinor contractions whose coefficients cancel those \
-powers. Such terms have no physical residues. Supplying the original channel \
-rows requests an independent ", ButtonBox["CheckAmplitudes",
-      BaseStyle -> "Link", ButtonData ->
-       "paclet:HEPCAT/ref/CheckAmplitudes"],
+powers. Such terms have no physical residues. The final native reduction uses \
+external masses and momentum conservation. The internal on-shell conditions \
+belong to individual diagrams and cuts. Supplying the original channel rows \
+requests an independent ", ButtonBox["CheckAmplitudes", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/CheckAmplitudes"],
      " report, including spurious poles and reference dependence."}],
-   "TechNoteText"], Cell[TextData[{"Generate and reduce the QED diagrams and \
-channel products directly from model files. Adjust the paths to your \
-checkout."}], "ExampleText"],
+   "TechNoteText"], Cell[TextData[{"When you have an independent CalcHEP \
+model, give its directory and model number to GenerateNativeAmplitude with \
+the FeynmanModel option. Its FeynmanDiagrams entry contains the off-shell \
+diagrams with their own model parameters. In C++, attach the same model to \
+the amplitude, run generate and complete_high_energy, then call validate. The \
+report compares the complex final amplitude with the coherent Feynman sum on \
+at least 10,000 shared scattering points. It reports physical residues, \
+spurious poles, reference independence and high-energy growth separately. A \
+failed or unresolved check prevents an overall pass."}], "TechNoteText"],
+  Cell[TextData[{"Generate and reduce the QED diagrams and channel products \
+directly from model files. Adjust the paths to your checkout."}],
+   "ExampleText"],
   Cell[BoxData[RowBox[{"Get", "[",
       "\"~/code/hepcat/csource/NativeAmplitude.wl\"", "]", ";", "\n",
       "binary", " ", "=", " ", "ExpandFileName", "[", "\"~/code/hepcat/tests/\

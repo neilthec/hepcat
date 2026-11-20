@@ -473,31 +473,45 @@ class Evaluator {
         return p;
     }
 };
-} // namespace
-
-std::vector<mpq_class> residue_sample(const Algebra& algebra, const numerator_shell& channel,
-                                      const std::vector<Id>& expressions, std::size_t sample) {
+template <class F>
+auto sample_cut(const Algebra& algebra, const numerator_shell& channel, const std::vector<Id>& expressions,
+                std::size_t sample, const std::map<Id, Q>& parameter_values, F project) {
     Algebra local(&algebra);
     Id mass = local.parse(channel.mass);
-    Parameters params(local, sample);
+    Parameters params(local, sample, parameter_values);
     std::vector<Q> masses;
     for (Id id : algebra.masses())
         masses.push_back(params.rational(id));
     Chart chart(channel.legs, std::move(masses), params.rational(mass), sample);
     Evaluator evaluator(local, params, chart, mass);
-    std::vector<Q> row;
+    std::vector<decltype(project(chart, Scalar{}))> row;
     row.reserve(expressions.size());
     for (Id id : expressions) {
         if (evaluator.internalWeight(id) != 0)
             throw residue_unsupported("unbalanced sewn internal helicity weight");
         auto p = evaluator.get(id);
-        if (p.order < -1) throw residue_unsupported("higher-order physical pole needs a Laurent expansion");
-        Q result = 0;
-        if (p.order == -1)
-            for (unsigned j = 0; j < 4; ++j)
-                result += chart.projection[j] * p.coefficient.c[j];
-        row.push_back(std::move(result));
+        if (p.order < -1)
+            throw residue_unsupported("higher-order physical pole needs a Laurent expansion");
+        row.push_back(project(chart, p.order == -1 ? p.coefficient : Scalar{}));
     }
     return row;
+}
+} // namespace
+
+std::vector<mpq_class> residue_sample(const Algebra& a, const numerator_shell& cut,
+                                      const std::vector<Id>& expressions, std::size_t sample) {
+    return sample_cut(a, cut, expressions, sample, {}, [](const Chart& chart, const Scalar& s) {
+        Q result = 0;
+        for (unsigned j = 0; j < 4; ++j)
+            result += chart.projection[j] * s.c[j];
+        return result;
+    });
+}
+std::vector<std::array<mpq_class, 4>> residue_components(const Algebra& a, const numerator_shell& cut,
+                                                         const std::vector<Id>& expressions,
+                                                         std::size_t sample,
+                                                         const std::map<Id, mpq_class>& parameters) {
+    return sample_cut(a, cut, expressions, sample, parameters,
+                      [](const Chart&, const Scalar& s) { return s.c; });
 }
 } // namespace hepcat

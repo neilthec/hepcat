@@ -260,11 +260,16 @@ struct high_energy_fit {
 
 } // namespace
 
+const amp_expression& amplitude::final_amplitude() const {
+    if (!high_energy_result_) throw std::logic_error("complete the high-energy stage before validating the final amplitude");
+    return *high_energy_result_;
+}
+
 const high_energy_report& amplitude::last_high_energy() const {
     if (!high_energy_result_) throw std::logic_error("no validated high-energy result");
     return high_energy_report_;
 }
-void amplitude::bind_model_parameters(Algebra& a, Id seed, high_energy_options& settings) const {
+void amplitude::bind_model_parameters(Algebra& a, Id seed, high_energy_options& settings, bool include_targets) const {
     std::vector<Id> roots{seed};
     for (Id mass : a.masses())
         roots.push_back(mass);
@@ -274,6 +279,11 @@ void amplitude::bind_model_parameters(Algebra& a, Id seed, high_energy_options& 
     for (const auto* items : {&diagrams_, &products_})
         for (const auto& row : *items)
             if (auto rest = row.expression.discarded_remainder()) roots.push_back(rest->import_into(a));
+    if (include_targets)
+        for (const auto& row : products_) {
+            roots.push_back(row.expression.import_into(a));
+            for (const auto& shell : row.shells) roots.push_back(a.parse(shell.mass));
+        }
     std::set<Id> visited;
     std::vector<std::string> active;
     while (!roots.empty()) {
@@ -340,7 +350,14 @@ const amp_expression& amplitude::complete_high_energy(const amp_expression& expr
     high_energy_fit work(a, seed, settings);
     auto publish = [&](Id answer, const char* unchanged = nullptr) -> const amp_expression& {
         amp_expression result("0", masses_);
+        // Every diagram and cut has already been combined. Only external
+        // kinematics apply to the expression returned to the caller.
         result.set_from(a, answer);
+        auto original = result; // The two roots share the original interned tree.
+        result.reduce();
+        work.report.nodes_before_final_reduction = original.arena_->cost(original.root_);
+        work.report.nodes_after_final_reduction = result.arena_->cost(result.root_);
+        before_final_reduction_ = std::move(original);
         if (unchanged) work.report.route = unchanged;
         high_energy_result_ = std::move(result);
         high_energy_report_ = std::move(work.report);

@@ -10,6 +10,10 @@
 namespace hepcat {
 
 class Algebra;
+class amp_expression;
+namespace validation_detail {
+std::uint32_t import_expression(Algebra&, const amp_expression&, bool remainder = false);
+}
 
 struct numerator_shell {
     std::vector<int> legs;
@@ -31,6 +35,7 @@ public:
     std::size_t particle_count() const;
 private:
     friend class amplitude;
+    friend std::uint32_t validation_detail::import_expression(Algebra&, const amp_expression&, bool);
     void restore_prepared(const std::string& remainder);
     std::uint32_t import_into(Algebra& destination, bool remainder = false) const;
     std::vector<std::uint32_t> import_masses(Algebra& destination) const;

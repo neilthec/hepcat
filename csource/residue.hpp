@@ -3,6 +3,7 @@
 #include "amp_expression.hpp"
 #include "reduce.hpp"
 #include <stdexcept>
+#include <array>
 
 namespace hepcat {
 
@@ -21,5 +22,11 @@ struct residue_unsupported : std::runtime_error {
 // No contour factor or sewing sign is included here.
 std::vector<mpq_class> residue_sample(const Algebra& algebra, const numerator_shell& channel,
                                       const std::vector<Id>& expressions, std::size_t sample);
+
+// Independent verification compares all coefficients in Q(sqrt(2),i).
+std::vector<std::array<mpq_class, 4>> residue_components(const Algebra&, const numerator_shell&,
+                                                         const std::vector<Id>& expressions,
+                                                         std::size_t sample,
+                                                         const std::map<Id, mpq_class>& parameters);
 
 } // namespace hepcat
