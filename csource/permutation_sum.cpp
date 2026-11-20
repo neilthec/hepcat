@@ -17,18 +17,18 @@ constexpr std::size_t max_terms = 768;
 
 // Only expand the commutative sum and product. A reciprocal sum or an
 // unfamiliar indexed tensor is outside the supported permutation grammar.
-Terms expand(Algebra& a, Id id, std::size_t& work) {
+Terms expand(Algebra& a, Id id, std::size_t& work, std::size_t limit = max_terms) {
     const auto& n = a.node(id);
     if (n.head != "Plus" && n.head != "Times") return {id};
     Terms terms;
     if (n.head == "Times") terms.push_back(a.integer(1));
     for (auto arg : n.args) {
-        const auto next = expand(a, arg, work);
+        const auto next = expand(a, arg, work, limit);
         if (n.head == "Plus") {
-            if (next.size() + terms.size() > max_terms) throw Unsupported{};
+            if (next.size() + terms.size() > limit) throw Unsupported{};
             terms.insert(terms.end(), next.begin(), next.end());
         } else {
-            if (next.size() * terms.size() > max_terms) throw Unsupported{};
+            if (next.size() * terms.size() > limit) throw Unsupported{};
             Terms products;
             for (auto x : terms)
                 for (auto y : next) products.push_back(a.mul({x, y}));
@@ -79,6 +79,12 @@ public:
                 (e.kind != spinor_detail::Kind::Helicity && e.kind != spinor_detail::Kind::Spin))
                 throw Unsupported{};
             args.back() = label(args.back());
+            out = a.call(n.head,std::move(args));
+        } else if (n.head == "MomProd" && args.size() == 2) {
+            if (!a.leg(args[0]) || !a.leg(args[1])) throw Unsupported{};
+            for (auto& leg : args) leg = label(leg);
+            // The scalar product is symmetric in its momentum arguments.
+            if (a.leg(args[0]) > a.leg(args[1])) std::swap(args[0],args[1]);
             out = a.call(n.head,std::move(args));
         } else if (n.head == "Mom" && args.size() == 1) {
             out = a.call(n.head,{label(args.front())});
@@ -241,10 +247,23 @@ class kernel_reducer {
         return a.cost(factored) < a.cost(together) ? factored : together;
     }
 public:
-    kernel_reducer(Algebra& algebra,const std::vector<int>& legs) : a(algebra) {
-        auto order = legs;
-        do { permutations.emplace_back(a,legs,order); }
-        while (std::next_permutation(order.begin(),order.end()));
+    kernel_reducer(Algebra& algebra, const std::vector<std::vector<int>>& groups) : a(algebra) {
+        std::vector<int> from;
+        std::vector<std::vector<int>> images(1);
+        for (auto group : groups) {
+            std::sort(group.begin(),group.end());
+            from.insert(from.end(),group.begin(),group.end());
+            std::vector<std::vector<int>> product;
+            do {
+                if (product.size()+images.size()>24) throw Unsupported{};
+                for (auto prefix : images) {
+                    prefix.insert(prefix.end(),group.begin(),group.end());
+                    product.push_back(std::move(prefix));
+                }
+            } while (std::next_permutation(group.begin(),group.end()));
+            images=std::move(product);
+        }
+        for (const auto& image:images) permutations.emplace_back(a,from,image);
     }
     Id run(Id id) {
         Group group(permutations.size());
@@ -356,7 +375,7 @@ Polynomial scalar_coefficients(Algebra& a, Id expanded) {
             const auto& power = a.node(factor);
             if (power.head == "Power" && power.args.size() != 2) throw Unsupported{};
             const auto& base = power.head == "Power" ? a.node(power.args.front()) : power;
-            if (base.head == "SpinorChain" || base.head == "PropDen") word.push_back(factor);
+            if (base.head == "SpinorChain" || base.head == "PropDen" || base.head == "MomProd") word.push_back(factor);
             else if (leg_independent_scalar(a,factor)) scalar.push_back(factor);
             else throw Unsupported{};
         }
@@ -405,19 +424,22 @@ std::optional<permutation_sum> recognize_ordered_current(Algebra& a, Id input) {
             else if (masses[i] == zero && w == 2) negative.push_back(i+1);
             else return {};
         }
+        const auto count = std::min(positive.size(),negative.size());
+        const bool paired = count == 2 && positive.size()+negative.size() == 5;
         if (ends.size() != 2 || masses[ends[0]-1] != masses[ends[1]-1] ||
-            std::min(positive.size(),negative.size()) != 1) return {};
+            (count != 1 && !paired)) return {};
         relabel canonical(a,{},{});
         auto expanded = [&](Id expr) {
-            std::size_t work = 50000;
-            return a.add(expand(a,canonical(expr),work));
+            std::size_t work = paired ? 200000 : 50000;
+            return a.add(expand(a,canonical(expr),work,paired ? 4096 : max_terms));
         };
         const auto original = expanded(input);
         const auto& sum = a.node(original);
         if (sum.head != "Plus" || sum.args.size() < std::max(positive.size(),negative.size())) return {};
         const bool conjugate = negative.size() > positive.size();
         auto& majority = conjugate ? negative : positive;
-        const int minority = (conjugate ? positive : negative).front();
+        auto& minorities = conjugate ? positive : negative;
+        const int minority = minorities.front();
         const auto [physical,reference] = reference_in(a,original,minority,conjugate);
         if (reference) {
             const auto it = std::find(majority.begin(),majority.end(),reference);
@@ -426,21 +448,30 @@ std::optional<permutation_sum> recognize_ordered_current(Algebra& a, Id input) {
         }
         const auto target = scalar_coefficients(a,original);
         const Id m = masses[ends.front()-1], unit = a.integer(1);
-        for (int l : ends) {
-            const int r = l == ends.front() ? ends.back() : ends.front();
-            std::optional<permutation_sum> ordered;
-            auto current = physical
-                ? physical_current_with_presentation(a,l,r,m,positive,negative,unit,&ordered)
-                : mixed_spurious_current(a,l,r,m,positive,negative,unit);
-            if (!current || (physical && !ordered)) continue;
-            auto reduced = reduceInto(a,*current,masses,{});
-            auto scale = current_scale(a,target,scalar_coefficients(a,expanded(reduced)));
-            if (!scale) continue;
-            if (!physical) ordered = ordered_minority_sum(a,l,r,m,positive,negative,unit);
-            if (ordered) {
-                ordered->kernel = a.mul({*scale,ordered->kernel});
-                std::sort(ordered->legs.begin(),ordered->legs.end());
-                return ordered;
+        // A stored expression can put either minority leg at the common
+        // reference. Only an exact match of the complete coefficient map
+        // licenses a new gauge or a new current representation.
+        const unsigned routings = paired && !physical ? 2 : 1;
+        for (unsigned routing=0; routing<routings; ++routing) {
+            if (routing) std::swap(minorities.front(),minorities.back());
+            for (int l : ends) {
+                const int r = l == ends.front() ? ends.back() : ends.front();
+                std::optional<permutation_sum> ordered;
+                auto current = physical
+                    ? physical_current_with_presentation(a,l,r,m,positive,negative,unit,&ordered)
+                    : mixed_spurious_current(a,l,r,m,positive,negative,unit);
+                if (!current || (physical && !paired && !ordered)) continue;
+                const auto reduced = reduceInto(a,*current,masses,{});
+                const auto scale = current_scale(a,target,scalar_coefficients(a,expanded(reduced)));
+                if (!scale) continue;
+                if (paired) ordered = paired_weyl_sum(a,l,r,m,positive,negative,unit,physical);
+                else if (!physical) ordered = ordered_minority_sum(a,l,r,m,positive,negative,unit);
+                if (ordered) {
+                    ordered->kernel = a.mul({*scale,ordered->kernel});
+                    std::sort(ordered->legs.begin(),ordered->legs.end());
+                    for (auto& group : ordered->other_groups) std::sort(group.begin(),group.end());
+                    return ordered;
+                }
             }
         }
     } catch (const Unsupported&) {
@@ -453,14 +484,30 @@ std::optional<permutation_sum> recognize_ordered_current(Algebra& a, Id input) {
     return {};
 }
 
-Id simplify_permutation_kernel(Algebra& a, Id input, const std::vector<int>& legs) {
+Id expand_permutation_groups(Algebra& a, Id kernel, const std::vector<std::vector<int>>& groups) {
+    for (auto legs : groups) {
+        std::sort(legs.begin(),legs.end());
+        auto order = legs;
+        Terms terms;
+        do { terms.push_back(relabel(a,legs,order)(kernel)); }
+        while (std::next_permutation(order.begin(),order.end()));
+        kernel = a.add(std::move(terms));
+    }
+    return kernel;
+}
+
+Id simplify_permutation_kernel(Algebra& a, Id input, const std::vector<int>& legs,
+                               const std::vector<std::vector<int>>& other_groups) {
     if (legs.size() < 3 || legs.size() > 4 || a.cost(input) > 16000) return input;
     try {
+        std::vector<std::vector<int>> groups{legs};
+        groups.insert(groups.end(),other_groups.begin(),other_groups.end());
         auto sorted = legs;
+        for (const auto& other:other_groups) sorted.insert(sorted.end(),other.begin(),other.end());
         std::sort(sorted.begin(),sorted.end());
         if (sorted.front() < 1 || static_cast<std::size_t>(sorted.back()) > a.masses().size() ||
             std::adjacent_find(sorted.begin(),sorted.end()) != sorted.end()) return input;
-        const auto compact = kernel_reducer(a,sorted).run(input);
+        const auto compact = kernel_reducer(a,groups).run(input);
         if (a.cost(compact) < a.cost(input) &&
             expression_complexity(a,compact) <= expression_complexity(a,input)) return compact;
     } catch (const Unsupported&) {

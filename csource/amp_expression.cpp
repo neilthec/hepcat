@@ -218,15 +218,15 @@ const amp_expression::cached_permutations& amp_expression::reduced_permutations(
     else
         ordered = recognize_ordered_current(trial,root_);
     if (ordered) {
-        Id raw = simplify_permutation_kernel(trial,ordered->kernel,ordered->legs);
+        Id raw = simplify_permutation_kernel(trial,ordered->kernel,ordered->legs,ordered->other_groups);
         Id kernel = reduceInto(trial,raw,kinematics_->masses,{});
         kernel = collect_scalar_factors(trial,kernel,3);
         kernel = collect_simple_fractions(trial,kernel);
-        kernel = simplify_permutation_kernel(trial,kernel,ordered->legs);
+        kernel = simplify_permutation_kernel(trial,kernel,ordered->legs,ordered->other_groups);
         const Id previous = sum ? sum->kernel : root_;
         if (trial.cost(kernel) + 16 < trial.cost(root_) && trial.cost(kernel) < trial.cost(previous) &&
             (ordered_formula_ || expression_complexity(trial,kernel) <= expression_complexity(trial,previous)))
-            sum = permutation_sum{ordered->legs,kernel,{}};
+            sum = permutation_sum{ordered->legs,kernel,{},ordered->other_groups};
     }
     if (sum) sum->kernel = retain_borrowed(*arena_, trial, sum->kernel, arena_->size());
     permutations_ = std::make_shared<cached_permutations>(cached_permutations{root_,std::move(sum)});
@@ -238,7 +238,22 @@ std::optional<permutation_formula> amp_expression::permutation_form() const {
     if (!reduced_ || !kinematics_->shells.empty()) return {};
     const auto& sum = reduced_permutations().sum;
     if (!sum) return {};
-    return permutation_formula{sum->legs,arena_->format(sum->kernel),sum->orbit_sizes};
+    if (sum->other_groups.empty())
+        return permutation_formula{sum->legs,arena_->format(sum->kernel),sum->orbit_sizes};
+    Algebra trial(arena_.get());
+    trial.setKinematics(kinematics_->masses,{});
+    const auto expanded = expand_permutation_groups(trial,sum->kernel,sum->other_groups);
+    return permutation_formula{sum->legs,trial.format(expanded),sum->orbit_sizes};
+}
+
+std::optional<amp_expression::permutation_product> amp_expression::grouped_permutation_form() const {
+    std::lock_guard<std::mutex> guard(*kinematics_->lock);
+    if (!reduced_ || !kinematics_->shells.empty()) return {};
+    const auto& sum = reduced_permutations().sum;
+    if (!sum) return {};
+    permutation_product result{{sum->legs},arena_->format(sum->kernel)};
+    result.groups.insert(result.groups.end(),sum->other_groups.begin(),sum->other_groups.end());
+    return result;
 }
 
 namespace {
@@ -255,18 +270,25 @@ std::string leg_list(const std::vector<int>& legs) {
 std::string amp_expression::plain_text() const {
     std::lock_guard<std::mutex> guard(*kinematics_->lock);
     if (reduced_ && kinematics_->shells.empty()) {
-        if (const auto& sum = reduced_permutations().sum)
-            return "Sum over all permutations of external legs (" + leg_list(sum->legs) +
-                   ") applied to\n" + format_plain_text(*arena_, sum->kernel);
+        if (const auto& sum = reduced_permutations().sum) {
+            std::string groups = "(" + leg_list(sum->legs) + ")";
+            for (const auto& other : sum->other_groups) groups += " and (" + leg_list(other) + ")";
+            return "Sum over all permutations of external legs " + groups +
+                   " applied to\n" + format_plain_text(*arena_, sum->kernel);
+        }
     }
     return format_plain_text(*arena_, root_);
 }
 std::string amp_expression::latex() const {
     std::lock_guard<std::mutex> guard(*kinematics_->lock);
     if (reduced_ && kinematics_->shells.empty()) {
-        if (const auto& sum = reduced_permutations().sum)
-            return "\\sum_{\\pi\\in S_{\\{" + leg_list(sum->legs) +
-                   "\\}}}\\pi\\!\\left[" + format_latex(*arena_, sum->kernel) + "\\right]";
+        if (const auto& sum = reduced_permutations().sum) {
+            std::string group = "S_{\\{" + leg_list(sum->legs) + "\\}}";
+            for (const auto& other : sum->other_groups)
+                group += "\\times S_{\\{" + leg_list(other) + "\\}}";
+            return "\\sum_{\\pi\\in " + group + "}\\pi\\!\\left[" +
+                   format_latex(*arena_, sum->kernel) + "\\right]";
+        }
     }
     return format_latex(*arena_, root_);
 }

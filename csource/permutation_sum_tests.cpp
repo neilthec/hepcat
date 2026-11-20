@@ -100,6 +100,56 @@ void test_single_minority(std::vector<int> majority, int minority, bool conjugat
     }
 }
 
+void test_paired_weyl(bool physical, bool conjugate, bool shuffled) {
+    Algebra a;
+    const int left = shuffled ? 5 : 1, right = 2;
+    const auto mass = a.atom("m"), zero = a.integer(0);
+    std::vector<Id> shell(7,zero);
+    std::vector<std::string> masses(7,"0");
+    std::vector<real> numeric(7);
+    for (int leg : {left,right}) {
+        shell[leg-1] = mass;
+        masses[leg-1] = "m";
+        numeric[leg-1] = 1;
+    }
+    a.setKinematics(shell,{});
+    const std::vector<int> major = shuffled ? std::vector<int>{6,1,3} : std::vector<int>{3,4,5};
+    const std::vector<int> minor = shuffled ? std::vector<int>{7,4} : std::vector<int>{6,7};
+    const auto build = physical ? mixed_physical_current : mixed_spurious_current;
+    const auto scalar = a.mul({a.exact(mpq_class(-5,7)),a.pow(a.atom("g"),5)});
+    const auto original = build(a,left,right,mass,conjugate ? minor : major,
+                                conjugate ? major : minor,scalar).value();
+    amp_expression input(a.format(original),masses);
+    const auto grouped = input.reduce().grouped_permutation_form();
+    auto expected = std::vector<std::vector<int>>{major,minor};
+    for (auto& group : expected) std::sort(group.begin(),group.end());
+    require(grouped && grouped->groups == expected,"lost independent Weyl-current permutations");
+    const auto single = input.permutation_form();
+    require(single && single->legs == expected[0],"single-group view changed its summation convention");
+    require(input.latex().find("\\times S_")!=std::string::npos &&
+            input.plain_text().find(") and (")!=std::string::npos,"missing independent groups in output");
+    const parameters values{{"m",1},{"g",0.4L}};
+    expression_evaluator kernel(a,a.parse(grouped->summand),values), legacy(a,a.parse(single->summand),values),
+                         full(a,original,values);
+    for (unsigned sample=0; sample<6; ++sample) {
+        const auto point=sample_point(numeric,41792+sample);
+        const auto reference=full(point);
+        complex joint=0, old_api=0;
+        auto first=expected[0];
+        do {
+            const auto q=permute(point,expected[0],first);
+            old_api+=legacy(q);
+            auto second=expected[1];
+            do { joint+=kernel(permute(q,expected[1],second)); }
+            while (std::next_permutation(second.begin(),second.end()));
+        } while (std::next_permutation(first.begin(),first.end()));
+        require(std::abs(joint-reference)<1e-8L*std::abs(reference) &&
+                std::abs(old_api-reference)<1e-8L*std::abs(reference),"incorrect signed Weyl-current sum");
+    }
+    const auto changed = a.mul({original,a.call("MomProd",{a.integer(major[0]),a.integer(major[1])})});
+    require(!recognize_ordered_current(a,changed),"stripped a momentum-dependent coefficient");
+}
+
 void test_reloaded_minority(bool physical, bool conjugate, bool shuffled) {
     Algebra a;
     const Id mass = a.atom("m"), zero = a.integer(0);
@@ -214,6 +264,10 @@ int main(int argc, char** argv) {
         test_reloaded_minority(true,false,false);
         test_reloaded_minority(false,false,false);
         test_reloaded_minority(false,true,true);
+        test_paired_weyl(true,false,false);
+        test_paired_weyl(false,false,false);
+        test_paired_weyl(true,true,true);
+        test_paired_weyl(false,true,true);
         model qed(argv[1],3);
         test_current(qed,true);
         test_current(qed,false);

@@ -17,4 +17,7 @@ std::optional<Id> mixed_spurious_current(Algebra&, int left, int right, Id mass,
 // Signed ordered-emission kernel, summed over all like-helicity legs.
 std::optional<permutation_sum> ordered_minority_sum(Algebra&, int left, int right, Id mass,
     const std::vector<int>& positive, const std::vector<int>& negative, Id vertex_product);
+// Sew the two Weyl components of symmetric endpoint currents across a central photon.
+std::optional<permutation_sum> paired_weyl_sum(Algebra&, int left, int right, Id mass,
+    const std::vector<int>& positive, const std::vector<int>& negative, Id vertex_product, bool physical);
 } // namespace hepcat

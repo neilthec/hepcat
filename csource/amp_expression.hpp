@@ -46,6 +46,13 @@ public:
     std::string plain_text() const;
     std::string latex() const;
     std::optional<permutation_formula> permutation_form() const;
+    // Each group permutes independently. The single-group API expands the
+    // secondary groups so its original summation convention still applies.
+    struct permutation_product {
+        std::vector<std::vector<int>> groups;
+        std::string summand;
+    };
+    std::optional<permutation_product> grouped_permutation_form() const;
     // Load HEPCAT, then evaluate the result in a Wolfram kernel. By default
     // the expression is paired with its external and diagram-local mass rules.
     std::string mathematica(bool include_mass_rules = true) const;
