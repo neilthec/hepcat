@@ -100,6 +100,61 @@ void test_single_minority(std::vector<int> majority, int minority, bool conjugat
     }
 }
 
+void test_reloaded_minority(bool physical, bool conjugate, bool shuffled) {
+    Algebra a;
+    const Id mass = a.atom("m"), zero = a.integer(0);
+    std::vector<std::string> masses(7,"0");
+    int left = shuffled ? 5 : 1, right = 2;
+    masses[left-1] = masses[right-1] = "m";
+    std::vector<Id> shell(7,zero);
+    shell[left-1] = shell[right-1] = mass;
+    a.setKinematics(shell,{});
+    // Change the fixed square reference, fermion ordering, names and overall
+    // normalization. No model, particles, graphs or saved kernel are passed
+    // to amp_expression.
+    const std::vector<int> majority = shuffled ? std::vector<int>{6,1,3,4} : std::vector<int>{3,4,5,6};
+    const std::vector<int> minority{7};
+    const auto& plus = conjugate ? minority : majority;
+    const auto& minus = conjugate ? majority : minority;
+    const auto build = physical ? mixed_physical_current : mixed_spurious_current;
+    const Id normalization = a.mul({a.exact(mpq_class(-7,3)),a.pow(a.atom("g"),5)});
+    const Id original = build(a,left,right,mass,plus,minus,normalization).value();
+    amp_expression loaded(a.format(original),masses);
+    const auto sum = loaded.reduce().permutation_form();
+    auto sorted = majority;
+    std::sort(sorted.begin(),sorted.end());
+    require(sum && sum->legs == sorted && sum->orbit_sizes.empty(),
+            "standalone reduction did not recover the ordered-current representation");
+    if (!shuffled) {
+        amp_expression kernel(sum->summand,masses);
+        require(kernel.complexity() <= (physical ? 331u : 408u),"standalone summand regressed in complexity");
+    }
+    parameters pars{{"g",2},{"m",1}};
+    expression_evaluator kernel(a,a.parse(sum->summand),pars), full(a,original,pars);
+    std::vector<real> values(7,0);
+    values[left-1] = values[right-1] = 1;
+    for (unsigned i=0;i<4;++i) {
+        const auto p = sample_point(values,132317+i);
+        auto order = sorted;
+        complex total{};
+        do { total += kernel(permute(p,sorted,order)); } while (std::next_permutation(order.begin(),order.end()));
+        const auto expected = full(p);
+        require(std::abs(total-expected) <= 1e-7L*std::abs(expected),"reloaded signed amplitude differs");
+    }
+    if (shuffled) return;
+    const Id spectator = a.call("PropDen",{a.call("Mom",{a.call("Multiparticle",{a.integer(left),a.integer(3)})}),mass});
+    require(!recognize_ordered_current(a,a.mul({spectator,original})),
+            "pulled a leg-dependent factor through a permutation sum");
+    auto factors = a.node(original).args;
+    auto body = std::find_if(factors.begin(),factors.end(),[&](Id f) { return a.node(f).head == "Plus"; });
+    require(body != factors.end(),"missing sum of currents in negative control");
+    auto terms = a.node(*body).args;
+    terms.front() = a.mul({a.integer(-1),terms.front()});
+    *body = a.add(std::move(terms));
+    require(!recognize_ordered_current(a,reduceInto(a,a.mul(std::move(factors)),shell,{})),
+            "accepted a current with a wrong relative sign");
+}
+
 void test_current(const model& qed, bool physical) {
     std::vector<std::string> particles{"e","E","A.+","A.+","A.+","A.+","A.+"};
     std::vector<std::string> masses;
@@ -156,6 +211,9 @@ int main(int argc, char** argv) {
         test_single_minority({1,3,4,6},7,false);
         test_single_minority({1,3,4,6},7,true);
         test_single_minority({1,3,4,6,7},8,true);
+        test_reloaded_minority(true,false,false);
+        test_reloaded_minority(false,false,false);
+        test_reloaded_minority(false,true,true);
         model qed(argv[1],3);
         test_current(qed,true);
         test_current(qed,false);

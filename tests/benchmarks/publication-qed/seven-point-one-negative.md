@@ -113,3 +113,16 @@ build/native/hepcat-qed --family eeAAAAA --helicity '++++-' --skip-formulas \
 ```
 
 Open `physical/eeAAAAA/++++-.txt` and `spurious/eeAAAAA/++++-.txt` in the reported output directory for the automatic summands. Their neighboring LaTeX files can be included in a paper. The explicit native amplitudes and the validation results are in the same run directory.
+
+To recover the permutation sum from a saved native expression, read the contents of its `.expr` file into a string and use the external masses with their original model scope:
+
+```cpp
+const auto m = vertices.particle("e").mass;
+hepcat::amp_expression amp(expression_text, {m,m,"0","0","0","0","0"});
+amp.reduce();
+std::cout << amp.plain_text() << '\n';
+```
+
+Standalone reduction recovered summand weights 331 and 408 from the two saved elementary amplitudes. It inferred the helicities and the reference leg from the expression. It checked proportionality to the reconstructed current using exact coefficients of the spinor-chain and propagator monomials. The expression and external masses were the only inputs.
+
+With seed 134791 each recovered sum agreed with its saved amplitude at 100,000 signed phase-space points under the same replay rule. The physical sum also reproduced all 270 signed Laurent coefficients by exact expansion. The reloaded physical summand has 878 leaves and the reloaded spurious summand has 1,086. Equivalent factor orderings in the constructor's spurious summand save two leaves at the same weight.

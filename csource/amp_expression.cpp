@@ -212,15 +212,21 @@ const amp_expression::cached_permutations& amp_expression::reduced_permutations(
     Algebra trial(arena_.get());
     trial.setKinematics(kinematics_->masses, {});
     auto sum = compact_permutations(trial, root_);
-    if (ordered_formula_) {
-        Id raw = trial.parse(ordered_formula_->summand);
-        raw = simplify_permutation_kernel(trial,raw,ordered_formula_->legs);
+    std::optional<permutation_sum> ordered;
+    if (ordered_formula_)
+        ordered = permutation_sum{ordered_formula_->legs,trial.parse(ordered_formula_->summand),{}};
+    else
+        ordered = recognize_ordered_current(trial,root_);
+    if (ordered) {
+        Id raw = simplify_permutation_kernel(trial,ordered->kernel,ordered->legs);
         Id kernel = reduceInto(trial,raw,kinematics_->masses,{});
         kernel = collect_scalar_factors(trial,kernel,3);
         kernel = collect_simple_fractions(trial,kernel);
-        kernel = simplify_permutation_kernel(trial,kernel,ordered_formula_->legs);
-        if (trial.cost(kernel) + 16 < trial.cost(root_) && (!sum || trial.cost(kernel) < trial.cost(sum->kernel)))
-            sum = permutation_sum{ordered_formula_->legs,kernel,ordered_formula_->orbit_sizes};
+        kernel = simplify_permutation_kernel(trial,kernel,ordered->legs);
+        const Id previous = sum ? sum->kernel : root_;
+        if (trial.cost(kernel) + 16 < trial.cost(root_) && trial.cost(kernel) < trial.cost(previous) &&
+            (ordered_formula_ || expression_complexity(trial,kernel) <= expression_complexity(trial,previous)))
+            sum = permutation_sum{ordered->legs,kernel,{}};
     }
     if (sum) sum->kernel = retain_borrowed(*arena_, trial, sum->kernel, arena_->size());
     permutations_ = std::make_shared<cached_permutations>(cached_permutations{root_,std::move(sum)});

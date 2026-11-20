@@ -57,6 +57,11 @@ private:
     std::map<std::vector<int>,Id> shells_;
 };
 
+// Scalar factors can be taken outside any permutation of external legs.
+bool leg_independent_scalar(const Algebra&, Id);
+// Homogeneous massless little-group weights and massive external spin degrees.
+std::optional<std::vector<int>> external_spin_weights(Algebra&, Id);
+
 Id reduceInto(Algebra& storage, Id expression, const std::vector<Id>& masses,
               const std::map<std::vector<int>,Id>& shells);
 Id collectCandidate(Algebra&, Id);

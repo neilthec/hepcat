@@ -1,5 +1,6 @@
 #include "permutation_sum.hpp"
 #include "spinor_word.hpp"
+#include "mixed_physical_current.hpp"
 
 #include <algorithm>
 #include <limits>
@@ -317,7 +318,140 @@ std::optional<permutation_sum> try_group(Algebra& a, Id input, Id expanded,
     return permutation_sum{legs,kernel,std::move(sizes)};
 }
 
+// The minority leg fixes the common chiral reference. A denominator of the
+// opposite chirality reveals which companion was used as its square (or
+// angle) reference in the elementary expression.
+std::pair<bool,int> reference_in(const Algebra& a, Id polynomial, int minority, bool conjugate) {
+    bool physical = true;
+    for (Id term : a.node(polynomial).args) {
+        const auto& product = a.node(term);
+        for (Id factor : product.head == "Times" ? product.args : Terms{term}) {
+            const auto& power = a.node(factor);
+            mpq_class exponent;
+            if (power.head != "Power" || power.args.size() != 2 || !a.number(power.args[1],exponent) || exponent >= 0) continue;
+            const auto& chain = a.node(power.args[0]);
+            if (chain.head != "SpinorChain") continue;
+            physical = false;
+            if (chain.args.size() != 2) continue;
+            const auto l = spinor_detail::endpoint(a,chain.args.front());
+            const auto r = spinor_detail::endpoint(a,chain.args.back());
+            if (l.angle == conjugate && (l.leg == minority || r.leg == minority))
+                return {false,l.leg == minority ? r.leg : l.leg};
+        }
+    }
+    return {physical,0};
+}
+
+// Separate spinor chains and propagators from the scalar coefficient of each
+// Laurent monomial. The scale subsequently pulled through the permutation
+// sum may contain masses and couplings, all invariant under its leg swaps.
+using Polynomial = std::map<Id,Id>;
+Polynomial scalar_coefficients(Algebra& a, Id expanded) {
+    Polynomial polynomial;
+    const auto& sum = a.node(expanded);
+    for (Id term : sum.head == "Plus" ? sum.args : Terms{expanded}) {
+        Terms word, scalar;
+        const auto& product = a.node(term);
+        for (Id factor : product.head == "Times" ? product.args : Terms{term}) {
+            const auto& power = a.node(factor);
+            if (power.head == "Power" && power.args.size() != 2) throw Unsupported{};
+            const auto& base = power.head == "Power" ? a.node(power.args.front()) : power;
+            if (base.head == "SpinorChain" || base.head == "PropDen") word.push_back(factor);
+            else if (leg_independent_scalar(a,factor)) scalar.push_back(factor);
+            else throw Unsupported{};
+        }
+        auto key = a.mul(std::move(word)), coeff = a.mul(std::move(scalar));
+        auto [it,inserted] = polynomial.emplace(key,coeff);
+        if (!inserted) it->second = a.add({it->second,coeff});
+    }
+
+    const Id zero = a.integer(0);
+    for (auto it = polynomial.begin(); it != polynomial.end(); ) {
+        if (it->second == zero) it = polynomial.erase(it);
+        else ++it;
+    }
+    return polynomial;
+}
+
+std::optional<Id> current_scale(Algebra& a, const Polynomial& target, const Polynomial& current) {
+    if (target.empty() || target.size() != current.size()) return {};
+    auto expected = current.begin(), actual = target.begin();
+    if (actual->first != expected->first) return {};
+    const auto scale = a.mul({actual->second,a.pow(expected->second,-1)});
+    for (; actual != target.end(); ++actual, ++expected)
+        if (actual->first != expected->first || a.mul({scale,expected->second}) != actual->second)
+            return {};
+    return scale;
+}
+
 } // namespace
+
+// Infer the candidate from external spin weights and denominator chirality.
+// Only coefficient-by-coefficient agreement authorizes the ordered identity.
+std::optional<permutation_sum> recognize_ordered_current(Algebra& a, Id input) {
+    const auto& masses = a.masses();
+    const auto zero = a.integer(0);
+    if (masses.size() < 6 || masses.size() > 8 || !a.shells().empty() ||
+        a.cost(input) < 300 || a.cost(input) > 18000 ||
+        static_cast<std::size_t>(std::count(masses.begin(),masses.end(),zero)) + 2 != masses.size()) return {};
+    try {
+        const auto weights = external_spin_weights(a,input);
+        if (!weights) return {};
+        std::vector<int> ends, positive, negative;
+        for (std::size_t i=0; i<masses.size(); ++i) {
+            const int w = (*weights)[i];
+            if (masses[i] != zero && w == 1) ends.push_back(i+1);
+            else if (masses[i] == zero && w == -2) positive.push_back(i+1);
+            else if (masses[i] == zero && w == 2) negative.push_back(i+1);
+            else return {};
+        }
+        if (ends.size() != 2 || masses[ends[0]-1] != masses[ends[1]-1] ||
+            std::min(positive.size(),negative.size()) != 1) return {};
+        relabel canonical(a,{},{});
+        auto expanded = [&](Id expr) {
+            std::size_t work = 50000;
+            return a.add(expand(a,canonical(expr),work));
+        };
+        const auto original = expanded(input);
+        const auto& sum = a.node(original);
+        if (sum.head != "Plus" || sum.args.size() < std::max(positive.size(),negative.size())) return {};
+        const bool conjugate = negative.size() > positive.size();
+        auto& majority = conjugate ? negative : positive;
+        const int minority = (conjugate ? positive : negative).front();
+        const auto [physical,reference] = reference_in(a,original,minority,conjugate);
+        if (reference) {
+            const auto it = std::find(majority.begin(),majority.end(),reference);
+            if (it == majority.end()) return {};
+            std::rotate(majority.begin(),it,it+1);
+        }
+        const auto target = scalar_coefficients(a,original);
+        const Id m = masses[ends.front()-1], unit = a.integer(1);
+        for (int l : ends) {
+            const int r = l == ends.front() ? ends.back() : ends.front();
+            std::optional<permutation_sum> ordered;
+            auto current = physical
+                ? physical_current_with_presentation(a,l,r,m,positive,negative,unit,&ordered)
+                : mixed_spurious_current(a,l,r,m,positive,negative,unit);
+            if (!current || (physical && !ordered)) continue;
+            auto reduced = reduceInto(a,*current,masses,{});
+            auto scale = current_scale(a,target,scalar_coefficients(a,expanded(reduced)));
+            if (!scale) continue;
+            if (!physical) ordered = ordered_minority_sum(a,l,r,m,positive,negative,unit);
+            if (ordered) {
+                ordered->kernel = a.mul({*scale,ordered->kernel});
+                std::sort(ordered->legs.begin(),ordered->legs.end());
+                return ordered;
+            }
+        }
+    } catch (const Unsupported&) {
+        return {};
+    } catch (const std::length_error&) {
+        return {};
+    } catch (const std::overflow_error&) {
+        return {};
+    }
+    return {};
+}
 
 Id simplify_permutation_kernel(Algebra& a, Id input, const std::vector<int>& legs) {
     if (legs.size() < 3 || legs.size() > 4 || a.cost(input) > 16000) return input;
