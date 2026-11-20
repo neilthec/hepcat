@@ -610,7 +610,7 @@ Id collectCandidate(Algebra& a, Id input) {
 }
 // Collect shared scalar factors inside existing sums as well as at the root.
 // Ordered chains, color tensors and reciprocal factors are opaque.
-Id collect_scalar_factors(Algebra &a, Id input) {
+Id collect_scalar_factors(Algebra &a, Id input, unsigned max_passes) {
   // A large printed formula can have a small number of distinct subcurrents.
   // Limit actual factoring work on such formulas, counting the factors
   // inspected in each sum. A memo hit reuses the already factored subtree.
@@ -633,18 +633,28 @@ Id collect_scalar_factors(Algebra &a, Id input) {
     }
     return cache.emplace(id, result).first->second;
   };
-  auto result = visit(visit, input);
-  if (a.cost(result) >= a.cost(input))
-    return input;
-  // Check the public metric explicitly, including hidden chain momentum
-  // branches.
-  try {
-    if (expression_complexity(a, result) <= expression_complexity(a, input))
-      return result;
-  } catch (const std::length_error &) {
-  } catch (const std::overflow_error &) {
+  // Factoring at a parent can expose another common factor inside the
+  // newly created sum. Each accepted pass lowers the leaf count and keeps or
+  // improves the weighted score. All passes share the same traversal budget.
+  Id best = input;
+  std::optional<std::size_t> weight;
+  for (unsigned pass = 0; pass < max_passes && (!budget || remaining); ++pass) {
+    cache.clear();
+    const auto candidate = visit(visit, best);
+    if (a.cost(candidate) >= a.cost(best)) break;
+    try {
+      if (!weight) weight = expression_complexity(a, best);
+      auto candidate_weight = expression_complexity(a, candidate);
+      if (candidate_weight > *weight) break;
+      best = candidate;
+      weight = candidate_weight;
+    } catch (const std::length_error &) {
+      break;
+    } catch (const std::overflow_error &) {
+      break;
+    }
   }
-  return input;
+  return best;
 }
 std::size_t expression_complexity(const Algebra& source, Id root) {
     Algebra trial(&source);

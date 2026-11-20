@@ -50,20 +50,10 @@ struct family {
     std::vector<helicity_case> examples;
 };
 
-// Identical photons give one representative for each possible number of
-// negative helicities. SPINAS relabels them to cover every ordered assignment.
-std::vector<helicity_case> new_helicities(unsigned photons) {
-    std::vector<helicity_case> cases;
-    for (unsigned minus = 0; minus <= photons; ++minus)
-        cases.push_back({std::string(photons - minus, '+') + std::string(minus, '-'),
-                         0, 0, reference_source::feynman_only});
-    return cases;
-}
-
-std::vector<helicity_case> five_photons() {
-    auto cases = new_helicities(5);
-    cases.front() = {"+++++", 820, 920, reference_source::all_positive_formula};
-    return cases;
+// A measured size can guard a new prediction even when its only signed
+// reference is the independent Feynman model. The constructor never sees it.
+helicity_case prediction(std::string helicities, std::size_t physical = 0, std::size_t spurious = 0) {
+    return {std::move(helicities), physical, spurious, reference_source::feynman_only};
 }
 
 // Add a family or helicity here. For example, {"++-", 62, 63} measures three
@@ -93,11 +83,18 @@ const std::vector<family> notebook = {
     {"eeeeAA", {"e", "E", "E", "e"}, {{"++", 1200, 1216}, {"+-", 1600, 1632}, {"--", 1200, 1216}}},
     {"eeeeee", {"e", "E", "e", "E", "e", "E"}, {{"", 3168, 3168}}},
 
-    // Seven external particles. The remaining entries are new predictions
-    // checked against the independent Feynman model, without a saved answer.
-    {"eeAAAAA", {"e", "E"}, five_photons()},
-    {"eeeeAAA", {"e", "E", "E", "e"}, new_helicities(3)},
-    {"eeeeeeA", {"e", "E", "e", "E", "e", "E"}, new_helicities(1)},
+    // Seven external particles. One representative for each number of negative
+    // photons covers all assignments under permutations of identical photons.
+    {"eeAAAAA", {"e", "E"},
+     {{"+++++", 820, 920, reference_source::all_positive_formula},
+      prediction("++++-", 3966, 4634), prediction("+++--", 7683, 12672),
+      prediction("++---", 7683, 12672), prediction("+----", 3966, 4634),
+      prediction("-----", 820, 920)}},
+    {"eeeeAAA", {"e", "E", "E", "e"},
+     {prediction("+++", 33792, 25792), prediction("++-", 41280, 27648),
+      prediction("+--", 41280, 27648), prediction("---", 33792, 25792)}},
+    {"eeeeeeA", {"e", "E", "e", "E", "e", "E"},
+     {prediction("+", 85248, 85248), prediction("-", 85248, 85248)}},
 };
 
 struct settings {
@@ -209,7 +206,7 @@ selected_amplitude construct_helicity(const settings& run, const construction_mo
             "native and publication complexity measures disagree on the reference");
     const auto baseline = spurious ? entry.spurious : entry.physical;
     auto target = reference_score;
-    if (baseline && target) target = std::min(baseline, *target);
+    if (baseline) target = std::min(baseline, target.value_or(baseline));
 
     auto result = amp.construct(options);
     const auto& report = amp.last_construction();

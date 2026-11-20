@@ -108,7 +108,7 @@ amplitude& amplitude::reduce(std::size_t workers) {
             auto i = next.fetch_add(1, std::memory_order_relaxed);
             if (i >= work.size()) return;
             try {
-                work[i].result.reduce();
+                work[i].result.reduce_with_factor_passes(1);
             } catch (...) {
                 work[i].error = std::current_exception();
                 failed.store(true, std::memory_order_relaxed);

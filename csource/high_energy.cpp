@@ -254,17 +254,17 @@ const amp_expression& amplitude::complete_high_energy(const high_energy_options&
 const amp_expression& amplitude::complete_high_energy(const amp_expression& expression,
                                                       const high_energy_options& options) {
     complete_energy_components(expression, options);
-    if (masses_.size() == 4) {
-        // Color components have been recombined. Copy only the winning tree
-        // from the temporary search arena back into the completed result.
-        auto& result = *high_energy_result_;
-        Algebra trial;
-        Id initial = result.import_into(trial);
-        Id compact = compact_commuting_products(trial, initial);
-        if (compact != initial) result.set_from(trial, compact);
-        high_energy_report_.nodes_after_final_reduction = result.leaf_count();
-    }
-    return *high_energy_result_;
+    auto& result = *high_energy_result_;
+    // Work on the whole expression after the color components and diagrams
+    // have been combined. Factoring an isolated component can prevent sharing
+    // across components. Keep only the winning tree in the amplitude arena.
+    Algebra trial;
+    const Id initial = result.import_into(trial);
+    Id compact = masses_.size() == 4 ? compact_commuting_products(trial, initial) : initial;
+    compact = collect_scalar_factors(trial, compact, 3);
+    if (compact != initial) result.set_from(trial, compact);
+    high_energy_report_.nodes_after_final_reduction = result.leaf_count();
+    return result;
 }
 
 const amp_expression& amplitude::complete_energy_components(const amp_expression& expression,
@@ -288,7 +288,7 @@ const amp_expression& amplitude::complete_energy_components(const amp_expression
         result.set_from(a, answer);
         auto original = result; // The two roots share the original interned tree.
         if (vertices_model_) result.set_from(a, contract_model_couplings(a,answer,*vertices_model_));
-        result.reduce();
+        result.reduce_with_factor_passes(1);
         if (a.masses().size() == 4 && std::all_of(a.masses().begin(), a.masses().end(),
                 [&](Id mass) { return chart_detail::free_parameter(a.node(mass)); })) {
             const Id reduced = result.import_into(a);

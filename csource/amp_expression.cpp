@@ -100,12 +100,14 @@ Id reduce_and_retain(Algebra& a, Id root, const std::vector<Id>& masses, const S
 }
 }
 
-amp_expression& amp_expression::reduce() {
+amp_expression& amp_expression::reduce() { return reduce_with_factor_passes(3); }
+
+amp_expression& amp_expression::reduce_with_factor_passes(unsigned passes) {
     std::lock_guard<std::mutex> guard(*kinematics_->lock);
     if (!reduced_) {
         root_=reduce_and_retain(*arena_,root_,kinematics_->masses,kinematics_->shells,remainder_);
         if (kinematics_->shells.empty())
-            root_=collect_scalar_factors(*arena_,root_);
+            root_=collect_scalar_factors(*arena_,root_,passes);
         reduced_=true;
     }
     return *this;

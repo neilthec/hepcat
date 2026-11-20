@@ -86,5 +86,14 @@ int main() {
     if (a.cost(large) <= 24000 || collect_scalar_factors(a,large) != grouped)
         throw std::runtime_error("Repeated subcurrent was missed in a large expression");
 
+    // The first collection creates a sum that already multiplies another
+    // current. The next pass can factor the newly shared sum as a whole.
+    Id leg_a=a.call("CurrentA", {x,y}), leg_b=a.call("CurrentB", {y,x});
+    Id u=a.atom("u"), v=a.atom("v");
+    Id xu=a.mul({x,u}), yv=a.mul({y,v}), shared=a.add({xu,yv});
+    Id related=a.add({a.mul({leg_a,xu}),a.mul({leg_a,yv}),a.mul({leg_b,shared})});
+    if (collect_scalar_factors(a,related,3)!=a.mul({a.add({leg_a,leg_b}),shared}))
+        throw std::runtime_error("Newly exposed common subcurrent was missed");
+
     std::cout << "Sparse collection identities passed\n";
 }

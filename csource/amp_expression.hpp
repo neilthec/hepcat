@@ -54,6 +54,7 @@ public:
 private:
     friend class amplitude;
     friend std::uint32_t validation_detail::import_expression(Algebra&, const amp_expression&, bool);
+    amp_expression& reduce_with_factor_passes(unsigned passes);
     void restore_prepared(const std::string& remainder);
     std::uint32_t import_into(Algebra& destination, bool remainder = false) const;
     std::vector<std::uint32_t> import_masses(Algebra& destination) const;
