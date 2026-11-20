@@ -13,7 +13,7 @@ add_library(hepcat_reduce
     high_energy.cpp high_energy_chart.cpp high_energy_contacts.cpp
     validation.cpp validation_checks.cpp validation_numeric.cpp validation_feynman.cpp
     validation_precision_chart.cpp validation_precision_parameters.cpp
-    collect.cpp algebra.cpp amp_expression.cpp kinematics.cpp spinor.cpp vector_basis.cpp vector_compact.cpp)
+    collect.cpp presentation.cpp algebra.cpp amp_expression.cpp kinematics.cpp spinor.cpp vector_basis.cpp vector_compact.cpp)
 target_compile_features(hepcat_reduce PUBLIC cxx_std_17)
 target_include_directories(hepcat_reduce PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(hepcat_reduce SYSTEM PRIVATE ${GMP_INCLUDE_DIR})

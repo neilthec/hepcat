@@ -212,11 +212,12 @@ bool run_family(const std::vector<notebook_case> &family, const model &sm, const
             const auto &report = amp.last_construction();
             checks(log, report.validation);
             const auto weight = result.complexity();
-            const bool within = weight <= c.weight;
+            const auto leaves = result.leaf_count();
+            const bool within = weight <= c.weight && leaves <= c.leaves;
             simple &= within;
             output(directory / (c.id + ".expr")) << result.str() << '\n';
             scores << c.id << '\t' << name << '\t' << (within ? "PASS" : "VALID_BUT_LONGER") << '\t' << weight
-                   << '\t' << c.weight << '\t' << result.leaf_count() << '\t' << c.leaves << '\t'
+                   << '\t' << c.weight << '\t' << leaves << '\t' << c.leaves << '\t'
                    << report.total_seconds << '\n'
                    << std::flush;
             generated.push_back({c.particles, std::move(result)});

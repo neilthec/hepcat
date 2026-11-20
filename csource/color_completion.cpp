@@ -88,7 +88,7 @@ bool amplitude::complete_color_rows(const factorization_options* factor, const h
             opts.correction_basis = std::move(scalar_corrections);
             amp_expression input("0", masses_);
             input.set_from(a, scalar_seed);
-            const auto& result = partial.complete_high_energy(input, opts);
+            const auto& result = partial.complete_energy_components(input, opts);
             answers.push_back(a.mul({decomposition.tensors[i], result.import_into(a)}));
             originals.push_back(
                 a.mul({decomposition.tensors[i], partial.before_final_reduction_->import_into(a)}));

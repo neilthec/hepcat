@@ -58,5 +58,23 @@ int main() {
         if (collectCandidate(a,unsupported)!=unsupported)
             throw std::runtime_error("Unknown or unlisted momentum must remain opaque");
     }
+    // Keep the sign and check the exact middle coefficient before folding a
+    // trinomial. The two numerical roots must disappear from its prefactor.
+    Id x=bracket(1,2,true), y=bracket(3,4,false);
+    Id sqrt2=a.call("Power",{a.integer(2),a.exact(mpq_class(1,2))});
+    Id core=a.add({a.pow(x,2),a.pow(y,2),a.mul({a.integer(-2),x,y})});
+    Id square=compact_commuting_products(a,a.mul({a.pow(sqrt2,2),core}));
+    Id opposite=a.add({y,a.mul({a.integer(-1),x})});
+    Id direct=a.add({x,a.mul({a.integer(-1),y})});
+    if (square!=a.mul({a.integer(2),a.pow(direct,2)}) &&
+        square!=a.mul({a.integer(2),a.pow(opposite,2)}))
+        throw std::runtime_error("Exact signed binomial square and numeric radical: "+a.format(square));
+    Id nonsquare=a.add({a.pow(x,2),a.pow(y,2),a.mul({a.integer(3),x,y})});
+    if (a.node(compact_commuting_products(a,nonsquare)).head=="Power")
+        throw std::runtime_error("Folded a non-square trinomial");
+    Id unknownRoot=a.call("Power",{a.pow(mx,2),a.exact(mpq_class(1,2))});
+    if (compact_commuting_products(a,unknownRoot)!=unknownRoot)
+        throw std::runtime_error("Removed a symbolic square root without a positivity assumption");
+
     std::cout << "Sparse collection identities passed\n";
 }

@@ -253,6 +253,22 @@ const amp_expression& amplitude::complete_high_energy(const high_energy_options&
 
 const amp_expression& amplitude::complete_high_energy(const amp_expression& expression,
                                                       const high_energy_options& options) {
+    complete_energy_components(expression, options);
+    if (masses_.size() == 4) {
+        // Color components have been recombined. Copy only the winning tree
+        // from the temporary search arena back into the completed result.
+        auto& result = *high_energy_result_;
+        Algebra trial;
+        Id initial = result.import_into(trial);
+        Id compact = compact_commuting_products(trial, initial);
+        if (compact != initial) result.set_from(trial, compact);
+        high_energy_report_.nodes_after_final_reduction = result.leaf_count();
+    }
+    return *high_energy_result_;
+}
+
+const amp_expression& amplitude::complete_energy_components(const amp_expression& expression,
+                                                            const high_energy_options& options) {
     if (complete_color_rows(nullptr, &options, &expression)) return *high_energy_result_;
     Algebra a;
     std::vector<Id> masses;
