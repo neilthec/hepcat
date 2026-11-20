@@ -9,7 +9,7 @@ find_library(GMP_LIBRARY gmp REQUIRED)
 
 add_library(hepcat_reduce
     model.cpp model_expression.cpp model_parameters.cpp generation_plan.cpp generation_sew.cpp generation_spin.cpp generation_null.cpp
-    generation_current.cpp generation_feynman.cpp generation.cpp amplitude.cpp completion.cpp continuations.cpp null_shift.cpp residue.cpp
+    generation_current.cpp generation_feynman.cpp generation.cpp amplitude.cpp construct.cpp line_current.cpp mixed_physical_current.cpp fermion_currents.cpp spinas_export.cpp external_export.cpp completion.cpp continuations.cpp null_shift.cpp residue.cpp
     high_energy.cpp high_energy_chart.cpp high_energy_contacts.cpp
     validation.cpp validation_checks.cpp validation_numeric.cpp validation_feynman.cpp
     validation_precision_chart.cpp validation_precision_parameters.cpp
@@ -25,6 +25,10 @@ target_link_libraries(hepcat-reduce PRIVATE hepcat_reduce)
 add_executable(hepcat-reduce-amplitude batch_reduce.cpp)
 target_include_directories(hepcat-reduce-amplitude SYSTEM PRIVATE ${GMP_INCLUDE_DIR})
 target_link_libraries(hepcat-reduce-amplitude PRIVATE hepcat_reduce)
+
+add_executable(hepcat-qed ../tests/QED-6-point-construction.cpp)
+target_include_directories(hepcat-qed SYSTEM PRIVATE ${GMP_INCLUDE_DIR})
+target_link_libraries(hepcat-qed PRIVATE hepcat_reduce)
 
 include(CTest)
 if(BUILD_TESTING)
@@ -53,6 +57,16 @@ if(BUILD_TESTING)
         target_include_directories(test_${suite} SYSTEM PRIVATE ${GMP_INCLUDE_DIR})
         target_link_libraries(test_${suite} PRIVATE hepcat_reduce)
         add_test(NAME ${suite} COMMAND test_${suite} "${HEPCAT_TEST_MODELS}" "${HEPCAT_MODEL_ROOT}/tests/reference-models/calchep")
+    endforeach()
+    add_executable(test_construct construct_tests.cpp)
+    target_link_libraries(test_construct PRIVATE hepcat_reduce)
+    add_test(NAME construct COMMAND test_construct "${HEPCAT_TEST_MODELS}")
+    add_test(NAME qed_inventory COMMAND hepcat-qed --list)
+    foreach(suite IN ITEMS spinas_export external_export)
+        add_executable(test_${suite} ${suite}_tests.cpp)
+        target_include_directories(test_${suite} SYSTEM PRIVATE ${GMP_INCLUDE_DIR})
+        target_link_libraries(test_${suite} PRIVATE hepcat_reduce)
+        add_test(NAME ${suite} COMMAND test_${suite} "${HEPCAT_TEST_MODELS}" "${HEPCAT_MODEL_ROOT}/source/internal/export")
     endforeach()
     add_executable(test_validation_feynman validation_feynman_tests.cpp)
     target_include_directories(test_validation_feynman SYSTEM PRIVATE ${GMP_INCLUDE_DIR})

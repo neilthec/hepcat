@@ -59,6 +59,14 @@ int main() {
         require(row[6] == row[7], "massive Dirac sign");
         require(row[8] == -2 && row[9] == 4, "exact algebraic coefficients");
     }
+    // The same inverse propagator is written in two different ways. Its
+    // vanishing constant term removes one pole and its derivative is one.
+    auto hidden_d = a.add({a.parse("Mandelstahm[1,3]"), a.mul({a.integer(-1), a.pow(m,2)})});
+    auto momentum_d = a.add({a.parse("Power[Mom[Multiparticle[1,3]],2]"), a.mul({a.integer(-1), a.pow(m,2)})});
+    for(unsigned i=0; i<4; ++i) {
+        auto row=regular(a,{{1,3},"m"},{a.mul({hidden_d,a.pow(d,-2)}),a.mul({momentum_d,a.pow(d,-2)}),a.pow(d,-1)},i);
+        require(row[0]==1 && row[1]==row[2], "normalized double-pole derivative");
+    }
     a.setKinematics({zero, zero, zero, zero}, {});
     Id angle = chain({spin(1, true, false), spin(2, true, false)});
     Id square = chain({spin(1, false, false), spin(2, false, false)});

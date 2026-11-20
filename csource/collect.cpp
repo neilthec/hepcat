@@ -103,7 +103,8 @@ Id projectChain(Algebra& a, Id value, unsigned order) {
 // multiplication boundary. Inverse powers are indivisible coefficients here.
 class Expansion {
 public:
-    Expansion(Algebra& a, int pivot) : algebra(a), order(pivot) {}
+    Expansion(Algebra& a, int pivot, std::size_t terms = maxTerms, std::size_t products = maxProducts, int power_limit = 8)
+        : algebra(a), order(pivot), term_limit(terms), product_limit(products), exponent_limit(power_limit) {}
     Id run(Id id) {
         auto cached=memo.find(id);
         if (cached!=memo.end()) return cached->second;
@@ -118,9 +119,9 @@ public:
             for (Id factor : n.args) result=product(result,run(factor));
         } else if (n.head=="Power" && n.args.size()==2) {
             int exponent=algebra.leg(n.args[1]);
-            if (exponent>8 && (algebra.node(n.args[0]).head=="Plus" || algebra.node(n.args[0]).head=="Times"))
+            if (exponent>exponent_limit && (algebra.node(n.args[0]).head=="Plus" || algebra.node(n.args[0]).head=="Times"))
                 throw TooLarge{};
-            if (exponent && exponent<=8) {
+            if (exponent && exponent<=exponent_limit) {
                 Id base=run(n.args[0]);
                 if (algebra.node(base).head=="Plus") {
                     result=base;
@@ -130,13 +131,15 @@ public:
         } else if (order>=0 && n.head=="SpinorChain") {
             result=projectChain(algebra,id,order);
         }
-        if (algebra.node(result).head=="Plus" && algebra.node(result).args.size()>maxTerms) throw TooLarge{};
+        if (algebra.node(result).head=="Plus" && algebra.node(result).args.size()>term_limit) throw TooLarge{};
         memo.emplace(id,result);
         return result;
     }
 private:
     Algebra& algebra;
     int order;
+    std::size_t term_limit, product_limit;
+    int exponent_limit;
     std::size_t work=0;
     std::unordered_map<Id,Id> memo;
     Id product(Id x, Id y) {
@@ -144,7 +147,7 @@ private:
         const bool xsum=nx.head=="Plus", ysum=ny.head=="Plus";
         if (!xsum && !ysum) return algebra.mul({x,y});
         const Terms xs=xsum ? nx.args : Terms{x}, ys=ysum ? ny.args : Terms{y};
-        if (xs.size()*ys.size()>maxTerms || (work+=xs.size()*ys.size())>maxProducts) throw TooLarge{};
+        if (xs.size() > term_limit/ys.size() || (work+=xs.size()*ys.size())>product_limit) throw TooLarge{};
         Terms terms;
         terms.reserve(xs.size()*ys.size());
         for (Id u : xs) for (Id v : ys) terms.push_back(algebra.mul({u,v}));
@@ -185,7 +188,14 @@ Measure measure(const Algebra& a, Id id) {
         const auto& slot=a.node(n.args[i]);
         if (slot.head=="Mom" && slot.args.size()==1) {
             const auto& label=a.node(slot.args[0]);
-            if (label.head=="Multiparticle") result.branches=cappedMul(result.branches,label.args.size());
+            if (label.head=="Multiparticle" && label.args.size()>=2) {
+                std::set<Id> members;
+                for (Id value : label.args) {
+                    mpq_class literal;
+                    if (!a.number(value,literal) || literal.get_den()!=1 || !members.insert(value).second) break;
+                }
+                if (members.size()==label.args.size()) result.branches=cappedMul(result.branches,members.size());
+            }
         }
     }
     return result;
@@ -589,5 +599,17 @@ Id collectCandidate(Algebra& a, Id input) {
         return input;
     }
     return input;
+}
+std::size_t expression_complexity(const Algebra& source, Id root) {
+    Algebra trial(&source);
+    try {
+        auto expanded = Expansion(trial, -1, 131072, 4000000, 4096).run(root);
+        if (expanded == trial.integer(0)) return 0;
+        auto result = score(trial, expanded);
+        if (result >= maxScore) throw std::overflow_error("expression complexity exceeds the numeric range");
+        return result;
+    } catch (const TooLarge&) {
+        throw std::length_error("complexity expansion exceeds the monomial budget");
+    }
 }
 } // namespace hepcat

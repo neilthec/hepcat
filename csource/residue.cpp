@@ -72,6 +72,7 @@ std::pair<Matrix, Matrix> splitTwo(Matrix total, const Q& m1, const Q& m2, bool 
 class Chart {
   public:
     Legs cut, other;
+    bool displaced = false;
     std::vector<Q> masses;
     std::vector<Matrix> momenta;
     std::vector<Vector> angles, squares;
@@ -149,7 +150,7 @@ class Chart {
     }
     bool isCut(Legs legs) const {
         std::sort(legs.begin(), legs.end());
-        return legs == cut || legs == other;
+        return !displaced && (legs == cut || legs == other);
     }
     Vector reference(const std::string& kind, const std::string& label) const {
         Draw draw{std::mt19937_64(mix(hashText(kind + ":" + label) ^ salt))};
@@ -473,6 +474,168 @@ class Evaluator {
         return p;
     }
 };
+// A single spurious extra power of the cut propagator can cancel between
+// diagrams. Evaluate its constant and linear numerator coefficients exactly
+// on a deformation that keeps all external momenta on shell. The parameter
+// is the selected inverse propagator itself, fixing the residue normalization.
+class double_cut_limit {
+  struct dual {
+    int order;
+    Scalar value, slope;
+  };
+  const Algebra &a;
+  Chart center;
+  Parameters &parameters;
+  Id cut_mass;
+  Q jacobian;
+  int l = -1, r = -1;
+  Matrix transfer;
+  std::vector<Chart> frames;
+  std::vector<std::unique_ptr<Evaluator>> evaluators;
+  std::unordered_map<Id, dual> cache;
+
+  dual multiply(const dual &x, const dual &y) {
+    return {x.order + y.order, x.value * y.value,
+            x.value * y.slope + x.slope * y.value};
+  }
+  dual raised(const dual &x, long k) {
+    if (k == 0)
+      return {0, Scalar(Q(1)), {}};
+    return {static_cast<int>(x.order * k), power(x.value, k),
+            x.slope * Scalar(Q(k)) * power(x.value, k == 1 ? 0 : k - 1)};
+  }
+  dual add(const dual &x, const dual &y) {
+    if (x.order > y.order)
+      return add(y, x);
+    if (x.order == y.order)
+      return {x.order, x.value + y.value, x.slope + y.slope};
+    return {x.order, x.value,
+            x.order + 1 == y.order ? x.slope + y.value : x.slope};
+  }
+  // Chain and trace entries are polynomials: each external spinor and
+  // each matrix is at most linear in this particular deformation.
+  dual primitive(Id id) {
+    const auto &n = a.node(id);
+    auto base = evaluators.front()->get(id).coefficient;
+    int degree = 0;
+    if (n.head == "SpinorChain" || n.head == "SpinorTrace")
+      degree = static_cast<int>(n.args.size());
+    else if (n.head == "PropDen" || n.head == "Mandelstahm" ||
+             n.head == "MomProd")
+      degree = 2;
+    else if (n.head == "Power" && n.args.size() == 2 &&
+             a.node(n.args[0]).head == "Mom") {
+      Q exponent;
+      if (!a.number(n.args[1], exponent) || exponent != 2)
+        throw residue_unsupported(
+            "unsupported momentum power in a double-pole derivative");
+      degree = 2;
+    } else if (n.head == "xFactor" || n.head == "xTildeFactor" ||
+               n.head == "ConstructiveDiagrams`xFactor" ||
+               n.head == "ConstructiveDiagrams`xTildeFactor")
+      throw residue_unsupported(
+          "internal helicity factor has no chosen continuation off this cut");
+    if (!degree)
+      return {0, base, {}};
+    if (degree > static_cast<int>(frames.size()) - 1)
+      throw residue_unsupported("spinor chain exceeds cut-derivative bound");
+    Scalar slope;
+    // Newton forward differences, using f'(0) = sum (-1)^(k-1) Delta^k f(0)/k.
+    std::vector<Scalar> differences{base};
+    for (int j = 1; j <= degree; ++j)
+      differences.push_back(evaluators[j]->get(id).coefficient);
+    for (int k = 1; k <= degree; ++k) {
+      for (int j = 0; j < degree + 1 - k; ++j)
+        differences[j] = differences[j + 1] + differences[j] * Scalar(Q(-1));
+      slope = slope + differences.front() * Scalar(Q(k % 2 ? 1 : -1, k));
+    }
+    return {0, base, slope};
+  }
+  dual visit(Id id) {
+    if (auto f = cache.find(id); f != cache.end())
+      return f->second;
+    const auto &n = a.node(id);
+    dual v{0, Scalar(Q(1)), {}};
+    if (n.head == "Times") {
+      for (auto child : n.args)
+        v = multiply(v, visit(child));
+    } else if (n.head == "Plus" && !n.args.empty()) {
+      v = visit(n.args.front());
+      for (std::size_t i = 1; i < n.args.size(); ++i)
+        v = add(v, visit(n.args[i]));
+    } else if (n.head == "Power" && n.args.size() == 2) {
+      Q e;
+      if (a.number(n.args[1], e) && e.get_den() == 1 && abs(e) < 10000 &&
+          a.node(n.args[0]).head != "Mom")
+        v = raised(visit(n.args[0]), e.get_num().get_si());
+      else
+        v = primitive(id);
+    } else if (n.head == "PropDen" && n.args.size() == 2 &&
+               n.args[1] == cut_mass && a.node(n.args[0]).head == "Mom") {
+      const auto &label = a.node(a.node(n.args[0]).args.at(0));
+      std::vector<int> legs;
+      for (auto i : label.args)
+        legs.push_back(a.leg(i));
+      v = label.head == "Multiparticle" && center.isCut(legs)
+              ? dual{1, Scalar(Q(1)), {}}
+              : primitive(id);
+    } else
+      v = primitive(id);
+    cache.emplace(id, v);
+    return v;
+  }
+
+public:
+  double_cut_limit(const Algebra &a_, Parameters &params, const Chart &chart,
+                   Id mass, std::size_t max_degree)
+      : a(a_), center(chart), parameters(params), cut_mass(mass) {
+    auto k = center.sum(center.cut);
+    for (int i : center.cut)
+      for (int j : center.other) {
+        if (l >= 0 || center.masses[i - 1] || center.masses[j - 1])
+          continue;
+        for (bool reverse : {false, true}) {
+          int x = (reverse ? j : i) - 1, y = (reverse ? i : j) - 1;
+          auto u = center.angles[y], v = center.squares[x];
+          Matrix q{u[0] * v[0], u[0] * v[1], u[1] * v[0], u[1] * v[1]};
+          Q delta = det(k + (reverse ? scale(-1, q) : q)) - det(k);
+          if (delta) {
+            l = x;
+            r = y;
+            transfer = q;
+            jacobian = delta;
+            break;
+          }
+        }
+      }
+    if (l < 0)
+      throw residue_unsupported("double-pole derivative requires a transverse "
+                                "massless shift across the cut");
+    frames.reserve(max_degree + 1);
+    for (std::size_t t = 0; t <= max_degree; ++t) {
+      frames.push_back(center);
+      auto &f = frames.back();
+      f.displaced = true;
+      Q z = Q(t) / jacobian;
+      f.momenta[l] = f.momenta[l] + scale(z, transfer);
+      f.momenta[r] = f.momenta[r] - scale(z, transfer);
+      for (int k = 0; k < 2; ++k) {
+        f.angles[l][k] += z * center.angles[r][k];
+        f.squares[r][k] -= z * center.squares[l][k];
+      }
+      evaluators.push_back(
+          std::make_unique<Evaluator>(a, parameters, f, cut_mass));
+    }
+  }
+  Scalar residue(Id root) {
+    auto v = visit(root);
+    if (v.order < -2 || (v.order == -2 && !v.value.zero()))
+      throw residue_unsupported(
+          "uncancelled or unresolved higher-order physical pole");
+    return v.order == -2 ? v.slope : (v.order == -1 ? v.value : Scalar{});
+  }
+};
+
 template <class F>
 auto sample_cut(const Algebra& algebra, const numerator_shell& channel, const std::vector<Id>& expressions,
                 std::size_t sample, const std::map<Id, Q>& parameter_values, F project) {
@@ -484,15 +647,19 @@ auto sample_cut(const Algebra& algebra, const numerator_shell& channel, const st
         masses.push_back(params.rational(id));
     Chart chart(channel.legs, std::move(masses), params.rational(mass), sample);
     Evaluator evaluator(local, params, chart, mass);
+    std::optional<double_cut_limit> limit;
     std::vector<decltype(project(chart, Scalar{}))> row;
     row.reserve(expressions.size());
     for (Id id : expressions) {
         if (evaluator.internalWeight(id) != 0)
             throw residue_unsupported("unbalanced sewn internal helicity weight");
         auto p = evaluator.get(id);
-        if (p.order < -1)
-            throw residue_unsupported("higher-order physical pole needs a Laurent expansion");
-        row.push_back(project(chart, p.order == -1 ? p.coefficient : Scalar{}));
+        if (p.order < -1) {
+            if (p.order < -2 || !p.coefficient.zero())
+                throw residue_unsupported("uncancelled or unresolved higher-order physical pole");
+            if (!limit) limit.emplace(local, params, chart, mass, 16);
+            row.push_back(project(chart, limit->residue(id)));
+        } else row.push_back(project(chart, p.order == -1 ? p.coefficient : Scalar{}));
     }
     return row;
 }

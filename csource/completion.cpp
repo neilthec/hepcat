@@ -1,4 +1,6 @@
 #include "amplitude.hpp"
+#include "line_current.hpp"
+#include "fermion_currents.hpp"
 #include "native_fit.hpp"
 #include "continuations.hpp"
 #include "residue.hpp"
@@ -522,9 +524,14 @@ const amp_expression& amplitude::complete_factorization(const factorization_opti
     auto import = [&](const amplitude_item& item, bool rest = false) {
         return trees.canonical(item.expression.import_into(a, rest));
     };
+    std::size_t generated_diagrams = 0;
+    bool has_manual_contribution = false;
     for (const auto& item : diagrams_) {
         diagrams.push_back(import(item));
         remains.push_back(import(item, true));
+        generated_diagrams += item.generated_;
+        if (!item.generated_ && (diagrams.back() != zero || remains.back() != zero))
+            has_manual_contribution = true;
         for (const auto& cut : item.shells)
             targets.emplace(key(a, cut.legs, trees.canonical(a.parse(cut.mass))), zero);
     }
@@ -563,12 +570,38 @@ const amp_expression& amplitude::complete_factorization(const factorization_opti
     auto publish = [&](Id answer) -> const amp_expression& {
         amp_expression result("0", masses_);
         result.set_from(a, answer);
+        construction_.reset();
         completed_ = std::move(result);
         high_energy_result_.reset();
         before_final_reduction_.reset();
         report_ = std::move(work.report);
         return *completed_;
     };
+    // Group elementary graphs only when the entire input is generated from the model.
+    // A caller can supply additional terms, including contact terms invisible on every cut.
+    if (options.try_grouped_currents && vertices_model_ && !products_.empty() &&
+        references_ != generation_references::keep && !has_manual_contribution) {
+        const bool physical = references_ == generation_references::physical;
+        try {
+            auto candidate = dirac_line_proposal(a, *vertices_model_, particles_, generated_diagrams, physical);
+            const char* name = "DiracLineCurrent";
+            if (!candidate) {
+                candidate = fermion_current_proposal(a, *vertices_model_, particles_, generated_diagrams, physical);
+                name = "ContractedDiracCurrents";
+            }
+            if (candidate) {
+                auto proposed = trees.canonical(*candidate);
+                if (work.verified(proposed)) {
+                    work.report.route = name;
+                    return publish(proposed);
+                }
+            }
+        } catch (const residue_unsupported&) {
+            // Try the ordinary residue fit if this representation exceeds the cut evaluator.
+        } catch (const residue_singular&) {
+            // A singular trial does not invalidate the diagram seed or the other continuations.
+        }
+    }
     if (products_.empty() && trees.has_pole(work.seed))
         throw residue_unsupported("a pole-bearing amplitude requires physical factorization channels");
     if (work.verified(work.seed)) {

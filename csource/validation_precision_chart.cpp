@@ -255,14 +255,7 @@ phase_point reconstruct(const validation::point& source, const std::vector<scala
         if (out.masses.back() < 0 || (source.masses[i] == 0) != (out.masses.back() == 0))
             throw std::invalid_argument("precision replay requires the same external mass shells");
     }
-    out.reference_seed = source.reference_seed;
-    out.color_seed = source.color_seed;
     out.momenta.resize(n, four{integer(0), integer(0), integer(0), integer(0)});
-    out.angles.resize(n);
-    out.squares.resize(n);
-    out.angle_basis.resize(n);
-    out.square_basis.resize(n);
-    out.scalar_products.assign(n * n, integer(0));
     random_draw gen{source.phase_seed};
     scalar threshold = out.masses[0] + out.masses[1];
     scalar final_mass = integer(0);
@@ -278,7 +271,26 @@ phase_point reconstruct(const validation::point& source, const std::vector<scala
         back_to_back(out, gen, 2, energy, -1);
     else
         rambo(out, gen, energy);
-    make_spinors(out, source.spin_seed);
+    return from_momenta(std::move(out.momenta), std::move(out.masses), source.spin_seed,
+                        source.reference_seed, source.color_seed);
+}
+
+phase_point from_momenta(std::vector<four> momenta, std::vector<scalar> masses, std::uint64_t spin_seed,
+                         std::uint64_t reference_seed, std::uint64_t color_seed) {
+    const auto n = masses.size();
+    if (n < 4 || n != momenta.size())
+        throw std::invalid_argument("invalid precise external momentum count");
+    phase_point out;
+    out.momenta = std::move(momenta);
+    out.masses = std::move(masses);
+    out.color_seed = color_seed;
+    out.reference_seed = reference_seed;
+    out.angles.resize(n);
+    out.squares.resize(n);
+    out.angle_basis.resize(n);
+    out.square_basis.resize(n);
+    out.scalar_products.assign(n * n, integer(0));
+    make_spinors(out, spin_seed);
     for (size_t i = 0; i < n; ++i) {
         out.scalar_products[i * n + i] = out.masses[i] * out.masses[i];
         for (size_t j = 0; j < i; ++j) {

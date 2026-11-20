@@ -33,6 +33,7 @@ public:
     std::optional<amp_expression> discarded_remainder() const;
     std::string str() const;
     std::size_t particle_count() const;
+    std::size_t complexity() const;
 private:
     friend class amplitude;
     friend std::uint32_t validation_detail::import_expression(Algebra&, const amp_expression&, bool);

@@ -99,6 +99,9 @@ struct MadGraphConfiguration {
   unsigned preparation_timeout_seconds = 600;
   // Preserve ordinary validation builds; timing clients can request 1, 2 or 3.
   int optimization_level = 0;
+  // Independently compare the exported polarization-sum routine with the MG sum.
+  bool check_polarization_sum = false;
+  bool complete_polarization_sum = false;
 };
 
 struct MadGraphHelicityReport {
@@ -355,6 +358,10 @@ void validate_configuration(const Process& process, const MadGraphConfiguration&
     if (std::find(config.helicities.begin(), config.helicities.end(), zero) == config.helicities.end())
       throw std::invalid_argument("A symbolic zero helicity is absent from the exported family.");
   }
+  auto unique_helicities = config.helicities;
+  std::sort(unique_helicities.begin(), unique_helicities.end());
+  if (std::adjacent_find(unique_helicities.begin(), unique_helicities.end()) != unique_helicities.end())
+    throw std::invalid_argument("Repeated MadGraph helicity assignment.");
   for (const auto& row : config.helicities) {
     if (row.size() != count) throw std::invalid_argument("A MadGraph helicity row has the wrong length.");
     for (std::size_t leg = 0; leg < count; ++leg) {
@@ -500,10 +507,22 @@ inline int madgraph_helicity(int doubled, int spin2,
 // A certified colored process contracts its complete color basis coherently.
 // Existing colorless and user-written processes retain their ordinary amp.
 template <class Process>
+auto polarization_sum(Process& process, int) -> decltype(process.amp2()) {
+  return process.amp2();
+}
+template <class Process>
+ldouble polarization_sum(Process&, long) {
+  throw std::logic_error("The exported process has no polarization-summed amp2().");
+}
+
+template <class Process>
 auto squared_amplitude(Process& process, const typename Process::Spins& spins, int)
     -> decltype(process.color_spin_sum(spins)) { return process.color_spin_sum(spins); }
 template <class Process>
 auto squared_amplitude(Process& process, const typename Process::Spins& spins, long)
+    -> decltype(process.amp_squared(spins)) { return process.amp_squared(spins); }
+template <class Process>
+auto squared_amplitude(Process& process, const typename Process::Spins& spins, ...)
     -> decltype(std::norm(process.amp(spins))) { return std::norm(process.amp(spins)); }
 
 } // namespace madgraph_detail
@@ -564,7 +583,14 @@ MadGraphValidationReport validate_madgraph(
     const std::string library = output + "/libhepcat_madgraph.so";
 #endif
     madgraph_detail::Reference reference(library);
+    // All rows use the same seed, energy range and masses. Keep one accumulated
+    // reference number per point, avoiding a second evaluation of every MG spin.
+    const bool selected_sum = config.check_polarization_sum && !config.complete_polarization_sum;
+    if (config.check_polarization_sum && config.complete_polarization_sum && !reference.has_sum())
+      throw std::runtime_error("Rebuild the MadGraph reference with its exhaustive spin-sum interface.");
+    std::vector<ldouble> reference_totals(selected_sum ? options.points : 0, 0);
     for (const auto& helicities : config.helicities) {
+      std::size_t reference_index = 0;
       MadGraphHelicityReport row;
       row.helicities = helicities;
       row.expected_exact_zero = std::find(config.exact_zero_helicities.begin(),
@@ -596,12 +622,13 @@ MadGraphValidationReport validate_madgraph(
           return config.normalization * squared;
         },
         [&](const Momenta<Process::leg_count>& momenta) {
+          const auto index = reference_index++;
           std::vector<double> physical_momenta(4 * Process::leg_count);
           for (std::size_t slot = 0; slot < Process::leg_count; ++slot)
             for (std::size_t component = 0; component < 4; ++component)
               physical_momenta[4 * slot + component] = static_cast<double>(momenta[config.leg_order[slot]][component]);
           auto spins = base_spins;
-          return config.normalization * madgraph_detail::sum_massive_spins(
+          const auto sector = config.normalization * madgraph_detail::sum_massive_spins(
             process, config, spins, 0, [&](const typename Process::Spins& state) {
               std::vector<int> reference_helicities(Process::leg_count);
               for (std::size_t slot = 0; slot < Process::leg_count; ++slot) {
@@ -612,8 +639,49 @@ MadGraphValidationReport validate_madgraph(
               }
               return static_cast<ldouble>(reference.evaluate(physical_momenta, reference_helicities));
             });
+          if (selected_sum) reference_totals.at(index) += sector;
+          return sector;
         }, comparison, progress);
       result.rows.push_back(row);
+    }
+    if (config.check_polarization_sum) {
+      MadGraphHelicityReport summed;
+      summed.expected_exact_zero = std::all_of(result.rows.begin(), result.rows.end(),
+        [](const MadGraphHelicityReport& row) { return row.expected_exact_zero; });
+      ValidationOptions sum_options = options;
+      if (summed.expected_exact_zero) {
+        summed.zero_absolute_tolerance = options.zero_absolute_tolerance;
+        sum_options.absolute_tolerance = options.zero_absolute_tolerance;
+        sum_options.relative_tolerance = 0;
+      }
+      std::size_t index = 0;
+      if (std::any_of(result.rows.begin(), result.rows.end(), [&](const MadGraphHelicityReport& row) {
+            return row.report.compared_points != options.points;
+          })) {
+        summed.report = failed_validation(options, "A MadGraph helicity sum has missing input points.");
+      } else {
+        summed.report = compare_squared_amplitudes<Process::leg_count>(
+          process.masses(), Process::incoming_legs(),
+          [&](const Momenta<Process::leg_count>& point) {
+            process.set_momenta(point);
+            const auto value = madgraph_detail::polarization_sum(process, 0);
+            if (summed.expected_exact_zero && value != 0)
+              throw std::runtime_error("An exported symbolic zero has a nonzero polarization sum.");
+            return value;
+          },
+          [&](const Momenta<Process::leg_count>& point) {
+            if (selected_sum) return reference_totals.at(index++);
+            // MadGraph supplies its own exhaustive NHEL table, independently
+            // of both the exported process and the list of validation rows.
+            std::vector<double> momenta(4 * Process::leg_count);
+            for (std::size_t slot=0; slot<Process::leg_count; ++slot)
+              for (std::size_t mu=0; mu<4; ++mu)
+                momenta[4*slot+mu]=static_cast<double>(point[config.leg_order[slot]][mu]);
+            return config.normalization * static_cast<ldouble>(reference.evaluate_sum(momenta));
+          },
+          sum_options, progress);
+      }
+      result.rows.push_back(summed);
     }
     result.passed = !result.rows.empty();
     bool errors = false;
@@ -622,7 +690,9 @@ MadGraphValidationReport validate_madgraph(
       errors = errors || row.report.status == "ERROR";
     }
     result.status = result.passed ? "PASS" : (errors ? "ERROR" : "FAIL");
-    result.message = result.passed ? "Every requested massless-helicity comparison agrees."
+    result.message = result.passed ? (config.check_polarization_sum ?
+      "Every requested helicity and the polarization sum agree." :
+      "Every requested massless-helicity comparison agrees.")
       : "At least one requested helicity comparison did not pass; inspect its first failing point.";
   } catch (const std::exception& error) {
     result.status = "ERROR";
@@ -640,7 +710,7 @@ inline void print_madgraph_validation_report(std::ostream& out, const MadGraphVa
   out << "MadGraph helicity validation: " << report.status << '\n'
       << "Seed: " << report.seed << '\n' << report.message << '\n';
   for (const auto& row : report.rows) {
-    out << "  Helicity";
+    out << (row.helicities.empty() ? "  Polarization sum" : "  Helicity");
     for (int h : row.helicities) out << ' ' << h;
     out << ": " << row.report.status << "; " << row.report.compared_points
         << '/' << row.report.requested_points << " points; max relative error "
@@ -673,7 +743,8 @@ inline void write_madgraph_validation_report_json(
     if (index) out << ',';
     const auto& row = report.rows[index];
     const auto& value = row.report;
-    out << "{\"Helicities\":[";
+    out << "{\"Kind\":" << json_string(row.helicities.empty() ? "PolarizationSum" : "FixedHelicity")
+        << ",\"Helicities\":[";
     for (std::size_t leg = 0; leg < row.helicities.size(); ++leg) {
       if (leg) out << ',';
       out << row.helicities[leg];

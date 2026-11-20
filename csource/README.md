@@ -18,6 +18,67 @@ int main() {
 
 Here the numerator shell is $(p_1+p_3)^2=m_e^2$. Since $p_1^2=m_e^2$ and $p_3^2=0$, the reduced dot product is zero. Its off-cut remainder is `MomProd[1,3]`. Omit the third constructor argument to use external masses and momentum conservation alone. The optional C interface is in [hepcat.h](hepcat.h), with a runnable short example in [c_api_test.c](c_api_test.c).
 
+## Construct an amplitude in C++
+
+From the repository root, build the native executable and list the QED examples.
+
+```sh
+cmake -S csource -B tests/results/native-reduce-build -DCMAKE_BUILD_TYPE=Release
+cmake --build tests/results/native-reduce-build --parallel
+tests/results/native-reduce-build/hepcat-qed --list
+```
+
+The C++ equivalent of the notebook's construction call returns the reduced, mass-tagged expression. An optional third model supplies independently generated off-shell Feynman diagrams.
+
+```cpp
+#include "amplitude.hpp"
+#include <iostream>
+
+int main() {
+    hepcat::model vertices("models", 3), channels("models", 4);
+    hepcat::model feynman("tests/reference-models/calchep", 2);
+    hepcat::amplitude amp({"e", "E", "A.+", "A.+", "A.-"}, vertices, channels, feynman);
+    hepcat::construct_options options;
+    options.progress = [](const std::string& stage) { std::cout << stage << '\n'; };
+    const auto& result = amp.construct(options);
+    std::cout << result.str() << "\nComplexity " << result.complexity() << '\n';
+    for (const auto& [stage, seconds] : amp.last_construction().seconds)
+        std::cout << stage << "  " << seconds << " s\n";
+}
+```
+
+The call generates and reduces the tree diagrams and factorization products, completes the residues and fixed-angle high-energy behavior, reduces the final expression and validates it. It publishes the result once all required checks pass. A failed check throws `construction_validation_error` with its report. A previously successful result remains available after a failed attempt. Physical poles are the default. To reproduce the QED spurious-pole construction, use factorization model 5 and set `options.pole_preference = hepcat::generation_references::cyclic`.
+
+### Run the QED examples and external comparisons
+
+The [C++ QED example](../tests/QED-6-point-construction.cpp) covers the notebook's helicity families through six external legs, the seven-leg all-positive example, and the separate all-positive formula study. From the HEPCAT repository root, run one complete family with
+
+```sh
+tests/results/native-reduce-build/hepcat-qed --family eeAA --preference physical --skip-formulas \
+  --spinas ../spinas --calchep ../CalcHEP/calchep_3.9.2 --madgraph ../MadGraph
+```
+
+Point `--calchep` to the CalcHEP installation containing `include` and `lib`. If MadGraph uses a particular Python installation, pass its interpreter with `--python`. Remove the family, preference and formula filters to run the full study. Use `--construct-only` to run the built-in and signed comparisons alone. Each run gets its own directory under `tests/results/spinas-output/native-qed`. The driver prints the exact path. Its `construction.tsv` contains the automatic and reference scores, and each family's `checks.txt` records individual checks. The driver constructs from elementary vertices and lower-point amplitudes. It reads the stored same-multiplicity expression separately to test the signed answer. If the notebook has a shorter worked form, the driver validates that form too and records which one it exports. A fixed seed, for example `--seed 9123`, reproduces a run.
+
+The native writer currently supports color-singlet external particles. For another such process, supply its helicity components and the zero-based incoming leg positions to `write_spinas_process`. Set the model and installation paths for each generator in `external_options`, call `write_external_project`, then `validate_external_project`. These C++ APIs are declared in [spinas_export.hpp](spinas_export.hpp) and [external_export.hpp](external_export.hpp). CalcHEP tests the polarization sum. MadGraph tests each labeled massless helicity with massive spins summed, and checks the complete rate independently against the exported spin sum. For spurious-pole expressions with identical massless bosons, the generated squared-rate routine estimates cancellation and can choose a better-conditioned, Bose-equivalent ordering. The complex polarized amplitude keeps the original ordering and phase convention for use in spin correlations. Widths are disabled during comparisons. The external checks default to 10,000 common phase-space points per family and engine. The seven-point example fixes every photon helicity, so its external comparison uses polarized MadGraph.
+
+For event generation, enter a generated family's `spinas` directory and run `cmake --build build`. This builds the Monte Carlo targets as well as the validators. For an installed SPINAS library with no precision setting in its CMake cache, first configure the generated project with `cmake -S . -B build -DSPINAS_PRECISION=DOUBLE` or `LONG_DOUBLE` to match its ABI. For the two-photon example, launch CalcHEP with `(cd build/results && ./n_calchep)` or MadEvent with `(cd build/PROC_eeAA && ./bin/madevent)`. Type `generate_events` at the MadEvent prompt. Each integration uses the exported HEPCAT amplitude through SPINAS. Its independent validator uses the external generator's own matrix element.
+
+### QED reference run
+
+Both pole preferences met the notebook complexity bound in every one of the 42 constructions. All 42 used the automatically constructed expression. Each passed the physical residues, spurious-pole, high-energy and reference checks, and 10,000 signed comparisons with both the Feynman sum and the notebook reference. The scores below count expanded numerator terms and momentum insertions with the same weights as Mathematica's `SpinorExpressionComplexity`.
+
+| Process and pole choice | C++ | Mathematica reference |
+| --- | ---: | ---: |
+| Electron pair and three photons, mixed, physical | 71 | 71 |
+| Electron pair and three photons, mixed, spurious | 86 | 94 |
+| Electron pair and four photons, two of each helicity, physical | 1,662 | 2,238 |
+| Electron pair and four photons, two of each helicity, spurious | 1,044 | 1,044 |
+| Four fermions and two opposite-helicity photons, physical | 1,600 | 2,576 |
+| Electron pair and five positive-helicity photons, spurious | 920 | 1,160 |
+
+The independent numerical exports passed 140,000 CalcHEP summed comparisons and 900,000 MadGraph helicity and sum comparisons. Each reported row used 10,000 phase-space points. The separate fixed-helicity formula study extends through eight photons. Two native-precision outliers there agreed with MadGraph to within `1.2e-14` after 160-bit replay of the on-shell kinematics. The QED driver keeps raw discrepancies and the replay results.
+
 ## Generate from HEPCAT model files
 
 A native program can start with particle names. Read each model once and reuse it across processes. The QED vertex model is number 3 and its physical-pole factorization model is number 4. Use models 1 and 2 for the corresponding SM pair.

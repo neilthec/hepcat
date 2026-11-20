@@ -5,8 +5,10 @@
 #include "validation.hpp"
 
 #include <cstddef>
+#include <functional>
 #include <optional>
 #include <string>
+#include <stdexcept>
 #include <vector>
 #include <utility>
 
@@ -15,6 +17,7 @@ namespace hepcat {
 struct factorization_options {
     std::size_t workers = 0;
     std::vector<std::string> correction_basis;
+    bool try_grouped_currents = false;
 };
 
 struct factorization_report {
@@ -48,7 +51,32 @@ struct high_energy_report {
     std::string route;
 };
 
-enum class generation_references { automatic, keep, physical };
+enum class generation_references { automatic, keep, physical, cyclic };
+
+struct construct_options {
+    std::size_t workers = 0;
+    // With no override, construct honors an explicit constructor policy.
+    // A new amplitude with automatic references starts with physical poles.
+    std::optional<generation_references> pole_preference;
+    factorization_options factorization;
+    high_energy_options high_energy;
+    validation_options validation;
+    std::optional<amp_expression> reference_amplitude;
+    // Called on the calling thread, at stage boundaries.
+    std::function<void(const std::string& stage)> progress;
+};
+
+struct construction_report {
+    std::vector<std::pair<std::string, double>> seconds;
+    double total_seconds = 0;
+    validation_report validation;
+};
+
+class construction_validation_error : public std::runtime_error {
+public:
+    explicit construction_validation_error(validation_report checks);
+    validation_report report;
+};
 
 struct amplitude_item {
     std::vector<numerator_shell> shells;
@@ -59,7 +87,7 @@ private:
     amplitude_item(const std::string& input, const std::vector<std::string>& masses,
                    std::vector<numerator_shell> conditions);
     std::size_t input_size_;
-    bool reduced_ = false;
+    bool reduced_ = false, generated_ = false;
 };
 
 // One process in all-incoming leg order. Each entry owns its algebra and its
@@ -107,6 +135,10 @@ public:
 
     // The externally reduced expression from the last successful high-energy completion.
     const amp_expression& final_amplitude() const;
+    // Publish only when generation, both completions and independent checks succeed.
+    const amp_expression& construct(const construct_options& options = {});
+    const construction_report& last_construction() const;
+    validation_report validate_against(const amp_expression& reference, const validation_options& options = {});
     validation_report validate(const validation_options& options = {});
     validation_report validate(const amp_expression& candidate, const validation_options& options = {});
 
@@ -125,7 +157,7 @@ public:
 
 private:
     validation_report validate_impl(amp_expression candidate, const amp_expression* original,
-                                    const validation_options&);
+                                    const validation_options&, const amp_expression* reference = nullptr);
     amplitude& generate_rows(bool diagrams, bool products, bool feynman, std::size_t workers);
     void bind_model_parameters(Algebra&, std::uint32_t seed, high_energy_options&, bool include_targets = false) const;
     std::vector<std::string> masses_, particles_;
@@ -138,6 +170,7 @@ private:
     factorization_report report_;
     std::optional<amp_expression> high_energy_result_, before_final_reduction_;
     high_energy_report high_energy_report_;
+    std::optional<construction_report> construction_;
 };
 
 } // namespace hepcat

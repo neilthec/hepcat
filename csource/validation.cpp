@@ -98,7 +98,7 @@ real mass_value(const Algebra& a, Id mass, const parameters& values) {
     return val.real();
 }
 
-enum class comparison { finite, reduction, reference, feynman };
+enum class comparison { finite, reduction, reference, feynman, reference_amplitude };
 struct probe {
     comparison type;
     std::string kind;
@@ -127,8 +127,15 @@ validation_report amplitude::validate(const amp_expression& candidate, const val
     return validate_impl(candidate, nullptr, options);
 }
 
+validation_report amplitude::validate_against(const amp_expression& reference, const validation_options& options) {
+    auto settings = options;
+    if (!settings.energy_bound) settings.energy_bound = last_high_energy().bound;
+    return validate_impl(final_amplitude(), before_final_reduction_ ? &*before_final_reduction_ : nullptr,
+                         settings, &reference);
+}
+
 validation_report amplitude::validate_impl(amp_expression candidate, const amp_expression* original,
-                                           const validation_options& options) {
+                                           const validation_options& options, const amp_expression* reference) {
     if (options.points < 10000)
         throw std::invalid_argument("validation requires at least 10000 phase-space points");
     if (!std::isfinite(options.relative_tolerance) || !std::isfinite(options.absolute_tolerance) ||
@@ -218,6 +225,12 @@ validation_report amplitude::validate_impl(amp_expression candidate, const amp_e
             replay_mass_error = e.what();
         }
         const expression_evaluator current(tree, root, values, colors, &exact_values);
+        if (reference) {
+            if (reference->import_masses(tree) != masses)
+                throw std::invalid_argument("reference amplitude has different external masses");
+            probes.push_back({comparison::reference_amplitude, "ReferenceAmplitude",
+                              expression_evaluator(tree, reference->import_into(tree), values, colors, &exact_values)});
+        }
         if (before && *before != root)
             probes.push_back({comparison::reduction, "FinalReduction",
                               expression_evaluator(tree, *before, values, colors, &exact_values)});

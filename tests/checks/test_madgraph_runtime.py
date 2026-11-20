@@ -119,6 +119,8 @@ struct Process {
   using Parameters = std::array<cdouble, 1>;
   Parameters parameters = {{cdouble(1, 0)}};
   int phase_mode = 0;
+  ldouble probability_sum = 2;
+  ldouble amp2() const { return probability_sum; }
   std::array<ldouble, 4> external_masses = {{1, 1, 0, 0}};
 
   const Parameters& get_parameters() const { return parameters; }
@@ -252,6 +254,15 @@ int main(int argc, char** argv) {
   if (mode == "legacy_width_roles") config.width_parameter_indices = {0};
 
   Process process;
+  if (mode == "all_summed" || mode == "bad_summed" || mode == "selected_summed") {
+    config.check_polarization_sum = true;
+    config.complete_polarization_sum = mode != "selected_summed";
+    if (mode == "bad_summed") process.probability_sum *= 1.5L;
+    if (mode == "selected_summed") {
+      config.helicities.resize(1);
+      process.probability_sum = 0.5L;
+    }
+  }
   if (mode == "global_phase") process.phase_mode = 1;
   if (mode == "helicity_phases") process.phase_mode = 2;
   if (mode == "helicity_sensitive") process.phase_mode = 3;
@@ -378,6 +389,26 @@ class MadGraphRuntimeTests(unittest.TestCase):
         for row in report["Rows"]:
             self.assertEqual(row["ComparedPoints"], 7)
             self.assertEqual(row["MaximumRelativeError"], 0)
+
+    def test_each_massless_assignment_and_the_exhaustive_sum(self):
+        report = self.run_case("all_summed")
+        self.assertTrue(report["Passed"])
+        self.assertEqual([row["Kind"] for row in report["Rows"]],
+                         ["FixedHelicity"] * 4 + ["PolarizationSum"])
+        self.assertEqual(report["Rows"][-1]["ComparedPoints"], 7)
+        bad = self.run_case("bad_summed")
+        self.assertFalse(bad["Passed"])
+        self.assertTrue(all(row["Passed"] for row in bad["Rows"][:-1]))
+        summed = bad["Rows"][-1]
+        self.assertEqual(summed["Mismatches"], 7)
+        self.assertEqual(summed["FirstFailure"]["HEPCATValue"], 3)
+        self.assertEqual(summed["FirstFailure"]["MadGraphValue"], 2)
+
+    def test_partial_family_compares_the_requested_helicity_sum(self):
+        report = self.run_case("selected_summed")
+        self.assertTrue(report["Passed"])
+        self.assertEqual(len(report["Rows"]), 2)
+        self.assertEqual(report["Rows"][-1]["ComparedPoints"], 7)
 
     def test_unphysical_amplitude_phases_do_not_change_validation(self):
         # Independent external-state conventions may change an amplitude phase.

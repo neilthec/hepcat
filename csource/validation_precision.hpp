@@ -114,5 +114,8 @@ struct phase_point {
     std::uint64_t reference_seed = 0, color_seed = 0;
     vector reference(std::uint64_t label, bool angle) const;
 };
+// Build Weyl spinors and scalar products for already conserved, on-shell all-incoming momenta.
+phase_point from_momenta(std::vector<four> momenta, std::vector<scalar> masses, std::uint64_t spin_seed,
+                         std::uint64_t reference_seed = 0, std::uint64_t color_seed = 0);
 phase_point reconstruct(const point &, const std::vector<scalar> &masses = {});
 } // namespace hepcat::validation::precision

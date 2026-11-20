@@ -359,6 +359,7 @@ const amp_expression& amplitude::complete_high_energy(const amp_expression& expr
         work.report.nodes_after_final_reduction = result.arena_->cost(result.root_);
         before_final_reduction_ = std::move(original);
         if (unchanged) work.report.route = unchanged;
+        construction_.reset();
         high_energy_result_ = std::move(result);
         high_energy_report_ = std::move(work.report);
         return *high_energy_result_;

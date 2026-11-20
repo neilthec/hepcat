@@ -64,6 +64,7 @@ amplitude& amplitude::set_feynman_model(model rules) {
             throw std::invalid_argument("incompatible Feynman particle definition for " + name);
     }
     feynman_model_ = std::move(rules);
+    construction_.reset();
     feynman_rows_.clear();
     feynman_generated_ = false;
     return *this;
@@ -156,6 +157,7 @@ amplitude& amplitude::generate_rows(bool diagrams, bool products, bool feynman, 
                 else
                     item.expression.reduce_from(tree, root);
                 item.reduced_ = true;
+                item.generated_ = true;
                 generated[i] = std::move(item);
             } catch (const std::exception& e) {
                 const auto label = channel ? "factorization channel " : (m.is_feynman() ? "Feynman diagram " : "diagram ");
@@ -174,6 +176,7 @@ amplitude& amplitude::generate_rows(bool diagrams, bool products, bool feynman, 
         auto& rows = i < dp.size() ? diagrams_ : (i < first_feynman ? products_ : feynman_rows_);
         rows.push_back(std::move(*generated[i]));
     }
+    construction_.reset();
     diagrams_generated_ |= diagrams;
     channels_generated_ |= products;
     feynman_generated_ |= feynman;

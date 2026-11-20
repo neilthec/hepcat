@@ -225,7 +225,7 @@ int main(int argc, char** argv) {
       const std::string value(argv[i]);
       if (key == "--photons") {
         const auto count = unsigned_value(value);
-        if (count < 6 || count > 8) throw std::invalid_argument("Select N=6, 7 or 8 photons.");
+        if (count < 3 || count > 8) throw std::invalid_argument("Select 3 through 8 photons.");
         options.photons = static_cast<unsigned>(count);
       }
       else if (key == "--points") options.points = unsigned_value(value);
@@ -249,10 +249,13 @@ int main(int argc, char** argv) {
       throw std::invalid_argument("Select a reference, positive mass and point count, and finite inputs.");
     std::cout << "Seed: " << options.seed << '\n';
     switch (options.photons) {
+      case 3: return validate<3>(options);
+      case 4: return validate<4>(options);
+      case 5: return validate<5>(options);
       case 6: return validate<6>(options);
       case 7: return validate<7>(options);
       case 8: return validate<8>(options);
-      default: throw std::invalid_argument("This driver tests N=6, 7 or 8 photons.");
+      default: throw std::invalid_argument("This driver tests 3 through 8 photons.");
     }
   } catch (const std::exception& error) {
     std::cerr << "Validation error: " << error.what() << '\n';
