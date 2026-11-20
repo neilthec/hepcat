@@ -142,7 +142,16 @@ To run just the seven-point calculations, use the following command. The default
 tests/results/native-reduce-build/hepcat-qed --legs 7
 ```
 
-Use `--legs 7 --list` for the three families and their 12 representatives. For a single construction, try `--family eeeeAAA --helicity ++- --construct-only`. A blank threshold in `construction.tsv` means the process has no prior complexity benchmark. Its measured complexity and validation results are recorded separately. The `--publication` selection still runs the cases with published expressions.
+Use `--legs 7 --list` to see the three families and their 12 representatives. For a single construction, try `--family eeeeAAA --helicity ++- --construct-only`. The [seven-point measurements](../tests/benchmarks/qed-seven-point.tsv) give the weighted complexity, the automatic and shortest validated leaf counts, diagram and channel counts, and signed Feynman comparisons for each pole preference. Each run writes the formulas in plain text, LaTeX, Mathematica and native form. The size targets in the example are regression checks. Construction uses the cubic vertices and lower-point products. Select `--publication` to compare the earlier published cases against their signed formulas.
+
+The five-photon line also admits a check against the independent [one-negative-photon formula](../tests/benchmarks/one-minus/README.md). Its spurious-pole form and the parity-conjugate construction each agreed on 32 exact external-kinematic samples. The [two-pair all-positive formula](../tests/benchmarks/four-fermion-all-plus/README.md) gives a separate 32-sample signed check for four fermions and three positive photons. The expressions can be shorter when written in terms of recursively defined currents. The table measures the full HEPCAT expression returned by the constructor.
+
+After both helicity partners have been constructed, a [worked C++ derivation](../tests/benchmarks/qed-helicity-partners.cpp) can search for a shorter way to print either partner. It exchanges angle and square brackets, relabels the photons and checks the overall sign against the target. For each improvement it runs 32 fresh exact signed comparisons, the built-in checks and 100,000 signed comparisons with independent Feynman diagrams. The formulas and measured sizes are saved in the family's `parity-alternatives` directory. Six seven-point expressions became shorter this way at the same weighted score. The physical five-photon `++++-` expression fell from 7,192 to 6,871 leaves and the spurious four-fermion `+--` expression from 56,798 to 56,110. For example, set `run_dir` to the output directory printed by the constructor and run
+
+```sh
+cmake --build tests/results/native-reduce-build --target hepcat-qed-helicity-partners
+tests/results/native-reduce-build/hepcat-qed-helicity-partners "$run_dir/physical/eeAAAAA"
+```
 
 If native reference arithmetic misses the tolerance, the external validators can replay the same phase-space points with 113-bit arithmetic. CalcHEP replays every saved outlier and checks the original binary64 values. MadGraph rebuilds its generated matrix and HELAS routines, then repeats every requested helicity and the polarization sum. The reports keep the original discrepancies and identify the precision used for the final comparison. The CalcHEP replay requires GCC and libquadmath. The MadGraph replay requires GNU Fortran with binary128 support.
 

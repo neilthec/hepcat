@@ -31,6 +31,10 @@ add_executable(hepcat-qed ../tests/QED-6-point-construction.cpp)
 target_include_directories(hepcat-qed SYSTEM PRIVATE ${GMP_INCLUDE_DIR})
 target_link_libraries(hepcat-qed PRIVATE hepcat_reduce)
 
+add_executable(hepcat-qed-helicity-partners EXCLUDE_FROM_ALL ../tests/benchmarks/qed-helicity-partners.cpp)
+target_include_directories(hepcat-qed-helicity-partners SYSTEM PRIVATE ${GMP_INCLUDE_DIR})
+target_link_libraries(hepcat-qed-helicity-partners PRIVATE hepcat_reduce)
+
 add_executable(hepcat-sm-four-point ../tests/SM-4-point-construction.cpp)
 target_link_libraries(hepcat-sm-four-point PRIVATE hepcat_reduce)
 
