@@ -78,7 +78,7 @@ else()
 endif()
 file(GENERATE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/madevent-link.json" CONTENT
   "{\n  \"Libraries\": [\"$<TARGET_FILE:${HEPCAT_PROCESS}_madevent_matrix>\", \"$<TARGET_FILE:${HEPCAT_PROCESS}_process>\", \"${SPINAS_LIBRARY}\"],\n  \"SPINASStaticLibrary\": \"${HEPCAT_MADEVENT_SPINAS_STATIC}\",\n  \"SPINASIncludeDirectory\": \"${SPINAS_INCLUDE_DIR}\",\n  \"CXXRuntime\": \"${HEPCAT_MADEVENT_CXX_RUNTIME}\",\n  \"RuntimeLibraryDirectories\": [\"${HEPCAT_MADEVENT_RUNTIME_DIRECTORY}\"]\n}\n")
-if(HEPCAT_MADGRAPH)
+if(HEPCAT_MADGRAPH AND NOT HEPCAT_EXTERNAL_COLOR)
 # Prepare the movable native process during an ordinary build, without running events.
 # Repeated builds retain its existing cards and event runs.
 option(HEPCAT_PREPARE_MADEVENT "Prepare the native HEPCAT MadEvent process during the build" ON)

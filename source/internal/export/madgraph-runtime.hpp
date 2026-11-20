@@ -99,6 +99,8 @@ struct MadGraphConfiguration {
   unsigned preparation_timeout_seconds = 600;
   // Preserve ordinary validation builds; timing clients can request 1, 2 or 3.
   int optimization_level = 0;
+  // Preserve raw data and rerun genuine discrepancies at higher reference precision.
+  bool replay_binary128 = false;
   // Independently compare the exported polarization-sum routine with the MG sum.
   bool check_polarization_sum = false;
   bool complete_polarization_sum = false;
@@ -119,7 +121,11 @@ struct MadGraphValidationReport {
   std::vector<MadGraphHelicityReport> rows;
   std::string build_log;
   std::string reference_build_json;
+  std::string native_precision_report, precision_build_json, unprojected_precision_report;
+  double maximum_chart_change = 0;
 };
+
+inline void write_madgraph_validation_report_json(std::ostream&, const MadGraphValidationReport&);
 
 namespace madgraph_detail {
 
@@ -300,6 +306,12 @@ public:
     return answer;
   }
   bool has_sum() const { return evaluate_sum_ != nullptr; }
+  double maximum_chart_change() const {
+    typedef double (*ChartDelta)();
+    auto delta = reinterpret_cast<ChartDelta>(dlsym(handle_, "hepcat_mg_chart_delta"));
+    if (!delta) throw std::runtime_error("The MadGraph chart replay did not report its input correction.");
+    return delta();
+  }
   // Raw exhaustive |M|^2 sum; callers apply averages and symmetry factors once.
   double evaluate_sum(const std::vector<double>& momenta) const {
     if (!evaluate_sum_)
@@ -582,118 +594,164 @@ MadGraphValidationReport validate_madgraph(
 #else
     const std::string library = output + "/libhepcat_madgraph.so";
 #endif
-    madgraph_detail::Reference reference(library);
-    // All rows use the same seed, energy range and masses. Keep one accumulated
-    // reference number per point, avoiding a second evaluation of every MG spin.
-    const bool selected_sum = config.check_polarization_sum && !config.complete_polarization_sum;
-    if (config.check_polarization_sum && config.complete_polarization_sum && !reference.has_sum())
-      throw std::runtime_error("Rebuild the MadGraph reference with its exhaustive spin-sum interface.");
-    std::vector<ldouble> reference_totals(selected_sum ? options.points : 0, 0);
-    for (const auto& helicities : config.helicities) {
-      std::size_t reference_index = 0;
-      MadGraphHelicityReport row;
-      row.helicities = helicities;
-      row.expected_exact_zero = std::find(config.exact_zero_helicities.begin(),
-        config.exact_zero_helicities.end(), helicities) != config.exact_zero_helicities.end();
-      ValidationOptions comparison = options;
-      if (row.expected_exact_zero) {
-        row.zero_absolute_tolerance = options.zero_absolute_tolerance;
-        comparison.absolute_tolerance = row.zero_absolute_tolerance;
-        comparison.relative_tolerance = 0;
-      }
-      if (progress) {
-        *progress << "Checking doubled helicities:";
-        for (int helicity : helicities) *progress << ' ' << helicity;
-        *progress << " (massive spins summed)\n";
-      }
-      typename Process::Spins base_spins = {};
-      std::copy(helicities.begin(), helicities.end(), base_spins.begin());
-      row.report = compare_squared_amplitudes<Process::leg_count>(
-        process.masses(), Process::incoming_legs(),
-        [&](const Momenta<Process::leg_count>& momenta) {
-          process.set_momenta(momenta);
-          auto spins = base_spins;
-          const ldouble squared = madgraph_detail::sum_massive_spins(
-            process, config, spins, 0, [&](const typename Process::Spins& state) {
-              return madgraph_detail::squared_amplitude(process, state, 0);
-            });
-          if (row.expected_exact_zero && squared != 0)
-            throw std::runtime_error("An exported symbolic zero evaluated to a nonzero squared amplitude.");
-          return config.normalization * squared;
-        },
-        [&](const Momenta<Process::leg_count>& momenta) {
-          const auto index = reference_index++;
-          std::vector<double> physical_momenta(4 * Process::leg_count);
-          for (std::size_t slot = 0; slot < Process::leg_count; ++slot)
-            for (std::size_t component = 0; component < 4; ++component)
-              physical_momenta[4 * slot + component] = static_cast<double>(momenta[config.leg_order[slot]][component]);
-          auto spins = base_spins;
-          const auto sector = config.normalization * madgraph_detail::sum_massive_spins(
-            process, config, spins, 0, [&](const typename Process::Spins& state) {
-              std::vector<int> reference_helicities(Process::leg_count);
-              for (std::size_t slot = 0; slot < Process::leg_count; ++slot) {
-                const std::size_t leg = config.leg_order[slot];
-                reference_helicities[slot] = madgraph_detail::madgraph_helicity(
-                  state[leg], config.spin2[leg], slot < Process::incoming_legs().size(),
-                  process.masses()[leg] == 0);
-              }
-              return static_cast<ldouble>(reference.evaluate(physical_momenta, reference_helicities));
-            });
-          if (selected_sum) reference_totals.at(index) += sector;
-          return sector;
-        }, comparison, progress);
-      result.rows.push_back(row);
-    }
-    if (config.check_polarization_sum) {
-      MadGraphHelicityReport summed;
-      summed.expected_exact_zero = std::all_of(result.rows.begin(), result.rows.end(),
-        [](const MadGraphHelicityReport& row) { return row.expected_exact_zero; });
-      ValidationOptions sum_options = options;
-      if (summed.expected_exact_zero) {
-        summed.zero_absolute_tolerance = options.zero_absolute_tolerance;
-        sum_options.absolute_tolerance = options.zero_absolute_tolerance;
-        sum_options.relative_tolerance = 0;
-      }
-      std::size_t index = 0;
-      if (std::any_of(result.rows.begin(), result.rows.end(), [&](const MadGraphHelicityReport& row) {
-            return row.report.compared_points != options.points;
-          })) {
-        summed.report = failed_validation(options, "A MadGraph helicity sum has missing input points.");
-      } else {
-        summed.report = compare_squared_amplitudes<Process::leg_count>(
+    auto compare_reference = [&](const std::string& reference_library, bool chart_replay) {
+      auto previous_rows = std::move(result.rows);
+      result.rows.clear();
+      madgraph_detail::Reference reference(reference_library);
+      // All rows use the same seed, energy range and masses. Keep one accumulated
+      // reference number per point, avoiding a second evaluation of every MG spin.
+      const bool selected_sum = config.check_polarization_sum && !config.complete_polarization_sum;
+      if (config.check_polarization_sum && config.complete_polarization_sum && !reference.has_sum())
+        throw std::runtime_error("Rebuild the MadGraph reference with its exhaustive spin-sum interface.");
+      std::vector<ldouble> reference_totals(selected_sum ? options.points : 0, 0);
+      for (const auto& helicities : config.helicities) {
+        std::size_t reference_index = 0;
+        MadGraphHelicityReport row;
+        row.helicities = helicities;
+        row.expected_exact_zero = std::find(config.exact_zero_helicities.begin(),
+          config.exact_zero_helicities.end(), helicities) != config.exact_zero_helicities.end();
+        if (chart_replay && !row.expected_exact_zero) {
+          result.rows.push_back(previous_rows.at(result.rows.size()));
+          continue;
+        }
+        ValidationOptions comparison = options;
+        if (row.expected_exact_zero) {
+          row.zero_absolute_tolerance = options.zero_absolute_tolerance;
+          comparison.absolute_tolerance = row.zero_absolute_tolerance;
+          comparison.relative_tolerance = 0;
+        }
+        if (progress) {
+          *progress << "Checking doubled helicities:";
+          for (int helicity : helicities) *progress << ' ' << helicity;
+          *progress << " (massive spins summed)\n";
+        }
+        typename Process::Spins base_spins = {};
+        std::copy(helicities.begin(), helicities.end(), base_spins.begin());
+        row.report = compare_squared_amplitudes<Process::leg_count>(
           process.masses(), Process::incoming_legs(),
-          [&](const Momenta<Process::leg_count>& point) {
-            process.set_momenta(point);
-            const auto value = madgraph_detail::polarization_sum(process, 0);
-            if (summed.expected_exact_zero && value != 0)
-              throw std::runtime_error("An exported symbolic zero has a nonzero polarization sum.");
-            return value;
+          [&](const Momenta<Process::leg_count>& momenta) {
+            process.set_momenta(momenta);
+            auto spins = base_spins;
+            const ldouble squared = madgraph_detail::sum_massive_spins(
+              process, config, spins, 0, [&](const typename Process::Spins& state) {
+                return madgraph_detail::squared_amplitude(process, state, 0);
+              });
+            if (row.expected_exact_zero && squared != 0)
+              throw std::runtime_error("An exported symbolic zero evaluated to a nonzero squared amplitude.");
+            return config.normalization * squared;
           },
-          [&](const Momenta<Process::leg_count>& point) {
-            if (selected_sum) return reference_totals.at(index++);
-            // MadGraph supplies its own exhaustive NHEL table, independently
-            // of both the exported process and the list of validation rows.
-            std::vector<double> momenta(4 * Process::leg_count);
-            for (std::size_t slot=0; slot<Process::leg_count; ++slot)
-              for (std::size_t mu=0; mu<4; ++mu)
-                momenta[4*slot+mu]=static_cast<double>(point[config.leg_order[slot]][mu]);
-            return config.normalization * static_cast<ldouble>(reference.evaluate_sum(momenta));
-          },
-          sum_options, progress);
+          [&](const Momenta<Process::leg_count>& momenta) {
+            const auto index = reference_index++;
+            std::vector<double> physical_momenta(4 * Process::leg_count);
+            for (std::size_t slot = 0; slot < Process::leg_count; ++slot)
+              for (std::size_t component = 0; component < 4; ++component)
+                physical_momenta[4 * slot + component] = static_cast<double>(momenta[config.leg_order[slot]][component]);
+            auto spins = base_spins;
+            const auto sector = config.normalization * madgraph_detail::sum_massive_spins(
+              process, config, spins, 0, [&](const typename Process::Spins& state) {
+                std::vector<int> reference_helicities(Process::leg_count);
+                for (std::size_t slot = 0; slot < Process::leg_count; ++slot) {
+                  const std::size_t leg = config.leg_order[slot];
+                  reference_helicities[slot] = madgraph_detail::madgraph_helicity(
+                    state[leg], config.spin2[leg], slot < Process::incoming_legs().size(),
+                    process.masses()[leg] == 0);
+                }
+                return static_cast<ldouble>(reference.evaluate(physical_momenta, reference_helicities));
+              });
+            if (selected_sum) reference_totals.at(index) += sector;
+            return sector;
+          }, comparison, progress);
+        result.rows.push_back(row);
       }
-      result.rows.push_back(summed);
+      const bool all_zero = std::all_of(result.rows.begin(), result.rows.end(),
+          [](const MadGraphHelicityReport& row) { return row.expected_exact_zero; });
+      if (config.check_polarization_sum && chart_replay && !all_zero) {
+        result.rows.push_back(previous_rows.back());
+      } else if (config.check_polarization_sum) {
+        MadGraphHelicityReport summed;
+        summed.expected_exact_zero = all_zero;
+        ValidationOptions sum_options = options;
+        if (summed.expected_exact_zero) {
+          summed.zero_absolute_tolerance = options.zero_absolute_tolerance;
+          sum_options.absolute_tolerance = options.zero_absolute_tolerance;
+          sum_options.relative_tolerance = 0;
+        }
+        std::size_t index = 0;
+        if (std::any_of(result.rows.begin(), result.rows.end(), [&](const MadGraphHelicityReport& row) {
+              return row.report.compared_points != options.points;
+            })) {
+          summed.report = failed_validation(options, "A MadGraph helicity sum has missing input points.");
+        } else {
+          summed.report = compare_squared_amplitudes<Process::leg_count>(
+            process.masses(), Process::incoming_legs(),
+            [&](const Momenta<Process::leg_count>& point) {
+              process.set_momenta(point);
+              const auto value = madgraph_detail::polarization_sum(process, 0);
+              if (summed.expected_exact_zero && value != 0)
+                throw std::runtime_error("An exported symbolic zero has a nonzero polarization sum.");
+              return value;
+            },
+            [&](const Momenta<Process::leg_count>& point) {
+              if (selected_sum) return reference_totals.at(index++);
+              // MadGraph supplies its own exhaustive NHEL table, independently
+              // of both the exported process and the list of validation rows.
+              std::vector<double> momenta(4 * Process::leg_count);
+              for (std::size_t slot=0; slot<Process::leg_count; ++slot)
+                for (std::size_t mu=0; mu<4; ++mu)
+                  momenta[4*slot+mu]=static_cast<double>(point[config.leg_order[slot]][mu]);
+              return config.normalization * static_cast<ldouble>(reference.evaluate_sum(momenta));
+            },
+            sum_options, progress);
+        }
+        result.rows.push_back(summed);
+      }
+      result.passed = !result.rows.empty();
+      bool errors = false;
+      for (const auto& row : result.rows) {
+        result.passed = result.passed && row.report.passed;
+        errors = errors || row.report.status == "ERROR";
+      }
+      result.status = result.passed ? "PASS" : (errors ? "ERROR" : "FAIL");
+      if (chart_replay) result.maximum_chart_change = reference.maximum_chart_change();
+      result.message = result.passed ? (config.check_polarization_sum ?
+        "Every requested helicity and the polarization sum agree." :
+        "Every requested massless-helicity comparison agrees.")
+        : "At least one requested helicity comparison did not pass; inspect its first failing point.";
+    };
+    compare_reference(library, false);
+    if (config.replay_binary128 && result.status == "FAIL") {
+      std::ostringstream raw;
+      write_madgraph_validation_report_json(raw, result);
+      result.native_precision_report = raw.str();
+      const int replay = madgraph_detail::run_helper(
+          {config.python_executable, config.helper_path, "--config", configuration,
+           "--output", output, "--precision-replay"}, log, watchdog_budget);
+      result.precision_build_json = madgraph_detail::read_text(output + "/precision-result.json");
+      if (replay == 0) {
+        const auto basename = library.substr(library.find_last_of('/') + 1);
+        compare_reference(output + "/precision/" + basename, false);
+        result.message += " Replayed the same points, helicities and MadGraph sources with 113-bit arithmetic.";
+        const auto masses = process.masses();
+        if (result.status == "FAIL" && masses.size() == 4 &&
+            std::all_of(masses.begin(), masses.end(), [](ldouble m) { return m == 0; }) &&
+            std::all_of(result.rows.begin(), result.rows.end(), [](const MadGraphHelicityReport& row) {
+              return row.report.passed || (row.expected_exact_zero && row.report.evaluation_errors == 0);
+            })) {
+          std::ostringstream unprojected;
+          write_madgraph_validation_report_json(unprojected, result);
+          result.unprojected_precision_report = unprojected.str();
+          compare_reference(output + "/precision/chart_" + basename, true);
+          result.message += " For symbolic zero sectors, reconstructed the massless two-body COM chart "
+              "at 113 bits using the sampled beam energy and outgoing direction. All original comparisons "
+              "and the maximum relative momentum component correction are recorded.";
+        }
+      } else {
+        const auto replay_log = madgraph_detail::read_tail(log);
+        result.build_log += "\n[precision replay]\n" + replay_log;
+        result.message += " MadGraph binary128 replay was unavailable. " +
+            madgraph_detail::preparation_failure_message(replay_log, replay);
+      }
     }
-    result.passed = !result.rows.empty();
-    bool errors = false;
-    for (const auto& row : result.rows) {
-      result.passed = result.passed && row.report.passed;
-      errors = errors || row.report.status == "ERROR";
-    }
-    result.status = result.passed ? "PASS" : (errors ? "ERROR" : "FAIL");
-    result.message = result.passed ? (config.check_polarization_sum ?
-      "Every requested helicity and the polarization sum agree." :
-      "Every requested massless-helicity comparison agrees.")
-      : "At least one requested helicity comparison did not pass; inspect its first failing point.";
   } catch (const std::exception& error) {
     result.status = "ERROR";
     result.message = error.what();
@@ -789,7 +847,17 @@ inline void write_madgraph_validation_report_json(
     out << '}';
   }
   out << "],\"BuildLog\":" << json_string(report.build_log)
-      << ",\"ReferenceBuildJSON\":" << json_string(report.reference_build_json) << "}\n";
+      << ",\"ReferenceBuildJSON\":" << json_string(report.reference_build_json);
+  if (!report.native_precision_report.empty()) {
+    out << ",\"NativePrecisionComparison\":" << report.native_precision_report
+        << ",\"PrecisionBuildJSON\":" << json_string(report.precision_build_json);
+  }
+  if (!report.unprojected_precision_report.empty()) {
+    out << ",\"UnprojectedBinary128Comparison\":" << report.unprojected_precision_report
+        << ",\"MaximumChartComponentChangeOverBeamEnergy\":";
+    json_number(out, report.maximum_chart_change);
+  }
+  out << "}\n";
 }
 
 inline void print_madgraph_validation_report(const MadGraphValidationReport& report, std::ostream& out) {

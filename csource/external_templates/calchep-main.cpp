@@ -4,6 +4,8 @@
 #include "calchep-runtime.hpp"
 #endif
 #include <iostream>
+#include <fstream>
+#include <iomanip>
 
 int main(int argc, char **argv) {
   using namespace hepcat_spinas;
@@ -14,7 +16,24 @@ int main(int argc, char **argv) {
     }
     ValidationOptions defaults;
     defaults.points = native_export::default_points;
-    auto options = parse_validation_arguments(argc, argv, defaults);
+    std::vector<char *> common{argv[0]};
+    std::ofstream outliers;
+    for (int i = 1; i < argc; ++i) {
+      if (std::string(argv[i]) == "--outliers") {
+        if (++i == argc)
+          throw std::invalid_argument("Expected outlier CSV path.");
+        outliers.exceptions(std::ios::failbit | std::ios::badbit);
+        outliers.open(argv[i]);
+        outliers << "point,hepcat,calchep";
+        for (size_t leg = 0; leg < native_export::Process::leg_count; ++leg)
+          for (int component = 0; component < 4; ++component)
+            outliers << ",p" << leg + 1 << "_" << component;
+        outliers << '\n' << std::setprecision(std::numeric_limits<ldouble>::max_digits10);
+      } else
+        common.push_back(argv[i]);
+    }
+    auto options =
+        parse_validation_arguments(static_cast<int>(common.size()), common.data(), defaults);
     if (options.points < 10000)
       throw std::invalid_argument("At least 10000 points are required.");
 #ifdef HEPCAT_HAS_CALCHEP
@@ -44,18 +63,38 @@ int main(int argc, char **argv) {
                              native_export::independent_mass_names());
     const auto order = native_export::leg_order();
     check_calchep_masses(proc.masses(), reference.masses(), order);
+    size_t point_index = 0, retained = 0;
+    ldouble native = 0;
     auto report = compare_squared_amplitudes(
         proc.masses(), proc.incoming_legs(),
         [&](const native_export::Process::Momenta &point) {
+          ++point_index;
           proc.set_momenta(point);
-          return proc.amp2();
+          return native = proc.amp2();
         },
         [&](const native_export::Process::Momenta &point) {
-          return reference.squared_amplitude(
-              calchep_momenta_in_order(point, order));
+          const auto expected = reference.squared_amplitude(calchep_momenta_in_order(point, order));
+          if (outliers.is_open() &&
+              std::abs(native - expected) >
+                  options.absolute_tolerance +
+                      options.relative_tolerance *
+                          std::max(std::abs(native), ldouble(std::abs(expected)))) {
+            outliers << point_index << ',' << native << ',' << expected;
+            for (const auto &p : point)
+              for (auto x : p)
+                outliers << ',' << x;
+            outliers << '\n';
+            ++retained;
+          }
+          return expected;
         },
         options);
     print_validation_report(report, std::cout);
+    if (outliers.is_open())
+      outliers.close();
+    if (!report.passed && !report.evaluation_errors && report.compared_points == options.points &&
+        retained && retained == report.mismatches)
+      return 3; // every numerical outlier is available for replay
     return report.passed ? 0 : 1;
 #else
     throw std::runtime_error(

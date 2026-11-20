@@ -67,6 +67,45 @@ class BuilderTests(unittest.TestCase):
     def tearDown(self):
         self.temporary.cleanup()
 
+    def test_two_body_precision_chart_preserves_direction_and_rejects_off_shell_input(self):
+        try:
+            compiler = builder.find_compiler(None)
+        except builder.ValidationSetupError as error:
+            self.skipTest(str(error))
+        # Run the generated Fortran independently of a MadGraph installation.
+        probe = subprocess.run([compiler, "-x", "f95", "-fsyntax-only", "-"],
+                               input="real(kind=16) :: x\nend\n", text=True, capture_output=True)
+        if probe.returncode:
+            self.skipTest("Fortran binary128 is unavailable")
+        code = builder.massless_two_body_chart("") + """
+program test_chart
+  use hepcat_com_chart
+  implicit none
+  real(c_double) :: p(4,4)
+  real(kind=16) :: q(4,4)
+  p = 0
+  p(1,:) = 1
+  p(4,1) = 1
+  p(4,2) = -1
+  p(2:4,3) = [0.0_c_double,0.6_c_double,0.8_c_double]
+  p(2:4,4) = -p(2:4,3)
+  q = chart_point(p)
+  if (.not. all(ieee_is_finite(q))) stop 1
+  if (abs(q(1,3)**2-sum(q(2:4,3)**2)) > 8*epsilon(1.0_16)) stop 2
+  if (any(q(:,1)+q(:,2) /= q(:,3)+q(:,4))) stop 3
+  if (max_change <= 0 .or. max_change > 16*epsilon(1.0_c_double)) stop 4
+  if (abs(q(3,3)*p(4,3)-q(4,3)*p(3,3)) > 8*epsilon(1.0_16)) stop 5
+  p(1,3) = 1.0001_c_double
+  q = chart_point(p)
+  if (.not. all(ieee_is_nan(q))) stop 6
+end program
+"""
+        source = self.directory / "chart.f90"
+        source.write_text(code)
+        binary = self.directory / "chart"
+        subprocess.run([compiler, "-o", binary, source], cwd=self.directory, check=True)
+        subprocess.run([binary], cwd=self.directory, check=True)
+
     def test_reference_imports_do_not_write_python_caches(self):
         self.assertTrue(builder.sys.dont_write_bytecode)
 

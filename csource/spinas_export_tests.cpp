@@ -1,6 +1,7 @@
 // Optional output path retains the representative eeAA project for external integrations.
 #include "spinas_export.hpp"
 #include "reduce.hpp"
+#include "validation_color.hpp"
 #include <chrono>
 #include <fstream>
 #include <regex>
@@ -9,10 +10,46 @@
 
 using namespace hepcat;
 namespace fs = std::filesystem;
+namespace {
+void check_color_tensors() {
+    using namespace validation_detail;
+    Algebra a;
+    const std::vector<int> reps{3, -3, 8, 8};
+    auto network = [&](std::initializer_list<const char*> factors) {
+        std::vector<Id> ids;
+        for (auto text : factors)
+            ids.push_back(a.parse(text));
+        return color_network(a, reps, ids);
+    };
+    auto ab = network(
+        {"ColorGenerator[ColorIndex[1],k,ColorIndex[3]]", "ColorGenerator[k,ColorIndex[2],ColorIndex[4]]"});
+    auto ba = network(
+        {"ColorGenerator[ColorIndex[1],k,ColorIndex[4]]", "ColorGenerator[k,ColorIndex[2],ColorIndex[3]]"});
+    auto comm = network(
+        {"ColorStructure[ColorIndex[3],ColorIndex[4],c]", "ColorGenerator[ColorIndex[1],ColorIndex[2],c]"});
+    mpq_class norm = 0, interference = 0;
+    for (int i = 0; i < 3; ++i)
+        for (int j = 0; j < 3; ++j)
+            for (int x = 0; x < 8; ++x)
+                for (int y = 0; y < 8; ++y) {
+                    std::vector<int> colors{i, j, x, y};
+                    auto first = ab(colors), second = ba(colors);
+                    if (first - second != color_number(0, 1) * comm(colors))
+                        throw std::runtime_error("Incorrect SU(3) commutator");
+                    mpq_class metric(1, color_basis::metric(x) * color_basis::metric(y));
+                    norm += metric * (first.real() * first.real() + first.imag() * first.imag());
+                    interference += metric * (std::conj(first) * second).real();
+                }
+    // Tr(sum_ab T_b T_a T_a T_b) and Tr(sum_ab T_b T_a T_b T_a).
+    if (norm != mpq_class(16, 3) || interference != -mpq_class(2, 3))
+        throw std::runtime_error("Incorrect external SU(3) normalization or interference");
+}
+} // namespace
 int main(int argc, char** argv) {
     try {
         if (argc < 3 || argc > 4)
             throw std::invalid_argument("usage: test_spinas_export MODELS EXPORT_TEMPLATES [OUTPUT]");
+        check_color_tensors();
         model m(argv[1], 4);
         std::vector<spinas_component> family;
         std::vector<std::string> masses{m.particle("e").mass, m.particle("E").mass, "0", "0"};

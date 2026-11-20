@@ -282,10 +282,9 @@ void numerical_ch(const spinas_project &p, const model &m,
     for (const auto& row : p.helicities) selected_helicities.insert(row.at(i));
     int states = p.mass_defaults[i] > 0 ? p.spin2[i] + 1
                     : static_cast<int>(selected_helicities.size());
-    conf << "  c.legs.push_back({" << quote(bare(p.physical_particles.at(i)))
-         << ", " << p.pdgs[i] << ", " << p.spin2[i] << ", 1, "
-         << (charge(std::abs(p.pdgs[i]), o) == 0 ? "true" : "false") << ", "
-         << states << "});\n";
+    conf << "  c.legs.push_back({" << quote(bare(p.physical_particles.at(i))) << ", " << p.pdgs[i]
+         << ", " << p.spin2[i] << ", " << p.color_dimensions.at(i) << ", "
+         << (charge(std::abs(p.pdgs[i]), o) == 0 ? "true" : "false") << ", " << states << "});\n";
   }
   std::vector<int> slots;
   for (const auto &name : p.parameter_names) {
@@ -403,9 +402,57 @@ void check(const spinas_project &p, const external_options &o) {
 }
 } // namespace
 
+// The conventional SM UFO takes inverse alpha, G_F and M_Z. HEPCAT's SM
+// instead takes e, sin(theta_W) and M_W. Check both tree-level relations at
+// independently varied inputs before translating this parameter scheme.
+static std::map<std::string, double> madgraph_inputs(const model &m, const external_options &o) {
+  auto inputs = o.madgraph_parameter_rules;
+  auto selected = fs::path(o.madgraph_model).filename().string();
+  if (selected != "sm" && selected != "sm-full")
+    return inputs;
+  std::map<std::string, std::string> keys;
+  for (const auto *rows : {&m.variables(), &m.functions()})
+    for (const auto &p : *rows)
+      keys[p.name] = m.algebra().format(p.symbol);
+  for (auto name : {"EE", "SW", "MW", "MZ", "GF"})
+    if (!keys.count(name))
+      return inputs;
+  std::map<std::string, double> defaults;
+  for (const auto &point :
+       std::vector<validation::parameters>{{},
+                                           {{"EE", 0.29L}, {"SW", 0.41L}, {"MW", 77.L}},
+                                           {{"EE", 0.38L}, {"SW", 0.55L}, {"MW", 92.L}}}) {
+    auto v = validation::model_parameters(m, point);
+    auto get = [&](const char *key) { return v.at(keys.at(key)).real(); };
+    for (auto name : {"EE", "SW", "MW", "MZ", "GF"})
+      if (!v.count(keys[name]) || v.at(keys[name]).imag() != 0)
+        return inputs;
+    auto e = get("EE"), w = get("SW"), mw = get("MW"), mz = get("MZ"), gf = get("GF");
+    if (!(e > 0 && w > 0 && w < 1 && mw > 0 && mz > 0 && gf > 0) ||
+        std::abs(mz * std::sqrt(1 - w * w) / mw - 1) > 1e-12L ||
+        std::abs(gf * 4 * w * w * mw * mw * std::sqrt(2.L) / (e * e) - 1) > 1e-12L)
+      return inputs;
+    if (point.empty())
+      defaults = {{"aEWM1", 4 * std::acos(-1.L) / (e * e)}, {"Gf", gf}, {"MZ", mz}};
+  }
+  auto lower = [](std::string s) {
+    for (auto &c : s)
+      c = std::tolower(static_cast<unsigned char>(c));
+    return s;
+  };
+  for (const auto &entry : defaults) {
+    const auto key = lower(entry.first);
+    if (std::none_of(inputs.begin(), inputs.end(),
+                     [&](const auto &p) { return lower(p.first) == key; }))
+      inputs.insert(entry);
+  }
+  return inputs;
+}
+
 void write_external_project(const spinas_project &p, const model &m,
                             const external_options &o) {
   check(p, o);
+  const auto mg_inputs = madgraph_inputs(m, o);
   if (!fs::is_regular_file(p.directory / "CMakeLists.txt") ||
       !fs::is_regular_file(p.directory / "process.hpp"))
     throw std::invalid_argument(
@@ -417,6 +464,8 @@ void write_external_project(const spinas_project &p, const model &m,
           : o.template_directory;
   const auto ord = order(p);
   auto pdgs = reordered(p.pdgs, ord);
+  const bool colored = std::any_of(p.color_dimensions.begin(), p.color_dimensions.end(),
+                                   [](int d) { return d != 1; });
   std::vector<std::string> names, mass_names, massless;
   for (const auto &n : p.parameter_names)
     names.push_back(mapped(o.calchep_parameter_map, n));
@@ -462,27 +511,26 @@ void write_external_project(const spinas_project &p, const model &m,
     << lists(p.helicities) << ";}\n"
     << "}\n";
   std::ostringstream mg, js;
-  mg << "config.madgraph_directory = " << quote(abspath(o.madgraph_directory))
-     << ";\n"
+  mg << "config.madgraph_directory = " << quote(abspath(o.madgraph_directory)) << ";\n"
      << "config.model = " << quote(o.madgraph_model) << ";\n"
      << "config.python_executable = " << quote(o.python_executable) << ";\n"
      << "config.physical_pdgs = native_export::physical_pdgs();\n"
      << "config.spin2 = native_export::spin2();\nconfig.helicities = "
         "native_export::helicities();\n"
+     << "config.full_color = " << (colored ? "true" : "false") << ";\n"
+     << "config.color_representations = " << list(p.color_dimensions) << ";\n"
      << "config.allowed_particle_pdgs = native_export::allowed_pdgs();\n"
      << "config.leg_order = " << list(ord)
      << ";\nconfig.normalization = " << number(p.normalization) << ";\n"
      << "config.parameter_names = " << list(p.parameter_names) << ";\n"
-     << "config.exact_zero_helicities = " << lists(p.exact_zero_helicities)
-     << ";\n"
-     << "config.width_parameter_indices = " << list(p.width_parameters)
-     << ";\n";
+     << "config.exact_zero_helicities = " << lists(p.exact_zero_helicities) << ";\n"
+     << "config.width_parameter_indices = " << list(p.width_parameters) << ";\n";
   for (auto &[key, v] : p.mass_parameter_pdgs)
     mg << "config.mass_parameter_pdgs[" << quote(key) << "] = {" << std::abs(v)
        << "};\n";
   for (auto &[key, v] : o.madgraph_parameter_map)
     mg << "config.parameter_map[" << quote(key) << "] = " << quote(v) << ";\n";
-  for (auto &[key, v] : o.madgraph_parameter_rules)
+  for (auto &[key, v] : mg_inputs)
     mg << "config.parameter_rules[" << quote(key) << "] = " << number(v)
        << ";\n";
   std::vector<size_t> one = ord;
@@ -495,20 +543,17 @@ void write_external_project(const spinas_project &p, const model &m,
         "\"BuildDirectory\",\n  \"SessionDirectory\": "
      << quote("PROC_" + p.name) << ",\n  \"ProcessName\": " << quote(p.name)
      << ",\n  \"BridgeLinkFile\": \"build/madevent-link.json\""
-     << ",\n  \"PhysicalPDGs\": " << list(pdgs, true)
-     << ",\n  \"LegOrder\": " << list(one, true)
+     << ",\n  \"PhysicalPDGs\": " << list(pdgs, true) << ",\n  \"LegOrder\": " << list(one, true)
      << ",\n  \"AllowedParticlePDGs\": " << list(o.allowed_pdgs, true)
      << ",\n  \"Spin2\": " << list(p.spin2, true)
      << ",\n  \"HelicityConfigurations\": " << lists(p.helicities, true)
      << ",\n  \"Masses\": " << list(p.mass_defaults, true)
-     << ",\n  \"InitialSpinAverage\": "
-     << number(p.symmetry_factor / p.normalization)
+     << ",\n  \"InitialSpinAverage\": " << number(p.symmetry_factor / p.normalization)
      << ",\n  \"SymmetryFactor\": " << number(p.symmetry_factor)
      << ",\n  \"ParameterNames\": " << list(p.parameter_names, true)
      << ",\n  \"ParameterDefaults\": " << list(p.parameter_defaults, true)
      << ",\n  \"ParameterMap\": " << object(o.madgraph_parameter_map)
-     << ",\n  \"ParameterRules\": " << object(o.madgraph_parameter_rules)
-     << ",\n  \"MassParameterPDGs\": "
+     << ",\n  \"ParameterRules\": " << object(mg_inputs) << ",\n  \"MassParameterPDGs\": "
      << join(
             p.mass_parameter_pdgs,
             [](const auto &pair) {
@@ -517,12 +562,38 @@ void write_external_project(const spinas_project &p, const model &m,
             },
             "{", "}")
      << "\n}\n";
+  if (!o.calchep_directory.empty()) {
+    std::ostringstream replay;
+    replay << "{\n  \"Class\": " << quote(p.name)
+           << ",\n  \"Masses\": " << list(p.mass_defaults, true) << ",\n  \"IncomingLegs\": ["
+           << p.incoming[0] + 1 << "," << p.incoming[1] + 1 << "]"
+           << ",\n  \"ParameterOrder\": " << list(p.parameter_names, true)
+           << ",\n  \"ParameterDefaults\": "
+           << join(
+                  p.parameter_defaults, [](double v) { return "{\"Real\":" + number(v) + "}"; },
+                  "[", "]")
+           << ",\n  \"WidthIndices\": " << list(p.width_parameters, true)
+           << ",\n  \"CalcHEPValidation\": {\"Status\":\"AVAILABLE\",\"Supported\":"
+           << (p.complete_helicities ? "true" : "false") << ",\"PhysicalPDGs\":" << list(pdgs, true)
+           << ",\"LegOrder\":" << list(one, true)
+           << ",\"ParameterNames\":" << list(p.parameter_names, true)
+           << ",\"ParameterMap\":" << object(o.calchep_parameter_map)
+           << ",\"CalcHEPDirectory\":" << quote(abspath(o.calchep_directory))
+           << ",\"ModelDirectory\":" << quote(abspath(o.calchep_model_directory))
+           << ",\"ModelNumber\":" << o.calchep_model_number
+           << ",\"AllowedParticlePDGs\":" << list(o.allowed_pdgs, true)
+           << ",\"IndependentMassParameters\":" << list(mass_names, true) << "}}\n";
+    write(p.directory / "calchep-replay.json", replay.str());
+    copy_to(runtime / "calchep-precision.py", p.directory / "calchep-precision.py");
+  }
   write(p.directory / "external-model.hpp", h.str());
   write(p.directory / "madevent-config.json", js.str());
   write(p.directory / "madgraph-model.inc", mg.str());
   std::string numerical_status;
   if (!o.calchep_directory.empty()) {
     try {
+      if (colored)
+        throw std::invalid_argument("Colored event generation requires external color-flow tags.");
       numerical_ch(p, m, o, ord, model_bindings(m));
     } catch (const std::invalid_argument &error) {
       // Numerical integration requires editable model relations and charge
@@ -539,11 +610,10 @@ void write_external_project(const spinas_project &p, const model &m,
         "madevent-spinas.cpp", "backends.cmake"})
     copy_to(templates / name, p.directory / name);
   write(p.directory / "external.cmake",
-        "set(HEPCAT_CALCHEP_NUMERICAL_ERROR " + cmake_string(numerical_status) +
-            ")\n" + "set(HEPCAT_PROCESS " + p.name + ")\nset(HEPCAT_CALCHEP " +
-            cmake_string(abspath(o.calchep_directory)) +
-            ")\nset(HEPCAT_MADGRAPH " +
-            cmake_string(abspath(o.madgraph_directory)) +
+        "set(HEPCAT_CALCHEP_NUMERICAL_ERROR " + cmake_string(numerical_status) + ")\n" +
+            "set(HEPCAT_EXTERNAL_COLOR " + (colored ? "ON" : "OFF") + ")\nset(HEPCAT_PROCESS " +
+            p.name + ")\nset(HEPCAT_CALCHEP " + cmake_string(abspath(o.calchep_directory)) +
+            ")\nset(HEPCAT_MADGRAPH " + cmake_string(abspath(o.madgraph_directory)) +
             ")\nset(HEPCAT_PYTHON " + cmake_string(o.python_executable) +
             ")\ninclude(\"${CMAKE_CURRENT_LIST_DIR}/backends.cmake\")\n");
 }
@@ -635,12 +705,34 @@ external_report validate_external_project(const spinas_project &p,
     std::vector<std::string> args = {(build / exe).string(), "--points",
                                      std::to_string(o.points), "--seed",
                                      std::to_string(result.seed)};
-    if (!calc) {
+    if (calc) {
+      args.push_back("--outliers");
+      args.push_back((build / "calchep-outliers.csv").string());
+    } else {
       args.push_back("--report");
       args.push_back((build / "madgraph-comparison.json").string());
     }
     status = run_external_command(args, calc ? result.calchep_report
                                              : result.madgraph_report);
+    if (calc && status == 3) {
+      const auto job =
+          build / ("precision-" +
+                   std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+      auto replay_status = run_external_command(
+          {o.python_executable, (p.directory / "calchep-precision.py").string(),
+           p.directory.string(), "--require-captured-values", "--points-csv",
+           (build / "calchep-outliers.csv").string(), "--seed", std::to_string(result.seed),
+           "--output", job.string()},
+          build / "calchep-precision.log");
+      if (fs::is_regular_file(job / "precision-summary.json"))
+        fs::copy_file(job / "precision-summary.json", build / "calchep-precision.json",
+                      fs::copy_options::overwrite_existing);
+      std::ofstream log(result.calchep_report, std::ios::app);
+      log << "CalcHEP binary128 replay of every saved raw outlier: "
+          << (replay_status == 0 ? "PASS" : "FAIL") << "\n";
+      if (replay_status == 0)
+        status = 0;
+    }
   }
   return result;
 }

@@ -955,28 +955,143 @@ end subroutine
             **generation_metadata}
 
 
+
+def massless_two_body_chart(bridge):
+    """Reconstruct the COM phase-space point from its independent beam energy and scattering direction."""
+    module = """module hepcat_com_chart
+  use iso_c_binding
+  use, intrinsic :: ieee_arithmetic
+  implicit none
+  real(kind=16) :: max_change=0.0_16
+contains
+  function chart_point(p) result(q)
+    real(c_double), intent(in) :: p(4,4)
+    real(kind=16) :: q(4,4), direction(3), energy, length, change
+    energy = real(p(1,1),kind=16)
+    direction = real(p(2:4,3),kind=16)
+    length = norm2(direction)
+    if (energy <= 0.0_16 .or. length <= 0.0_16) then
+      q = ieee_value(energy,ieee_quiet_nan)
+      return
+    endif
+    q = 0.0_16
+    q(1,:) = energy
+    q(4,1) = energy
+    q(4,2) = -energy
+    q(2:4,3) = energy*(direction/length)
+    q(2:4,4) = -q(2:4,3)
+    change = maxval(abs(q-real(p,kind=16))) / energy
+    max_change = max(max_change,change)
+    if (change > 16.0_16*epsilon(1.0_c_double)) q = ieee_value(energy,ieee_quiet_nan)
+  end function
+  real(c_double) function hepcat_mg_chart_delta() bind(C)
+    hepcat_mg_chart_delta = real(max_change,c_double)
+  end function
+end module
+"""
+    return module + bridge.replace("  use iso_c_binding", "  use hepcat_com_chart").replace(
+        "real(p,kind=16),", "chart_point(p),")
+
+
+def build_precision_replay(data, output):
+    """Compile the existing MATRIX and its actual MODEL and HELAS archive members in binary128."""
+    native = json.loads((output / "result.json").read_text())
+    if native.get("Status") != "READY":
+        raise ValidationSetupError("A successful native reference is required for a precision replay.")
+    compiler = native["FortranCompiler"]
+    process = output / "process"
+    replay = output / "precision"
+    replay.mkdir()
+    log = replay / "build.log"
+    deadline = time.monotonic() + float(data.get("TimeConstraint", 600))
+    flags = ["-w", "-fPIC", "-ffixed-line-length-none", "-freal-8-real-16"]
+    archives = []
+    source_hashes = {}
+    ar = shutil.which("ar")
+    if not ar:
+        raise ValidationSetupError("An archiver is required for MadGraph precision replay.")
+    for library, directory in (("libmodel.a", "MODEL"), ("libdhelas.a", "DHELAS")):
+        source = process / "Source" / directory
+        members = subprocess.check_output([ar, "t", process / "lib" / library], text=True,
+                                          timeout=max(1, deadline - time.monotonic())).splitlines()
+        names = [member for member in members if member.endswith(".o")]
+        if not names or len(set(names)) != len(names):
+            raise ValidationSetupError("Incomplete generated Fortran archive " + library)
+        objects = []
+        for name in names:
+            if Path(name).name != name:
+                raise ValidationSetupError("Invalid generated Fortran object name.")
+            file = source / Path(name).with_suffix(".f")
+            obj = replay / (directory + "_" + name)
+            source_hashes[str(file.relative_to(process))] = hashlib.sha256(file.read_bytes()).hexdigest()
+            run_logged([compiler, *flags, "-c", "-o", obj, "-J" + str(replay), file], source, log, deadline)
+            objects.append(obj)
+        archive = replay / library
+        run_logged([ar, "rcs", archive, *objects], replay, log, deadline)
+        archives.append(archive)
+    matrices = list((process / "SubProcesses").glob("P*/matrix.f"))
+    if len(matrices) != 1:
+        raise ValidationSetupError("Expected one standalone matrix for precision replay.")
+    matrix = matrices[0]
+    source_hashes[str(matrix.relative_to(process))] = hashlib.sha256(matrix.read_bytes()).hexdigest()
+    obj = replay / "matrix.o"
+    run_logged([compiler, *flags, "-c", "-o", obj, matrix], matrix.parent, log, deadline)
+    # Retain the C ABI and original binary64 point. Promote explicitly at the
+    # boundary. The exact same card, helicity enumeration and normalization apply.
+    bridge = (output / "madgraph_bridge.f90").read_text()
+    bridge = bridge.replace("hepcat_mg_initialize = 0",
+                            "hepcat_mg_initialize = merge(0,1,digits(1.0_16)==113)")
+    bridge = bridge.replace("double precision, external ::", "real(kind=16), external ::")
+    bridge, count = re.subn(r"(= (?:answer \+ )?\w+\()p,",
+                            r"\1real(p,kind=16),", bridge)
+    if count != 2:
+        raise ValidationSetupError("Unsupported fixed-helicity or spin-sum Fortran bridge.")
+    bridge = bridge.replace("  integer :: leg, state", "  real(kind=16) :: total\n  integer :: leg, state")
+    bridge = bridge.replace("  answer = 0d0", "  total = 0.0_16")
+    bridge = bridge.replace("    answer = answer + ", "    total = total + ")
+    bridge = bridge.replace("  enddo\nend subroutine", "  enddo\n  answer = real(total,c_double)\nend subroutine")
+    path = replay / "bridge.f90"
+    path.write_text(bridge)
+    lib = replay / Path(native["Library"]).name
+    shared = "-dynamiclib" if sys.platform == "darwin" else "-shared"
+    run_logged([compiler, shared, "-fPIC", "-o", lib, path, obj, *archives], replay, log, deadline)
+    chart = None
+    if native["Masses"] == [0.0] * 4:
+        chart = replay / ("chart_" + lib.name)
+        chart_source = replay / "chart_bridge.f90"
+        chart_source.write_text(massless_two_body_chart(bridge))
+        run_logged([compiler, shared, "-fPIC", "-o", chart, chart_source, obj, *archives], replay, log, deadline)
+    return {"Status": "READY", "Process": native["Process"], "Library": str(lib),
+            "MantissaBits": 113, "FortranCompiler": compiler, "FortranFlags": flags,
+            "MatrixAndArchiveSourcesSHA256": source_hashes,
+            "Input": "Identical binary64 momenta promoted to binary128 at the matrix boundary.",
+            "MasslessTwoBodyChartLibrary": str(chart) if chart else None}
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
+    parser.add_argument("--precision-replay", action="store_true")
     arguments = parser.parse_args()
     output = arguments.output.expanduser().resolve()
     output.mkdir(parents=True, exist_ok=True)
+    receipt = output / ("precision-result.json" if arguments.precision_replay else "result.json")
     try:
         data = json.loads(arguments.config.read_text())
-        result = build_reference(data, output)
+        result = build_precision_replay(data, output) if arguments.precision_replay else build_reference(data, output)
     except Exception as error:
+        log_names = ("model.log", "generate.log", "build.log", "initialize.log", "precision/build.log")
         logs = {name: (output / name).read_text(errors="replace")[-4000:]
-                for name in ("model.log", "generate.log", "build.log", "initialize.log") if (output / name).is_file()}
+                for name in log_names if (output / name).is_file()}
         result = {"Status": "ERROR", "Message": str(error), "ErrorType": type(error).__name__, "Logs": logs}
         (output / "exception.log").write_text(traceback.format_exc())
-        write_json(output / "result.json", result)
+        write_json(receipt, result)
         print("MadGraph reference preparation failed: " + str(error), file=sys.stderr)
         if logs:
             name = next(reversed(logs))
             print(name + ":\n" + logs[name], file=sys.stderr)
         return 1
-    write_json(output / "result.json", result)
+    write_json(receipt, result)
     print("MadGraph reference ready: " + result["Process"])
     return 0
 

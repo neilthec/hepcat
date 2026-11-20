@@ -65,7 +65,8 @@ miPositive = miExport["madgraph_positive", miFamily];
 miCheck["source export retains the available MadGraph counterpart",
   AssociationQ[miPositive] && miPositive["MadGraphValidation"]["Configuration"]["Status"] === "AVAILABLE"];
 If[!AssociationQ[miPositive], Print["EXPORT FAILURE: ", InputForm[miPositive]]; Exit[1]];
-miPositiveReport = ValidateMadGraph[miPositive["Directory"], "Output" -> "Details", "MadGraphSeed" -> 12345];
+miPositiveReport = ValidateMadGraph[miPositive["Directory"], "Output" -> "Details",
+  "MadGraphPoints" -> 1000, "MadGraphSeed" -> 12345];
 miCheck["1000 common random points pass independently for all four photon helicities",
   miPassed[miPositiveReport, 4, 1000]];
 If[!miPassed[miPositiveReport, 4, 1000], Print["POSITIVE REPORT: ", InputForm[miPositiveReport]]];
@@ -98,7 +99,8 @@ miCheck["every external reference mass is verified against the exported process"
   AssociationQ[miReference] && Length[Lookup[miReference, "MassMatching", {}]] === 4 &&
     And @@ MapThread[TrueQ[Abs[#1 - #2] < 10^-12] &,
       {Lookup[miReference["MassMatching"], "RequestedMass"], {1, 1, 0, 0}}]];
-miReplay = ValidateMadGraph[miPositive["Directory"], "Output" -> "Details", "MadGraphSeed" -> 12345];
+miReplay = ValidateMadGraph[miPositive["Directory"], "Output" -> "Details",
+  "MadGraphPoints" -> 1000, "MadGraphSeed" -> 12345];
 miCheck["the same seed reproduces every per-helicity numerical summary",
   miPassed[miReplay, 4, 1000] &&
     (KeyTake[#, {"Helicities", "Points", "MaximumRelativeError", "MaximumAbsoluteError"}] & /@ miRows[miReplay]) ===
@@ -179,7 +181,8 @@ miCheck["the four-fermion caller explicitly selects electron/photon intermediate
   AssociationQ[miFermion] &&
     miFermion["MadGraphValidation"]["Configuration"]["AllowedParticlePDGs"] === {11, 22}];
 If[AssociationQ[miFermion],
-  miFermionReport = ValidateMadGraph[miFermion["Directory"], "Output" -> "Details", "MadGraphSeed" -> 24680];
+  miFermionReport = ValidateMadGraph[miFermion["Directory"], "Output" -> "Details",
+    "MadGraphPoints" -> 1000, "MadGraphSeed" -> 24680];
   miCheck["the four-fermion QED amplitude agrees on 1000 points without unwanted weak exchange",
     miPassed[miFermionReport, 1, 1000] && miRows[miFermionReport][[1]]["Helicities"] === {0, 0, 0, 0}];
   If[!miPassed[miFermionReport, 1, 1000], Print["FOUR-FERMION REPORT: ", InputForm[miFermionReport]]]];

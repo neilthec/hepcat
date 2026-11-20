@@ -31,6 +31,7 @@ int main(int argc, char **argv) {
 #include "madgraph-model.inc"
     config.helper_path =
         std::string(HEPCAT_PROJECT_DIR) + "/madgraph-runtime.py";
+    config.replay_binary128 = true;
     config.check_polarization_sum = true;
     config.complete_polarization_sum = native_export::complete_helicities;
     const auto result = validate_madgraph(proc, config, options);

@@ -28,7 +28,7 @@ struct spinas_project {
     std::filesystem::path directory;
     std::string name;
     std::array<std::size_t, 2> incoming;
-    std::vector<int> pdgs, spin2;
+    std::vector<int> pdgs, spin2, color_dimensions;
     std::vector<std::string> parameter_names, physical_particles;
     std::vector<double> parameter_defaults, mass_defaults;
     std::vector<std::vector<int>> helicities, exact_zero_helicities;

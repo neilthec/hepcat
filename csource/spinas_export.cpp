@@ -1,6 +1,7 @@
 #include "spinas_export.hpp"
 #include "reduce.hpp"
 #include "validation_numeric.hpp"
+#include "validation_color.hpp"
 #include <algorithm>
 #include <cctype>
 #include <cmath>
@@ -78,10 +79,12 @@ struct plan {
     std::vector<std::complex<long double>> defaults;
     std::map<std::string, std::pair<std::string, std::complex<long double>>> known;
     std::set<std::string> widths;
-    strings masses, point_lines, chain_lines;
+    strings masses, point_lines, chain_lines, derived_updates;
+    std::map<std::string,std::string> derived_slots;
     std::map<std::string, size_t> scalars, chains;
     std::vector<std::string> functions;
-    std::vector<std::string> dispatch;
+    std::vector<std::string> dispatch, color_sums, color_amps;
+    bool colored = false;
     std::vector<ints> exchangeable;
     std::set<size_t> conditioned_components;
     plan(const model& model, const spinas_export_options& opt, const strings& names)
@@ -103,12 +106,22 @@ struct plan {
         for (auto& particle : m.particles())
             if (particle.width != "0")
                 widths.insert(particle.width);
+        for (const auto& particle : m.particles()) {
+            auto par = std::find_if(known.begin(), known.end(),
+                                    [&](const auto& item) { return item.second.first == particle.mass; });
+            if (par != known.end())
+                p.mass_parameter_pdgs.emplace(par->first, std::abs(particle.pdg));
+        }
         std::map<int, int> outgoing_counts;
         for (size_t i = 0; i < n; ++i) {
             const auto& part = m.particle(names[i]);
-            if (part.color != 1)
-                throw std::invalid_argument(
-                    "native SPINAS export needs a color-singlet family; external color sums are unavailable");
+            const int dimension = std::abs(part.color);
+            if (dimension != 1 && dimension != 3 && dimension != 8)
+                throw std::invalid_argument("unsupported external SU(3) representation");
+            p.color_dimensions.push_back(dimension);
+            colored |= dimension != 1;
+            if (incoming(p, i))
+                p.normalization /= dimension;
             bool beam = incoming(p, i), massive = part.mass != "0",
                  neutral = species(part.name) == species(part.antiname);
             int pdg = part.pdg * ((neutral || names[i] == part.name) ? 1 : -1);
@@ -184,10 +197,47 @@ struct plan {
                                           [](const auto& group) { return group.size() < 2; }),
                            exchangeable.end());
     }
+    // Export independent model inputs. A dependent coupling or mass stays a
+    // function of these inputs when SPINAS or the Monte Carlo changes them.
+    std::string definition(Id id) {
+        const auto& a = m.algebra();
+        const auto& n = a.node(id);
+        const auto name = head(n);
+        mpq_class q;
+        if (a.number(id, q))
+            return "ldouble(" + literal(q.get_d()) + ")";
+        if (name == "ModelParameter")
+            return parameter(string_value(a.node(n.args.at(0)).head));
+        if (name == "I")
+            return "cdouble(0,1)";
+        if (name == "Pi")
+            return "std::acos(ldouble(-1))";
+        strings args;
+        for (Id child : n.args)
+            args.push_back(definition(child));
+        if (name == "Plus" || name == "Times")
+            return "(" + join(args, name == "Times" ? " * " : " + ") + ")";
+        static const std::map<std::string, std::string> calls{
+            {"Sqrt", "sqrt"}, {"Power", "pow"}, {"Conjugate", "conj"}, {"Abs", "abs"},
+            {"Re", "real"},   {"Im", "imag"},   {"Sin", "sin"},        {"Cos", "cos"},
+            {"Tan", "tan"},   {"Exp", "exp"},   {"Log", "log"}};
+        if (auto it = calls.find(name); it != calls.end())
+            return "std::" + it->second + "(" + join(args, ", ") + ")";
+        throw std::invalid_argument("unsupported SPINAS model relation " + a.format(id));
+    }
     std::string parameter(const std::string& name) {
         const auto it = known.find(name);
         if (it == known.end())
             throw std::invalid_argument("SPINAS cannot resolve model parameter " + name);
+        if (auto found=derived_slots.find(name); found!=derived_slots.end()) return found->second;
+        for (const auto& f : m.functions()) if (f.name==name) {
+            // Recursively materialize dependencies first, once per parameter update.
+            auto rhs=definition(f.definition);
+            auto slot="derived[" + std::to_string(derived_updates.size()) + "]";
+            derived_updates.push_back("    "+slot+" = "+rhs+";");
+            derived_slots.emplace(name,slot);
+            return slot;
+        }
         auto& p = project;
         auto index =
             std::find(p.parameter_names.begin(), p.parameter_names.end(), name) - p.parameter_names.begin();
@@ -390,6 +440,12 @@ struct compiler {
         }
         if (h == "ModelParameter")
             return p.parameter(string_value(a.node(n.args.at(0)).head));
+        if (h == "Complex" && n.args.size() == 2) {
+            mpq_class re, im;
+            if (!a.number(n.args[0], re) || !a.number(n.args[1], im))
+                throw std::invalid_argument("expected an exact complex-number coefficient");
+            return "cdouble(" + rational(re) + ", " + rational(im) + ")";
+        }
         if (h == "Pi")
             return "ldouble(std::acos(ldouble(-1)))";
         if (h == "I")
@@ -505,6 +561,7 @@ void compile_family(plan& p, const std::vector<spinas_component>& family) {
     Algebra tree;
     std::vector<source> sources;
     std::set<ints> provided;
+    std::map<Id, validation_detail::projected_colors> projected;
     for (auto& row : family) {
         if (row.expression.particle_count() != n || row.particles.size() != n)
             throw std::invalid_argument("helicity family has inconsistent external leg count");
@@ -518,7 +575,29 @@ void compile_family(plan& p, const std::vector<spinas_component>& family) {
         }
         if (!provided.insert(spins).second)
             throw std::invalid_argument("duplicate explicit helicity component");
-        sources.push_back({validation_detail::import_expression(tree, row.expression), spins});
+        Id root = validation_detail::import_expression(tree, row.expression);
+        sources.push_back({root, spins});
+        if (!projected.count(root)) {
+            validation_detail::color_polynomial colors(tree);
+            if (p.colored && root != tree.integer(0)) {
+                // A stripped kinematic coefficient cannot be promoted to a full color amplitude.
+                for (const auto& term : colors.split(root)) {
+                    std::set<int> external;
+                    for (auto t : term.tensors)
+                        for (auto idx : tree.node(t).args) {
+                            const auto& n = tree.node(idx);
+                            if (head(n) == "ColorIndex" && n.args.size() == 1)
+                                external.insert(tree.leg(n.args[0]));
+                        }
+                    for (size_t i = 0; i < n; ++i)
+                        if (p.project.color_dimensions[i] > 1 && !external.count(i + 1))
+                            throw std::invalid_argument("incomplete external color tensor on leg " +
+                                                        std::to_string(i + 1));
+                }
+            }
+            validation_detail::fundamental_color_projections project(tree, p.project.color_dimensions);
+            projected.emplace(root, project.components({root}));
+        }
     }
     std::function<void(ints&)> append = [&](ints& target) {
         if (target.size() < n) {
@@ -572,31 +651,72 @@ void compile_family(plan& p, const std::vector<spinas_component>& family) {
                     for (size_t j = i + 1; j < n; ++j)
                         if (species(names[i]) == species(names[j]) && perm[i] > perm[j])
                             sign = -sign;
-            const bool track = !p.exchangeable.empty() && condition_sensitive(tree, source.expr);
-            compiler gen{tree, p, perm, track, {}, {}};
-            ints slots(n);
-            auto value = gen.emit(source.expr, slots);
-            mpq_class q;
-            bool zero = tree.number(source.expr, q) && q == 0;
-            for (size_t i = 0; i < n; ++i)
-                if (!zero && p.legs[i].massive && slots[i] != p.project.spin2[i])
-                    throw std::invalid_argument("incomplete massive spin tensor on leg " +
-                                                std::to_string(i + 1));
-            const auto member = "component_" + std::to_string(p.functions.size());
-            if (track)
-                p.conditioned_components.insert(p.functions.size());
-            strings body{std::string(track ? "template<class Scalar> Scalar " : "cdouble ") + p.project.name +
-                         "::" + member + "(const Indices& indices) const {"};
-            body.insert(body.end(), gen.lines.begin(), gen.lines.end());
-            body.push_back(std::string("    return ") + (sign < 0 ? "-(" : "(") + value + ");\n}");
-            p.functions.push_back(join(body, "\n"));
+            const auto& colors = projected.at(source.expr);
             strings conditions;
             for (size_t i = 0; i < n; ++i)
                 if (!p.legs[i].massive && p.project.spin2[i])
                     conditions.push_back("spins[" + std::to_string(i) + "] == " + std::to_string(target[i]));
-            p.dispatch.push_back(
-                "    " + (conditions.empty() ? std::string{} : "if (" + join(conditions, " && ") + ") ") +
-                "return " + member + (track ? "<Scalar>" : "") + "(indices);");
+            const auto branch = conditions.empty() ? std::string{} : "if (" + join(conditions, " && ") + ") ";
+            strings contributions, members;
+            bool zero = true;
+            for (size_t ci = 0; ci < colors.components.size(); ++ci) {
+                Id root = colors.components[ci].front();
+                const bool component_zero = root == tree.integer(0);
+                zero &= component_zero;
+                const bool track = !p.colored && !p.exchangeable.empty() && condition_sensitive(tree, root);
+                compiler gen{tree, p, perm, track, {}, {}};
+                ints slots(n);
+                auto value = gen.emit(root, slots);
+                for (size_t i = 0; i < n; ++i)
+                    if (!component_zero && p.legs[i].massive && slots[i] != p.project.spin2[i])
+                        throw std::invalid_argument("incomplete massive spin tensor on leg " +
+                                                    std::to_string(i + 1));
+                size_t number = p.functions.size();
+                const auto member = "component_" + std::to_string(number);
+                if (track)
+                    p.conditioned_components.insert(number);
+                strings body{std::string(track ? "template<class Scalar> Scalar " : "cdouble ") +
+                             p.project.name + "::" + member + "(const Indices& indices) const {"};
+                body.insert(body.end(), gen.lines.begin(), gen.lines.end());
+                body.push_back(std::string("    return ") + (sign < 0 ? "-(" : "(") + value + ");\n}");
+                p.functions.push_back(join(body, "\n"));
+                members.push_back(member + (track ? "<Scalar>" : "") + "(indices)");
+                if (p.colored && !component_zero)
+                    contributions.push_back(literal(colors.summed_metric[ci].get_d()) +
+                                            " * std::norm(evaluate<cdouble>(spins, " + std::to_string(ci) +
+                                            "))");
+            }
+            if (!p.colored)
+                p.dispatch.push_back("    " + branch + "return " + members.front() + ";");
+            else {
+                strings choices;
+                for (size_t ci = 0; ci < members.size(); ++ci)
+                    choices.push_back("        case " + std::to_string(ci) + ": return " + members[ci] + ";");
+                p.dispatch.push_back("    " + branch + "{\n      switch (color_component) {\n" +
+                                     join(choices, "\n") + "\n      }\n    }");
+                p.color_sums.push_back(
+                    "    " + branch + "return " +
+                    (contributions.empty() ? std::string("0") : join(contributions, " +\n        ")) + ";");
+                if (zero)
+                    p.color_amps.push_back("    " + branch + "return {};");
+                else {
+                    strings lookup, strides;
+                    size_t stride = 1;
+                    for (auto x : colors.assignment_component)
+                        lookup.push_back(std::to_string(x));
+                    for (size_t i = 0; i < n; ++i) {
+                        if (p.project.color_dimensions[i] > 1)
+                            strides.push_back(std::to_string(stride) + " * colors[" +
+                                              std::to_string(perm[i]) + "]");
+                        stride *= p.project.color_dimensions[i];
+                    }
+                    p.color_amps.push_back(
+                        "    " + branch + "{\n        static constexpr unsigned profile[] = {" +
+                        join(lookup, ",") +
+                        "};\n        return normalization * evaluate<cdouble>(spins, profile[" +
+                        join(strides, " + ") + "]);\n    }");
+                }
+            }
             p.project.helicities.push_back(target);
             if (zero)
                 p.project.exact_zero_helicities.push_back(target);
@@ -633,17 +753,22 @@ std::string header(const plan& p) {
         << "    void set_widths_enabled(bool enabled) { if (enabled != widths_enabled) { "
            "widths_enabled=enabled; ready=false; } }\n"
         << "    void set_momenta(const Momenta& physical);\n"
-        << "    cdouble amp(const Spins& spins) const;\n    ldouble amp_squared(const Spins& spins) const;\n "
+        << (p.colored ? "    using Colors = std::array<unsigned,leg_count>;\n    cdouble amp(const Spins& "
+                        "spins,const Colors& colors) const;\n"
+                      : "    cdouble amp(const Spins& spins) const;\n")
+        << "    ldouble amp_squared(const Spins& spins) const;\n "
            "   ldouble spin_sum() const;\n"
         << "    ldouble amp2() const { return spin_sum() * " << literal(p.project.normalization) << "; }\n"
         << "private:\n    using Indices = std::array<std::array<int, " << max_rank << ">, leg_count>;\n"
-        << "    Parameters parameters;\n    std::array<ldouble, leg_count> external_masses{};\n"
+        << "    Parameters parameters;\n    std::array<cdouble, " << p.derived_updates.size()
+        << "> derived;\n    std::array<ldouble, leg_count> external_masses{};\n"
         << "    std::array<spinas::particle, leg_count> particles;\n    Momenta momenta;\n"
         << "    bool ready=false, widths_enabled=true;\n"
         << "    std::array<cdouble, " << p.scalars.size() << "> invariants;\n"
         << "    std::array<std::array<cdouble, 4>, " << p.chains.size() << "> chains;\n"
-        << "    template<class Scalar> Scalar evaluate(const Spins&) const;\n"
-        << "    template<class Scalar> Scalar component(const Spins&, const Indices&) const;\n";
+        << "    template<class Scalar> Scalar evaluate(const Spins&,std::size_t color_component=0) const;\n"
+        << "    template<class Scalar> Scalar component(const Spins&, const Indices&,std::size_t "
+           "color_component) const;\n";
     for (size_t i = 0; i < p.functions.size(); ++i)
         out << (p.conditioned_components.count(i) ? "    template<class Scalar> Scalar component_"
                                                   : "    cdouble component_")
@@ -671,7 +796,7 @@ std::string source(const plan& p) {
         << "void " << name << "::set_parameters(const Parameters& values) {\n    ready = false;\n"
         << "    for (auto v : values) if (!hepcat_spinas::finite_complex(v)) throw "
            "std::invalid_argument(\"Nonfinite parameter.\");\n"
-        << "    parameters = values;\n    external_masses = {" << join(p.masses, ", ") << "};\n";
+        << "    parameters = values;\n" << join(p.derived_updates,"\n") << "\n    external_masses = {" << join(p.masses, ", ") << "};\n";
     for (size_t i = 0; i < p.legs.size(); ++i)
         if (p.legs[i].massive && project.spin2[i] > 0)
             out << "    if (external_masses[" << i
@@ -687,10 +812,11 @@ std::string source(const plan& p) {
         << join(p.chain_lines, "\n") << "\n    ready = true;\n}\n\n"
         << join(p.functions, "\n\n") << "\n\n"
         << "template<class Scalar> Scalar " << name
-        << "::component(const Spins& spins, const Indices& indices) const {\n"
+        << "::component(const Spins& spins, const Indices& indices, std::size_t color_component) const {\n"
         << join(p.dispatch, "\n")
         << "\n    throw std::invalid_argument(\"Unavailable helicity in exported family.\");\n}\n\n"
-        << "template<class Scalar> Scalar " << name << "::evaluate(const Spins& spins) const {\n"
+        << "template<class Scalar> Scalar " << name
+        << "::evaluate(const Spins& spins, std::size_t color_component) const {\n"
         << "    if (!ready) throw std::logic_error(\"Call set_momenta before amp.\");\n    Indices "
            "indices{};\n";
     std::string indent = "    ";
@@ -707,7 +833,7 @@ std::string source(const plan& p) {
             vector_legs.push_back(std::to_string(i));
     }
     if (vector_legs.empty())
-        out << "    return component<Scalar>(spins, indices);\n";
+        out << "    return component<Scalar>(spins, indices, color_component);\n";
     else {
         out << "    Scalar result{};\n    ldouble normalization=1;\n";
         for (auto& leg : vector_legs) {
@@ -722,17 +848,33 @@ std::string source(const plan& p) {
             indent += "    ";
             out << indent << "std::copy(choice.begin(), choice.end(), indices[" << leg << "].begin());\n";
         }
-        out << indent << "result += component<Scalar>(spins, indices);\n";
+        out << indent << "result += component<Scalar>(spins, indices, color_component);\n";
         for (auto& leg : vector_legs) {
             indent.resize(indent.size() - 4);
             out << indent << "}\n";
         }
         out << "    return normalization * result;\n";
     }
-    out << "}\n\ncdouble " << name
-        << "::amp(const Spins& spins) const { return evaluate<cdouble>(spins); }\n";
+    out << "}\n\n";
+    if (p.colored) {
+        out << "cdouble " << name << "::amp(const Spins& spins, const Colors& colors) const {\n";
+        out << "    ldouble normalization=1;\n";
+        for (size_t i = 0; i < project.color_dimensions.size(); ++i) {
+            const auto dim = project.color_dimensions[i];
+            out << "    if (colors[" << i << "] >= " << dim
+                << ") throw std::out_of_range(\"External color index.\");\n";
+            if (dim == 8)
+                out << "    normalization /= (colors[" << i
+                    << "] == 7 ? std::sqrt(ldouble(12)) : ldouble(2));\n";
+        }
+        out << join(p.color_amps, "\n")
+            << "\n    throw std::invalid_argument(\"Unavailable helicity.\");\n}\n";
+    } else
+        out << "cdouble " << name << "::amp(const Spins& spins) const { return evaluate<cdouble>(spins); }\n";
     out << "\nldouble " << name << "::amp_squared(const Spins& spins) const {\n";
-    if (p.conditioned_components.empty())
+    if (p.colored)
+        out << join(p.color_sums, "\n") << "\n    throw std::invalid_argument(\"Unavailable helicity.\");\n";
+    else if (p.conditioned_components.empty())
         out << "    return std::norm(amp(spins));\n";
     else {
         strings groups;
