@@ -24,6 +24,8 @@ along with HEPCAT.  If not, see <https://www.gnu.org/licenses/>.
 #include <iomanip>
 #include <map>
 
+extern "C" int check_standalone_denominators(const char* matrix_path);
+
 namespace {
 std::string read_file(const std::string& path) {
   std::ifstream input(path.c_str(), std::ios::binary);
@@ -143,6 +145,9 @@ int main(int argc, char* argv[]) {
     double sm, restricted, qed;
     {
       hepcat_spinas::CalcHEPProcess process(model,1,external,parameters);
+      const std::string matrix = process.work_directory() + "/aux/so_generated/hepcat_validation_u.so";
+      if (!check_standalone_denominators(matrix.c_str())) return 22;
+      std::cout << "CALCHEP_STANDALONE_DENOMINATORS_PASS\n";
       if (!process.excluded_particle_names().empty()) return 1;
       sm = process.squared_amplitude(point);
     }

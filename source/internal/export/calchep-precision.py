@@ -120,6 +120,7 @@ def cpp_list(values):
 CAPTURE = r"""
 #include "process.hpp"
 #include "calchep-runtime.hpp"
+#include "spinas-validation.hpp"
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -299,9 +300,11 @@ def main():
     command[command.index('-o') + 1] = str(output / 'capture')
     flags = link.with_name('flags.make').read_text()
     defines = re.search(r'^CXX_DEFINES = (.*)$', flags, re.M)
-    long_double = ('-DWITH_LONG_DOUBLE' in shlex.split(defines.group(1)) if defines
+    compile_definitions = shlex.split(defines.group(1)) if defines else []
+    long_double = ('-DWITH_LONG_DOUBLE' in compile_definitions if defines
                    else manifest.get('Precision') == 'LongDouble')
     command += ['-std=c++17'] + (['-DWITH_LONG_DOUBLE'] if long_double else [])
+    command += [flag for flag in compile_definitions if flag.startswith('-DHEPCAT_CALCHEP_AUX=')]
     spinas_header = next(line.split('=', 1)[1].strip() for line in (export / 'build/CMakeCache.txt').read_text().splitlines()
                          if line.startswith('SPINAS_INCLUDE_DIR:'))
     for path in (export, Path(spinas_header), calchep / 'include', calchep / 'c_source/dynamicME/include', calchep / 'c_source/ntools/include'):
@@ -326,15 +329,20 @@ def main():
         (native / name).mkdir(parents=True, exist_ok=True)
     for path in (Path(workspace) / 'aux/models').glob('*.mdl'):
         shutil.copy2(path, native / 'models' / path.name)
-    # The capture process created this private directory with mkdtemp. Models
-    # have been copied and the saved inputs suffice to reproduce every draw.
     retained = Path(workspace)
-    if (not retained.is_symlink() and retained.resolve().parent == Path('/tmp').resolve()
-            and re.fullmatch(r'hepcat-calchep-[A-Za-z0-9]{6}', retained.name)):
-        shutil.rmtree(retained)
+    # Reuse the capture's compiler and denominator helper for the native
+    # precision control. Older exports used the installation directly.
+    compiler = retained / 'optimized-calchep/sbin/newProcess'
+    if not compiler.is_file():
+        compiler = calchep / 'sbin/newProcess'
     env = dict(os.environ, nParProc='1')
-    run([str(calchep / 'sbin/newProcess'), 'hepcat_precision', str(native / 'so_generated'), '', 'U', process, exclusions, ''],
-        native, output / 'generate-reference.log', deadline, env)
+    try:
+        run([str(compiler), 'hepcat_precision', str(native / 'so_generated'), '', 'U', process, exclusions, ''],
+            native, output / 'generate-reference.log', deadline, env)
+    finally:
+        if (not retained.is_symlink() and retained.resolve().parent == Path('/tmp').resolve()
+                and re.fullmatch(r'hepcat-calchep-[A-Za-z0-9]{6}', retained.name)):
+            shutil.rmtree(retained)
     sources = native / 'results'
     symbolic_hashes = {path.name: sha256(path) for path in sorted(sources.glob('*.c'))}
     if not symbolic_hashes:

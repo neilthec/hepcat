@@ -603,7 +603,7 @@ void write_external_project(const spinas_project &p, const model &m,
       numerical_status = error.what();
     }
   }
-  for (const auto *name : {"calchep-runtime.hpp", "calchep-spinas-runtime.hpp",
+  for (const auto *name : {"calchep-runtime.hpp", "calchep-validation-aux.cmake", "calchep-spinas-runtime.hpp",
                            "madgraph-runtime.hpp", "madgraph-runtime.py",
                            "madevent-runtime.py", "spinas-validation.hpp"})
     copy_to(runtime / name, p.directory / name);

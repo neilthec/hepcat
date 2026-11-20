@@ -40,6 +40,8 @@ along with HEPCAT.  If not, see <https://www.gnu.org/licenses/>.
 #include <cstdlib>
 #include <cstring>
 #include <dirent.h>
+#include <dlfcn.h>
+#include <memory>
 #include <fcntl.h>
 #include <fstream>
 #include <iterator>
@@ -178,23 +180,37 @@ class Workspace {
   bool keep_;
 };
 
-// A benchmark can request optimized matrix-element compilation without editing
-// the installation's FlagsForSh or changing the process environment. CalcHEP's
-// newProcess script finds its installation from its own path, so this private
-// overlay supplies that script and flags while sharing read-only support files.
-inline std::string optimized_compiler_installation(
+// newProcess locates libraries relative to its own installation. Stage read-only
+// links in its private workspace so the matrix loads the validator's helper.
+inline void link_compiler_input(const std::string& from, const std::string& to) {
+  if (symlink(from.c_str(), to.c_str()))
+    throw std::runtime_error(error_message("Link private CalcHEP compiler support"));
+}
+
+inline std::string private_compiler_installation(
     const std::string& installation, const std::string& workspace, int level,
-    bool omit_debug_symbols = false) {
+    bool omit_debug_symbols) {
   const std::string directory = workspace + "/optimized-calchep";
   if (mkdir(directory.c_str(), 0700) || mkdir((directory + "/sbin").c_str(), 0700)) {
     throw std::runtime_error(error_message("Create private CalcHEP compiler directory"));
   }
-  const char* shared[] = {"bin", "include", "lib", "sbin/make-j"};
-  for (const char* name : shared) {
-    if (symlink((installation + "/" + name).c_str(), (directory + "/" + name).c_str())) {
-      throw std::runtime_error(error_message("Link private CalcHEP compiler support"));
-    }
+  for (const char* name : {"bin", "include", "sbin/make-j"})
+    link_compiler_input(installation + "/" + name, directory + "/" + name);
+#ifdef HEPCAT_CALCHEP_AUX
+  const std::string lib = directory + "/lib";
+  if (mkdir(lib.c_str(), 0700))
+    throw std::runtime_error(error_message("Create private CalcHEP library directory"));
+  std::unique_ptr<DIR, int(*)(DIR*)> entries(opendir((installation + "/lib").c_str()), closedir);
+  if (!entries) throw std::runtime_error(error_message("Read CalcHEP library directory"));
+  while (const dirent* entry = readdir(entries.get())) {
+    const std::string name = entry->d_name;
+    if (name != "." && name != ".." && name != "sqme_aux.so")
+      link_compiler_input(installation + "/lib/" + name, lib + "/" + name);
   }
+  link_compiler_input(HEPCAT_CALCHEP_AUX, lib + "/sqme_aux.so");
+#else
+  link_compiler_input(installation + "/lib", directory + "/lib");
+#endif
   const char* copied[] = {"FlagsForSh", "sbin/newProcess"};
   for (const char* name : copied) {
     std::ifstream input((installation + "/" + name).c_str(), std::ios::binary);
@@ -679,15 +695,22 @@ class CalcHEPProcess {
     // unspecified outgoing states and must not be used for an internal cut.
     // Unitary gauge; do not add t-channel Breit-Wigner factors.
     {
-      const std::string compiler_directory = optimization_level_ == 0 && !omit_debug_symbols ? std::string() :
-          calchep_detail::optimized_compiler_installation(
-              calchepDir, workspace_.path(), optimization_level_, omit_debug_symbols);
+      const std::string compiler_directory = calchep_detail::private_compiler_installation(
+          calchepDir, workspace_.path(), optimization_level_, omit_debug_symbols);
       calchep_detail::CompilerInstallation compiler(compiler_directory);
       matrix_element_ = getMEcode(0, 1, process.data(),
           excluded_names_.empty() ? NULL : excluded.data(), excluded_output, library);
     }
     if (!matrix_element_) {
       throw std::runtime_error("CalcHEP could not generate " + process_ + " in " + workspace_.path());
+    }
+    // A binary-only installation may supply the micrOMEGAs helper. Its 40-slot
+    // optional width table is indexed starting at one. Check before calling sqme.
+    int mass_index = 0, width_index = 0, propagator_number = 0;
+    if (matrix_element_->interface->den_info && dlsym(matrix_element_->handle, "omgWidth") &&
+        matrix_element_->interface->den_info(1, 40, &mass_index, &width_index, &propagator_number)) {
+      throw std::runtime_error("The generated process exceeds the micrOMEGAs width table. "
+          "Rebuild the validator with CalcHEP's standalone c_source/num/sqme_aux.c available.");
     }
     // passParameters has a fatal legacy path for absent links. Diagnose it
     // before calling the public routine so the generated validator can fail.

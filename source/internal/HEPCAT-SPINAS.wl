@@ -972,6 +972,7 @@ spinasCalcHEPCMake[name_String, config_Association] := StringRiffle[{
   "if(UNIX AND " <> If[TrueQ[config["Supported"]], "TRUE", "FALSE"] <>
     " AND EXISTS \"${CALCHEP_ROOT}/lib/dynamic_me.a\")",
   "  enable_language(C)",
+  "  include(\"${CMAKE_CURRENT_LIST_DIR}/calchep-validation-aux.cmake\")",
   "  target_compile_definitions(" <> name <> "_calchep_validation PRIVATE HEPCAT_HAS_CALCHEP)",
   "  target_include_directories(" <> name <> "_calchep_validation PRIVATE",
   "    \"${CALCHEP_ROOT}/include\" \"${CALCHEP_ROOT}/c_source/dynamicME/include\"",
@@ -980,7 +981,7 @@ spinasCalcHEPCMake[name_String, config_Association] := StringRiffle[{
   "  target_link_libraries(" <> name <> "_calchep_validation PUBLIC",
   "    \"${CALCHEP_ROOT}/lib/dynamic_vp.a\" \"${CALCHEP_ROOT}/lib/dynamic_me.a\"",
   "    \"${CALCHEP_ROOT}/lib/num_c.a\" \"${CALCHEP_ROOT}/lib/servNoX11.a\" \"${CALCHEP_ROOT}/lib/serv.a\"",
-  "    \"${CALCHEP_ROOT}/lib/sqme_aux.so\" \"${CALCHEP_ROOT}/lib/libSLHAplus.a\"",
+  "    hepcat_calchep_validation_aux \"${CALCHEP_ROOT}/lib/libSLHAplus.a\"",
   "    \"${CALCHEP_ROOT}/lib/dummy.a\" \"${CALCHEP_ROOT}/lib/ntools.a\"",
   "    ${CMAKE_DL_LIBS} m pthread)",
   "  set_target_properties(" <> name <> "_validate_calchep PROPERTIES BUILD_RPATH \"${CALCHEP_ROOT}/lib\")",
@@ -989,11 +990,12 @@ spinasCalcHEPCMake[name_String, config_Association] := StringRiffle[{
   "endif()", ""}, "\n"];
 
 spinasCalcHEPProject[dir_String, name_String, ir_Association, config_Association] := Module[{files},
-  files = AssociationThread[{"ValidationRuntime", "CalcHEPRuntime", "CalcHEPSource", "CalcHEPMain"},
-    FileNameJoin[{dir, #}] & /@ {"spinas-validation.hpp", "calchep-runtime.hpp", "calchep-validation.cpp", "calchep-main.cpp"}];
+  files = AssociationThread[{"ValidationRuntime", "CalcHEPRuntime", "CalcHEPAuxBuild", "CalcHEPSource", "CalcHEPMain"},
+    FileNameJoin[{dir, #}] & /@ {"spinas-validation.hpp", "calchep-runtime.hpp", "calchep-validation-aux.cmake", "calchep-validation.cpp", "calchep-main.cpp"}];
   <|"Files" -> files, "Contents" -> <|
     "ValidationRuntime" -> Import[FileNameJoin[{$spinasExportRuntimeDirectory, "spinas-validation.hpp"}], "Text"],
     "CalcHEPRuntime" -> Import[FileNameJoin[{$spinasExportRuntimeDirectory, "calchep-runtime.hpp"}], "Text"],
+    "CalcHEPAuxBuild" -> Import[FileNameJoin[{$spinasExportRuntimeDirectory, "calchep-validation-aux.cmake"}], "Text"],
     "CalcHEPSource" -> spinasCalcHEPSource[name, ir, config],
     "CalcHEPMain" -> spinasCalcHEPMain[name, config]|>|>
 ];
@@ -1002,6 +1004,7 @@ spinasCalcHEPREADME[name_String, config_Association] := StringRiffle[{
   "", "## Independent CalcHEP validation", "",
   "Choose the CalcHEP installation with CalcHEPDirectory and its reference model with CalcHEPModel -> {directory, number}. Both default to None, so HEPCAT never guesses a reference installation or theory. Explicit CalcHEPDirectory -> Automatic uses only CALCHEP_ROOT or CALCHEP environment settings. CalcHEPAllowedParticles -> All retains the entire selected model; a list such as {11,22} explicitly restricts internal particles to electrons/positrons and photons. The chosen restriction is recorded in manifest.json. No reference model is rewritten or trimmed.", "",
   "The generated validate_calchep(options) method compares 100000 seeded random physical phase-space points by default. The same momentum values are sent to SPINAS and CalcHEP. The validator generates the CalcHEP process at runtime in a private temporary workspace and leaves the installation unchanged.", "",
+  "The validator builds the standalone denominator helper from the selected CalcHEP sources. This supports processes with more denominators than the optional micrOMEGAs width table in CalcHEP 3.9.2.", "",
   "Validation sets every internal width to zero on both sides, using a private SPINAS copy and a private CalcHEP particle table. The caller's parameters and the normal n_calchep simulation widths remain unchanged.", "",
   "CalcHEPSeed -> Automatic chooses a seed from the current time when the validation executable runs, not when its source is exported. The report prints the actual Seed for replay. Set CalcHEPSeed to an unsigned 64-bit integer to choose a fixed executable default, or use --seed to override it for one run. In C++, assign options.seed directly; zero is a valid explicit seed.", "",
   "```sh", "./build/" <> name <> "_validate_calchep", "./build/" <> name <> "_validate_calchep --points 100000 --seed 12345", "```", "",

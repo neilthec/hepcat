@@ -4,6 +4,7 @@ add_executable(${HEPCAT_PROCESS}_validate_calchep calchep-main.cpp)
 target_link_libraries(${HEPCAT_PROCESS}_validate_calchep PRIVATE ${HEPCAT_PROCESS}_process)
 if(UNIX AND HEPCAT_CALCHEP AND EXISTS "${CALCHEP_ROOT}/lib/dynamic_me.a")
   enable_language(C)
+  include("${CMAKE_CURRENT_LIST_DIR}/calchep-validation-aux.cmake")
   target_compile_definitions(${HEPCAT_PROCESS}_validate_calchep PRIVATE HEPCAT_HAS_CALCHEP HEPCAT_CALCHEP_ROOT="${CALCHEP_ROOT}")
   target_include_directories(${HEPCAT_PROCESS}_validate_calchep PRIVATE
     "${CALCHEP_ROOT}/include" "${CALCHEP_ROOT}/c_source/dynamicME/include"
@@ -12,7 +13,7 @@ if(UNIX AND HEPCAT_CALCHEP AND EXISTS "${CALCHEP_ROOT}/lib/dynamic_me.a")
   target_link_libraries(${HEPCAT_PROCESS}_validate_calchep PUBLIC
     "${CALCHEP_ROOT}/lib/dynamic_vp.a" "${CALCHEP_ROOT}/lib/dynamic_me.a"
     "${CALCHEP_ROOT}/lib/num_c.a" "${CALCHEP_ROOT}/lib/servNoX11.a" "${CALCHEP_ROOT}/lib/serv.a"
-    "${CALCHEP_ROOT}/lib/sqme_aux.so" "${CALCHEP_ROOT}/lib/libSLHAplus.a"
+    hepcat_calchep_validation_aux "${CALCHEP_ROOT}/lib/libSLHAplus.a"
     "${CALCHEP_ROOT}/lib/dummy.a" "${CALCHEP_ROOT}/lib/ntools.a"
     ${CMAKE_DL_LIBS} m pthread)
   set_target_properties(${HEPCAT_PROCESS}_validate_calchep PROPERTIES BUILD_RPATH "${CALCHEP_ROOT}/lib")

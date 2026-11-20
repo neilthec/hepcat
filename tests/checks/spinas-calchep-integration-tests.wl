@@ -97,7 +97,9 @@ ciRestrictionTarget = "calchep_particle_restriction";
 ciRestrictionSource = FileNameJoin[{root, "tests", "checks", "calchep-particle-restriction-tests.cpp"}];
 ciRestrictionCMake = StringRiffle[{
   "", "add_executable(" <> ciRestrictionTarget <> " " <>
-    ConstructiveDiagrams`Private`spinasCppQuoted[ciRestrictionSource] <> ")",
+    ConstructiveDiagrams`Private`spinasCppQuoted[ciRestrictionSource] <> " " <>
+    ConstructiveDiagrams`Private`spinasCppQuoted[FileNameJoin[{DirectoryName[ciRestrictionSource],
+      "calchep-standalone-denominators.c"}]] <> ")",
   "target_include_directories(" <> ciRestrictionTarget <> " PRIVATE " <>
     ConstructiveDiagrams`Private`spinasCppQuoted[FileNameJoin[{root, "source", "internal", "export"}]] <>
     " \"${CALCHEP_ROOT}/include\" \"${CALCHEP_ROOT}/c_source/dynamicME/include\" " <>
@@ -119,6 +121,9 @@ If[ciSucceeded[ciRestrictionBuilt],
   check["restricted full-SM Bhabha equals QED, unrestricted SM differs, and unknown allowed types are rejected",
     ciSucceeded[ciRestrictionRun] && StringContainsQ[
       Lookup[ciRestrictionRun, "StandardOutput", ""], "CALCHEP_PARTICLE_RESTRICTION_PASS"]];
+  check["the generated matrix and validator share the standalone helper and preserve 44 zero-width denominators",
+    ciSucceeded[ciRestrictionRun] && StringContainsQ[
+      Lookup[ciRestrictionRun, "StandardOutput", ""], "CALCHEP_STANDALONE_DENOMINATORS_PASS"]];
   check["CalcHEP canonical external ordering preserves masses, outgoing momenta and beam roles",
     ciSucceeded[ciRestrictionRun] && StringContainsQ[
       Lookup[ciRestrictionRun, "StandardOutput", ""], "CALCHEP_EXTERNAL_ORDER_PASS"]];

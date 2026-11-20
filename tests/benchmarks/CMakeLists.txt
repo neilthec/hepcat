@@ -72,6 +72,7 @@ cmake_pop_check_state()
 if(NOT HEPCAT_SPINAS_PRECISION_MATCHES)
   message(FATAL_ERROR "The SPINAS library does not match the exported scalar precision. Select a matching SPINAS_LIBRARY.")
 endif()
+include("${HEPCAT_ROOT}/source/internal/export/calchep-validation-aux.cmake")
 add_executable(qed_photon_benchmark qed-photons.cpp ${BENCHMARK_SOURCES}
   "${CALCHEP_ROOT}/include/VandPgate.c")
 target_include_directories(qed_photon_benchmark PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}"
@@ -85,7 +86,7 @@ target_compile_definitions(qed_photon_benchmark PRIVATE
 target_link_libraries(qed_photon_benchmark PRIVATE "${SPINAS_LIBRARY}"
   "${CALCHEP_ROOT}/lib/dynamic_vp.a" "${CALCHEP_ROOT}/lib/dynamic_me.a"
   "${CALCHEP_ROOT}/lib/num_c.a" "${CALCHEP_ROOT}/lib/servNoX11.a" "${CALCHEP_ROOT}/lib/serv.a"
-  "${CALCHEP_ROOT}/lib/sqme_aux.so" "${CALCHEP_ROOT}/lib/libSLHAplus.a"
+  hepcat_calchep_validation_aux "${CALCHEP_ROOT}/lib/libSLHAplus.a"
   "${CALCHEP_ROOT}/lib/dummy.a" "${CALCHEP_ROOT}/lib/ntools.a"
   ${CMAKE_DL_LIBS} m Threads::Threads)
 set_target_properties(qed_photon_benchmark PROPERTIES BUILD_RPATH "${CALCHEP_ROOT}/lib")
