@@ -673,6 +673,9 @@ external_report validate_external_project(const spinas_project &p,
       o.points};
   result.requested_calchep = o.run_calchep;
   result.requested_madgraph = o.run_madgraph;
+  const auto notify = [&](const std::string &message) {
+    if (o.progress) o.progress(message);
+  };
   if (o.run_calchep)
     result.calchep_report = build / "calchep-comparison.log";
   if (o.run_madgraph)
@@ -686,24 +689,32 @@ external_report validate_external_project(const spinas_project &p,
     write(build / "madgraph-comparison.json",
           "{\"Passed\":false,\"Status\":\"Pending\",\"Seed\":" + std::to_string(result.seed) + "}\n");
   }
+  notify("Configuring the SPINAS validation project");
   result.configuration = run_external_command(
       {o.cmake_executable, "-S", fs::absolute(p.directory).string(), "-B",
        build.string()},
       build / "external-configure.log");
-  if (result.configuration != 0)
+  if (result.configuration != 0) {
+    notify("FAIL configuring the validation project. See " + (build / "external-configure.log").string());
     return result;
+  }
   for (const auto &backend :
        {std::string("calchep"), std::string("madgraph")}) {
     bool calc = backend == "calchep";
     if (calc ? !o.run_calchep : !o.run_madgraph)
       continue;
+    const std::string name = calc ? "CalcHEP" : "MadGraph";
     const auto exe = p.name + "_validate_" + backend;
     int &status = calc ? result.calchep : result.madgraph;
+    const auto build_log = build / ("external-build-" + backend + ".log");
+    notify("Building the " + name + " validator");
     status = run_external_command(
         {o.cmake_executable, "--build", build.string(), "--target", exe},
-        build / ("external-build-" + backend + ".log"));
-    if (status)
+        build_log);
+    if (status) {
+      notify("FAIL building the " + name + " validator. See " + build_log.string());
       continue;
+    }
     std::vector<std::string> args = {(build / exe).string(), "--points",
                                      std::to_string(o.points), "--seed",
                                      std::to_string(result.seed)};
@@ -714,9 +725,25 @@ external_report validate_external_project(const spinas_project &p,
       args.push_back("--report");
       args.push_back((build / "madgraph-comparison.json").string());
     }
-    status = run_external_command(args, calc ? result.calchep_report
-                                             : result.madgraph_report);
+    const auto &report = calc ? result.calchep_report : result.madgraph_report;
+    const auto count = std::to_string(o.points) + " phase-space points";
+    notify("Comparing with " + name + " at " + count +
+           (calc ? " (polarization sum)" : " (exported helicities and their sum)"));
+    status = run_external_command(args, report);
+    if (status == 0) {
+      // A Fortran STOP can return zero before the generated validator reaches its report.
+      const std::string marker = calc ? "Amplitude validation: PASS" : "MadGraph helicity validation: PASS";
+      std::ifstream log(report);
+      std::string line;
+      while (std::getline(log, line) && line != marker) {}
+      if (line != marker) {
+        status = -1;
+        notify("UNRESOLVED " + name + " returned without a passing report. See " + report.string());
+        continue;
+      }
+    }
     if (calc && status == 3) {
+      notify("Rechecking CalcHEP outliers at higher precision");
       const auto job =
           build / ("precision-" +
                    std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
@@ -738,6 +765,8 @@ external_report validate_external_project(const spinas_project &p,
       if (replay_status == 0)
         status = 0;
     }
+    notify(status == 0 ? "PASS " + name + " comparison at " + count
+                       : "FAIL " + name + " comparison. See " + report.string());
   }
   return result;
 }

@@ -4,7 +4,7 @@ The C++ runner constructs each amplitude from the elementary SM vertices. The ex
 
 ## Results
 
-The [per-amplitude validation results](validation.tsv) cover all 392 ordered amplitudes in 258 process families for the notebook's generation-diagonal SM. Each row passed the built-in checks, signed comparisons with the notebook and the independent Feynman diagrams, and external comparisons with CalcHEP and MadGraph. Each numerical comparison used 10,000 phase-space points with seed 41711. CalcHEP compared the polarization sum. MadGraph compared each distinct massless helicity assignment and the sum. The externally tested expressions matched the final saved expressions byte for byte.
+The [per-amplitude validation results](validation.tsv) cover all 392 ordered amplitudes in 258 process families for the notebook's generation-diagonal SM. Each row passed the built-in checks, signed comparisons with the notebook and the independent Feynman diagrams, and external comparisons with CalcHEP and MadGraph. The archived campaign used 10,000 phase-space points per numerical comparison with seed 41711. The driver now defaults to 100,000. To reproduce the archived sample, pass `--points 10000 --seed 41711`. CalcHEP compared the polarization sum. MadGraph compared each distinct massless helicity assignment and the sum. The externally tested expressions matched the final saved expressions byte for byte.
 
 Mathematica 15 measured both the notebook formulas and the C++ formulas.
 
@@ -36,8 +36,8 @@ Supply the final native run and the parent directory of the external validation 
 
 ```sh
 python3 tests/benchmarks/native-sm-four-point/audit-results.py \
-  --native-run tests/results/spinas-output/native-sm-four-point/run-FINAL \
-  --external-root tests/results/spinas-output/native-sm-four-point \
+  --native-run tests/results/spinas-output/SM-4-point/run-FINAL \
+  --external-root tests/results/spinas-output/SM-4-point \
   --receipt sm-four-point-validation.tsv --missing-families rerun.txt
 ```
 
@@ -53,7 +53,7 @@ The ordinary C++ run measures the native expression directly. To reproduce the a
 
 ```sh
 WolframKernel -script tests/benchmarks/native-sm-four-point/cross-score.wls \
-  tests/results/spinas-output/native-sm-four-point/run-FINAL wolfram-scores.tsv
+  tests/results/spinas-output/SM-4-point/run-FINAL wolfram-scores.tsv
 ```
 
 Add `--wolfram-scores wolfram-scores.tsv` to the audit command above. The script imports each native expression with the HEPCAT symbols, lets Mathematica evaluate it normally, and measures `SpinorExpressionComplexity` and `LeafCount`. It separately imports and scores the corresponding reference, including color factors, and checks the recorded notebook values. The auditor checks the SHA-256 of the scored native expression. A Wolfram kernel is optional for constructing amplitudes and running the physics validations in C++.

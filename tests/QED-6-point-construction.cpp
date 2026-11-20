@@ -1,6 +1,18 @@
-// Native counterpart of QED-6-point-construction.nb. Run with --help or --list.
+// C++ counterpart of QED-6-point-construction.nb. From the HEPCAT repository root:
+//   cmake -S csource -B tests/results/native-reduce-build -DCMAKE_BUILD_TYPE=Release
+//   cmake --build tests/results/native-reduce-build --target hepcat-qed --parallel
+//   tests/results/native-reduce-build/hepcat-qed --family eeAA --preference physical
+// The example above constructs all four photon helicities and runs the CalcHEP
+// and MadGraph checks at 100,000 phase-space points by default. To run the entire
+// notebook, including the all-positive formula comparisons through eight photons,
+// run the same executable without arguments.
+// Use --list to see families and --help for installation paths and other options.
+// Each run prints its directory under tests/results/spinas-output. Open construction.tsv
+// for scores and, inside each pole preference and family, checks.txt for validations
+// and the .expr files for the amplitudes.
 #include "QED-all-positive-replay.hpp"
 #include "amplitude.hpp"
+#include "construction-progress.hpp"
 #include "external_export.hpp"
 #include "generation_sew.hpp"
 #include <algorithm>
@@ -63,6 +75,7 @@ void usage() {
   std::cout
       << "hepcat-qed [--root HEPCAT] [--output DIRECTORY] [--seed N] [--points "
          "N>=10000]\n"
+         "  --points N                     Numerical comparison points (default 100000).\n"
          "  --list                         Show the notebook cases without "
          "calculating them.\n"
          "  --family eeAA|eeee|eeAAA|eeeeA|eeAAAA|eeeeAA|eeeeee|eeAAAAA\n"
@@ -171,9 +184,9 @@ settings options(int argc, char** argv) {
         } else
           throw std::invalid_argument("unknown option " + key);
     }
+    if (!explicit_points && (s.formula_replay.empty() || s.publication))
+      s.engines.points = 100000;
     if (s.publication) {
-      if (!explicit_points)
-        s.engines.points = 100000;
       if (!explicit_seed)
         s.seed = 861811;
       if (s.engines.points < 100000)
@@ -209,7 +222,7 @@ settings options(int argc, char** argv) {
             "--formulas-only conflicts with the requested construction selection");
     s.root = fs::absolute(s.root).lexically_normal();
     if (s.output.empty())
-        s.output = s.root / "tests/results/spinas-output/native-qed";
+        s.output = s.root / "tests/results/spinas-output";
     s.output = fs::absolute(s.output).lexically_normal();
     auto sibling = s.root.parent_path();
     if (s.spinas.empty())
@@ -369,7 +382,8 @@ bool construct_family(const settings &s, const model &vertices,
       continue;
     auto legs = process(f, e);
     std::string branch = e.helicities.empty() ? "massive" : e.helicities;
-    std::cout << policy << ' ' << f.name << ' ' << branch << '\n' << std::flush;
+    std::cout << "\nConstructing " << f.name << " (" << policy << " poles, "
+              << branch << ")\n" << std::flush;
     auto baseline = spurious ? e.spurious : e.physical;
     try {
       const bool seven = legs.size() == 7;
@@ -396,6 +410,7 @@ bool construct_family(const settings &s, const model &vertices,
       opts.validation.seed = s.seed;
       opts.validation.points = s.engines.points;
       opts.reference_amplitude = ref;
+      opts.progress = notebook_output::print_stage;
       auto result = amp.construct(opts);
       std::optional<std::size_t> complexity;
       try {
@@ -407,6 +422,7 @@ bool construct_family(const settings &s, const model &vertices,
       }
       cells << branch << " signed reference and Feynman comparisons\n";
       print_checks(cells, amp.last_construction().validation);
+      notebook_output::print_validation(amp.last_construction().validation);
       file(directory / (branch + ".expr")) << result.str() << '\n';
       bool simple = complexity && *complexity <= target;
       const auto measured =
@@ -421,18 +437,24 @@ bool construct_family(const settings &s, const model &vertices,
              << result.leaf_count() << '\t'
              << (published ? published->leaves : ref.leaf_count()) << '\n'
              << std::flush;
-      std::cout << "  validated " << s.engines.points << " points; complexity "
-                << measured << " vs " << target << '\n';
+      std::cout << "  " << (simple ? "PASS" : "UNMET") << " complexity target (score "
+                << measured << ", target " << target << "), " << result.leaf_count()
+                << " leaves, " << amp.last_construction().total_seconds << " s\n"
+                << "  Expression " << directory / (branch + ".expr") << '\n' << std::flush;
       if (!s.publication && !simple && catalog_score <= target) {
         // The author selected shorter verified forms after construction
         // in the notebook. Keep that step visible, with its own checks.
+        notebook_output::print_stage("Validating the notebook's shorter worked expression");
         auto verified = amp.validate(ref, opts.validation);
         cells << branch << " worked representative, independently checked\n";
         print_checks(cells, verified);
+        notebook_output::print_validation(verified);
         if (!verified.passed())
           throw std::runtime_error(
               "worked representative failed its own validation");
         file(directory / (branch + ".selected.expr")) << ref.str() << '\n';
+        std::cout << "  Selected worked expression (complexity " << catalog_score << ") "
+                  << directory / (branch + ".selected.expr") << '\n' << std::flush;
         scores << policy << '\t' << f.name << '\t' << branch
                << "\tWORKED_FORM_PASS\t" << catalog_score << '\t' << target
                << '\t' << catalog_score << '\t' << s.engines.points
@@ -448,9 +470,12 @@ bool construct_family(const settings &s, const model &vertices,
              << baseline << "\t\t\t\t" << clean_cell(err.what()) << '\n'
              << std::flush;
       if (auto failure =
-              dynamic_cast<const construction_validation_error *>(&err))
+              dynamic_cast<const construction_validation_error *>(&err)) {
         print_checks(cells, failure->report);
-      std::cerr << "  " << err.what() << '\n';
+        notebook_output::print_validation(failure->report);
+      }
+      std::cerr << "  UNRESOLVED " << f.name << " (" << policy << ", " << branch << "): "
+                << err.what() << "\n  Details " << directory / "checks.txt" << '\n';
       passed = false;
     }
   }
@@ -466,6 +491,7 @@ bool construct_family(const settings &s, const model &vertices,
   write.spinas_directory = s.spinas;
   write.runtime_directory = s.engines.runtime_directory;
   auto backends = s.engines;
+  backends.progress = notebook_output::print_stage;
   if (f.name == "eeAAAAA") {
     // The notebook has only the all-positive five-photon row. CalcHEP
     // sums over all photon polarizations; that observable needs 32 rows.
@@ -474,7 +500,9 @@ bool construct_family(const settings &s, const model &vertices,
     backends.calchep_model_directory.clear();
     for (std::size_t i = 2; i < 7; ++i)
       write.fixed_helicities[i] = 2;
+    std::cout << "  SKIP CalcHEP polarization sum (only the all-positive amplitude was selected).\n";
   }
+  notebook_output::print_stage("Writing the SPINAS process and external comparison programs");
   auto project =
       write_spinas_process(directory / "spinas", vertices, rows, write);
   write_external_project(project, vertices, backends);
@@ -524,12 +552,15 @@ void formula_study(const settings& s) {
     fs::create_directories(out);
     auto build = out / "build";
     const auto cmake = s.engines.cmake_executable;
+    notebook_output::print_stage("Building the all-positive formula comparison");
     command({cmake, "-S", (s.root / "tests/benchmarks/all-positive").string(), "-B", build.string(),
              "-DCMAKE_BUILD_TYPE=Release", "-DSPINAS_ROOT=" + s.spinas.string()},
             out / "configure.log");
     command({cmake, "--build", build.string(), "--target", "qed-all-positive"}, out / "compile.log");
+    notebook_output::print_stage("Running the small-multiplicity formula controls");
     command({(build / "qed-all-positive").string(), "--self-test"},
             out / "small-formula-controls.log");
+    std::cout << "  PASS small-multiplicity controls\n" << std::flush;
     for (unsigned n = 2; n <= 8; ++n) {
       if (s.photons && n != *s.photons)
         continue;
@@ -561,6 +592,7 @@ void formula_study(const settings& s) {
              << "\"TimeConstraint\":7200,\"JampSplit\":" << (n >= 7 ? 128 : 0)
              << "}";
       }
+      notebook_output::print_stage("Generating and compiling the independent MadGraph reference");
       command({s.engines.python_executable,
                (s.engines.runtime_directory / "madgraph-runtime.py").string(),
                "--config", config.string(), "--output", reference.string()},
@@ -568,6 +600,8 @@ void formula_study(const settings& s) {
       auto library = reference / "libhepcat_madgraph.so";
       if (!fs::exists(library))
         library = reference / "libhepcat_madgraph.dylib";
+      notebook_output::print_stage("Comparing both formulas with MadGraph at " +
+                                  std::to_string(s.engines.points) + " phase-space points");
       auto status = run_external_command(
           {(build / "qed-all-positive").string(), "--photons",
            std::to_string(n), "--points", std::to_string(s.engines.points),
@@ -585,7 +619,10 @@ void formula_study(const settings& s) {
         if (receipt.find(token) == receipt.npos)
           throw std::runtime_error("incomplete formula comparison at N=" +
                                    std::to_string(n));
+      bool passed = true;
+      std::ostringstream outcome;
       if (status == 1 && receipt.find(R"("Status":"FAIL",)") != receipt.npos) {
+        notebook_output::print_stage("Replaying saved formula outliers at 160 bits");
         const model vertices(s.root / "models", 3);
         auto replay = qed_notebook::replay_formulas(
             vertices, n, dir / "check", s.engines.points, mass, 1e-7L, true, true, mpq_class(1, 3),
@@ -595,10 +632,8 @@ void formula_study(const settings& s) {
             receipt.find("\"StoredRows\":" + count) == receipt.npos)
           throw std::runtime_error(
               "raw outlier count and precision replay disagree");
-        bool pass = replay.unchanged_failures == 0 &&
-                    replay.projected_identity_failures == 0;
-        file(dir / "outcome.txt")
-            << (pass ? "PASS " : "FAIL ") << s.engines.points << " points, "
+        passed = replay.unchanged_failures == 0 && replay.projected_identity_failures == 0;
+        outcome << (passed ? "PASS " : "FAIL ") << s.engines.points << " points, "
             << replay.replayed << " replayed at 160 bits. "
             << replay.unchanged_failures
             << " unresolved on original momenta (worst relative MG "
@@ -606,19 +641,18 @@ void formula_study(const settings& s) {
             << replay.projected_identity_failures
             << " failed signed identities (worst relative "
             << replay.worst_projected_identity << ").\n";
-        if (!pass)
-          throw std::runtime_error(
-              "formula precision comparison exceeds tolerance: " +
-              dir.string());
       } else if (status == 0 &&
                  receipt.find(R"("Status":"PASS",)") != receipt.npos &&
                  receipt.find(R"("Failures":0,)") != receipt.npos) {
-        file(dir / "outcome.txt")
-            << "PASS " << s.engines.points << " points at native precision\n";
+        outcome << "PASS " << s.engines.points << " points at native precision\n";
       } else {
         throw std::runtime_error("failed or incomplete formula comparison: " +
                                  dir.string());
       }
+      file(dir / "outcome.txt") << outcome.str();
+      std::cout << "  " << outcome.str() << "  Formula report " << dir / "check.json" << '\n' << std::flush;
+      if (!passed)
+        throw std::runtime_error("formula precision comparison exceeds tolerance: " + dir.string());
       // Formula references can occupy gigabytes at N=8. Keep the config,
       // independent receipt, values, points and logs for this run.
       fs::copy_file(reference / "result.json", dir / "reference.json");
@@ -633,6 +667,7 @@ int main(int argc, char** argv) {
         if (!s.formula_replay.empty()) {
           const unsigned n = *s.photons;
           const bool model = s.model_formula_replay;
+          std::cout << "Replaying saved points at 160 bits from " << s.formula_replay << '\n' << std::flush;
           auto result = qed_notebook::replay_formulas(
               hepcat::model(s.root / "models", 3), n, s.formula_replay,
               s.engines.points, model ? 0.0005 : (n == 8 ? 1.5 : 1.0), 1e-7L,
@@ -649,9 +684,9 @@ int main(int argc, char** argv) {
                     << " signed identity failures, maximum "
                     << result.worst_projected_identity << ", maximum shift "
                     << result.largest_shift << '\n';
-          return result.unchanged_failures || result.projected_identity_failures
-                     ? 1
-                     : 0;
+          const bool passed = !result.unchanged_failures && !result.projected_identity_failures;
+          std::cout << (passed ? "PASS" : "FAIL") << " formula replay\n";
+          return passed ? 0 : 1;
         }
         if (s.list) {
             list();
@@ -660,13 +695,18 @@ int main(int argc, char** argv) {
         if (!fs::is_regular_file(s.root / "models/amps3.mdl"))
             throw std::runtime_error("specify the HEPCAT checkout with --root");
         fs::create_directories(s.output);
-        auto now = std::chrono::steady_clock::now().time_since_epoch().count();
-        s.output /= "run-" + std::to_string(s.seed) + "-" + std::to_string(now);
+        const auto start = std::chrono::steady_clock::now();
+        s.output /= "run-" + std::to_string(s.seed) + "-" + std::to_string(start.time_since_epoch().count());
         if (!fs::create_directory(s.output))
             throw std::runtime_error("run directory already exists");
-        std::cout << "Seed " << s.seed << "\nResults " << s.output << '\n' << std::flush;
+        std::cout << "Seed " << s.seed << ", " << s.engines.points << " comparison points\n"
+                  << "Results " << s.output << '\n' << std::flush;
+        if (s.construct_only)
+            std::cout << "  SKIP CalcHEP and MadGraph comparisons (--construct-only).\n" << std::flush;
         bool all = true;
+        unsigned families = 0, passed = 0;
         if (!s.formula_only) {
+            notebook_output::print_stage("Reading the constructive QED and Feynman models");
             const model vertices(s.root / "models", 3), rules(s.engines.calchep_model_directory, 2);
             const auto publication =
                 s.publication
@@ -687,19 +727,29 @@ int main(int argc, char** argv) {
                 const model catalog(s.root / "models", spurious ? 5 : 4);
                 for (auto& f : notebook)
                     if (s.family_filter.empty() || s.family_filter == f.name) {
+                        ++families;
                         try {
-                          if (!construct_family(s, vertices, catalog, rules, f,
-                                                spurious, scores, publication))
-                            all = false;
+                          const bool success = construct_family(s, vertices, catalog, rules, f,
+                                                                spurious, scores, publication);
+                          passed += success;
+                          std::cout << (success ? "PASS " : "FAIL ") << f.name
+                                    << (spurious ? " (spurious poles)" : " (physical poles)")
+                                    << "  [" << passed << "/" << families << " passed so far]\n" << std::flush;
                         } catch (const std::exception& err) {
-                            all = false;
-                            std::cerr << f.name << " " << err.what() << '\n';
+                            std::cerr << "FAIL " << f.name << (spurious ? " (spurious poles): " : " (physical poles): ")
+                                      << err.what() << '\n';
                         }
                     }
             }
+            all = passed == families;
+            std::cout << passed << '/' << families << " process-family and pole-preference runs passed.\n"
+                      << "Construction scores " << s.output / "construction.tsv" << '\n' << std::flush;
         }
         if (!s.construct_only && !s.no_formulas && s.family_filter.empty())
             formula_study(s);
+        const std::chrono::duration<double> elapsed = std::chrono::steady_clock::now() - start;
+        std::cout << (all ? "PASS" : "FAIL") << " QED notebook selection in " << elapsed.count()
+                  << " s\nResults " << s.output << '\n';
         return all ? 0 : 1;
     } catch (const std::exception& err) {
         std::cerr << err.what() << '\n';

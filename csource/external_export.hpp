@@ -1,6 +1,7 @@
 #pragma once
 
 #include "spinas_export.hpp"
+#include <functional>
 #include <optional>
 
 namespace hepcat {
@@ -21,6 +22,8 @@ struct external_options {
   std::size_t points = 10000;
   std::optional<std::uint64_t> seed;
   bool run_calchep = true, run_madgraph = true;
+  // Optional notifications on the calling thread during validate_external_project.
+  std::function<void(const std::string&)> progress;
 };
 
 void write_external_project(const spinas_project &, const model &,

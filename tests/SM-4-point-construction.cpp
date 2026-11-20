@@ -1,5 +1,17 @@
-// C++ counterpart of SM-4-point-construction.nb. Run from the repository root.
+// C++ counterpart of SM-4-point-construction.nb. From the HEPCAT repository root:
+//   cmake -S csource -B tests/results/native-reduce-build -DCMAKE_BUILD_TYPE=Release
+//   cmake --build tests/results/native-reduce-build --target hepcat-sm-four-point --parallel
+//   tests/results/native-reduce-build/hepcat-sm-four-point
+//
+// Try one family first by adding --family sm01_uUCc. Use --notebook-only for the
+// notebook's 78 families, or run without options to include all flavor assignments.
+// Numerical checks use 100,000 phase-space points by default. Set --points N to
+// choose a different sample size (minimum 10,000).
+// Each run prints its directory under tests/results/spinas-output/SM-4-point.
+// Open scores.tsv for the summary or a family directory for its .expr files and
+// validation reports. Use --help to set the installed SPINAS, CalcHEP, and MadGraph paths.
 #include "amplitude.hpp"
+#include "construction-progress.hpp"
 #include "external_export.hpp"
 
 #include <algorithm>
@@ -45,12 +57,14 @@ std::vector<std::string> split(const std::string &s, char separator) {
 }
 settings options(int argc, char **argv) {
     settings s;
+    s.engines.points = 100000;
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
         if (arg == "--help") {
             std::cout << "hepcat-sm-four-point [--root DIR] [--output DIR] [--family NAME] [--list]\n"
                          "  [--notebook-only] [--construct-only] [--workers N] [--points N] [--seed N]\n"
-                         "  [--spinas DIR] [--calchep DIR] [--madgraph DIR] [--python EXE] [--cmake EXE]\n";
+                         "  [--spinas DIR] [--calchep DIR] [--madgraph DIR] [--python EXE] [--cmake EXE]\n"
+                         "  Numerical validation defaults to 100,000 points (minimum 10,000).\n";
             std::exit(0);
         }
         if (arg == "--list") {
@@ -99,7 +113,7 @@ settings options(int argc, char **argv) {
     if (!s.engines.seed)
         s.engines.seed = std::chrono::system_clock::now().time_since_epoch().count();
     if (s.output.empty())
-        s.output = s.root / "tests/results/spinas-output/native-sm-four-point";
+        s.output = s.root / "tests/results/spinas-output/SM-4-point";
     s.output = fs::absolute(s.output);
     if (s.spinas.empty())
         s.spinas = s.root.parent_path() / "spinas";
@@ -122,6 +136,7 @@ settings options(int argc, char **argv) {
     s.engines.calchep_model_number = 1;
     s.engines.madgraph_model = (s.root / "tests/reference-models/madgraph/sm").string();
     s.engines.madgraph_parameter_rules["lamWS"] = 0;
+    s.engines.progress = notebook_output::print_stage;
     return s;
 }
 std::vector<notebook_case> read_notebook(const fs::path &path, std::size_t cases, std::size_t groups) {
@@ -188,8 +203,11 @@ bool run_family(const std::vector<notebook_case> &family, const model &sm, const
     auto log = output(directory / "checks.txt");
     std::vector<spinas_component> generated;
     bool simple = true;
+    std::size_t case_number = 0;
     for (const auto &c : family) {
-        std::cout << c.id << ' ' << name << std::endl;
+        std::cout << "  Amplitude " << ++case_number << '/' << family.size() << "  " << c.id
+                  << "  (all incoming: " << c.particles[0] << ", " << c.particles[1] << ", "
+                  << c.particles[2] << ", " << c.particles[3] << ')' << std::endl;
         log << c.id << '\n';
         try {
             for (unsigned i = 0; i < 2; ++i)
@@ -199,6 +217,7 @@ bool run_family(const std::vector<notebook_case> &family, const model &sm, const
             // The same elementary model supplies both vertices and the two sides of a four-point cut.
             amplitude amp(c.particles, sm, sm, feynman);
             construct_options opts;
+            opts.progress = notebook_output::print_stage;
             opts.workers = s.workers;
             opts.validation.points = s.engines.points;
             opts.validation.seed = s.engines.seed;
@@ -211,6 +230,7 @@ bool run_family(const std::vector<notebook_case> &family, const model &sm, const
             auto result = amp.construct(opts);
             const auto &report = amp.last_construction();
             checks(log, report.validation);
+            notebook_output::print_validation(report.validation);
             const auto weight = result.complexity();
             const auto leaves = result.leaf_count();
             const bool within = weight <= c.weight && leaves <= c.leaves;
@@ -220,20 +240,29 @@ bool run_family(const std::vector<notebook_case> &family, const model &sm, const
                    << '\t' << c.weight << '\t' << leaves << '\t' << c.leaves << '\t'
                    << report.total_seconds << '\n'
                    << std::flush;
+            std::cout << "    " << (within ? "PASS" : "FAIL") << " notebook size comparison: complexity "
+                      << weight << " (notebook " << c.weight << "), leaves " << leaves << " (notebook "
+                      << c.leaves << "). Construction and validation took " << report.total_seconds << " s.\n"
+                      << "    Expression: " << (directory / (c.id + ".expr")).string() << std::endl;
             generated.push_back({c.particles, std::move(result)});
         } catch (const std::exception &e) {
             scores << c.id << '\t' << name << "\tUNRESOLVED\t\t" << c.weight << "\t\t" << c.leaves << "\t\n"
                    << std::flush;
-            if (auto error = dynamic_cast<const construction_validation_error *>(&e))
+            if (auto error = dynamic_cast<const construction_validation_error *>(&e)) {
                 checks(log, error->report);
+                notebook_output::print_validation(error->report);
+            }
             log << e.what() << '\n';
-            std::cerr << c.id << ' ' << e.what() << '\n';
+            std::cerr << "    UNRESOLVED " << c.id << ": " << e.what() << '\n';
         }
         log.flush();
     }
     if (generated.size() != family.size()) {
-        if (!s.construct_only)
+        if (!s.construct_only) {
             scores << "external\t" << name << "\tINCOMPLETE_FAMILY\t\t\t\t\t\n" << std::flush;
+            std::cout << "  Skipping CalcHEP and MadGraph: " << generated.size() << '/' << family.size()
+                      << " amplitudes available. See " << (directory / "checks.txt").string() << std::endl;
+        }
         return false;
     }
     if (s.construct_only)
@@ -243,6 +272,7 @@ bool run_family(const std::vector<notebook_case> &family, const model &sm, const
     write.spinas_directory = fs::absolute(s.spinas);
     write.runtime_directory = s.engines.runtime_directory;
     // Each invocation owns a fresh run directory. Preserve comparison receipts before discarding builds.
+    notebook_output::print_stage("Exporting SPINAS and writing the independent validation projects");
     auto project = write_spinas_process(directory / "spinas", sm, generated, write);
     write_external_project(project, sm, s.engines);
     const auto ext = validate_external_project(project, s.engines);
@@ -273,9 +303,12 @@ int main(int argc, char **argv) {
             rows.insert(rows.end(), closure.begin(), closure.end());
         }
         std::map<std::string, std::vector<notebook_case>> selected;
+        std::size_t cases = 0;
         for (const auto &c : rows)
-            if (s.family.empty() || c.family == s.family)
+            if (s.family.empty() || c.family == s.family) {
                 selected[c.family].push_back(c);
+                ++cases;
+            }
         if (selected.empty())
             throw std::invalid_argument("Unknown notebook family " + s.family);
         if (s.list) {
@@ -283,27 +316,47 @@ int main(int argc, char **argv) {
                 std::cout << name << '\t' << group.size() << '\n';
             return 0;
         }
-        const model sm(s.root / "models", 1, "SM"), feynman(s.engines.calchep_model_directory, 1, "Feynman");
+        const auto start = std::chrono::steady_clock::now();
         fs::create_directories(s.output);
         const auto run = "run-" + std::to_string(std::chrono::system_clock::now().time_since_epoch().count());
         auto dir = s.output / run;
         for (unsigned suffix = 1; !fs::create_directory(dir); ++suffix)
             dir = s.output / (run + "-" + std::to_string(suffix));
-        std::cout << dir << "\nSeed " << *s.engines.seed << ", " << s.engines.points << " points\n";
+        std::cout << "SM four-point construction: " << cases << (cases == 1 ? " amplitude in " : " amplitudes in ")
+                  << selected.size() << (selected.size() == 1 ? " family" : " families")
+                  << ". Seed " << *s.engines.seed << ", " << s.engines.points
+                  << " phase-space points per numerical comparison.\nOutput: " << dir.string() << std::endl;
+        if (s.construct_only)
+            std::cout << "Running native checks only (--construct-only). CalcHEP and MadGraph are skipped."
+                      << std::endl;
+        notebook_output::print_stage("Loading the elementary SM and the independent Feynman model");
+        const model sm(s.root / "models", 1, "SM"), feynman(s.engines.calchep_model_directory, 1, "Feynman");
         auto scores = output(dir / "scores.tsv");
         scores << "case\tfamily\tstatus\tweight\tnotebook_weight\tleaves\tnotebook_leaves\tseconds\n";
-        bool ok = true;
+        std::size_t family_number = 0, passed = 0;
         for (const auto &[name, group] : selected) {
+            const auto &process = group.front();
+            std::cout << "\nFamily " << ++family_number << '/' << selected.size() << "  " << name << "  "
+                      << process.incoming[0] << ' ' << process.incoming[1] << " -> " << process.outgoing[0]
+                      << ' ' << process.outgoing[1] << std::endl;
             try {
-                if (!run_family(group, sm, feynman, s, dir / name, scores))
-                    ok = false;
+                const bool ok = run_family(group, sm, feynman, s, dir / name, scores);
+                passed += ok;
+                std::cout << (ok ? "PASS " : "FAIL ") << name << "  Reports: " << (dir / name).string()
+                          << std::endl;
             } catch (const std::exception &e) {
-                ok = false;
-                std::cerr << name << ' ' << e.what() << '\n';
+                std::cerr << "UNRESOLVED " << name << ": " << e.what() << '\n';
                 scores << "external\t" << name << "\tUNRESOLVED\t\t\t\t\t\n";
                 output(dir / name / "error.txt") << e.what() << '\n';
             }
         }
+        const bool ok = passed == selected.size();
+        const auto seconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - start).count();
+        std::cout << '\n' << (ok ? "PASS" : "FAIL") << "  Families passed: " << passed << '/' << selected.size()
+                  << " (" << (s.construct_only ? "native checks and size comparisons"
+                                               : "native checks, size comparisons, CalcHEP and MadGraph")
+                  << "). Total time: " << seconds << " s.\nSummary: " << (dir / "scores.tsv").string()
+                  << std::endl;
         return ok ? 0 : 1;
     } catch (const std::exception &e) {
         std::cerr << e.what() << '\n';

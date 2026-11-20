@@ -1,5 +1,6 @@
 #include "external_export.hpp"
 #include "reduce.hpp"
+#include <algorithm>
 #include <chrono>
 #include <fstream>
 #include <iostream>
@@ -72,8 +73,32 @@ int main(int argc, char **argv) {
                 << r.madgraph << " " << r.madgraph_report << "\n";
       if (!r.passed())
         return 1;
-    } else
+    } else {
+#if defined(__unix__) || defined(__APPLE__)
+      // Some Fortran runtimes exit successfully before the validation report is written.
+      const auto build = tmp / "build";
+      fs::create_directories(build);
+      for (const char* backend : {"calchep", "madgraph"}) {
+        const auto validator = build / (project.name + "_validate_" + backend);
+        std::ofstream(validator) << "#!/bin/sh\nexit 0\n";
+        fs::permissions(validator, fs::perms::owner_exec, fs::perm_options::add);
+      }
+      o.cmake_executable = "true";
+      std::vector<std::string> messages;
+      o.progress = [&](const std::string& message) { messages.push_back(message); };
+      const auto result = validate_external_project(project, o);
+      if (result.configuration != 0 || result.calchep == 0 || result.madgraph == 0 || result.passed())
+        throw std::runtime_error("An external program exited without producing its validation results");
+      for (const char* backend : {"CalcHEP", "MadGraph"}) {
+        const auto prefix = std::string("UNRESOLVED ") + backend;
+        if (std::none_of(messages.begin(), messages.end(), [&](const std::string& message) {
+              return message.rfind(prefix, 0) == 0;
+            }))
+          throw std::runtime_error("Missing unresolved validation message for " + std::string(backend));
+      }
+#endif
       fs::remove_all(tmp);
+    }
   } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';
     return 1;
