@@ -1,5 +1,7 @@
 #include "amp_expression.hpp"
 #include "hepcat.h"
+#include "identities_detail.hpp"
+#include "mathematica.hpp"
 #include "reduce.hpp"
 
 #include <algorithm>
@@ -35,16 +37,10 @@ void insertShell(Shells& shells, std::vector<int> legs, Id mass, const std::vect
     }
     shells.emplace(std::move(legs),mass);
 }
-}
 
-Id reduceInto(Algebra& storage, Id input, const std::vector<Id>& masses, const Shells& shells) {
-    // Borrow the imported tree. Trial expressions live only in this call.
-    // Copy back just the new nodes reachable from the accepted result.
-    const auto originalSize=storage.size();
-    Algebra trial(&storage);
-    trial.setKinematics(masses,shells);
-    const Id local=trial.simplify(input);
-    const Id answer=collectCandidate(trial,local);
+// The trial borrows all IDs below originalSize from storage. Copy back only
+// the new nodes reachable from the chosen alternative, preserving DAG sharing.
+Id retain_borrowed(Algebra& storage, const Algebra& trial, Id answer, std::size_t originalSize) {
     std::unordered_map<Id,Id> saved;
     std::function<Id(Id)> retain = [&](Id id) -> Id {
         if (id<originalSize) return id;
@@ -57,6 +53,15 @@ Id reduceInto(Algebra& storage, Id input, const std::vector<Id>& masses, const S
         return out;
     };
     return retain(answer);
+}
+} // namespace
+
+Id reduceInto(Algebra& storage, Id input, const std::vector<Id>& masses, const Shells& shells) {
+    const auto originalSize=storage.size();
+    Algebra trial(&storage);
+    trial.setKinematics(masses,shells);
+    const Id local=trial.simplify(input);
+    return retain_borrowed(storage, trial, collectCandidate(trial, local), originalSize);
 }
 
 struct amp_expression::context {
@@ -189,6 +194,46 @@ std::string amp_expression::str() const {
 std::string amp_expression::plain_text() const {
     std::lock_guard<std::mutex> guard(*kinematics_->lock);
     return format_plain_text(*arena_, root_);
+}
+std::string amp_expression::latex() const {
+    std::lock_guard<std::mutex> guard(*kinematics_->lock);
+    return format_latex(*arena_, root_);
+}
+std::string amp_expression::mathematica(bool include_mass_rules) const {
+    std::lock_guard<std::mutex> guard(*kinematics_->lock);
+    return format_mathematica(*arena_, root_, kinematics_->masses, kinematics_->shells, include_mass_rules);
+}
+
+std::vector<identity_candidate> amp_expression::identity_candidates(const identity_options& options) const {
+    std::lock_guard<std::mutex> guard(*kinematics_->lock);
+    Algebra trial(arena_.get());
+    trial.setKinematics(kinematics_->masses, {});
+    return identity_detail::enumerate(trial, root_, kinematics_, options);
+}
+
+Id amp_expression::apply_in_trial(Algebra& trial, const identity_candidate& edit) const {
+    if (!edit.belongs_to(kinematics_, root_))
+        throw std::invalid_argument("Identity edit belongs to a different expression or mass context");
+    trial.setKinematics(kinematics_->masses, {});
+    return identity_detail::apply(trial, root_, edit);
+}
+
+identity_score amp_expression::preview_identity(const identity_candidate& edit) const {
+    std::lock_guard<std::mutex> guard(*kinematics_->lock);
+    Algebra trial(arena_.get());
+    const auto alternative = apply_in_trial(trial, edit);
+    return {expression_complexity(trial, alternative), trial.cost(alternative)};
+}
+
+amp_expression amp_expression::apply_identity(const identity_candidate& edit) const {
+    std::lock_guard<std::mutex> guard(*kinematics_->lock);
+    const auto original_size = arena_->size();
+    Algebra trial(arena_.get());
+    const Id alternative = apply_in_trial(trial, edit);
+    auto result = *this;
+    result.root_ = retain_borrowed(*arena_, trial, alternative, original_size);
+    result.reduced_ = false;
+    return result;
 }
 std::size_t amp_expression::leaf_count() const {
     std::lock_guard<std::mutex> guard(*kinematics_->lock);

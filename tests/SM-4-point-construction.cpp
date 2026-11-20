@@ -9,8 +9,9 @@
 // choose a different sample size (minimum 10,000).
 // Each run prints its directory under tests/results/spinas-output/SM-4-point.
 // Open scores.tsv for the summary. Each family directory contains a readable
-// spinor formula (<case>.txt), its exact HEPCAT expression (<case>.expr), and
-// the validation reports. Use --help for the SPINAS, CalcHEP, and MadGraph paths.
+// spinor formula (.txt), a paper formula (.tex), a Mathematica HEPCAT file (.wl),
+// the exact native expression (.expr), and the validation reports.
+// Use --help for the SPINAS, CalcHEP, and MadGraph paths.
 //
 // Each catalog row describes one all-incoming amplitude. A family groups its
 // helicities for the same physical two-to-two process. Start at construct_case
@@ -118,8 +119,8 @@ bool record_amplitude(const notebook_case &entry, const amplitude &process, cons
               << " (target " << notebook_output::number(entry.reference_weight) << "), leaves "
               << notebook_output::number(leaves) << " (target " << notebook_output::number(entry.reference_leaves)
               << ")   " << notebook_output::seconds(report.total_seconds)
-              << "\n    Spinor formula   " << entry.family << '/' << entry.id << ".txt"
-              << "\n    Exact expression " << entry.family << '/' << entry.id << ".expr" << std::endl;
+              << "\n    Formula files   " << entry.family << '/' << entry.id << ".txt"
+              << "  (also .tex, .wl and .expr)" << std::endl;
     return within;
 }
 

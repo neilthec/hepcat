@@ -1,5 +1,7 @@
 #pragma once
 
+#include "identities.hpp"
+#include "identity_check.hpp"
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -34,6 +36,18 @@ public:
     std::string str() const;
     // Readable spinor brackets and invariants for display. str() preserves exact FullForm.
     std::string plain_text() const;
+    std::string latex() const;
+    // Load HEPCAT, then evaluate the result in a Wolfram kernel. By default
+    // the expression is paired with its external and diagram-local mass rules.
+    std::string mathematica(bool include_mass_rules = true) const;
+
+    // Explore a single occurrence. The alternative shares unchanged nodes.
+    std::vector<identity_candidate> identity_candidates(const identity_options& options = {}) const;
+    // Measure a single edit in scratch space without retaining its alternative.
+    identity_score preview_identity(const identity_candidate& edit) const;
+    amp_expression apply_identity(const identity_candidate& edit) const;
+    identity_check_report check_identity(const amp_expression& alternative,
+                                         const identity_check_options& options = {}) const;
     std::size_t particle_count() const;
     std::size_t complexity() const;
     std::size_t leaf_count() const;
@@ -45,8 +59,10 @@ private:
     std::vector<std::uint32_t> import_masses(Algebra& destination) const;
     void reduce_from(Algebra& worker, std::uint32_t source, std::optional<std::uint32_t> original = {});
     void set_from(const Algebra& source, std::uint32_t result);
+    std::uint32_t apply_in_trial(Algebra& trial, const identity_candidate& edit) const;
     struct context;
     static std::string format_plain_text(const Algebra&, std::uint32_t);
+    static std::string format_latex(const Algebra&, std::uint32_t);
     std::shared_ptr<const context> kinematics_;
     std::shared_ptr<Algebra> arena_;
     std::uint32_t root_;

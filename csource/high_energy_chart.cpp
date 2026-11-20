@@ -250,8 +250,11 @@ class Evaluation {
     Jets jets;
     std::size_t sample;
     const std::vector<shear>* shears;
+    bool fixed_point;
     std::vector<JMat> p;
-    Jet component(int energy_power, const Q& value) const { return qmon(shears ? 0 : energy_power, value); }
+    Jet component(int energy_power, const Q& value) const {
+        return qmon(shears || fixed_point ? 0 : energy_power, value);
+    }
     JVec transform(const JVec& v, Matrix slope) const {
         auto t = [&](const Q& k, const Jet& x) { return jets.mul(qmon(1, k), x); };
         return {jets.add(v[0], jets.add(t(slope.a, v[0]), t(slope.b, v[1]))),
@@ -342,6 +345,14 @@ class Evaluation {
                 // Angle frame A=[u*l,(m/det(l,b))*b/u].
                 // The square frame is epsilon*adj(P)*A/m, giving S=[-m*h/(det(r,h)*u),u*r].
                 Q w1 = 1, w2 = k.spin;
+                if (fixed_point) {
+                    // Vary the overall little-group scale too. A trial edit
+                    // can have the wrong spin weight or even mix weights.
+                    auto salt = mix(sample ^ mix(static_cast<std::uint64_t>(j) + 317));
+                    w1 = Q(2 + static_cast<unsigned long>(salt % 73), 11);
+                    w1.canonicalize();
+                    w2 *= w1;
+                }
                 if (n.args.size() == 5) {
                     auto upper = a.node(n.args[1]).head == "\"Upper\"";
                     auto& ix = a.node(n.args[4]);
@@ -407,14 +418,17 @@ class Evaluation {
             return det(v);
         }
         if (n.head == "Mass" && n.args.size() == 1) return qmon(0, f[leg(n.args[0])].mass);
-        if (n.head == "PropDen" && n.args.size() == 2) {
+        if (n.head == "PropDen" && (n.args.size() == 2 || (fixed_point && n.args.size() == 3))) {
             Q m = params.rational(n.args[1]);
             auto v = det(momentum(n.args[0]));
             // A zero leading multi-leg invariant describes a collinear or
             // exceptional direction, outside the fixed-angle scattering chart.
-            if (!shears && internal_partition(n.args[0]) && v.degree() != 4)
+            if (!shears && !fixed_point && internal_partition(n.args[0]) && v.degree() != 4)
                 throw residue_singular("nongeneric fixed-angle propagator");
-            return jets.add(std::move(v), qmon(0, -m * m));
+            v = jets.add(std::move(v), qmon(0, -m * m));
+            if (n.args.size() == 3)
+                v.add(0, Scalar::imaginary() * Scalar(m) * params.value(n.args[2]));
+            return v;
         }
         if (n.head == "Power" && n.args.size() == 2 && a.number(n.args[1], q) && q.get_den() == 1 &&
             q.get_num().fits_slong_p()) {
@@ -437,10 +451,16 @@ class Evaluation {
 
   public:
     Evaluation(const Algebra& tree, Parameters& parameters, const std::vector<Frame>& frame, std::size_t seed,
-               int width, const std::vector<shear>* deformation = nullptr)
-        : a(tree), params(parameters), f(frame), jets(width), sample(seed), shears(deformation) {
+               int width, const std::vector<shear>* deformation = nullptr, bool at_point = false)
+        : a(tree), params(parameters), f(frame), jets(width), sample(seed), shears(deformation),
+          fixed_point(at_point) {
         for (auto& k : f) {
             Matrix large = outer(k.l, k.r), small = outer(k.b, k.h);
+            if (fixed_point) {
+                const auto m = large + small; // Evaluate the chart at u = 1.
+                p.push_back({qmon(0, m.a), qmon(0, m.b), qmon(0, m.c), qmon(0, m.d)});
+                continue;
+            }
             if (shears) {
                 auto& shift = (*shears)[p.size()];
                 auto base = large + small;
@@ -526,6 +546,26 @@ class SpinDegree {
     }
 };
 } // namespace
+
+bool equal_at_external_point(const Algebra& a, const std::vector<std::vector<Id>>& pairs,
+                             std::uint64_t sample, const std::map<Id, mpq_class>& fixed) {
+    Parameters parameters(a, sample, fixed);
+    std::vector<Q> masses;
+    for (Id mass : a.masses())
+        masses.push_back(parameters.rational(mass));
+    auto frame = make_chart(masses, sample);
+    Evaluation point(a, parameters, frame, sample, 0, nullptr, true);
+    auto value = [&](Id id) -> Scalar {
+        const auto& jet = point.get(id);
+        if (jet.unknown != exact || (!jet.terms.empty() && (jet.terms.begin()->first != 0 || jet.terms.size() != 1)))
+            throw std::logic_error("external-point evaluation produced a nonconstant");
+        return jet.terms.empty() ? Scalar{} : jet.terms.begin()->second;
+    };
+    for (const auto& pair : pairs)
+        if (value(pair.at(0)).c != value(pair.at(1)).c)
+            return false;
+    return true;
+}
 
 std::vector<std::vector<mpq_class>> high_energy_chart_rows(const Algebra& algebra,
                                                            const std::vector<Id>& expressions, int bound,

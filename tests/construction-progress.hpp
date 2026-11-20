@@ -49,6 +49,8 @@ inline void write_expression(const std::filesystem::path& base, const hepcat::am
     write(".expr", amplitude.str());
     const auto formula = amplitude.plain_text();
     write(".txt", formula);
+    write(".tex", amplitude.latex());
+    write(".wl", amplitude.mathematica());
 
     std::istringstream input(formula);
     std::string line;

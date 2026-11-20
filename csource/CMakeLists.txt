@@ -13,7 +13,8 @@ add_library(hepcat_reduce
     high_energy.cpp high_energy_chart.cpp high_energy_contacts.cpp
     validation.cpp validation_checks.cpp validation_numeric.cpp validation_feynman.cpp
     validation_precision_chart.cpp validation_precision_parameters.cpp
-    collect.cpp presentation.cpp algebra.cpp amp_expression.cpp plain_text.cpp kinematics.cpp spinor.cpp vector_basis.cpp vector_compact.cpp)
+    collect.cpp presentation.cpp algebra.cpp amp_expression.cpp plain_text.cpp mathematica.cpp
+    identities.cpp identity_check.cpp kinematics.cpp spinor.cpp vector_basis.cpp vector_compact.cpp)
 target_compile_features(hepcat_reduce PUBLIC cxx_std_17)
 target_include_directories(hepcat_reduce PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(hepcat_reduce SYSTEM PRIVATE ${GMP_INCLUDE_DIR})
@@ -33,9 +34,13 @@ target_link_libraries(hepcat-qed PRIVATE hepcat_reduce)
 add_executable(hepcat-sm-four-point ../tests/SM-4-point-construction.cpp)
 target_link_libraries(hepcat-sm-four-point PRIVATE hepcat_reduce)
 
+add_executable(hepcat-derive-example ../tests/Spinor-identity-derivation.cpp)
+target_include_directories(hepcat-derive-example SYSTEM PRIVATE ${GMP_INCLUDE_DIR})
+target_link_libraries(hepcat-derive-example PRIVATE hepcat_reduce)
+
 include(CTest)
 if(BUILD_TESTING)
-    foreach(suite IN ITEMS spinor generation_spin kinematics collect vector_basis api amplitude completion residue continuations high_energy high_energy_chart validation_checks validation_numeric validation_precision_chart)
+    foreach(suite IN ITEMS spinor generation_spin kinematics collect vector_basis api latex mathematica identity identity_check amplitude completion residue continuations high_energy high_energy_chart validation_checks validation_numeric validation_precision_chart)
         add_executable(test_${suite} ${suite}_tests.cpp)
         target_include_directories(test_${suite} SYSTEM PRIVATE ${GMP_INCLUDE_DIR})
         target_link_libraries(test_${suite} PRIVATE hepcat_reduce)
@@ -45,6 +50,7 @@ if(BUILD_TESTING)
     target_include_directories(test_generation_plan SYSTEM PRIVATE ${GMP_INCLUDE_DIR})
     target_link_libraries(test_generation_plan PRIVATE hepcat_reduce)
     set(HEPCAT_TEST_MODELS "${CMAKE_CURRENT_SOURCE_DIR}/../models" CACHE PATH "HEPCAT model files for native tests")
+    add_test(NAME six_point_derivation COMMAND hepcat-derive-example "${HEPCAT_TEST_MODELS}")
     add_test(NAME generation_plan COMMAND test_generation_plan "${HEPCAT_TEST_MODELS}")
     add_executable(test_generation generation_tests.cpp)
     target_link_libraries(test_generation PRIVATE hepcat_reduce)

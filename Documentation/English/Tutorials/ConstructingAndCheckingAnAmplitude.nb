@@ -111,7 +111,12 @@ report compares the complex final amplitude with the coherent Feynman sum on \
 at least 10,000 shared scattering points. It reports physical residues, \
 spurious poles, reference independence and high-energy growth separately. A \
 failed or unresolved check prevents an overall pass."}], "TechNoteText"],
-  Cell[TextData[{"The standalone C++ example in \
+  Cell[TextData[{"The C++ examples save each result as a readable spinor \
+formula (.txt), a LaTeX math fragment (.tex), and a Wolfram expression with \
+its mass rules (.wl). Load HEPCAT before reading the .wl file with Get. The \
+.expr file is the exact native form. For comparing to a model read separately \
+in Mathematica, the native README explains how to share its parameter scope."}\
+], "TechNoteText"], Cell[TextData[{"The standalone C++ example in \
 tests/QED-6-point-construction.cpp runs the QED notebook families with both \
 pole preferences. Use write_spinas_process to combine labeled helicities into \
 a numerical process. Use write_external_project to generate the CalcHEP and \

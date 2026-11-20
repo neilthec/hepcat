@@ -9,7 +9,8 @@
 // Use --list to see families and --help for installation paths and other options.
 // Each run prints its directory under tests/results/spinas-output. Open construction.tsv
 // for scores and, inside each pole preference and family, checks.txt for validations
-// and the .txt amplitudes in spinor notation. The .expr files hold the exact expressions.
+// and the .txt amplitudes in spinor notation. Use .tex for papers, .wl with
+// Mathematica HEPCAT, and .expr to reload the exact native expression.
 //
 // To extend the notebook, start at the process list below. construct_helicity()
 // shows how to set up, construct, check, and save one amplitude. construct_family()
@@ -209,7 +210,8 @@ selected_amplitude construct_helicity(const settings& run, const construction_mo
               << (meets_target ? "met" : "unmet") << "), " << notebook_output::number(leaves)
               << " leaves\n"
               << "    Time              " << notebook_output::seconds(report.total_seconds) << '\n'
-              << "    Formula file      " << (relative_dir / (branch + ".txt")).string() << std::endl;
+              << "    Formula files     " << (relative_dir / (branch + ".txt")).string()
+              << "  (also .tex, .wl and .expr)" << std::endl;
 
     // As in the notebook, validate a shorter worked form before selecting it
     // for export. Publication mode always measures the automatic construction.

@@ -6,7 +6,7 @@ This guide is for a user who asks an AI to use HEPCAT to support a physics
 calculation. Help derive new amplitudes, simplify expressions, combine
 diagrams, discover useful representations and check proposed results. The AI
 should develop and explain the mathematical reasoning, then use the package
-in a Wolfram kernel to apply identities and test its ideas.
+in a Wolfram kernel or the native C++ library to apply identities and test its ideas.
 
 The automatic constructor is one useful tool. A derivation may also require
 choosing reference spinors, exploring identities, comparing alternative forms
@@ -43,6 +43,9 @@ new hardware. Do not modify user files outside generated-output boundaries.
 Paths in this guide are relative to the repository root.
 
 - `source/HEPCAT.wl` loads the package.
+- `csource/README.md` explains native construction, explicit identity edits,
+  signed comparisons, output formats and model scopes. The QED and SM
+  notebooks in `tests/` have standalone C++ counterparts.
 - `source/HEPCAT-Base.wl` implements spinor algebra and explicit identities.
 - `source/HEPCAT-Model.wl` implements models, diagrams, factorization,
   preparation, completion, and amplitude checks.
@@ -148,6 +151,26 @@ organization of terms and check it with the tools. A known expression may be
 used as a comparison, with its source stated. When no target is known, retain
 the best verified form and explain the evidence and remaining uncertainties.
 The package is a means of checking the reasoning, not a substitute for it.
+
+### Work entirely in C++
+
+Start from the exact expression and ordered masses, or from a constructed
+process's `final_amplitude()`. Keep that starting object. Enumerate local
+moves with `identity_candidates`, filter by rule or subtree, and use
+`preview_identity` to compare their complexity and leaf counts. The preview
+uses temporary storage. Apply a chosen edit with `apply_identity` and keep
+its description with the new expression. Regenerate candidates at each step.
+An intermediate expansion can expose a cancellation across terms.
+
+Use `before.check_identity(after, options)` for a signed comparison at
+independently sampled external on-shell kinematics. Record the seed, sample
+count and outcome. These probes can also test a proposed form entered by hand.
+Supply the external color representations for colored amplitudes. A mismatch
+gives a reproducible counterexample under the supplied assumptions. Singular
+or unsupported calculations can be unresolved. For a finished amplitude
+run `process.validate(after, options)` with the actual models and channels.
+Use `plain_text()` while exploring, `latex()` for manuscripts, and
+`mathematica()` to hand an expression and its mass rules to Wolfram HEPCAT.
 
 ## Apply identities with their assumptions
 

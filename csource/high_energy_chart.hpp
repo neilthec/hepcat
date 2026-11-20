@@ -31,4 +31,9 @@ regular_chart_validation regularity_chart(const Algebra&, Id cleared_amplitude,
                                           const std::vector<Id>& probe_denominators, std::size_t sample,
                                           std::size_t pairing,
                                           const std::map<Id, mpq_class>& parameter_values = {});
+
+// Compare each pair of signed (color-projected) expressions on the same
+// ordinary conserved point, with external masses on shell and generic spins.
+bool equal_at_external_point(const Algebra&, const std::vector<std::vector<Id>>& pairs,
+                             std::uint64_t sample, const std::map<Id, mpq_class>& parameter_values);
 } // namespace hepcat

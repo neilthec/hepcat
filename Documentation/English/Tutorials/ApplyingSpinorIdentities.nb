@@ -65,13 +65,19 @@ expression pieces it changes. ", ButtonBox["ApplySpinorIdentity",
       BaseStyle -> "Link", ButtonData ->
        "paclet:HEPCAT/ref/ApplySpinorIdentity"],
      " checks that the edit is still legal before applying it."}],
-   "TechNoteText"], Cell[TextData[{"The example deliberately disables \
-internal-shell and momentum-conservation moves, so only ordinary identities \
-are being explored. Applying the first listed edit illustrates the mechanism; \
-it does not assert that the first edit is the best simplification. Compare \
-resulting expressions with ", ButtonBox["SpinorExpressionComplexity",
-      BaseStyle -> "Link", ButtonData ->
-       "paclet:HEPCAT/ref/SpinorExpressionComplexity"],
+   "TechNoteText"], Cell[TextData[{"To carry out the derivation entirely in \
+C++, ask the amp_expression for identity_candidates, select a rule and \
+occurrence, preview the complexity with preview_identity and keep a branch \
+with apply_identity. Use check_identity to compare the signed expressions at \
+conserved external on-shell points before accepting a step. The C++ API also \
+accepts a trial formula written by hand. See csource/README.md for the \
+runnable workflow, assumptions and supported tests."}], "TechNoteText"],
+  Cell[TextData[{"The example deliberately disables internal-shell and \
+momentum-conservation moves, so only ordinary identities are being explored. \
+Applying the first listed edit illustrates the mechanism; it does not assert \
+that the first edit is the best simplification. Compare resulting expressions \
+with ", ButtonBox["SpinorExpressionComplexity", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/SpinorExpressionComplexity"],
      ", and retain the edit if you want a reproducible route."}],
    "TechNoteText"],
   Cell[TextData[

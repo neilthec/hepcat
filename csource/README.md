@@ -18,6 +18,77 @@ int main() {
 
 Here the numerator shell is $(p_1+p_3)^2=m_e^2$. Since $p_1^2=m_e^2$ and $p_3^2=0$, the reduced dot product is zero. Its off-cut remainder is `MomProd[1,3]`. Omit the third constructor argument to use external masses and momentum conservation alone. The optional C interface is in [hepcat.h](hepcat.h), with a runnable short example in [c_api_test.c](c_api_test.c).
 
+## Read, publish or reuse an expression
+
+| In C++ | Notebook output | Use |
+| --- | --- | --- |
+| `expr.plain_text()` | `.txt` | Read spinor chains such as `[213>` and denominators such as `s_13 - Me^2` in the terminal. |
+| `expr.latex()` | `.tex` | Include the math fragment inside an equation in a paper. It supplies its brackets, fractions, masses, indices and color factors. You choose the equation numbers and line breaks. |
+| `expr.mathematica()` | `.wl` | After loading HEPCAT, use `pair = Get["amplitude.wl"]` to recover `{massRules, expression}`. The rules include declared diagram-local conditions. Use `expr.mathematica(false)` for the expression alone. |
+| `expr.str()` | `.expr` | Read the exact native expression back into `amp_expression` with the original masses and any applicable shells. |
+| `write_spinas_process(...)` | SPINAS project | Export one or more helicity expressions with their model and physical incoming legs as numerical C++. |
+
+The Wolfram export preserves each model parameter's name, scope and type. To
+combine it with a separate Mathematica `ReadModel`, give both readers the
+same scope. For example, obtain it with `ModelParameter[qed, "Me"][[2]]`
+in Mathematica and pass that string as the third argument to the C++ `model`
+constructor. For an existing export, bind its particular native scope to the
+corresponding loaded model.
+
+```wolfram
+With[{source = "native-..."},  (* copy the scope from the exported file *)
+  pair /. ModelParameter[name_, source, _] :> ModelParameter[qed, name]]
+```
+
+## Try an identity in C++
+
+Use `reduce()` for automatic simplification. During a derivation, direct the
+next step yourself. For example, a scalar product multiplying a chain can be
+inserted into that chain using the Clifford anticommutator. This can expose
+a cancellation with the next term.
+
+```cpp
+using namespace hepcat;
+identity_options search;
+search.rule = identity_rule::dot_into_chain;
+for (const auto& move : expr.identity_candidates(search)) {
+    const auto size = expr.preview_identity(move);
+    std::cout << move.description() << "   complexity " << size.complexity
+              << ", leaves " << size.leaves << '\n';
+}
+```
+
+Use `auto next = expr.apply_identity(move)` to keep an alternative. The input
+retains its original value. For options and rule names see [identities.hpp](identities.hpp).
+You can restrict enumeration to one subtree (zero-based argument indices),
+cap the number of moves, or exclude expansion rules. Applying a move rebuilds
+the chosen occurrence even if another occurrence shares the same underlying
+nodes. Re-enumerate after modifying the expression.
+
+Use `expr.check_identity(next, options)` to evaluate both signed expressions
+independently in exact arithmetic at sampled conserved four-dimensional
+kinematics for four or more external legs. External masses are on shell and
+internal propagators are free. The report distinguishes agreement at the
+sampled points, a mismatch, and an unresolved calculation. Record the seed
+to repeat the check. You can also supply a formula you entered by hand with
+the same ordered external masses. The default varies free scalar parameters
+independently. Supply rational parameter values for a relation specific to a
+model, and give the external color representations for colored expressions.
+Unsupported functions or radicals outside the chart's coefficient field
+produce an unresolved result. For the final process, run the full validations.
+
+The [worked six-point QED derivation](../tests/Spinor-identity-derivation.cpp)
+starts with a complete mixed-helicity amplitude from model 4. It reduces the
+starting expression, previews Clifford swaps on the resulting chains, and
+checks the sign and value after each accepted edit. A final check uses
+fresh samples. Run it from the repository root.
+
+```sh
+cmake -S csource -B tests/results/native-reduce-build -DCMAKE_BUILD_TYPE=Release
+cmake --build tests/results/native-reduce-build --target hepcat-derive-example --parallel
+tests/results/native-reduce-build/hepcat-derive-example models
+```
+
 ## Construct an amplitude in C++
 
 From the repository root, build the native executable and list the QED examples.
@@ -51,7 +122,7 @@ The call generates and reduces the tree diagrams and factorization products, com
 
 ### Run the QED examples and external comparisons
 
-Both C++ notebooks save each amplitude twice. Open the `.txt` file to read the spinor brackets and propagators, or the matching `.expr` file to reuse the exact symbolic expression. In your own C++ code, use `amp.final_amplitude().plain_text()` for the displayed formula and `amp.final_amplitude().str()` for the exact expression. The terminal shows short amplitudes inline. Each validation table gives the check, its outcome and the number of checks or phase-space points covered.
+Both C++ notebooks save each amplitude in the four expression formats above. The terminal shows short amplitudes inline. Each validation table gives the check, its outcome and the number of checks or phase-space points covered.
 
 The [C++ QED example](../tests/QED-6-point-construction.cpp) covers the notebook's helicity families through six external legs, the seven-leg all-positive example, and the separate all-positive formula study. From the HEPCAT repository root, run one complete family with
 

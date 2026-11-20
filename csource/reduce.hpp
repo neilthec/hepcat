@@ -45,6 +45,7 @@ public:
     bool number(Id id, mpq_class& result) const;
     Id exact(const mpq_class& value);
     Id simplify(Id expression);
+    Id factorSum(Id expression);
 private:
     const Algebra* parent_;
     size_t base_;
@@ -54,7 +55,6 @@ private:
     std::unordered_multimap<std::size_t,Id> index_;
     std::vector<Id> masses_;
     std::map<std::vector<int>,Id> shells_;
-    Id factorSum(Id expression);
 };
 
 Id reduceInto(Algebra& storage, Id expression, const std::vector<Id>& masses,
