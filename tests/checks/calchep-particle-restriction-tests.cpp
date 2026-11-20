@@ -22,12 +22,34 @@ along with HEPCAT.  If not, see <https://www.gnu.org/licenses/>.
 #include "calchep-runtime.hpp"
 #include <iostream>
 #include <iomanip>
+#include <map>
 
 namespace {
 std::string read_file(const std::string& path) {
   std::ifstream input(path.c_str(), std::ios::binary);
   if (!input) throw std::runtime_error("Cannot read test model table: " + path);
   return std::string(std::istreambuf_iterator<char>(input), std::istreambuf_iterator<char>());
+}
+
+// Exercise a CalcHEP model with running masses even when the repository's
+// comparison model already declares these three masses as independent inputs.
+void use_running_quark_masses(const std::string& fixture) {
+  const std::map<std::string, std::string> functions = {
+      {"Mb", "MbEff(Q)"}, {"Mc", "McEff(Q)"}, {"Ms", "MqEff(0.096,Q)"}};
+  const auto vars = fixture + "/vars1.mdl", func = fixture + "/func1.mdl";
+  std::istringstream input(read_file(vars));
+  std::ostringstream retained, derived;
+  for (std::string line; std::getline(input, line);) {
+    const auto fields = hepcat_spinas::calchep_detail::split_table_fields(line);
+    const auto entry = fields.empty() ? functions.end() : functions.find(fields.front());
+    if (entry == functions.end()) retained << line << '\n';
+    else derived << entry->first << " | " << entry->second << '\n';
+  }
+  if (derived.str().empty()) return;
+  std::ofstream variables(vars, std::ios::trunc), constraints(func, std::ios::app);
+  variables << retained.str();
+  constraints << derived.str();
+  if (!variables || !constraints) throw std::runtime_error("Cannot create the running-mass test fixture");
 }
 
 void check_particle_widths(const std::string& table, const bool zero) {
@@ -86,13 +108,16 @@ int main(int argc, char* argv[]) {
     const std::string model = argv[1];
     test_width_table_staging();
     const std::string original_particles = read_file(model + "/prtcls1.mdl");
+    hepcat_spinas::calchep_detail::Workspace fixture_workspace(false);
+    const auto derived_model = hepcat_spinas::calchep_detail::stage_model(model, 1, fixture_workspace.path());
+    use_running_quark_masses(derived_model);
     hepcat_spinas::calchep_detail::Workspace staged_workspace(false);
     const std::string staged_model = hepcat_spinas::calchep_detail::stage_model(
-      model, 1, staged_workspace.path());
+      derived_model, 1, staged_workspace.path());
     check_particle_widths(read_file(staged_model + "/prtcls1.mdl"), true);
     if (read_file(model + "/prtcls1.mdl") != original_particles) return 11;
     {
-      const std::string original_functions = read_file(model + "/func1.mdl");
+      const std::string original_functions = read_file(derived_model + "/func1.mdl");
       const std::vector<hepcat_spinas::CalcHEPParameter> masses = {
         {"Mb", 4.2}, {"Mc", 1.3}, {"Ms", 0.095}, {"CW", 0.9}};
       const auto promoted = hepcat_spinas::calchep_detail::promote_private_mass_inputs(
@@ -103,7 +128,7 @@ int main(int argc, char* argv[]) {
           functions.find("McEff(") != std::string::npos || functions.find("MqEff(") != std::string::npos ||
           functions.find("sqrt(1-SW^2)") == std::string::npos ||
           variables.find("Matched independent HEPCAT mass") == std::string::npos ||
-          read_file(model + "/func1.mdl") != original_functions) return 14;
+          read_file(derived_model + "/func1.mdl") != original_functions) return 14;
       // Repeating the matching step must not duplicate an already promoted input.
       if (!hepcat_spinas::calchep_detail::promote_private_mass_inputs(
             staged_model, masses, {"Mb", "Mc", "Ms"}).empty()) return 15;
@@ -157,11 +182,23 @@ int main(int argc, char* argv[]) {
       std::cout << "CALCHEP_PRIVATE_OPTIMIZATION_PASS\n";
     }
     {
+      // The numerical validator needs the installed arithmetic flags. Debug
+      // information grows with every squared diagram in the generated library.
+      hepcat_spinas::CalcHEPProcess process(model, 2, external, parameters,
+          1.0, false, {11, 22}, 0, {}, true);
+      const double compact = process.squared_amplitude(point);
+      std::ifstream flags(process.work_directory() + "/optimized-calchep/FlagsForSh");
+      const std::string text((std::istreambuf_iterator<char>(flags)), std::istreambuf_iterator<char>());
+      if (!std::isfinite(compact) || std::abs(compact - qed) > 1e-12 * std::abs(qed) ||
+          text.find("CFLAGS=\"$CFLAGS -g0\"") == std::string::npos) return 18;
+      std::cout << "CALCHEP_VALIDATION_LINK_FLAGS_PASS\n";
+    }
+    {
       // Native constraints and every dependent Yukawa remain tied to the
       // explicitly matched masses after private numerical-scheme conversion.
       auto values = parameters;
       values.push_back({"Mb", 4.2}); values.push_back({"Mc", 1.3}); values.push_back({"Ms", 0.095});
-      hepcat_spinas::CalcHEPProcess process(model, 1, {11,-11,5,-5}, values,
+      hepcat_spinas::CalcHEPProcess process(derived_model, 1, {11,-11,5,-5}, values,
           1.0, false, {}, 0, {"Mb", "Mc", "Ms"});
       if (process.promoted_mass_parameters().size() != 3 ||
           process.mass_scheme_summary().find("Mb=") == std::string::npos ||

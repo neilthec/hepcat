@@ -183,7 +183,8 @@ class Workspace {
 // newProcess script finds its installation from its own path, so this private
 // overlay supplies that script and flags while sharing read-only support files.
 inline std::string optimized_compiler_installation(
-    const std::string& installation, const std::string& workspace, int level) {
+    const std::string& installation, const std::string& workspace, int level,
+    bool omit_debug_symbols = false) {
   const std::string directory = workspace + "/optimized-calchep";
   if (mkdir(directory.c_str(), 0700) || mkdir((directory + "/sbin").c_str(), 0700)) {
     throw std::runtime_error(error_message("Create private CalcHEP compiler directory"));
@@ -206,8 +207,10 @@ inline std::string optimized_compiler_installation(
     throw std::runtime_error(error_message("Make private CalcHEP compiler script executable"));
   }
   std::ofstream flags((directory + "/FlagsForSh").c_str(), std::ios::app);
-  flags << "\n# HEPCAT call-local matrix-element optimization.\n"
-        << "CFLAGS=\"$CFLAGS -O" << level << "\"\nexport CFLAGS\n";
+  flags << "\n# Compiler flags for this generated matrix element.\nCFLAGS=\"$CFLAGS";
+  if (level) flags << " -O" << level;
+  if (omit_debug_symbols) flags << " -g0";
+  flags << "\"\nexport CFLAGS\n";
   if (!flags) throw std::runtime_error("Cannot save private CalcHEP optimization flags.");
   return directory;
 }
@@ -498,13 +501,15 @@ class CalcHEPProcess {
   // particle factorial. Do not multiply those factors a second time.
   // Level 0 preserves installation compiler flags; 1, 2 or 3 appends -Olevel
   // in a private workspace for this process only, useful for timing studies.
+  // A disposable validation matrix can omit debug symbols to reduce link space.
   CalcHEPProcess(const std::string& model_directory, int model_number,
                  const std::vector<int>& physical_pdgs,
                  const std::vector<CalcHEPParameter>& parameters,
                  double strong_coupling = 1.0, bool keep_work_files = false,
                  const std::vector<int>& allowed_particle_pdgs = std::vector<int>(),
                  int optimization_level = 0,
-                 const std::vector<std::string>& independent_mass_parameters = std::vector<std::string>())
+                 const std::vector<std::string>& independent_mass_parameters = std::vector<std::string>(),
+                 bool omit_debug_symbols = false)
       : lock_(calchep_detail::session_mutex(), std::try_to_lock),
         workspace_(keep_work_files), matrix_element_(NULL), pdgs_(physical_pdgs),
         strong_coupling_(strong_coupling), allowed_pdgs_(allowed_particle_pdgs),
@@ -542,7 +547,7 @@ class CalcHEPProcess {
         staged, parameters, independent_mass_parameters);
     calchep_detail::WorkingDirectory working_directory(workspace_.path());
     try {
-      initialize(staged, parameters);
+      initialize(staged, parameters, omit_debug_symbols);
     } catch (...) {
       delAllLib();
       matrix_element_ = NULL;
@@ -606,7 +611,7 @@ class CalcHEPProcess {
 
  private:
   void initialize(const std::string& directory,
-                   const std::vector<CalcHEPParameter>& parameters) {
+                   const std::vector<CalcHEPParameter>& parameters, bool omit_debug_symbols) {
     std::vector<char> model_path(directory.begin(), directory.end());
     model_path.push_back('\0');
     if (setModel(model_path.data(), 1)) {
@@ -674,9 +679,9 @@ class CalcHEPProcess {
     // unspecified outgoing states and must not be used for an internal cut.
     // Unitary gauge; do not add t-channel Breit-Wigner factors.
     {
-      const std::string compiler_directory = optimization_level_ == 0 ? std::string() :
+      const std::string compiler_directory = optimization_level_ == 0 && !omit_debug_symbols ? std::string() :
           calchep_detail::optimized_compiler_installation(
-              calchepDir, workspace_.path(), optimization_level_);
+              calchepDir, workspace_.path(), optimization_level_, omit_debug_symbols);
       calchep_detail::CompilerInstallation compiler(compiler_directory);
       matrix_element_ = getMEcode(0, 1, process.data(),
           excluded_names_.empty() ? NULL : excluded.data(), excluded_output, library);

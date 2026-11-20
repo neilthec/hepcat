@@ -60,7 +60,8 @@ int main(int argc, char **argv) {
                              native_export::calchep_model_number,
                              native_export::physical_pdgs(), inputs, strong,
                              false, native_export::allowed_pdgs(), 0,
-                             native_export::independent_mass_names());
+                             native_export::independent_mass_names(),
+                             /*omit_debug_symbols=*/true);
     const auto order = native_export::leg_order();
     check_calchep_masses(proc.masses(), reference.masses(), order);
     size_t point_index = 0, retained = 0;
