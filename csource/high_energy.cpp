@@ -289,7 +289,6 @@ const amp_expression& amplitude::complete_energy_components(const amp_expression
         auto original = result; // The two roots share the original interned tree.
         if (vertices_model_) result.set_from(a, contract_model_couplings(a,answer,*vertices_model_));
         result.reduce();
-        result.root_=collect_scalar_factors(*result.arena_, result.root_);
         if (a.masses().size() == 4 && std::all_of(a.masses().begin(), a.masses().end(),
                 [&](Id mass) { return chart_detail::free_parameter(a.node(mass)); })) {
             const Id reduced = result.import_into(a);

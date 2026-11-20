@@ -186,7 +186,8 @@ validation_report amplitude::validate_impl(amp_expression candidate, const amp_e
             inventory.bind_model_parameters(tree, root, exact, true);
         report.checks =
             native_builtin_checks(inventory, candidate, bound, exact.parameter_points,
-                                  options.samples_per_cut, options.energy_directions, seed, colors);
+                                  options.samples_per_cut, options.energy_directions, seed, colors,
+                                  options.workers);
     } catch (const std::exception& e) {
         report.checks.push_back(
             {"BuiltIn", "External-kinematics checks", check_outcome::unresolved, 0, e.what()});

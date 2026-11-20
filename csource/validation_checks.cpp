@@ -3,6 +3,7 @@
 #include "validation_color.hpp"
 #include "chart_scalar.hpp"
 #include "high_energy_chart.hpp"
+#include "native_fit.hpp"
 
 #include <algorithm>
 #include <limits>
@@ -211,7 +212,8 @@ std::vector<builtin_check> native_builtin_checks(const amplitude& process, const
                                                  const validation_parameter_points& parameter_points,
                                                  std::size_t samples_per_cut, std::size_t energy_directions,
                                                  std::size_t offset,
-                                                 const std::vector<int>& color_representations) {
+                                                 const std::vector<int>& color_representations,
+                                                 std::size_t workers) {
     if (samples_per_cut < 4 || energy_directions == 0)
         throw std::invalid_argument(
             "validation requires all four cut branches and at least one energy direction");
@@ -244,17 +246,23 @@ std::vector<builtin_check> native_builtin_checks(const amplitude& process, const
             // Residues are linear in the two roots. Use a pair of IDs for
             // de-duplication because their difference can contain distinct sewn
             // helicity weights across summands.
-            for (std::size_t i = 0; i < inventory.channels.size(); ++i) {
+            // Every channel reads the same immutable expressions and owns its
+            // chart arithmetic. Retain model order in the finished report.
+            const auto count = inventory.channels.size();
+            const auto threads = workers ? workers : std::max(1u, std::thread::hardware_concurrency());
+            const auto first = rows.size();
+            rows.resize(first + count);
+            fit_detail::parallel_indices(count, std::min(count, threads), [&](std::size_t i) {
                 std::set<std::pair<Id, Id>> distinct;
                 for (const auto& v : versions)
                     distinct.emplace(v.front(), v[i + 1]);
-                rows.push_back(components(distinct, [&](const auto& pair) {
+                rows[first + i] = components(distinct, [&](const auto& pair) {
                     auto channel = inventory.channels[i];
                     auto [root, target] = pair;
                     channel.target = target;
                     return physical(a, root, channel, points, samples_per_cut, offset);
-                }));
-            }
+                });
+            });
         }
         std::set<Id> finals;
         for (const auto& version : versions)

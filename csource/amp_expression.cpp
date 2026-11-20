@@ -104,6 +104,8 @@ amp_expression& amp_expression::reduce() {
     std::lock_guard<std::mutex> guard(*kinematics_->lock);
     if (!reduced_) {
         root_=reduce_and_retain(*arena_,root_,kinematics_->masses,kinematics_->shells,remainder_);
+        if (kinematics_->shells.empty())
+            root_=collect_scalar_factors(*arena_,root_);
         reduced_=true;
     }
     return *this;

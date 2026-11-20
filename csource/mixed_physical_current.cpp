@@ -21,7 +21,6 @@ struct dirac_recursion {
     std::vector<bool> minor;
     bool swapped;
     mask full;
-    std::map<mask, std::map<legs, Id>> memo;
     Id zero() { return a.integer(0); }
     Id one() { return a.integer(1); }
     Id neg(Id x) { return a.mul({a.integer(-1), x}); }
@@ -49,19 +48,6 @@ struct dirac_recursion {
             w.push_back(a.integer(k));
         return a.call("PropDen", {a.call("Mom", {a.call("Multiparticle", w)}), mass});
     }
-    Id orbital(int idx, mask earlier) {
-        int i = vectors[idx];
-        bool q = minor[idx] ? swapped : !swapped;
-        // Choose the shorter expression using total momentum conservation.
-        // The projected polarization annihilates p_l and p_i.
-        std::vector<Id> plus{chain(q, i, {l, r}, i)}, minus;
-        for (size_t k = 0; k < vectors.size(); ++k)
-            if (k != idx) {
-                auto v = chain(q, i, {l, vectors[k]}, i);
-                (earlier & (1u << k) ? plus : minus).push_back(v);
-            }
-        return plus.size() <= minus.size() ? a.add(plus) : neg(a.add(minus));
-    }
     Id contact(int i, int j) {
         if (minor[i] == minor[j]) {
             bool q = minor[i] ? swapped : !swapped;
@@ -70,47 +56,6 @@ struct dirac_recursion {
         if (!minor[i])
             std::swap(i, j);
         return a.pow(chain(swapped, vectors[i], {l}, vectors[j]), 2);
-    }
-    const std::map<legs, Id>& build(mask set) {
-        auto hit = memo.find(set);
-        if (hit != memo.end())
-            return hit->second;
-        if (!set)
-            return memo.emplace(set, std::map<legs, Id>{{{}, one()}}).first->second;
-        std::map<legs, std::vector<Id>> sums;
-        for (size_t i = 0; i < vectors.size(); ++i)
-            if (set & (1u << i)) {
-                auto rest = set ^ (1u << i);
-                auto weight = neg(orbital(i, rest));
-                for (auto& [spins, current] : build(rest)) {
-                    if (weight != zero())
-                        sums[spins].push_back(a.mul({weight, current}));
-                    if (minor[i]) {
-                        legs q{vectors[i]};
-                        q.insert(q.end(), spins.begin(), spins.end());
-                        sums[q].push_back(a.mul({pole(l, 1u << i), current}));
-                    }
-                }
-                for (size_t j = 0; j < i; ++j)
-                    if (rest & (1u << j)) {
-                        auto seagull = neg(contact(i, j));
-                        for (auto& [spins, current] : build(rest ^ (1u << j)))
-                            sums[spins].push_back(a.mul({seagull, current}));
-                    }
-            }
-        Id den = one();
-        if (set != full) {
-            auto other = full ^ set;
-            den = a.pow(std::bitset<sizeof(mask) * 8>(other).count() <
-                                std::bitset<sizeof(mask) * 8>(set).count()
-                            ? pole(l, other)
-                            : pole(r, set),
-                        -1);
-        }
-        std::map<legs, Id> results;
-        for (auto& [key, terms] : sums)
-            results.emplace(key, a.mul({a.add(terms), den}));
-        return memo.emplace(set, std::move(results)).first->second;
     }
     Id grouped_one_minority() {
         const size_t hidx = vectors.size() - 1;
@@ -349,22 +294,267 @@ struct dirac_recursion {
         }
       return neg(a.mul({g, inv(mass), a.add(all)}));
     }
-    Id run() {
-        std::vector<Id> terms, prefactors{g, a.pow(mass, -1)};
+};
+
+// A second-order Dirac line is an ordered sequence of spin and orbital
+// emissions and scalar contacts. Split it near its middle and contract
+// the two short endpoint currents. Every allowed ordering occurs once.
+struct balanced_line : dirac_recursion {
+    using current = std::map<int, Id>;
+    using cache_key = std::pair<bool, mask>;
+
+    bool physical;
+    mask minority = 0;
+    std::map<cache_key, Id> remainders;
+    std::map<cache_key, current> currents;
+
+    balanced_line(dirac_recursion input, bool physical_gauge)
+        : dirac_recursion(std::move(input)), physical(physical_gauge) {
         for (size_t i = 0; i < vectors.size(); ++i)
-            prefactors.push_back(a.pow(pole(l, 1u << i), -1));
-        for (auto& [spins, val] : build(full)) {
-            int prev = l;
-            std::vector<Id> term{val};
-            for (int i : spins) {
-                term.push_back(chain(swapped, prev, {}, i));
-                prev = i;
-            }
-            term.push_back(chain(swapped, prev, {}, r));
-            terms.push_back(a.mul(term));
+            if (minor[i]) minority |= 1u << i;
+    }
+
+    static size_t length(mask set) { return std::bitset<sizeof(mask) * 8>(set).count(); }
+
+    int reference(size_t i) const {
+        if (physical) return minor[i] ? r : l;
+        return minor[i] ? vectors.front() : vectors.back();
+    }
+
+    bool chirality(size_t i) const { return minor[i] ? swapped : !swapped; }
+
+    Id norm(size_t i) {
+        return physical ? pole(reference(i), 1u << i) : chain(!chirality(i), reference(i), {}, vectors[i]);
+    }
+
+    Id projection(size_t i, int p) {
+        if (p == vectors[i] || p == reference(i)) return zero();
+        return physical ? chain(chirality(i), vectors[i], {reference(i), p}, vectors[i])
+                        : chain(!chirality(i), reference(i), {p}, vectors[i]);
+    }
+
+    Id pair_weight(size_t i, size_t j) {
+        if (physical) {
+            if (minor[i] == minor[j]) return neg(contact(i, j));
+            if (!minor[i]) std::swap(i, j);
+            return neg(a.mul({chain(swapped, vectors[i], {reference(i)}, vectors[j]),
+                              chain(swapped, vectors[i], {reference(j)}, vectors[j])}));
         }
-        prefactors.push_back(a.add(terms));
-        return neg(a.mul(prefactors));
+        if (minor[i] == minor[j]) return zero();
+        if (!minor[i]) std::swap(i, j);
+        return a.mul({chain(!swapped, reference(i), {}, vectors[j]),
+                      chain(swapped, vectors[i], {}, reference(j))});
+    }
+
+    Id orbital_weight(bool left, size_t i, mask rest) {
+        std::vector<Id> direct, complement;
+        auto append = [&](std::vector<Id>& terms, int p) {
+            Id x = projection(i, p);
+            if (x != zero()) terms.push_back(x);
+        };
+        append(direct, left ? l : r);
+        append(complement, left ? r : l);
+        for (size_t j = 0; j < vectors.size(); ++j)
+            if (j != i) append(rest & (1u << j) ? direct : complement, vectors[j]);
+        if (direct.size() <= complement.size())
+            return left ? a.add(direct) : neg(a.add(direct));
+        return left ? neg(a.add(complement)) : a.add(complement);
+    }
+
+    Id denominator(bool left, mask set) {
+        if (length(set) > length(full ^ set)) return pole(left ? r : l, full ^ set);
+        return pole(left ? l : r, set);
+    }
+
+    template<class F> std::vector<Id> each(mask set, F f) {
+        std::vector<Id> terms;
+        for (size_t i = 0; i < vectors.size(); ++i)
+            if (set & (1u << i)) terms.push_back(f(i));
+        return terms;
+    }
+
+    Id leading(bool left, mask set) {
+        return a.mul(each(set, [&](size_t i) { return orbital_weight(left, i, 0); }));
+    }
+
+    // Subtract the product of the single emissions from a like-helicity
+    // current. Each remaining source is a marked two-photon determinant,
+    // since the projected polarization is transverse to its photon.
+    Id determinant(bool left, mask set) {
+        if (length(set) < 2) return zero();
+        const auto key = std::make_pair(left, set);
+        if (auto it = remainders.find(key); it != remainders.end()) return it->second;
+        const int end = left ? l : r;
+        std::vector<Id> terms;
+        for (size_t i = 0; i < vectors.size(); ++i) {
+            if (!(set & (1u << i))) continue;
+            const mask rest = set ^ (1u << i);
+            const Id di = pole(end, 1u << i);
+            terms.push_back(a.mul({orbital_weight(left, i, rest), di, determinant(left, rest)}));
+            for (size_t j = 0; j < i; ++j) {
+                if (!(rest & (1u << j))) continue;
+                const mask rest_pair = rest ^ (1u << j);
+                terms.push_back(a.mul({norm(i), norm(j), a.pow(chain(chirality(i), vectors[i], {}, vectors[j]), 2),
+                                      leading(left, rest_pair)}));
+                terms.push_back(a.mul({pair_weight(i, j), di, pole(end, 1u << j),
+                                      determinant(left, rest_pair)}));
+            }
+        }
+        return remainders.emplace(key, a.mul({a.add(terms), a.pow(denominator(left, set), -1)})).first->second;
+    }
+
+    const current& extend(bool left, mask set) {
+        const auto key = std::make_pair(left, set);
+        if (auto it = currents.find(key); it != currents.end()) return it->second;
+        if (!set) return currents.emplace(key, current{{left ? l : r, one()}}).first->second;
+        if (length(set) >= 3 && !(set & minority)) {
+            const int end = left ? l : r;
+            Id scalar = a.add({leading(left, set), neg(a.mul({a.pow(mass, 2), determinant(left, set)}))});
+            scalar = a.mul({scalar, a.pow(a.mul(each(set, [&](size_t i) { return pole(end, 1u << i); })), -1)});
+            return currents.emplace(key, current{{end, scalar}}).first->second;
+        }
+        std::map<int, std::vector<Id>> sums;
+        if (length(set) == 2) {
+            const size_t i = first_member(set), j = first_member(set ^ (1u << i));
+            const int end = left ? l : r;
+            // The two scalar orderings and the contact can be written as
+            // independent endpoint projections plus their field-strength
+            // contraction. In the end's own gauge both projections vanish,
+            // leaving just the contraction from the scalar contact.
+            const auto di = pole(end, 1u << i), dj = pole(end, 1u << j);
+            Id remainder;
+            if (minor[i] == minor[j])
+                remainder = a.mul({a.pow(mass, 2), a.pow(chain(chirality(i), vectors[i], {}, vectors[j]), 2)});
+            else {
+                const size_t m = minor[i] ? i : j, v = minor[i] ? j : i;
+                remainder = a.pow(chain(swapped, vectors[m], {end}, vectors[v]), 2);
+            }
+            const auto leading = a.mul({projection(i, end), projection(j, end), pole(end, set)});
+            const auto divide = a.mul({a.pow(di, -1), a.pow(dj, -1)});
+            sums[end] = {a.mul({a.add({leading, neg(a.mul({norm(i), norm(j), remainder}))}), divide})};
+            // Move the orbital spectator past one Pauli emission. For two
+            // Pauli emissions Schouten and the massive endpoint equation
+            // collapse their recoil to a single mass times a bracket.
+            auto pauli = [&](size_t u, size_t v) {
+                if (!minor[u]) return;
+                const int U = vectors[u], V = vectors[v];
+                const Id endpoint = chain(swapped, U, {}, end);
+                Id shift;
+                if (minor[v]) {
+                    shift = a.mul({mass, norm(v), a.pow(chain(swapped, U, {}, V), 2),
+                                   chain(!swapped, U, {}, end)});
+                } else {
+                    shift = neg(a.mul({endpoint, norm(v), chain(!swapped, V, {end}, U),
+                                       chain(!swapped, U, {}, V)}));
+                }
+                sums[U] = {a.mul({norm(u), divide, a.add({shift,
+                    neg(a.mul({endpoint, projection(v, end), pole(end, set)}))})})};
+            };
+            pauli(i, j);
+            pauli(j, i);
+        } else {
+            for (size_t i = 0; i < vectors.size(); ++i) {
+                mask bit = 1u << i;
+                if (!(set & bit)) continue;
+                mask rest = set ^ bit;
+                Id weight = orbital_weight(left, i, rest);
+                const auto& tail = extend(left, rest);
+                std::vector<Id> spin;
+                for (const auto& [end, v] : tail) {
+                    if (weight != zero()) sums[end].push_back(a.mul({weight, v}));
+                    if (minor[i])
+                        spin.push_back(a.mul({v, left ? chain(swapped, end, {}, vectors[i])
+                                                      : chain(swapped, vectors[i], {}, end)}));
+                }
+                if (!spin.empty()) sums[vectors[i]].push_back(a.mul({norm(i), a.add(spin)}));
+                for (size_t j = 0; j < i; ++j) {
+                    if (!(rest & (1u << j))) continue;
+                    const Id w = pair_weight(i, j);
+                    if (w == zero()) continue;
+                    for (const auto& [end, v] : extend(left, rest ^ (1u << j)))
+                        sums[end].push_back(a.mul({w, v}));
+                }
+            }
+        }
+        const Id inv = a.pow(denominator(left, set), -1);
+        current result{{left ? l : r, zero()}};
+        for (auto& [k, v] : sums) result[k] = a.mul({a.add(v), inv});
+        return currents.emplace(key, std::move(result)).first->second;
+    }
+
+    Id dot(const current& u, const current& v) {
+        std::vector<Id> terms;
+        for (const auto& [i, x] : u)
+            for (const auto& [j, y] : v)
+                if (i != j) terms.push_back(a.mul({x, y, chain(swapped, i, {}, j)}));
+        return a.add(terms);
+    }
+
+    Id join_emission(mask start, size_t i) {
+        const mask end = full ^ start ^ (1u << i);
+        const auto& left = extend(true, start);
+        const auto& right = extend(false, end);
+        const Id scalar = orbital_weight(true, i, start);
+        if (minor[i] && (full & minority) == (1u << i)) {
+            const Id spin = a.mul({norm(i), chain(swapped, l, {}, vectors[i]), chain(swapped, vectors[i], {}, r)});
+            const Id vertex = a.add({spin, a.mul({scalar, chain(swapped, l, {}, r)})});
+            return a.mul({vertex, left.at(l), right.at(r)});
+        }
+        Id result = a.mul({scalar, dot(left, right)});
+        if (minor[i]) {
+            current polarization{{vectors[i], one()}};
+            result = a.add({result, a.mul({norm(i), dot(left, polarization), dot(polarization, right)})});
+        }
+        return result;
+    }
+
+    Id join_contact(mask start, size_t i, size_t j) {
+        const Id weight = pair_weight(i, j);
+        if (weight == zero()) return zero();
+        const mask end = full ^ start ^ (1u << i) ^ (1u << j);
+        return a.mul({weight, dot(extend(true, start), extend(false, end))});
+    }
+
+    Id run() {
+        const size_t half = vectors.size() / 2;
+        const bool odd = vectors.size() % 2;
+        // Centering on the only Pauli emission leaves two purely orbital
+        // tails. The crossed reference photons also kill every scalar contact
+        // involving the central photon, so the determinant form stays small.
+        const bool marked = !physical && length(minority) == 1;
+        std::vector<Id> terms;
+        for (mask start = 0; start < full; ++start) {
+            const auto count = length(start);
+            if (marked) {
+                const auto h = first_member(minority);
+                if (start & minority) continue;
+                terms.push_back(join_emission(start, h));
+                for (size_t j = 0; j < vectors.size(); ++j)
+                    if (j != h && !(start & (1u << j))) terms.push_back(join_contact(start, h, j));
+                continue;
+            }
+            if (count == half && odd) {
+                for (size_t i = 0; i < vectors.size(); ++i)
+                    if (!(start & (1u << i))) terms.push_back(join_emission(start, i));
+            }
+            if (count == half && !odd) {
+                // Both currents carry the joining propagator. Amputate one.
+                const mask end = full ^ start;
+                const auto den = denominator(false, end);
+                current amputated;
+                for (const auto& [k, x] : extend(false, end)) amputated[k] = a.mul({den, x});
+                terms.push_back(dot(extend(true, start), amputated));
+            }
+            if (count + 1 == half || (odd && count == half)) {
+                for (size_t i = 0; i < vectors.size(); ++i)
+                    if (!(start & (1u << i)))
+                        for (size_t j = 0; j < i; ++j)
+                            if (!(start & (1u << j))) terms.push_back(join_contact(start, i, j));
+            }
+        }
+        std::vector<Id> prefactors{neg(g), a.pow(mass, -1), a.add(terms)};
+        for (size_t i = 0; i < vectors.size(); ++i) prefactors.push_back(a.pow(norm(i), -1));
+        return a.mul(prefactors);
     }
 };
 } // namespace
@@ -379,19 +569,19 @@ std::optional<Id> mixed_physical_current(Algebra& a, int l, int r, Id mass, cons
         major.push_back(i);
         chi.push_back(true);
     }
-    dirac_recursion d{a, l, r, mass, coefficient, major, chi, swapped, (1u << major.size()) - 1, {}};
+    dirac_recursion d{a, l, r, mass, coefficient, major, chi, swapped, (1u << major.size()) - 1};
     if (minor.size() == 1 && major.size() == 3)
       return d.connected_emissions(true);
     if (minor.size() == 1 && major.size() == 4)
       return d.grouped_one_minority();
     if (minor.size() == 2 && major.size() == 4)
       return d.midpoint(true);
-    return d.run();
+    return balanced_line(std::move(d), true).run();
 }
 std::optional<Id> mixed_spurious_current(Algebra& a, int l, int r, Id mass, const std::vector<int>& plus,
                                          const std::vector<int>& minus, Id coefficient) {
   if (plus.empty() || minus.empty() || plus.size() + minus.size() < 3 ||
-      plus.size() + minus.size() > 4)
+      plus.size() + minus.size() > 6)
     return {};
   bool swapped = minus.size() > plus.size();
   legs vectors = swapped ? minus : plus, other = swapped ? plus : minus;
@@ -400,8 +590,8 @@ std::optional<Id> mixed_spurious_current(Algebra& a, int l, int r, Id mass, cons
   minor.resize(vectors.size(), true);
   dirac_recursion d{a,     l,           r,
                     mass,  coefficient, vectors,
-                    minor, swapped,     (1u << vectors.size()) - 1,
-                    {}};
+                    minor, swapped,     (1u << vectors.size()) - 1};
+  if (vectors.size() > 4) return balanced_line(std::move(d), false).run();
   return other.size() == 1 ? d.connected_emissions(false) : d.midpoint(false);
 }
 

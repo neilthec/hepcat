@@ -4,8 +4,13 @@
 #include "reduce.hpp"
 
 #include <utility>
+#include <map>
 
 namespace hepcat {
+
+// Supply the momentum or null spinor used for each independent Xi endpoint.
+struct reference_choice { int emitter, target; bool physical; };
+Id replace_external_references(Algebra&, Id expression, const std::map<Id, reference_choice>&);
 
 // Alternate off-cut lifts of a sewn channel, obtained by changing its gauge
 // references. Only the simultaneous residue check can admit a lift.

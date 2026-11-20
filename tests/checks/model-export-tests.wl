@@ -168,6 +168,14 @@ Do[
     ConvertAmplitude[Join[meFiveParts, {1, meCompact}], meModel[[1]], meScope] === meExpected],
   {meBrackets, {{"<", ">", "Angle", "Angle"}, {"[", "]", "Square", "Square"},
     {"<", "]", "Angle", "Square"}, {"[", ">", "Square", "Angle"}}}];
+meSignedScalar = Times[-1, meCharge + meMass, meDerived + meMass];
+meSignedEntries = {{ConstantArray["h", 4], meSignedScalar},
+  {ConstantArray["h", 5], (meSignedScalar - meCharge/3)^2 - meDerived}};
+meSignedAppend = AppendModelAmplitudes[meDirectory, 91, meSignedEntries];
+meCheck["negative products of sums and nested ordinary signs keep their exact factored form",
+  AssociationQ[meSignedAppend] && meSignedAppend["Added"] === 2 &&
+    (Times @@ Take[#, -2] & /@ Take[ReadModel[meDirectory, 91][[2]], -2]) === Last /@ meSignedEntries];
+
 meRepeated = AppendModelAmplitudes[meDirectory, 91,
   {{{"e", "E", "A.-", "A.-"}, meFour}, {{"e", "E", "A.-", "A.-"}, meFour}}];
 meCheck["identical new entries within one batch are written only once",

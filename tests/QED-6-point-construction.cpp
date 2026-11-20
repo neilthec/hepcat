@@ -4,8 +4,9 @@
 //   tests/results/native-reduce-build/hepcat-qed --family eeAA --preference physical
 // The example above constructs all four photon helicities and runs the CalcHEP
 // and MadGraph checks at 100,000 phase-space points by default. To run the entire
-// notebook, including the all-positive formula comparisons through eight photons,
-// run the same executable without arguments.
+// study, including all seven-point processes and the all-positive formula
+// comparisons through eight photons, run without arguments. Use --legs 7
+// to construct just the seven-point processes.
 // Use --list to see families and --help for installation paths and other options.
 // Each run prints its directory under tests/results/spinas-output. Open construction.tsv
 // for scores and, inside each pole preference and family, checks.txt for validations
@@ -35,19 +36,35 @@ namespace fs = std::filesystem;
 using namespace hepcat;
 namespace {
 
+enum class reference_source { model_catalog, all_positive_formula, feynman_only };
+
 struct helicity_case {
     std::string helicities;         // One sign for each photon, in all-incoming order.
-    std::size_t physical, spurious; // Complexity ceilings for each pole preference.
+    std::size_t physical = 0, spurious = 0; // Zero means no pre-existing score target.
+    reference_source reference = reference_source::model_catalog;
 };
-
-enum class reference_source { model_catalog, all_positive_formula };
 
 struct family {
     std::string name;
     std::vector<std::string> fermions; // Ordered external fermions. The photons follow them.
     std::vector<helicity_case> examples;
-    reference_source reference = reference_source::model_catalog;
 };
+
+// Identical photons give one representative for each possible number of
+// negative helicities. SPINAS relabels them to cover every ordered assignment.
+std::vector<helicity_case> new_helicities(unsigned photons) {
+    std::vector<helicity_case> cases;
+    for (unsigned minus = 0; minus <= photons; ++minus)
+        cases.push_back({std::string(photons - minus, '+') + std::string(minus, '-'),
+                         0, 0, reference_source::feynman_only});
+    return cases;
+}
+
+std::vector<helicity_case> five_photons() {
+    auto cases = new_helicities(5);
+    cases.front() = {"+++++", 820, 920, reference_source::all_positive_formula};
+    return cases;
+}
 
 // Add a family or helicity here. For example, {"++-", 62, 63} measures three
 // photons against the physical and spurious complexity targets, respectively.
@@ -55,7 +72,7 @@ struct family {
 // reference in the corresponding model, and both catalog rows for --publication.
 // A complete family can use photon permutations of the listed representatives.
 // A single photon-helicity assignment is exported as a polarized process. The
-// last family uses the independent electron-pair all-positive reference formula.
+// five-positive-photon entry also has an independent all-positive reference.
 const std::vector<family> notebook = {
     // Four external particles
     {"eeAA", {"e", "E"}, {{"++", 1, 1}, {"+-", 10, 10}, {"-+", 10, 10}, {"--", 1, 1}}},
@@ -76,8 +93,11 @@ const std::vector<family> notebook = {
     {"eeeeAA", {"e", "E", "E", "e"}, {{"++", 1200, 1216}, {"+-", 1600, 1632}, {"--", 1200, 1216}}},
     {"eeeeee", {"e", "E", "e", "E", "e", "E"}, {{"", 3168, 3168}}},
 
-    // Seven external particles, with a fixed-helicity MadGraph comparison
-    {"eeAAAAA", {"e", "E"}, {{"+++++", 820, 920}}, reference_source::all_positive_formula},
+    // Seven external particles. The remaining entries are new predictions
+    // checked against the independent Feynman model, without a saved answer.
+    {"eeAAAAA", {"e", "E"}, five_photons()},
+    {"eeeeAAA", {"e", "E", "E", "e"}, new_helicities(3)},
+    {"eeeeeeA", {"e", "E", "e", "E", "e", "E"}, new_helicities(1)},
 };
 
 struct settings {
@@ -89,6 +109,7 @@ struct settings {
     fs::path formula_replay;
     bool model_formula_replay = false, summed_formula_replay = false;
     std::optional<unsigned> photons;
+    std::optional<unsigned> legs;
     std::size_t workers = 0;
     std::uint64_t seed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
 };
@@ -124,12 +145,14 @@ std::vector<std::string> external_legs(const family& process, const helicity_cas
 }
 
 // Each signed reference enters only the validation and size comparison.
-amp_expression signed_reference(const family& process, const helicity_case& entry,
+std::optional<amp_expression> signed_reference(const family& process, const helicity_case& entry,
                                 const construction_models& models, const std::vector<std::string>& legs,
                                 const amplitude& amp, bool spurious, const publication_row* published) {
     if (published)
         return amp_expression(published->expression, amp.external_masses());
-    if (process.reference == reference_source::all_positive_formula) {
+    if (entry.reference == reference_source::feynman_only)
+        return std::nullopt;
+    if (entry.reference == reference_source::all_positive_formula) {
         if (process.fermions != std::vector<std::string>{"e", "E"} || entry.helicities.empty() ||
             entry.helicities.find_first_not_of('+') != std::string::npos)
             throw std::invalid_argument("The all-positive reference requires e, E followed by positive photons");
@@ -180,34 +203,38 @@ selected_amplitude construct_helicity(const settings& run, const construction_mo
     options.reference_amplitude = reference;
     options.progress = notebook_output::print_stage;
 
-    const auto reference_score = reference.complexity();
-    if (published && reference_score != published->weighted)
+    const auto reference_score = reference ? std::optional{reference->complexity()} : std::nullopt;
+    if (published && reference_score.value() != published->weighted)
         throw std::runtime_error(
             "native and publication complexity measures disagree on the reference");
     const auto baseline = spurious ? entry.spurious : entry.physical;
-    const auto target = baseline ? std::min(baseline, reference_score) : reference_score;
+    auto target = reference_score;
+    if (baseline && target) target = std::min(baseline, *target);
 
     auto result = amp.construct(options);
     const auto& report = amp.last_construction();
-    log << branch << " signed reference and Feynman comparisons\n";
+    log << branch << (reference ? " signed reference and Feynman comparisons\n"
+                                : " signed Feynman comparison\n");
     print_checks(log, report.validation);
     notebook_output::print_validation(report.validation);
     notebook_output::write_expression(directory / branch, result);
 
     const auto complexity = measure_complexity(result, log, branch);
-    const bool meets_target = complexity && *complexity <= target;
+    const bool meets_target = !target || (complexity && *complexity <= *target);
     const auto measured = complexity ? std::to_string(*complexity) : "UNMEASURED";
     const char* score_status = meets_target ? "PASS" : "VALID_BUT_LONGER";
     if (!complexity)
         score_status = "VALID_SCORE_UNAVAILABLE";
     const auto leaves = result.leaf_count();
     scores << policy << '\t' << process.name << '\t' << branch << '\t' << score_status << '\t'
-           << measured << '\t' << target << '\t' << reference_score << '\t' << run.engines.points
+           << measured << '\t' << (target ? std::to_string(*target) : "") << '\t'
+           << (reference_score ? std::to_string(*reference_score) : "") << '\t' << run.engines.points
            << '\t' << report.total_seconds << "\t\t" << leaves << '\t'
-           << (published ? published->leaves : reference.leaf_count()) << '\n'
+           << (reference ? std::to_string(published ? published->leaves : reference->leaf_count()) : "") << '\n'
            << std::flush;
-    std::cout << "    Complexity        " << measured << " (target " << target << ", "
-              << (meets_target ? "met" : "unmet") << "), " << notebook_output::number(leaves)
+    std::cout << "    Complexity        " << measured;
+    if (target) std::cout << " (target " << *target << ", " << (meets_target ? "met" : "unmet") << ')';
+    std::cout << ", " << notebook_output::number(leaves)
               << " leaves\n"
               << "    Time              " << notebook_output::seconds(report.total_seconds) << '\n'
               << "    Formula files     " << (relative_dir / (branch + ".txt")).string()
@@ -215,24 +242,24 @@ selected_amplitude construct_helicity(const settings& run, const construction_mo
 
     // As in the notebook, validate a shorter worked form before selecting it
     // for export. Publication mode always measures the automatic construction.
-    if (meets_target || run.publication || reference_score > target)
+    if (!reference || meets_target || run.publication || reference_score > target)
         return {{legs, std::move(result)}, meets_target};
 
     notebook_output::print_stage("Validating the notebook's shorter worked expression");
-    const auto verified = amp.validate(reference, options.validation);
+    const auto verified = amp.validate(*reference, options.validation);
     log << branch << " worked representative, independently checked\n";
     print_checks(log, verified);
     notebook_output::print_validation(verified);
     if (!verified.passed())
         throw std::runtime_error("worked representative failed its own validation");
-    notebook_output::write_expression(directory / (branch + ".selected"), reference);
+    notebook_output::write_expression(directory / (branch + ".selected"), *reference);
     scores << policy << '\t' << process.name << '\t' << branch << "\tWORKED_FORM_PASS\t"
-           << reference_score << '\t' << target << '\t' << reference_score << '\t' << run.engines.points
+           << *reference_score << '\t' << *target << '\t' << *reference_score << '\t' << run.engines.points
            << "\t\tvalidated after construction\n"
            << std::flush;
     std::cout << "    Selected for export  " << (relative_dir / (branch + ".selected.txt")).string()
-              << " (complexity " << reference_score << ")\n";
-    return {{legs, std::move(reference)}, true};
+              << " (complexity " << *reference_score << ")\n";
+    return {{legs, std::move(*reference)}, true};
 }
 
 bool validate_export(const settings& run, const model& vertices, const family& process,
@@ -280,8 +307,6 @@ bool construct_family(const settings& run, const construction_models& models, co
     bool meets_targets = true;
     std::vector<spinas_component> components;
     for (const auto& entry : process.examples) {
-        if (!run.helicity_filter.empty() && run.helicity_filter != entry.helicities)
-            continue;
         const std::string branch = entry.helicities.empty() ? "massive" : entry.helicities;
         const auto legs = external_legs(process, entry);
         std::cout << "\n  ";
@@ -324,6 +349,24 @@ bool construct_family(const settings& run, const construction_models& models, co
     return meets_targets && external_passed;
 }
 
+std::vector<family> selected_families(const settings& run) {
+    std::vector<family> selected;
+    for (auto process : notebook) {
+        if (!run.family_filter.empty() && run.family_filter != process.name) continue;
+        if (run.legs && process.fermions.size() + process.examples.front().helicities.size() != *run.legs)
+            continue;
+        auto& entries = process.examples;
+        entries.erase(std::remove_if(entries.begin(), entries.end(), [&](const helicity_case& entry) {
+            return (run.publication && entry.reference == reference_source::feynman_only) ||
+                   (!run.helicity_filter.empty() && run.helicity_filter != entry.helicities);
+        }), entries.end());
+        if (!entries.empty()) selected.push_back(std::move(process));
+    }
+    if (selected.empty())
+        throw std::invalid_argument("no QED amplitudes match the selected family, multiplicity and reference");
+    return selected;
+}
+
 bool run_families(const settings& run) {
     notebook_output::print_stage("Reading the QED vertices and Feynman rules");
     const model vertices(run.root / "models", 3);
@@ -337,8 +380,8 @@ bool run_families(const settings& run) {
     scores << "preference\tfamily\thelicity\tstatus\tcpp_complexity\tthreshold\treference_complexity"
               "\tpoints\tseconds\tdetail\tcpp_leaves\treference_leaves\n";
 
-    const auto family_count = run.family_filter.empty() ? notebook.size() : 1;
-    const auto total = family_count * (run.preference == "both" ? 2 : 1);
+    const auto families = selected_families(run);
+    const auto total = families.size() * (run.preference == "both" ? 2 : 1);
     std::size_t number = 0, passed = 0;
     for (bool spurious : {false, true}) {
         const std::string policy = spurious ? "spurious" : "physical";
@@ -346,9 +389,7 @@ bool run_families(const settings& run) {
             continue;
         const model catalog(run.root / "models", spurious ? 5 : 4);
         const construction_models models{vertices, catalog, feynman};
-        for (const auto& process : notebook) {
-            if (!run.family_filter.empty() && run.family_filter != process.name)
-                continue;
+        for (const auto& process : families) {
             std::cout << "\n[" << ++number << '/' << total << "] " << process.name << "  |  "
                       << (spurious ? "AllSpurious" : "AllPhysical") << std::endl;
             try {
@@ -454,11 +495,12 @@ publication_table read_publication(const fs::path& path, const std::string& scop
         if (!table.emplace(publication_key{mode, family, helicity}, std::move(row)).second)
             throw std::runtime_error("duplicate publication reference");
     }
-    std::size_t expected = 0;
     for (const auto& f : notebook)
-        expected += 2 * f.examples.size();
-    if (table.size() != expected)
-        throw std::runtime_error("incomplete publication catalog");
+        for (const auto& entry : f.examples)
+            if (entry.reference != reference_source::feynman_only)
+                for (const auto* mode : {"physical", "spurious"})
+                    if (!table.count({mode, f.name, entry.helicities.empty() ? "massive" : entry.helicities}))
+                        throw std::runtime_error("missing publication reference for " + f.name + " " + entry.helicities);
     return table;
 }
 
@@ -636,15 +678,17 @@ Usage
   hepcat-qed [options]
   hepcat-qed --family eeAA --preference physical
   hepcat-qed --family eeAAA --helicity ++- --construct-only
+  hepcat-qed --legs 7 --construct-only
   hepcat-qed --formulas-only --photons 2
 
 Process selection
   --list                     Show the available families, helicities, and score targets.
+  --legs N                   Select processes with N external particles (4 through 7).
   --family NAME              Run one family from the list.
-  --helicity SIGNS           Select one entry with --family and --construct-only.
+  --helicity SIGNS           Select one entry with --family. Its external test uses polarized MadGraph.
   --preference MODE          physical, spurious, or both (default).
   --construct-only           Run the native construction and signed checks.
-  --publication              Use the signed publication catalog and its complexity targets.
+  --publication              Select the published cases and use their signed references and score targets.
 
 Sampling and files
   --points N                 Phase-space points per comparison (default 100,000, minimum 10,000).
@@ -676,21 +720,22 @@ Publication runs use at least 100,000 points and default to seed 861811.
 )";
 }
 
-void list() {
+void list(const settings& run) {
     std::cout << "QED notebook inventory\n\n"
               << std::left << std::setw(11) << "Family" << std::setw(18) << "Photon helicities"
               << std::right << std::setw(11) << "AllPhysical" << std::setw(14) << "AllSpurious" << '\n';
-    for (const auto& process : notebook) {
+    for (const auto& process : selected_families(run)) {
         bool first = true;
         for (const auto& entry : process.examples) {
             const auto helicities = entry.helicities.empty() ? "(no photons)" : entry.helicities;
             std::cout << std::left << std::setw(11) << (first ? process.name : "") << std::setw(18)
-                      << helicities << std::right << std::setw(11) << entry.physical << std::setw(14)
-                      << (entry.spurious ? std::to_string(entry.spurious) : "formula") << '\n';
+                      << helicities << std::right << std::setw(11)
+                      << (entry.physical ? std::to_string(entry.physical) : "-") << std::setw(14)
+                      << (entry.spurious ? std::to_string(entry.spurious) : "-") << '\n';
             first = false;
         }
     }
-    std::cout << "\nThe two score columns give the weighted complexity targets.\n"
+    std::cout << "\nThe score columns give weighted complexity targets. A dash marks a new calculation.\n"
               << "The separate all-positive formula study covers 2 through 8 photons.\n";
 }
 
@@ -732,6 +777,11 @@ settings options(int argc, char** argv) {
             s.output = v;
         else if (key == "--workers")
             s.workers = integer_option(v);
+        else if (key == "--legs") {
+            auto n = integer_option(v);
+            if (n < 4 || n > 7) throw std::invalid_argument("--legs must be 4 through 7");
+            s.legs = static_cast<unsigned>(n);
+        }
         else if (key == "--points") {
             s.engines.points = integer_option(v);
             explicit_points = true;
@@ -792,15 +842,15 @@ settings options(int argc, char** argv) {
                      [&](const family& f) { return f.name == s.family_filter; }))
         throw std::invalid_argument("unknown notebook family " + s.family_filter);
     if (!s.helicity_filter.empty()) {
-        if (s.family_filter.empty() || !s.construct_only)
-            throw std::invalid_argument("--helicity requires --family and --construct-only");
+        if (s.family_filter.empty())
+            throw std::invalid_argument("--helicity requires --family");
         for (auto& f : notebook)
             if (f.name == s.family_filter &&
                 std::none_of(f.examples.begin(), f.examples.end(),
                              [&](auto& e) { return e.helicities == s.helicity_filter; }))
                 throw std::invalid_argument("helicity is not a notebook cell for " + f.name);
     }
-    if (s.formula_only && (s.no_formulas || s.construct_only || !s.family_filter.empty()))
+    if (s.formula_only && (s.no_formulas || s.construct_only || s.legs || !s.family_filter.empty()))
         throw std::invalid_argument(
             "--formulas-only conflicts with the requested construction selection");
     s.root = fs::absolute(s.root).lexically_normal();
@@ -842,7 +892,7 @@ int main(int argc, char** argv) {
     try {
         auto run = options(argc, argv);
         if (run.list && run.formula_replay.empty()) {
-            list();
+            list(run);
             return 0;
         }
         if (!run.formula_replay.empty())
@@ -867,7 +917,7 @@ int main(int argc, char** argv) {
         bool passed = true;
         if (!run.formula_only)
             passed = run_families(run);
-        if (!run.construct_only && !run.no_formulas && run.family_filter.empty())
+        if (!run.construct_only && !run.no_formulas && !run.legs && run.family_filter.empty())
             formula_study(run);
 
         const std::chrono::duration<double> elapsed = std::chrono::steady_clock::now() - start;

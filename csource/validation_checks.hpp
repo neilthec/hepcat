@@ -22,5 +22,6 @@ std::vector<builtin_check> native_builtin_checks(const amplitude&, const amp_exp
                                                  std::size_t samples_per_cut = 8,
                                                  std::size_t energy_directions = 4,
                                                  std::size_t sample_offset = 0,
-                                                 const std::vector<int>& color_representations = {});
+                                                 const std::vector<int>& color_representations = {},
+                                                 std::size_t workers = 0);
 } // namespace hepcat

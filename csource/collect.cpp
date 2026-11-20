@@ -214,9 +214,17 @@ std::size_t score(const Algebra& a, Id expanded) {
 
 // Collect common literal factors from subsets of the terms as well as across
 // the whole sum. A product remains factored at its original pole.
-Id factor(Algebra& a, Id expanded, unsigned depth=0) {
+Id factor(Algebra& a, Id expanded, unsigned depth=0, std::size_t* budget=nullptr) {
     const auto& n=a.node(expanded);
     if (n.head!="Plus" || n.args.size()<2 || depth>60) return expanded;
+    if (budget) {
+        for (Id term : n.args) {
+            const auto& t = a.node(term);
+            const auto work = t.head == "Times" ? t.args.size() : std::size_t{1};
+            if (work > *budget) { *budget = 0; return expanded; }
+            *budget -= work;
+        }
+    }
     std::map<Id,std::size_t> freq;
     for (Id term : n.args) {
         const auto& t=a.node(term);
@@ -242,8 +250,8 @@ Id factor(Algebra& a, Id expanded, unsigned depth=0) {
             included.push_back(a.mul(std::move(factors)));
         }
     }
-    Id grouped=factor(a,a.add(std::move(included)),depth+1);
-    Id outside=factor(a,a.add(std::move(others)),depth+1);
+    Id grouped=factor(a,a.add(std::move(included)),depth+1,budget);
+    Id outside=factor(a,a.add(std::move(others)),depth+1,budget);
     Id result=a.add({a.mul({atom,grouped}),outside});
     return a.cost(result)<a.cost(expanded) ? result : expanded;
 }
@@ -603,19 +611,23 @@ Id collectCandidate(Algebra& a, Id input) {
 // Collect shared scalar factors inside existing sums as well as at the root.
 // Ordered chains, color tensors and reciprocal factors are opaque.
 Id collect_scalar_factors(Algebra &a, Id input) {
-  if (a.cost(input) > 24000)
-    return input;
+  // A large printed formula can have a small number of distinct subcurrents.
+  // Limit actual factoring work on such formulas, counting the factors
+  // inspected in each sum. A memo hit reuses the already factored subtree.
+  std::size_t remaining = 100000;
+  auto budget = a.cost(input) > 24000 ? &remaining : nullptr;
   std::unordered_map<Id, Id> cache;
   auto visit = [&](auto &self, Id id) -> Id {
     if (auto at = cache.find(id); at != cache.end())
       return at->second;
+    if (budget && !remaining) return id;
     const auto &n = a.node(id);
     Id result = id;
     if (n.head == "Times" || n.head == "Plus") {
       Terms args;
       for (Id k : n.args)
         args.push_back(self(self, k));
-      result = n.head == "Times" ? a.mul(args) : factor(a, a.add(args));
+      result = n.head == "Times" ? a.mul(args) : factor(a, a.add(args), 0, budget);
     } else if (n.head == "Power" && n.args.size() == 2 && a.leg(n.args[1])) {
       result = a.pow(self(self, n.args[0]), a.leg(n.args[1]));
     }

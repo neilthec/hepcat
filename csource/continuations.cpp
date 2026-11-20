@@ -21,13 +21,12 @@ std::vector<int> cut_key(std::vector<int> legs, int n) {
     return std::min(legs, complement);
 }
 
-struct reference {
-    int emitter, target;
-    bool physical;
-};
+using reference = reference_choice;
 using assignments = std::map<Id, reference>;
 
-Id replace_references(Algebra& a, Id root, const assignments& choices) {
+} // namespace
+
+Id replace_external_references(Algebra& a, Id root, const assignments& choices) {
     std::map<Id, Id> memo;
     auto helicity = [&](Id kind, int leg) {
         return a.call("Spinor", {a.atom("\"Helicity\""), kind, a.integer(leg)});
@@ -102,7 +101,6 @@ Id replace_references(Algebra& a, Id root, const assignments& choices) {
     };
     return visit(root);
 }
-} // namespace
 
 std::vector<Id> channel_continuations(Algebra& a, Id expr, const numerator_shell& selected,
                                       const std::vector<numerator_shell>& inventory) {
@@ -167,7 +165,7 @@ std::vector<Id> channel_continuations(Algebra& a, Id expr, const numerator_shell
                 const auto& options = preferred.empty() ? entry.second : preferred;
                 choice.emplace(entry.first, options[offset % options.size()]);
             }
-            Id value = replace_references(a, expr, choice);
+            Id value = replace_external_references(a, expr, choice);
             if (value != expr && std::find(result.begin(), result.end(), value) == result.end())
                 result.push_back(value);
         }

@@ -78,10 +78,11 @@ Unsupported functions or radicals outside the chart's coefficient field
 produce an unresolved result. For the final process, run the full validations.
 
 The [worked six-point QED derivation](../tests/Spinor-identity-derivation.cpp)
-starts with a complete mixed-helicity amplitude from model 4. It reduces the
-starting expression, previews Clifford swaps on the resulting chains, and
-checks the sign and value after each accepted edit. A final check uses
-fresh samples. Run it from the repository root.
+starts from the independent sum of Feynman diagrams for an electron pair
+and four mixed-helicity photons. It previews common-factor extractions,
+applies an improving edit, and reduces the spinor chains. Each step includes
+a signed check, followed by a comparison with the constructive amplitude in
+model 4 at fresh kinematic points. Run it from the repository root.
 
 ```sh
 cmake -S csource -B tests/results/native-reduce-build -DCMAKE_BUILD_TYPE=Release
@@ -124,7 +125,7 @@ The call generates and reduces the tree diagrams and factorization products, com
 
 Both C++ notebooks save each amplitude in the four expression formats above. The terminal shows short amplitudes inline. Each validation table gives the check, its outcome and the number of checks or phase-space points covered.
 
-The [C++ QED example](../tests/QED-6-point-construction.cpp) covers the notebook's helicity families through six external legs, the seven-leg all-positive example, and the separate all-positive formula study. From the HEPCAT repository root, run one complete family with
+The [C++ QED example](../tests/QED-6-point-construction.cpp) covers the notebook's helicity families through six external legs, all three seven-point tree families of electron-photon QED, and the separate all-positive formula study. From the HEPCAT repository root, run one complete family with
 
 ```sh
 tests/results/native-reduce-build/hepcat-qed --family eeAA --preference physical --skip-formulas \
@@ -133,7 +134,15 @@ tests/results/native-reduce-build/hepcat-qed --family eeAA --preference physical
 
 Point `--calchep` to the CalcHEP installation containing `include` and `lib`. If MadGraph uses a particular Python installation, pass its interpreter with `--python`. Remove the family, preference and formula filters to run the full study. Use `--construct-only` to run the built-in and signed comparisons alone. Each run prints its directory under `tests/results/spinas-output/run-*`, the QED notebook’s output area. The terminal shows construction stages, validation outcomes, and a final summary. Its `construction.tsv` contains the automatic and reference scores, and each family's `checks.txt` records individual checks. The driver constructs from elementary vertices and lower-point amplitudes. It reads the stored same-multiplicity expression separately to test the signed answer. If the notebook has a shorter worked form, the driver validates that form too and records which one it exports. A fixed seed, for example `--seed 9123`, reproduces a run.
 
-The native writer supports color singlets, SU(3) triplets, antitriplets and adjoints. A colored process exposes the fixed-color amplitude as `amp(spins, colors)`, with each color numbered from zero. Its `amp_squared(spins)` contracts all color components coherently and `amp2()` also averages the incoming colors. Supply the helicity components and the zero-based incoming leg positions to `write_spinas_process`. Set the model and installation paths for each generator in `external_options`, call `write_external_project`, then `validate_external_project`. These C++ APIs are declared in [spinas_export.hpp](spinas_export.hpp) and [external_export.hpp](external_export.hpp). CalcHEP tests the polarization sum. MadGraph tests each labeled massless helicity with massive spins summed, and checks the complete rate independently against the exported spin sum. For spurious-pole expressions with identical massless bosons, the generated squared-rate routine estimates cancellation and can choose a better-conditioned, Bose-equivalent ordering. The complex polarized amplitude keeps the original ordering and phase convention for use in spin correlations. Widths are disabled during comparisons. Both C++ notebook drivers default to 100,000 common phase-space points per family and engine. Use `--points N` to choose another sample size (minimum 10,000, or 100,000 in QED publication mode). The seven-point example fixes every photon helicity, so its external comparison uses polarized MadGraph.
+The native writer supports color singlets, SU(3) triplets, antitriplets and adjoints. A colored process exposes the fixed-color amplitude as `amp(spins, colors)`, with each color numbered from zero. Its `amp_squared(spins)` contracts all color components coherently and `amp2()` also averages the incoming colors. Supply the helicity components and the zero-based incoming leg positions to `write_spinas_process`. Set the model and installation paths for each generator in `external_options`, call `write_external_project`, then `validate_external_project`. These C++ APIs are declared in [spinas_export.hpp](spinas_export.hpp) and [external_export.hpp](external_export.hpp). CalcHEP tests the polarization sum. MadGraph tests each labeled massless helicity with massive spins summed, and checks the complete rate independently against the exported spin sum. For spurious-pole expressions with identical massless bosons, the generated squared-rate routine estimates cancellation and can choose a better-conditioned, Bose-equivalent ordering. The complex polarized amplitude keeps the original ordering and phase convention for use in spin correlations. Widths are disabled during comparisons. Both C++ notebook drivers default to 100,000 common phase-space points per family and engine. Use `--points N` to choose another sample size (minimum 10,000, or 100,000 in QED publication mode). At seven points the full families include all 32 ordered five-photon helicities, all eight ordered three-photon helicities with four fermions, and both single-photon helicities with six fermions. The exporter obtains permutations of identical photons from the constructed representatives. Selecting only the published five-positive-photon case runs a fixed-helicity MadGraph comparison.
+
+To run just the seven-point calculations, use the following command. The default covers both pole preferences. Each helicity representative goes through factorization, high-energy and signed Feynman checks. Once all the representatives in a family pass, its full SPINAS process is built for the external comparisons.
+
+```sh
+tests/results/native-reduce-build/hepcat-qed --legs 7
+```
+
+Use `--legs 7 --list` for the three families and their 12 representatives. For a single construction, try `--family eeeeAAA --helicity ++- --construct-only`. A blank threshold in `construction.tsv` means the process has no prior complexity benchmark. Its measured complexity and validation results are recorded separately. The `--publication` selection still runs the cases with published expressions.
 
 If native reference arithmetic misses the tolerance, the external validators can replay the same phase-space points with 113-bit arithmetic. CalcHEP replays every saved outlier and checks the original binary64 values. MadGraph rebuilds its generated matrix and HELAS routines, then repeats every requested helicity and the polarization sum. The reports keep the original discrepancies and identify the precision used for the final comparison. The CalcHEP replay requires GCC and libquadmath. The MadGraph replay requires GNU Fortran with binary128 support.
 
@@ -142,6 +151,18 @@ For massless two-body scattering, rounded four-vector components can leave a sma
 Near a radiation zero, even small mass-shell defects can affect the relative accuracy of CalcHEP's squared amplitude. If its unchanged-input 113-bit replay still disagrees for a two-body final state, the validator reconstructs the on-shell momenta from the sampled beam momentum and scattering direction. It evaluates the generated SPINAS process and CalcHEP at 113 bits on those identical components. This comparison also checks the original SPINAS result against its high-precision value. The report preserves the raw and refined results and saves the shared input in `calchep-chart.csv`. This optional replay uses the SPINAS sources beside its include directory and a GNU C++23 compiler with binary128 and libquadmath.
 
 For event generation, enter a generated family's `spinas` directory and run `cmake --build build`. This builds the Monte Carlo targets as well as the validators. For an installed SPINAS library with no precision setting in its CMake cache, first configure the generated project with `cmake -S . -B build -DSPINAS_PRECISION=DOUBLE` or `LONG_DOUBLE` to match its ABI. For the two-photon example, launch CalcHEP with `(cd build/results && ./n_calchep)` or MadEvent with `(cd build/PROC_eeAA && ./bin/madevent)`. Type `generate_events` at the MadEvent prompt. Each integration uses the exported HEPCAT amplitude through SPINAS. Its independent validator uses the external generator's own matrix element.
+
+### Why grouping photon emissions helps
+
+For a model with the minimal Abelian Dirac coupling, the constructor first checks the two cubic spinor vertices, the internal helicity sum, and the identical-fermion sign on every topology. On a fermion line, moving a propagator momentum past a polarization gives the ordinary Clifford identity
+
+$$
+(\not{P}+\not{k}+m)\not{\epsilon}
+ = 2P\cdot\epsilon+\not{k}\not{\epsilon}
+   -\not{\epsilon}(\not{P}-m).
+$$
+
+The last term either vanishes on an external spinor or cancels the adjoining fermion propagator. Combining its two emission orders gives the definite contact contribution proportional to $-2\epsilon_i\cdot\epsilon_j$. The spin term acts on one chirality and produces a spinor of the emitted photon. These relations let the code sum over subsets of photons attached to each end of a charged line and reuse the resulting spinors. With two charged lines it sums these placements before contracting the two currents at the exchanged photon. With additional lines it also retains emissions between two exchanges. All intermediate electron momenta remain off shell. The assembled candidate must agree with every signed lower-point residue before the constructor accepts it. The [focused C++ regression](radiative_current_tests.cpp) also tests identical-fermion exchange directly.
 
 ### Compare with the publication catalog
 

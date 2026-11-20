@@ -1,7 +1,9 @@
 #include "fermion_currents.hpp"
 #include "generation_plan.hpp"
+#include "radiative_currents.hpp"
 #include <algorithm>
 #include <array>
+#include <limits>
 #include <map>
 #include <set>
 
@@ -109,6 +111,8 @@ public:
       if (external[i] == p.name)
         starts.push_back(i + 1);
     }
+    if (starts.size() >= 2 && (!photons.empty() || starts.size() > 3))
+      return external.size() == starts.size() * 2 + photons.size();
     return (starts.size() == 2 &&
             (photons.size() == 1 || photons.size() == 2) &&
             external.size() == 4 + photons.size()) ||
@@ -355,6 +359,65 @@ fermion_current_proposal(Algebra &a, const model &m,
   auto plans = generation::diagram_plans(m, names);
   if (plans.empty() || plans.size() != count)
     return {};
+  if (b.starts.size() > 2 && (!b.photons.empty() || b.starts.size() > 3)) {
+    std::map<std::vector<Id>, std::vector<Id>> attachments;
+    struct orbit {
+      size_t expected, count;
+      Id coefficient;
+    };
+    std::map<radiative_detail::tree_current::signature, orbit> orbits;
+    for (const auto &plan : plans) {
+      graph g;
+      if (!b.graph_of(plan, g))
+        return {};
+      std::map<int, int> refs;
+      std::vector<Id> exchange;
+      for (const auto &path : g.paths) {
+        for (int k : path.attachments) {
+          if (k < 0)
+            continue;
+          const auto it = std::find(b.photons.begin(), b.photons.end(), k);
+          if (!physical && b.photons.size() > 1) {
+            int ref = 0;
+            for (int j : b.photons)
+              if (names[j - 1] != names[k - 1]) {
+                ref = j;
+                break;
+              }
+            refs[k] = ref ? ref
+                          : b.photons[(it - b.photons.begin() + 1) %
+                                      b.photons.size()];
+          } else {
+            // Every ordering of the attachments on this conserved current
+            // uses the same spectator. The emitting endpoint then has zero
+            // orbital emission.
+            refs[k] = -path.ends[0];
+          }
+        }
+      }
+      const auto &tree = plan.terms.front();
+      for (const auto &e : tree.edges)
+        if (m.particle(e.particle_a).spin2 == 2)
+          exchange.push_back(b.pole(e.legs, b.integer(0)));
+      std::sort(exchange.begin(), exchange.end());
+      radiative_detail::tree_current current(a, m, names, tree, refs);
+      auto [it, first] =
+          orbits.emplace(current.key, orbit{current.orders, 0, g.coefficient});
+      if (it->second.coefficient != g.coefficient ||
+          it->second.expected != current.orders)
+        return {};
+      ++it->second.count;
+      if (first)
+        attachments[exchange].push_back(current.expression(g.coefficient));
+    }
+    std::vector<Id> terms;
+    for (const auto &entry : orbits)
+      if (entry.second.expected != entry.second.count)
+        return {};
+    for (auto &[k, rows] : attachments)
+      terms.push_back(collect_scalar_factors(a, a.factorSum(a.add(rows))));
+    return a.add(terms);
+  }
   std::map<group_key, group> groups;
   std::map<std::pair<Id, Id>, std::vector<Id>> six_groups;
   for (auto &plan : plans) {
@@ -423,9 +486,105 @@ fermion_current_proposal(Algebra &a, const model &m,
   }
   for (auto &[key, g] : groups) {
     auto &[l, r, L, R] = key;
-    auto ways = [](size_t n) { return n == 2 ? 6u : n == 1 ? 2u : 1u; };
+    auto ways = [](size_t n) {
+      size_t result = 1;
+      for (size_t k = 2; k <= n + 1; ++k)
+        result *= k;
+      return result;
+    };
     if (g.orders.size() != ways(L.size()) * ways(R.size()))
       return {};
+    if (b.photons.size() > 2) {
+      using current = radiative_detail::endpoint_radiation::vector_current;
+      // Each of the two conserved currents can choose its own spin frames.
+      // Include both physical endpoints or the distinct common-photon gauges.
+      // Compare the complete contracted numerator, including cancellations.
+      auto alternatives = [&](line side, const labels &photons) {
+        std::vector<current> result;
+        if (photons.size() <= 2 &&
+            (photons.empty() ||
+             std::all_of(photons.begin(), photons.end(), [&](int i) {
+               return names[i - 1] == names[photons[0] - 1];
+             }))) {
+          bool flip =
+              !photons.empty() &&
+              names[photons[0] - 1] != m.particle(names[photons[0] - 1]).name;
+          current terms;
+          for (const auto &t : b.chiral(side, photons, flip, true)) {
+            auto coord = flip ? std::make_pair(t.square, t.angle)
+                              : std::make_pair(t.angle, t.square);
+            auto [where, inserted] = terms.emplace(coord, t.factor);
+            if (!inserted)
+              where->second = b.sum({where->second, t.factor});
+          }
+          result.push_back(std::move(terms));
+          return result;
+        }
+        std::set<std::vector<int>> tried;
+        const size_t gauges = physical ? 2 : b.photons.size() + 1;
+        for (size_t choice = 0; choice < gauges; ++choice) {
+          std::map<Id, reference_choice> gauge;
+          std::vector<int> selected;
+          for (int i : photons) {
+            int spectator;
+            if (physical)
+              spectator = side[choice];
+            else {
+              auto position = std::find(b.photons.begin(), b.photons.end(), i) -
+                              b.photons.begin();
+              spectator = b.photons[(position + 1) % b.photons.size()];
+              if (choice && b.photons[choice - 1] != i)
+                spectator = b.photons[choice - 1];
+              else if (!choice) {
+                auto other = std::find_if(
+                    b.photons.begin(), b.photons.end(),
+                    [&](int j) { return names[j - 1] != names[i - 1]; });
+                if (other != b.photons.end())
+                  spectator = *other;
+              }
+            }
+            selected.push_back(spectator);
+            bool pos = names[i - 1] == m.particle(names[i - 1]).name;
+            Id xi = a.call("Spinor", {a.atom("\"Xi\""),
+                                      a.atom(pos ? "\"Angle\"" : "\"Square\""),
+                                      a.integer(i)});
+            gauge.emplace(xi, reference_choice{i, spectator, physical});
+          }
+          if (!tried.insert(selected).second)
+            continue;
+          radiative_detail::endpoint_radiation rad(a, m, names, gauge);
+          result.push_back(rad.current(side[0], side[1], photons));
+        }
+        return result;
+      };
+      const auto lc = alternatives(l, L), rc = alternatives(r, R);
+      const std::map<Id, reference_choice> no_gauge;
+      radiative_detail::endpoint_radiation rad(a, m, names, no_gauge);
+      std::optional<std::pair<size_t, size_t>> best;
+      Id joined = b.integer(0);
+      for (const auto &left : lc)
+        for (const auto &right : rc) {
+          auto val = rad.contract_currents(left, right);
+          // A comparison budget for presentation must never discard a correct
+          // current at a new multiplicity. Prefer a measured score where
+          // available and use the exact tree size to break ties.
+          size_t weight = std::numeric_limits<size_t>::max();
+          try {
+            weight = expression_complexity(a, val);
+          } catch (const std::length_error &) {
+          } catch (const std::overflow_error &) {
+          }
+          auto score = std::make_pair(weight, a.cost(val));
+          if (!best || score < *best) {
+            best = score;
+            joined = val;
+          }
+        }
+      if (!(b.photons.size() % 2))
+        joined = b.neg(joined);
+      total.push_back(b.prod({g.coefficient, joined, b.inv(g.propagator)}));
+      continue;
+    }
     int pos = 0, neg = 0;
     for (int i : b.photons) {
       if (names[i - 1] == m.particle(names[i - 1]).name)

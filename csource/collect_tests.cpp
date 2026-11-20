@@ -76,5 +76,15 @@ int main() {
     if (compact_commuting_products(a,unknownRoot)!=unknownRoot)
         throw std::runtime_error("Removed a symbolic square root without a positivity assumption");
 
+    // Repeated subcurrents can be large on paper and cheap to factor in the
+    // shared expression tree. Extract a common factor from only two summands.
+    Id current = spectator;
+    for (int level = 0; level < 13; ++level)
+        current = a.call("Current", {current, current});
+    Id large = a.add({a.mul({current,x}), a.mul({current,y}), mx});
+    Id grouped = a.add({a.mul({current,a.add({x,y})}), mx});
+    if (a.cost(large) <= 24000 || collect_scalar_factors(a,large) != grouped)
+        throw std::runtime_error("Repeated subcurrent was missed in a large expression");
+
     std::cout << "Sparse collection identities passed\n";
 }

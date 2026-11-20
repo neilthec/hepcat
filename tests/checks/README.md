@@ -707,6 +707,16 @@ nonunit masses/couplings. Six-point channel inventories verify that the newly
 saved amplitudes are actually available for three-by-five sewing. The cubic
 diagram model is unchanged.
 
+The C++ check `hepcat-check-qed-catalog .` loads the two QED factorization
+models and compares all 38 complete four- to six-point entries with the
+publication formulas. It checks the sign on exact, conserved external
+kinematics and compares the momentum-weighted complexity of each helicity
+representative with the best recorded value. For equal scores it also checks
+the leaf count. Run `hepcat-check-qed-catalog . --full` from the
+repository root to test the physical residues, pole preference, high-energy
+growth, reference independence and 100,000 signed Feynman comparisons per
+entry. The repository-root argument can also be an absolute path.
+
 ## SPINAS Process Export
 
 `spinas-analytic-closure-tests.wl` checks missing identical-boson helicity

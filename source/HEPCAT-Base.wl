@@ -478,7 +478,11 @@ amplitudeModelText[expression_] := Module[
         value[[1]] <> "(" <> StringRiffle[emit /@ value[[3]], ","] <> ")", fail[value]],
     Head[value] === ConstructiveAmplitude, emit[Times @@ Take[List @@ value, 2]/value[[3]]],
     Head[value] === Plus, "(" <> StringRiffle[emit /@ (List @@ value), "+"] <> ")",
-    Head[value] === Times, "(" <> StringRiffle[emit /@ (List @@ value), "*"] <> ")",
+    Head[value] === Times, With[{factors = List @@ value},
+      (* The model reader multiplies left to right. Applying -1 to a sum
+         before its other factors distributes the sign into that sum. *)
+      "(" <> StringRiffle[emit /@ If[Length[factors] > 2 && First[factors] === -1 &&
+        Head[factors[[2]]] === Plus, RotateLeft[factors], factors], "*"] <> ")"],
     value === Sqrt[2], "Sqrt[2]",
     Head[value] === Power, "(" <> emit[value[[1]]] <> ")^(" <> emit[value[[2]]] <> ")",
     compactChainQ[value],

@@ -31,6 +31,19 @@ int main() {
     };
     auto valid = check(inv, -2);
     require(valid, "Physical", check_outcome::pass);
+    // Adding an unlisted pole exercises both a passing physical cut and a
+    // failing extra cut. Worker count must preserve their evidence and order.
+    const amp_expression two_channels("Plus[" + inv + "," + extra + "]", masses);
+    const auto serial = native_builtin_checks(amp, two_channels, 4, {}, 4, 1, 89, {}, 1);
+    const auto parallel = native_builtin_checks(amp, two_channels, 4, {}, 4, 1, 89, {}, 2);
+    if (serial.size() != parallel.size()) throw std::runtime_error("Changed cut inventory");
+    for (std::size_t i = 0; i < serial.size(); ++i) {
+        const auto& x = serial[i];
+        const auto& y = parallel[i];
+        if (x.label != y.label || x.kind != y.kind || x.status != y.status ||
+            x.samples != y.samples || x.detail != y.detail)
+            throw std::runtime_error("Parallel cut report differs from serial report");
+    }
     require(valid, "HighEnergy", check_outcome::pass);
     require(valid, "Spurious", check_outcome::pass);
     require(check("Times[-1," + inv + "]"), "Physical", check_outcome::fail);

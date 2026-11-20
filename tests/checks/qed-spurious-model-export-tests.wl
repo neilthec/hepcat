@@ -40,8 +40,8 @@ processes = {
   {"e", "E", "E", "e", "A.+", "A.-"},
   {"e", "E", "E", "e", "A.-", "A.-"},
   {"e", "E", "e", "E", "e", "E"}};
-ceilings = {120, 528, 1044, 528, 120, 1216, 1632, 1216, 3168};
-spuriousCounts = {6, 4, 4, 4, 6, 1, 2, 1, 0};
+ceilings = {120, 416, 712, 416, 120, 1216, 1632, 1216, 3168};
+spuriousCounts = {6, 1, 1, 1, 6, 1, 2, 1, 0};
 physicalCounts = {14, 14, 14, 14, 14, 20, 20, 20, 18};
 checks = 0; failures = {};
 SetAttributes[check, HoldRest];

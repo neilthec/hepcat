@@ -51,8 +51,17 @@ qmeLookup[particles_List] := LookupAmplitude[
 Do[
   qmeExpected = entry[[2]] entry[[3]];
   qmeActual = qmeLookup[First[entry]];
-  check["the saved text roundtrips the diagram derivation " <> ToString[First[entry], InputForm],
-    Cancel[Together[qmeActual - qmeExpected]] === 0];
+  (* The compact model can use identities involving momentum conservation.
+     Compare the two signed amplitudes at generic off-cut points and all spin components. *)
+  qmeMassRules = MapIndexed[Mass[First[#2]] -> ParticleMass[#1, qmeModel[[1]]] &, First[entry]];
+  qmeComparison = CheckAmplitudes[{qmeMassRules, qmeActual}, {}, qmeModel,
+    "FeynmanAmplitudes" -> qmeExpected, "FeynmanModel" -> prModel,
+    "ParameterRules" -> {"Me" -> 3/7, "EE" -> 2}, "RandomSeed" -> 515321,
+    "Samples" -> 2, "FeynmanSamples" -> 2, "HighEnergyCheck" -> False,
+    "ReferenceCheck" -> False, "SpuriousPoles" -> {}, "Output" -> "Details"];
+  check["the stored amplitude agrees with the signed diagram derivation " <> ToString[First[entry], InputForm],
+    qmeComparison["FeynmanCheck"]["CompletedSamples"] === 2 &&
+      MemberQ[qmeComparison["FeynmanCheck"]["MatchingSigns"], 1]];
   check["saved amplitudes have no reference spinors or unexpanded x factors " <>
       ToString[First[entry], InputForm],
     FreeQ[qmeActual, Spinor["Xi", ___] | _xFactor | _xTildeFactor]],
