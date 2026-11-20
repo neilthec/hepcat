@@ -213,9 +213,12 @@ const amp_expression::cached_permutations& amp_expression::reduced_permutations(
     trial.setKinematics(kinematics_->masses, {});
     auto sum = compact_permutations(trial, root_);
     std::optional<permutation_sum> ordered;
-    if (ordered_formula_)
-        ordered = permutation_sum{ordered_formula_->legs,trial.parse(ordered_formula_->summand),{}};
-    else
+    if (ordered_formula_) {
+        const auto& groups = ordered_formula_->symmetric_groups;
+        ordered = permutation_sum{groups.front(),trial.parse(ordered_formula_->summand),ordered_formula_->orbit_sizes,
+                                  {groups.begin()+1,groups.end()},ordered_formula_->alternating_groups,
+                                  ordered_formula_->joint_exchange};
+    } else
         ordered = recognize_ordered_current(trial,root_);
     if (ordered) {
         Id raw = simplify_permutation_kernel(trial,ordered->kernel,ordered->legs,ordered->other_groups);
@@ -225,8 +228,10 @@ const amp_expression::cached_permutations& amp_expression::reduced_permutations(
         kernel = simplify_permutation_kernel(trial,kernel,ordered->legs,ordered->other_groups);
         const Id previous = sum ? sum->kernel : root_;
         if (trial.cost(kernel) + 16 < trial.cost(root_) && trial.cost(kernel) < trial.cost(previous) &&
-            (ordered_formula_ || expression_complexity(trial,kernel) <= expression_complexity(trial,previous)))
-            sum = permutation_sum{ordered->legs,kernel,{},ordered->other_groups};
+            (ordered_formula_ || expression_complexity(trial,kernel) <= expression_complexity(trial,previous))) {
+            ordered->kernel = kernel;
+            sum = std::move(ordered);
+        }
     }
     if (sum) sum->kernel = retain_borrowed(*arena_, trial, sum->kernel, arena_->size());
     permutations_ = std::make_shared<cached_permutations>(cached_permutations{root_,std::move(sum)});
@@ -238,11 +243,12 @@ std::optional<permutation_formula> amp_expression::permutation_form() const {
     if (!reduced_ || !kinematics_->shells.empty()) return {};
     const auto& sum = reduced_permutations().sum;
     if (!sum) return {};
-    if (sum->other_groups.empty())
+    if (sum->other_groups.empty() && sum->alternating_groups.empty() && !sum->joint_exchange)
         return permutation_formula{sum->legs,arena_->format(sum->kernel),sum->orbit_sizes};
     Algebra trial(arena_.get());
     trial.setKinematics(kinematics_->masses,{});
-    const auto expanded = expand_permutation_groups(trial,sum->kernel,sum->other_groups);
+    const auto signed_kernel = expand_signed_operators(trial,*sum);
+    const auto expanded = expand_permutation_groups(trial,signed_kernel,sum->other_groups);
     return permutation_formula{sum->legs,trial.format(expanded),sum->orbit_sizes};
 }
 
@@ -251,9 +257,31 @@ std::optional<amp_expression::permutation_product> amp_expression::grouped_permu
     if (!reduced_ || !kinematics_->shells.empty()) return {};
     const auto& sum = reduced_permutations().sum;
     if (!sum) return {};
-    permutation_product result{{sum->legs},arena_->format(sum->kernel)};
+    Algebra trial(arena_.get());
+    trial.setKinematics(kinematics_->masses,{});
+    const Id kernel = expand_signed_operators(trial,*sum);
+    permutation_product result{{sum->legs},trial.format(kernel)};
     result.groups.insert(result.groups.end(),sum->other_groups.begin(),sum->other_groups.end());
     return result;
+}
+
+std::optional<amp_expression::signed_permutation_product> amp_expression::signed_permutation_form() const {
+    std::lock_guard<std::mutex> guard(*kinematics_->lock);
+    if (!reduced_ || !kinematics_->shells.empty()) return {};
+    const auto& sum = reduced_permutations().sum;
+    if (!sum) return {};
+    signed_permutation_product result{{sum->legs},sum->alternating_groups,arena_->format(sum->kernel),
+                                      sum->joint_exchange,sum->orbit_sizes};
+    result.symmetric_groups.insert(result.symmetric_groups.end(),sum->other_groups.begin(),sum->other_groups.end());
+    return result;
+}
+
+std::optional<std::size_t> amp_expression::permutation_summand_complexity() const {
+    std::lock_guard<std::mutex> guard(*kinematics_->lock);
+    if (!reduced_ || !kinematics_->shells.empty()) return {};
+    const auto& sum = reduced_permutations().sum;
+    if (!sum) return {};
+    return expression_complexity(*arena_,sum->kernel);
 }
 
 namespace {
@@ -265,6 +293,12 @@ std::string leg_list(const std::vector<int>& legs) {
     }
     return out;
 }
+std::string cycles(const signed_exchange& exchange) {
+    std::string out;
+    for (auto [i,j] : exchange.swaps)
+        out += "(" + std::to_string(i) + "," + std::to_string(j) + ")";
+    return out;
+}
 }
 
 std::string amp_expression::plain_text() const {
@@ -273,8 +307,17 @@ std::string amp_expression::plain_text() const {
         if (const auto& sum = reduced_permutations().sum) {
             std::string groups = "(" + leg_list(sum->legs) + ")";
             for (const auto& other : sum->other_groups) groups += " and (" + leg_list(other) + ")";
-            return "Sum over all permutations of external legs " + groups +
-                   " applied to\n" + format_plain_text(*arena_, sum->kernel);
+            std::string operations;
+            if (sum->joint_exchange) {
+                operations = sum->joint_exchange->sign < 0
+                    ? "Subtract from the summand its image under the simultaneous exchange "
+                    : "Add to the summand its image under the simultaneous exchange ";
+                operations += cycles(*sum->joint_exchange) + ".\n";
+            }
+            for (const auto& other : sum->alternating_groups)
+                operations += "Antisymmetrize in (" + leg_list(other) + "), carrying each spin with its momentum.\n";
+            return operations + "Sum over all permutations of external legs " + groups +
+                   (operations.empty() ? " applied to\n" : ".\nSummand\n") + format_plain_text(*arena_,sum->kernel);
         }
     }
     return format_plain_text(*arena_, root_);
@@ -286,7 +329,18 @@ std::string amp_expression::latex() const {
             std::string group = "S_{\\{" + leg_list(sum->legs) + "\\}}";
             for (const auto& other : sum->other_groups)
                 group += "\\times S_{\\{" + leg_list(other) + "\\}}";
-            return "\\sum_{\\pi\\in " + group + "}\\pi\\!\\left[" +
+            std::string sign;
+            for (const auto& other : sum->alternating_groups) {
+                const auto labels = leg_list(other);
+                group += "\\times S_{\\{" + labels + "\\}}";
+                sign += "\\operatorname{sgn}(\\pi_{\\{" + labels + "\\}})";
+            }
+            std::string exchange;
+            if (sum->joint_exchange) {
+                exchange = sum->joint_exchange->sign < 0 ? "\\left(1-" : "\\left(1+";
+                exchange += "\\mathsf P_{" + cycles(*sum->joint_exchange) + "}\\right)";
+            }
+            return "\\sum_{\\pi\\in " + group + "}" + sign + "\\pi\\!" + exchange + "\\left[" +
                    format_latex(*arena_, sum->kernel) + "\\right]";
         }
     }

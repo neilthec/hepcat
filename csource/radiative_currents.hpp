@@ -18,12 +18,22 @@ namespace hepcat::radiative_detail {
 using labels = std::vector<int>;
 using spin_components = std::map<int, Id>;
 
+// A signed entry is twice the spin. Its sign distinguishes particle from
+// antiparticle, or the two helicities of a massless vector.
+inline std::vector<int> external_types(const model& m, const std::vector<std::string>& names) {
+  std::vector<int> types;
+  for (const auto& name : names) {
+    const auto& p = m.particle(name);
+    types.push_back(name == p.name ? p.spin2 : -p.spin2);
+  }
+  return types;
+}
+
 // Each amputated charged endpoint is a sum of two-spinors. A term carries
 // either the original spinor or the helicity spinor of an attached photon.
 class endpoint_radiation {
   Algebra &a;
-  const model &m;
-  const std::vector<std::string> &external;
+  const std::vector<int> types;
   const std::map<Id, reference_choice> &gauge;
   std::map<std::tuple<int, bool, labels>, spin_components> waves;
   std::map<std::pair<int, int>, Id> orbitals, contacts;
@@ -65,17 +75,20 @@ public:
   endpoint_radiation(Algebra &arena, const model &vertices,
                      const std::vector<std::string> &legs,
                      const std::map<Id, reference_choice> &choices)
-      : a(arena), m(vertices), external(legs), gauge(choices),
+      : endpoint_radiation(arena, external_types(vertices, legs), choices) {}
+  endpoint_radiation(Algebra& arena, const std::vector<int>& leg_types,
+                     const std::map<Id, reference_choice>& choices)
+      : a(arena), types(leg_types), gauge(choices),
         one(a.integer(1)), zero(a.integer(0)),
         inv_sqrt2(a.parse("Power[2,Rational[-1,2]]")),
         mu(a.atom("radiationIndex")) {}
 
   bool positive(int i) const {
-    return external.at(i - 1) == m.particle(external[i - 1]).name;
+    return types.at(i-1) > 0;
   }
 
   Id spin(int leg, bool square) {
-    bool photon = m.particle(external[leg - 1]).spin2 == 2;
+    bool photon = std::abs(types.at(leg-1)) == 2;
     return a.call("Spinor", {a.atom(photon ? "\"Helicity\"" : "\"Spin\""),
                              a.atom(square ? "\"Square\"" : "\"Angle\""),
                              a.integer(leg)});
@@ -84,7 +97,7 @@ public:
   Id propagator(labels side, Id mass) {
     std::sort(side.begin(), side.end());
     labels other;
-    for (size_t i = 0; i < external.size(); ++i)
+    for (size_t i = 0; i < types.size(); ++i)
       if (!std::binary_search(side.begin(), side.end(), int(i + 1)))
         other.push_back(i + 1);
     if (other.size() < side.size() ||

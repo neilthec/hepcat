@@ -727,8 +727,14 @@ const amp_expression& amplitude::complete_factorization(const factorization_opti
     auto publish = [&](Id answer, const std::optional<permutation_sum>& ordered = {}) -> const amp_expression& {
         amp_expression result("0", masses_);
         result.set_from(a, answer);
-        if (ordered) result.ordered_formula_ = std::make_shared<permutation_formula>(
-            permutation_formula{ordered->legs,a.format(ordered->kernel),ordered->orbit_sizes});
+        if (ordered) {
+            amp_expression::signed_permutation_product presentation{{ordered->legs},ordered->alternating_groups,
+                                                                   a.format(ordered->kernel),ordered->joint_exchange,
+                                                                   ordered->orbit_sizes};
+            presentation.symmetric_groups.insert(presentation.symmetric_groups.end(),
+                ordered->other_groups.begin(),ordered->other_groups.end());
+            result.ordered_formula_ = std::make_shared<amp_expression::signed_permutation_product>(std::move(presentation));
+        }
         construction_.reset();
         completed_ = std::move(result);
         high_energy_result_.reset();
@@ -747,7 +753,7 @@ const amp_expression& amplitude::complete_factorization(const factorization_opti
             const char* name = "DiracLineCurrent";
             if (!candidate) {
                 ordered.reset();
-                candidate = fermion_current_proposal(a, *vertices_model_, particles_, generated_diagrams, physical);
+                candidate = fermion_current_proposal(a, *vertices_model_, particles_, generated_diagrams, physical, &ordered);
                 name = "ContractedDiracCurrents";
             }
             if (candidate) {

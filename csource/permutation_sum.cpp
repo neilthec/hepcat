@@ -1,4 +1,6 @@
 #include "permutation_sum.hpp"
+#include "fermion_currents.hpp"
+#include "chiral_radiation.hpp"
 #include "spinor_word.hpp"
 #include "mixed_physical_current.hpp"
 
@@ -403,17 +405,127 @@ std::optional<Id> current_scale(Algebra& a, const Polynomial& target, const Poly
     return scale;
 }
 
+// The two-leg photon exchange poles determine a bipartite graph. They suggest
+// the two charge classes but do not establish any permutation identity.
+std::optional<permutation_sum> recognize_exchange(Algebra& a, Id input) {
+    const auto& masses = a.masses();
+    const auto zero = a.integer(0);
+    if (a.cost(input) > 100000) return {};
+    std::vector<int> massive, photons;
+    const auto weights = external_spin_weights(a,input);
+    if (!weights) return {};
+    for (std::size_t i = 0; i < masses.size(); ++i) {
+        if (masses[i] == zero) {
+            if (std::abs((*weights)[i]) != 2 ||
+                (!photons.empty() && (*weights)[i] != (*weights)[photons.front()-1])) return {};
+            photons.push_back(i+1);
+        } else {
+            if ((*weights)[i] != 1 || (!massive.empty() && masses[i] != masses[massive.front()-1])) return {};
+            massive.push_back(i+1);
+        }
+    }
+    std::set<std::pair<int,int>> edges;
+    bool physical = true;
+    std::set<Id> visited;
+    auto scan = [&](auto& self, Id id) -> void {
+        if (!visited.insert(id).second) return;
+        const auto& node = a.node(id);
+        if (node.head == "Power" && node.args.size() == 2) {
+            mpq_class exponent;
+            const auto& base = a.node(node.args[0]);
+            if (a.number(node.args[1],exponent) && exponent < 0) {
+                if (base.head == "SpinorChain") physical = false;
+                if (base.head == "PropDen" && base.args.size() == 2 && base.args[1] == zero) {
+                    const auto& mom = a.node(base.args[0]);
+                    if (mom.head != "Mom" || mom.args.size() != 1) throw Unsupported{};
+                    const auto& side = a.node(mom.args[0]);
+                    if (side.head == "Multiparticle" && side.args.size() == 2) {
+                        const int u = a.leg(side.args[0]), v = a.leg(side.args[1]);
+                        if (!std::binary_search(massive.begin(),massive.end(),u) ||
+                            !std::binary_search(massive.begin(),massive.end(),v)) throw Unsupported{};
+                        edges.insert(std::minmax(u,v));
+                    }
+                }
+            }
+        }
+        for (Id child : node.args) self(self,child);
+    };
+    relabel canonical(a,{},{});
+    scan(scan,canonical(input));
+    if (edges.size() != 4) return {};
+    std::vector<int> starts, ends;
+    for (int leg : massive)
+        (edges.count({massive.front(),leg}) ? ends : starts).push_back(leg);
+    if (starts.size() != 2 || ends.size() != 2) return {};
+    for (int l : starts) for (int r : ends)
+        if (!edges.count(std::minmax(l,r))) return {};
+    const bool square = (*weights)[photons.front()-1] == -2;
+    const auto mass = masses[massive.front()-1];
+    auto polynomial = [&](Id expr) {
+        size_t work = 1000000;
+        return scalar_coefficients(a,a.add(expand(a,canonical(expr),work,18000)));
+    };
+    // Preserve the massless exchange pole in every Laurent word. No contact
+    // term or term with a second massless propagator can pass this check.
+    std::map<Id,Polynomial> allocations;
+    for (auto [word,value] : polynomial(input)) {
+        Id pole = zero;
+        for (Id factor : a.node(word).args) {
+            const auto& power = a.node(factor);
+            if (power.head != "Power" || power.args.size() != 2) continue;
+            const auto& den = a.node(power.args[0]);
+            if (den.head != "PropDen" || den.args.size() != 2 || den.args[1] != zero) continue;
+            if (pole != zero || power.args[1] != a.integer(-1)) return {};
+            pole = power.args[0];
+        }
+        if (pole == zero) return {};
+        allocations[pole][word] = value;
+    }
+    if (allocations.size() != (2u << photons.size())) return {};
+    for (int orientation=0; orientation<2; ++orientation) {
+        if (orientation) starts.swap(ends);
+        std::optional<Id> scale;
+        auto matches = [&](Id pole, Id current) {
+            const auto found = allocations.find(pole);
+            if (found == allocations.end()) return false;
+            const auto candidate = reduceInto(a,current,masses,{});
+            const auto ratio = current_scale(a,found->second,polynomial(candidate));
+            if (!ratio || (scale && *ratio != *scale)) return false;
+            scale = ratio;
+            return true;
+        };
+        if (!verify_radiation_exchange(a,starts,ends,photons,square,physical,matches)) continue;
+        return chiral_exchange_sum(a,starts,ends,photons,mass,*scale,square,physical);
+    }
+    return {};
+}
+
 } // namespace
 
 // Infer the candidate from external spin weights and denominator chirality.
 // Only coefficient-by-coefficient agreement authorizes the ordered identity.
+permutation_sum chiral_exchange_sum(Algebra& a, const std::vector<int>& fermions,
+                                    const std::vector<int>& antifermions, const std::vector<int>& photons,
+                                    Id mass, Id coefficient, bool square, bool physical) {
+    const int l = fermions.at(0), r = antifermions.at(0);
+    const int u = fermions.at(1), v = antifermions.at(1);
+    const Id seed = chiral_radiation_kernel(a,l,r,u,v,photons,mass,square,physical);
+    // Each external vector changes sign under charge conjugation. Reversing
+    // both currents exchanges the two ends of the internal photon as well.
+    const int charge_parity = photons.size()%2 == 0 ? 1 : -1;
+    const signed_exchange conjugate{{{l,r},{u,v}},charge_parity};
+    return {photons,a.mul({coefficient,seed}),{}, {},{fermions,antifermions},conjugate};
+}
+
 std::optional<permutation_sum> recognize_ordered_current(Algebra& a, Id input) {
     const auto& masses = a.masses();
     const auto zero = a.integer(0);
-    if (masses.size() < 6 || masses.size() > 8 || !a.shells().empty() ||
-        a.cost(input) < 300 || a.cost(input) > 18000 ||
-        static_cast<std::size_t>(std::count(masses.begin(),masses.end(),zero)) + 2 != masses.size()) return {};
+    if (masses.size() < 6 || masses.size() > 8 || !a.shells().empty() || a.cost(input) < 300)
+        return {};
+    const auto massless = static_cast<std::size_t>(std::count(masses.begin(),masses.end(),zero));
     try {
+        if (masses.size() == 7 && massless == 3) return recognize_exchange(a,input);
+        if (massless + 2 != masses.size() || a.cost(input) > 18000) return {};
         const auto weights = external_spin_weights(a,input);
         if (!weights) return {};
         std::vector<int> ends, positive, negative;
@@ -484,16 +596,40 @@ std::optional<permutation_sum> recognize_ordered_current(Algebra& a, Id input) {
     return {};
 }
 
-Id expand_permutation_groups(Algebra& a, Id kernel, const std::vector<std::vector<int>>& groups) {
+Id expand_permutation_groups(Algebra& a, Id kernel, const std::vector<std::vector<int>>& groups, bool alternating) {
     for (auto legs : groups) {
         std::sort(legs.begin(),legs.end());
         auto order = legs;
         Terms terms;
-        do { terms.push_back(relabel(a,legs,order)(kernel)); }
+        do {
+            Id image = relabel(a,legs,order)(kernel);
+            if (alternating) {
+                bool odd = false;
+                for (std::size_t i = 0; i < order.size(); ++i)
+                    for (std::size_t j = i + 1; j < order.size(); ++j)
+                        if (order[i] > order[j]) odd = !odd;
+                if (odd) image = a.mul({a.integer(-1),image});
+            }
+            terms.push_back(image);
+        }
         while (std::next_permutation(order.begin(),order.end()));
         kernel = a.add(std::move(terms));
     }
     return kernel;
+}
+
+Id expand_signed_operators(Algebra& a, const permutation_sum& sum) {
+    Id kernel = sum.kernel;
+    if (sum.joint_exchange) {
+        std::vector<int> from, to;
+        for (const auto& [left,right] : sum.joint_exchange->swaps) {
+            from.insert(from.end(),{left,right});
+            to.insert(to.end(),{right,left});
+        }
+        Id image = relabel(a,from,to)(kernel);
+        kernel = a.add({kernel,a.mul({a.integer(sum.joint_exchange->sign),image})});
+    }
+    return expand_permutation_groups(a,kernel,sum.alternating_groups,true);
 }
 
 Id simplify_permutation_kernel(Algebra& a, Id input, const std::vector<int>& legs,

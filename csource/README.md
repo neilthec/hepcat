@@ -32,6 +32,12 @@ A reduced expression with repeated external masses can have a compact permutatio
 
 For two independent sets of identical legs, `grouped_permutation_form()` returns the leg groups and a single summand. Sum over every permutation within each group. The older `permutation_form()` expands the additional groups into its summand for callers that loop over one group. With two photons at each end of a fermion line and one in the middle, the two orders at either end can be added before joining the left and right currents. The [three-positive, two-negative example](../tests/benchmarks/publication-qed/seven-point-two-negative.md) gives the pole choices, symmetry factors, and a signed check of the paper formulas.
 
+For identical fermions, `signed_permutation_form()` returns a summand, symmetric and alternating leg groups, and an optional `joint_exchange`. If the exchange is present, start with the summand plus `joint_exchange->sign` times its image with all listed pairs exchanged simultaneously. Then sum over permutations in each group, multiplying by the sign of every alternating permutation. Spin labels move with the momenta. The unsigned accessors expand all signed operations automatically.
+
+`complexity()` scores the full elementary expression. `permutation_summand_complexity()` gives the score inside the displayed sum, or an empty optional when there is no compact permutation form. The QED C++ notebook reports both scores and checks its historical thresholds against the elementary score.
+
+With two identical charged pairs and three photons of one helicity, only two assignments are needed. All three photons can attach to one pair, or two can attach to one and one to the other. Reversing both charged lines simultaneously recovers the second Weyl orientation with a minus sign. This formula works for either helicity and any ordering of the external particles. On a saved elementary expression the four two-fermion photon poles suggest the two charge classes. The reducer accepts the compact form only after checking the signed coefficient of every Laurent term in every exchange channel. The [two-current formula and signed replay](../tests/benchmarks/publication-qed/seven-point-four-fermions.md) give both pole choices and the measured summand complexities.
+
 
 The Wolfram export preserves each model parameter's name, scope and type. To
 combine it with a separate Mathematica `ReadModel`, give both readers the

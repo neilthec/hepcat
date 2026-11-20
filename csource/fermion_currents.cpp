@@ -23,19 +23,12 @@ bool same_kind(const std::string &h, const std::string &k) {
   return h.substr(h.rfind('`') + 1) == k;
 }
 
-// Certify the two chiral halves of the same minimal vector coupling from
-// every actual diagram. Extra scalar, contact, or nonminimal contributions
-// must go through the general constructor.
-class builder {
+// Spinor algebra for two open Dirac lines, also usable when reading a saved
+// expression with only mass and spin information.
+class line_kinematics {
 public:
-  Algebra &a;
-  const model &m;
-  const std::vector<std::string> &external;
-  labels photons, starts;
-  std::map<size_t, bool> checked;
-  builder(Algebra &algebra, const model &model,
-          const std::vector<std::string> &particles)
-      : a(algebra), m(model), external(particles) {}
+  Algebra& a;
+  labels photons;
   Id integer(int n) { return a.integer(n); }
   Id prod(std::initializer_list<Id> x) { return a.mul(x); }
   Id sum(std::initializer_list<Id> x) { return a.add(x); }
@@ -61,7 +54,7 @@ public:
   Id pole(labels legs, Id mass) {
     std::sort(legs.begin(), legs.end());
     labels complement;
-    for (size_t k = 1; k <= external.size(); ++k)
+    for (size_t k = 1; k <= a.masses().size(); ++k)
       if (!std::binary_search(legs.begin(), legs.end(), int(k)))
         complement.push_back(int(k));
     if (complement.size() < legs.size() ||
@@ -73,6 +66,78 @@ public:
     return a.call("PropDen",
                   {a.call("Mom", {a.call("Multiparticle", args)}), mass});
   }
+  struct term {
+    Id factor;
+    int angle, square;
+  };
+  using pieces = std::vector<term>;
+  Id fermion_pole(int leg, int photon) {
+    return pole({leg, photon}, a.masses()[leg - 1]);
+  }
+  Id inv_pole(int leg, int photon) { return inv(fermion_pole(leg, photon)); }
+  Id inv_triple(int leg, int i, int j) {
+    return prod({inv(pole({leg, i, j}, a.masses()[leg - 1])), inv_pole(leg, i),
+                 inv_pole(leg, j)});
+  }
+  pieces chiral(line pair, labels emitted, bool flip, bool physical) {
+    auto [u, v] = pair;
+    const int first = photons.front();
+    const Id mass = a.masses()[u - 1];
+    auto soft = [&](int x, int y, int i, bool split) {
+      // Schouten combines the two soft emissions into a reference-independent
+      // dipole.
+      if (physical || split || i == first)
+        return neg(
+            prod({chain(!flip, i, {y, x}, i), inv_pole(x, i), inv_pole(y, i)}));
+      return prod(
+          {sum({prod({chain(!flip, i, {x}, first), inv_pole(x, i)}),
+                neg(prod({chain(!flip, i, {y}, first), inv_pole(y, i)}))}),
+           inv(chain(flip, i, {}, first))});
+    };
+    Id scalar = integer(1);
+    for (int i : emitted)
+      scalar = prod({scalar, soft(u, v, i, true)});
+    if (emitted.size() == 2) {
+      int i = emitted[0], j = emitted[1];
+      scalar =
+          sum({scalar,
+               neg(prod({a.pow(mass, 2), a.pow(chain(!flip, i, {}, j), 2),
+                         sum({inv_triple(u, i, j), inv_triple(v, i, j)})}))});
+    }
+    pieces out{{scalar, u, v}, {scalar, v, u}};
+    for (int x : {u, v}) {
+      int y = x == u ? v : u;
+      for (int i : emitted) {
+        Id shift = prod({chain(!flip, i, {}, x), inv_pole(x, i)});
+        if (emitted.size() == 1 && x == v)
+          shift = neg(shift);
+        if (emitted.size() == 2) {
+          int j = emitted.front() == i ? emitted.back() : emitted.front();
+          shift = sum({prod({shift, soft(x, y, j, false)}),
+                       prod({mass, a.pow(chain(!flip, i, {}, j), 2),
+                             chain(flip, i, {}, x), inv_triple(x, i, j)})});
+        }
+        out.push_back({shift, y, i});
+      }
+    }
+    return out;
+  }
+  explicit line_kinematics(Algebra& algebra, labels emitters = {})
+      : a(algebra), photons(std::move(emitters)) {}
+};
+
+// Certify the two chiral halves of the same minimal vector coupling from
+// every actual diagram. Extra scalar, contact, or nonminimal contributions
+// must go through the general constructor.
+class builder : public line_kinematics {
+public:
+  const model &m;
+  const std::vector<std::string> &external;
+  labels starts;
+  std::map<size_t, bool> checked;
+  builder(Algebra &algebra, const model &model,
+          const std::vector<std::string> &particles)
+      : line_kinematics(algebra), m(model), external(particles) {}
   bool minimal(size_t vi) {
     auto seen = checked.find(vi);
     if (seen != checked.end())
@@ -201,11 +266,6 @@ public:
                 neg(prod({sum({J(x, y), J(y, x)}),
                           sum({B(a1, x, b), B(b, x, a1)})}))});
   }
-  struct term {
-    Id factor;
-    int angle, square;
-  };
-  using pieces = std::vector<term>;
   Id contract(const pieces &l, const pieces &r, bool flip) {
     std::vector<Id> sum;
     for (auto &u : l)
@@ -214,57 +274,6 @@ public:
             prod({u.factor, v.factor, chain(flip, u.angle, {}, v.angle),
                   chain(!flip, u.square, {}, v.square)}));
     return a.add(sum);
-  }
-  Id fermion_pole(int leg, int photon) {
-    return pole({leg, photon}, a.masses()[leg - 1]);
-  }
-  Id inv_pole(int leg, int photon) { return inv(fermion_pole(leg, photon)); }
-  Id inv_triple(int leg, int i, int j) {
-    return prod({inv(pole({leg, i, j}, a.masses()[leg - 1])), inv_pole(leg, i),
-                 inv_pole(leg, j)});
-  }
-  pieces chiral(line pair, labels emitted, bool flip, bool physical) {
-    auto [u, v] = pair;
-    const int first = photons.front();
-    const Id mass = a.masses()[u - 1];
-    auto soft = [&](int x, int y, int i, bool split) {
-      // Schouten combines the two soft emissions into a reference-independent
-      // dipole.
-      if (physical || split || i == first)
-        return neg(
-            prod({chain(!flip, i, {y, x}, i), inv_pole(x, i), inv_pole(y, i)}));
-      return prod(
-          {sum({prod({chain(!flip, i, {x}, first), inv_pole(x, i)}),
-                neg(prod({chain(!flip, i, {y}, first), inv_pole(y, i)}))}),
-           inv(chain(flip, i, {}, first))});
-    };
-    Id scalar = integer(1);
-    for (int i : emitted)
-      scalar = prod({scalar, soft(u, v, i, true)});
-    if (emitted.size() == 2) {
-      int i = emitted[0], j = emitted[1];
-      scalar =
-          sum({scalar,
-               neg(prod({a.pow(mass, 2), a.pow(chain(!flip, i, {}, j), 2),
-                         sum({inv_triple(u, i, j), inv_triple(v, i, j)})}))});
-    }
-    pieces out{{scalar, u, v}, {scalar, v, u}};
-    for (int x : {u, v}) {
-      int y = x == u ? v : u;
-      for (int i : emitted) {
-        Id shift = prod({chain(!flip, i, {}, x), inv_pole(x, i)});
-        if (emitted.size() == 1 && x == v)
-          shift = neg(shift);
-        if (emitted.size() == 2) {
-          int j = emitted.front() == i ? emitted.back() : emitted.front();
-          shift = sum({prod({shift, soft(x, y, j, false)}),
-                       prod({mass, a.pow(chain(!flip, i, {}, j), 2),
-                             chain(flip, i, {}, x), inv_triple(x, i, j)})});
-        }
-        out.push_back({shift, y, i});
-      }
-    }
-    return out;
   }
   Id mixed(line left, line right, labels L, labels R, int plus, int minus,
            bool physical) {
@@ -347,12 +356,195 @@ struct group {
   Id propagator;
   std::set<std::pair<labels, labels>> orders;
 };
+
+Id contracted_radiation(line_kinematics& b, const std::vector<int>& types,
+                        line l, line r, const labels& L, const labels& R, bool physical,
+                        const std::function<bool(Id)>& accepts = {}) {
+  auto& a = b.a;
+  using current = radiative_detail::endpoint_radiation::vector_current;
+  // Each of the two conserved currents can choose its own spin frames.
+  // Include both physical endpoints or the distinct common-photon gauges.
+  // Compare the complete contracted numerator, including cancellations.
+  auto alternatives = [&](line side, const labels &photons) {
+    std::vector<current> result;
+    if (photons.size() <= 2 &&
+        (photons.empty() ||
+         std::all_of(photons.begin(), photons.end(), [&](int i) {
+           return types[i-1] == types[photons.front()-1];
+         }))) {
+      const bool flip = !photons.empty() && types[photons.front()-1] < 0;
+      current terms;
+      for (const auto &t : b.chiral(side, photons, flip, true)) {
+        auto coord = flip ? std::make_pair(t.square, t.angle)
+                          : std::make_pair(t.angle, t.square);
+        auto [where, inserted] = terms.emplace(coord, t.factor);
+        if (!inserted)
+          where->second = b.sum({where->second, t.factor});
+      }
+      result.push_back(std::move(terms));
+      return result;
+    }
+    std::set<std::vector<int>> tried;
+    const size_t gauges = physical ? 2 : b.photons.size() + 1;
+    for (size_t choice = 0; choice < gauges; ++choice) {
+      std::map<Id, reference_choice> gauge;
+      std::vector<int> selected;
+      for (int i : photons) {
+        int spectator;
+        if (physical)
+          spectator = side[choice];
+        else {
+          auto position = std::find(b.photons.begin(), b.photons.end(), i) -
+                          b.photons.begin();
+          spectator = b.photons[(position + 1) % b.photons.size()];
+          if (choice && b.photons[choice - 1] != i)
+            spectator = b.photons[choice - 1];
+          else if (!choice) {
+            auto other = std::find_if(
+                b.photons.begin(), b.photons.end(),
+                [&](int j) { return types[j-1] != types[i-1]; });
+            if (other != b.photons.end())
+              spectator = *other;
+          }
+        }
+        selected.push_back(spectator);
+        bool pos = types[i-1] > 0;
+        Id xi = a.call("Spinor", {a.atom("\"Xi\""),
+                                  a.atom(pos ? "\"Angle\"" : "\"Square\""),
+                                  a.integer(i)});
+        gauge.emplace(xi, reference_choice{i, spectator, physical});
+      }
+      if (!tried.insert(selected).second)
+        continue;
+      radiative_detail::endpoint_radiation rad(a, types, gauge);
+      result.push_back(rad.current(side[0], side[1], photons));
+    }
+    return result;
+  };
+  const auto lc = alternatives(l, L), rc = alternatives(r, R);
+  const std::map<Id, reference_choice> no_gauge;
+  radiative_detail::endpoint_radiation rad(a, types, no_gauge);
+  std::optional<std::pair<size_t, size_t>> best;
+  Id joined = b.integer(0);
+  for (const auto &left : lc)
+    for (const auto &right : rc) {
+      auto val = rad.contract_currents(left, right);
+      if (accepts) {
+        const Id signed_value = b.photons.size() % 2 ? val : b.neg(val);
+        if (accepts(signed_value)) return signed_value;
+        continue;
+      }
+      // A comparison budget for presentation must never discard a correct
+      // current at a new multiplicity. Prefer a measured score where
+      // available and use the exact tree size to break ties.
+      size_t weight = std::numeric_limits<size_t>::max();
+      try {
+        weight = expression_complexity(a, val);
+      } catch (const std::length_error &) {
+      } catch (const std::overflow_error &) {
+      }
+      auto score = std::make_pair(weight, a.cost(val));
+      if (!best || score < *best) {
+        best = score;
+        joined = val;
+      }
+    }
+  if (!(b.photons.size() % 2)) joined = b.neg(joined);
+  return joined;
+}
+
+// Radiation assigned to either side of the exchanged photon is separately
+// gauge invariant after all attachment orders on that side have been summed.
+// Consequently equivalent allocations may have chosen different references.
+std::optional<permutation_sum> exchange_orbits(builder& b, const std::map<group_key, group>& groups,
+                                                const std::vector<Id>& terms, bool physical) {
+  const auto n = b.photons.size();
+  if (b.starts.size() != 2 || n < 3 || n >= std::numeric_limits<size_t>::digits-1 ||
+      b.external[b.starts[0]-1] != b.external[b.starts[1]-1] ||
+      !std::all_of(b.photons.begin(), b.photons.end(), [&](int i) {
+        return b.external[i-1] == b.external[b.photons.front()-1];
+      })) return {};
+  // Two complete matchings and every binary assignment of photons in each.
+  if (groups.size() != (size_t{2} << n) || terms.size() != groups.size()) return {};
+  std::vector<Id> representatives(n/2+1);
+  std::vector<size_t> counts(n/2+1);
+  std::optional<Id> direct_coefficient;
+  labels antiparticles;
+  size_t index = 0;
+  for (const auto& [key, allocation] : groups) {
+    const auto& [left,right,L,R] = key;
+    labels ends{left[1],right[1]};
+    std::sort(ends.begin(),ends.end());
+    if (antiparticles.empty()) antiparticles = ends;
+    if (left[0] != b.starts[0] || right[0] != b.starts[1] || ends != antiparticles) return {};
+    const Id oriented = left[1] < right[1] ? allocation.coefficient : b.neg(allocation.coefficient);
+    if (!direct_coefficient) direct_coefficient = oriented;
+    if (*direct_coefficient != oriented) return {};
+    if (L.size()+R.size() != n) return {};
+    const auto k = std::min(L.size(),R.size());
+    const Id term = terms[index++];
+    // With identical photons an orbit is specified by the smaller of the
+    // two occupation numbers. Keep the shortest complete contracted term.
+    if (!counts[k]++ || b.a.cost(term) < b.a.cost(representatives[k]))
+      representatives[k] = term;
+  }
+  if (n == 3) {
+    const int a = b.starts[0], photon = b.photons.front();
+    const bool square = b.external[photon-1] == b.m.particle(b.external[photon-1]).name;
+    return chiral_exchange_sum(b.a,b.starts,antiparticles,b.photons,b.a.masses()[a-1],
+                               *direct_coefficient,square,physical);
+  }
+  mpz_class order = 4;  // two independent identical-fermion transpositions
+  for (size_t i = 2; i <= n; ++i) order *= i;
+  for (size_t k = 0; k < representatives.size(); ++k) {
+    if (!counts[k]) return {};
+    mpq_class inverse_stabilizer(mpz_class(counts[k]),order);
+    inverse_stabilizer.canonicalize();
+    representatives[k] = b.prod({representatives[k],b.a.exact(inverse_stabilizer)});
+  }
+  return permutation_sum{b.photons,b.a.add(representatives),{}, {},{b.starts,antiparticles}};
+}
 } // namespace
+
+bool verify_radiation_exchange(Algebra& a, const labels& fermions, const labels& antifermions,
+                               const labels& photons, bool square, bool physical,
+                               const std::function<bool(Id,Id)>& accepts) {
+  if (a.masses().size() != 7 || photons.size() != 3 || fermions.size() != 2 ||
+      antifermions.size() != 2) return false;
+  labels legs = photons;
+  legs.insert(legs.end(),fermions.begin(),fermions.end());
+  legs.insert(legs.end(),antifermions.begin(),antifermions.end());
+  std::sort(legs.begin(),legs.end());
+  for (std::size_t i=0; i<legs.size(); ++i)
+    if (legs[i] != static_cast<int>(i+1)) return false;
+  line_kinematics b(a,photons);
+  std::vector<int> types(a.masses().size(), square ? 2 : -2);
+  for (int i : fermions) types[i-1] = 1;
+  for (int i : antifermions) types[i-1] = -1;
+  const auto zero = b.integer(0);
+  for (unsigned swap = 0; swap < 2; ++swap) {
+    const line left{fermions[0],antifermions[swap]}, right{fermions[1],antifermions[1-swap]};
+    for (unsigned mask = 0; mask < (1u << photons.size()); ++mask) {
+      labels L,R;
+      for (std::size_t i=0; i<photons.size(); ++i)
+        (mask & (1u<<i) ? L : R).push_back(photons[i]);
+      labels cut{left[0],left[1]};
+      cut.insert(cut.end(),L.begin(),L.end());
+      const Id pole = b.pole(cut,zero);
+      auto matches = [&](Id current) {
+        return accepts(pole,b.prod({swap ? b.neg(current) : current,b.inv(pole)}));
+      };
+      if (contracted_radiation(b,types,left,right,L,R,physical,matches) == zero) return false;
+    }
+  }
+  return true;
+}
 
 std::optional<Id>
 fermion_current_proposal(Algebra &a, const model &m,
                          const std::vector<std::string> &names, size_t count,
-                         bool physical) {
+                         bool physical, std::optional<permutation_sum>* presentation) {
+  if (presentation) presentation->reset();
   builder b(a, m, names);
   if (!b.inventory())
     return {};
@@ -477,6 +669,7 @@ fermion_current_proposal(Algebra &a, const model &m,
         return {};
     }
   }
+  const auto types = radiative_detail::external_types(m,names);
   std::vector<Id> total;
   for (auto &[den, terms] : six_groups) {
     if (terms.size() != 2)
@@ -495,93 +688,7 @@ fermion_current_proposal(Algebra &a, const model &m,
     if (g.orders.size() != ways(L.size()) * ways(R.size()))
       return {};
     if (b.photons.size() > 2) {
-      using current = radiative_detail::endpoint_radiation::vector_current;
-      // Each of the two conserved currents can choose its own spin frames.
-      // Include both physical endpoints or the distinct common-photon gauges.
-      // Compare the complete contracted numerator, including cancellations.
-      auto alternatives = [&](line side, const labels &photons) {
-        std::vector<current> result;
-        if (photons.size() <= 2 &&
-            (photons.empty() ||
-             std::all_of(photons.begin(), photons.end(), [&](int i) {
-               return names[i - 1] == names[photons[0] - 1];
-             }))) {
-          bool flip =
-              !photons.empty() &&
-              names[photons[0] - 1] != m.particle(names[photons[0] - 1]).name;
-          current terms;
-          for (const auto &t : b.chiral(side, photons, flip, true)) {
-            auto coord = flip ? std::make_pair(t.square, t.angle)
-                              : std::make_pair(t.angle, t.square);
-            auto [where, inserted] = terms.emplace(coord, t.factor);
-            if (!inserted)
-              where->second = b.sum({where->second, t.factor});
-          }
-          result.push_back(std::move(terms));
-          return result;
-        }
-        std::set<std::vector<int>> tried;
-        const size_t gauges = physical ? 2 : b.photons.size() + 1;
-        for (size_t choice = 0; choice < gauges; ++choice) {
-          std::map<Id, reference_choice> gauge;
-          std::vector<int> selected;
-          for (int i : photons) {
-            int spectator;
-            if (physical)
-              spectator = side[choice];
-            else {
-              auto position = std::find(b.photons.begin(), b.photons.end(), i) -
-                              b.photons.begin();
-              spectator = b.photons[(position + 1) % b.photons.size()];
-              if (choice && b.photons[choice - 1] != i)
-                spectator = b.photons[choice - 1];
-              else if (!choice) {
-                auto other = std::find_if(
-                    b.photons.begin(), b.photons.end(),
-                    [&](int j) { return names[j - 1] != names[i - 1]; });
-                if (other != b.photons.end())
-                  spectator = *other;
-              }
-            }
-            selected.push_back(spectator);
-            bool pos = names[i - 1] == m.particle(names[i - 1]).name;
-            Id xi = a.call("Spinor", {a.atom("\"Xi\""),
-                                      a.atom(pos ? "\"Angle\"" : "\"Square\""),
-                                      a.integer(i)});
-            gauge.emplace(xi, reference_choice{i, spectator, physical});
-          }
-          if (!tried.insert(selected).second)
-            continue;
-          radiative_detail::endpoint_radiation rad(a, m, names, gauge);
-          result.push_back(rad.current(side[0], side[1], photons));
-        }
-        return result;
-      };
-      const auto lc = alternatives(l, L), rc = alternatives(r, R);
-      const std::map<Id, reference_choice> no_gauge;
-      radiative_detail::endpoint_radiation rad(a, m, names, no_gauge);
-      std::optional<std::pair<size_t, size_t>> best;
-      Id joined = b.integer(0);
-      for (const auto &left : lc)
-        for (const auto &right : rc) {
-          auto val = rad.contract_currents(left, right);
-          // A comparison budget for presentation must never discard a correct
-          // current at a new multiplicity. Prefer a measured score where
-          // available and use the exact tree size to break ties.
-          size_t weight = std::numeric_limits<size_t>::max();
-          try {
-            weight = expression_complexity(a, val);
-          } catch (const std::length_error &) {
-          } catch (const std::overflow_error &) {
-          }
-          auto score = std::make_pair(weight, a.cost(val));
-          if (!best || score < *best) {
-            best = score;
-            joined = val;
-          }
-        }
-      if (!(b.photons.size() % 2))
-        joined = b.neg(joined);
+      Id joined = contracted_radiation(b,types,l,r,L,R,physical);
       total.push_back(b.prod({g.coefficient, joined, b.inv(g.propagator)}));
       continue;
     }
@@ -603,6 +710,8 @@ fermion_current_proposal(Algebra &a, const model &m,
       num = b.mixed(l, r, L, R, pos, neg, physical);
     total.push_back(b.prod({g.coefficient, num, b.inv(g.propagator)}));
   }
+  if (presentation && b.photons.size() > 2 && !groups.empty())
+    *presentation = exchange_orbits(b,groups,total,physical);
   return a.add(total);
 }
 } // namespace hepcat

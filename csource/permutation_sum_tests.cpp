@@ -219,6 +219,9 @@ void test_current(const model& qed, bool physical) {
     amp.reduce();
     const auto compact = amp.permutation_form();
     require(compact.has_value(),"missing compact permutation sum");
+    const auto signed_view = amp.signed_permutation_form();
+    require(signed_view && signed_view->orbit_sizes == compact->orbit_sizes,
+            "signed presentation lost orbit sizes");
     auto lengths = compact->orbit_sizes;
     std::sort(lengths.begin(),lengths.end());
     require(lengths == (physical ? std::vector<std::size_t>{10,30,60}

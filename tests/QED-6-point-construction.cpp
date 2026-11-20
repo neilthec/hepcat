@@ -12,6 +12,8 @@
 // for scores and, inside each pole preference and family, checks.txt for validations
 // and the .txt amplitudes in spinor notation. Use .tex for papers, .wl with
 // Mathematica HEPCAT, and .expr to reload the exact native expression.
+// The threshold applies to the full elementary expression. When a permutation
+// sum is displayed, summand_complexity scores the expression inside that sum.
 //
 // To extend the notebook, start at the process list below. construct_helicity()
 // shows how to set up, construct, check, and save one amplitude. construct_family()
@@ -158,14 +160,14 @@ std::optional<amp_expression> signed_reference(const family& process, const heli
     return catalog_reference(models.factorization, legs);
 }
 
-std::optional<std::size_t> measure_complexity(const amp_expression& expression, std::ostream& log,
-                                              const std::string& branch) {
+template <class Measure>
+std::optional<std::size_t> measure_score(Measure measure, std::ostream& log, const std::string& label) {
     try {
-        return expression.complexity();
+        return measure();
     } catch (const std::length_error& error) {
-        log << branch << " complexity unavailable: " << error.what() << '\n';
+        log << label << " unavailable: " << error.what() << '\n';
     } catch (const std::overflow_error& error) {
-        log << branch << " complexity unavailable: " << error.what() << '\n';
+        log << label << " unavailable: " << error.what() << '\n';
     }
     return std::nullopt;
 }
@@ -216,7 +218,9 @@ selected_amplitude construct_helicity(const settings& run, const construction_mo
     notebook_output::print_validation(report.validation);
     notebook_output::write_expression(directory / branch, result);
 
-    const auto complexity = measure_complexity(result, log, branch);
+    const auto complexity = measure_score([&] { return result.complexity(); }, log, branch + " elementary complexity");
+    const auto summand = measure_score([&] { return result.permutation_summand_complexity(); },
+                                       log, branch + " summand complexity");
     const bool meets_target = !target || (complexity && *complexity <= *target);
     const auto measured = complexity ? std::to_string(*complexity) : "UNMEASURED";
     const char* score_status = meets_target ? "PASS" : "VALID_BUT_LONGER";
@@ -227,14 +231,15 @@ selected_amplitude construct_helicity(const settings& run, const construction_mo
            << measured << '\t' << (target ? std::to_string(*target) : "") << '\t'
            << (reference_score ? std::to_string(*reference_score) : "") << '\t' << run.engines.points
            << '\t' << report.total_seconds << "\t\t" << leaves << '\t'
-           << (reference ? std::to_string(published ? published->leaves : reference->leaf_count()) : "") << '\n'
+           << (reference ? std::to_string(published ? published->leaves : reference->leaf_count()) : "") << '\t'
+           << (summand ? std::to_string(*summand) : "") << '\n'
            << std::flush;
-    std::cout << "    Complexity        " << measured;
+    std::cout << "    Elementary complexity   " << measured;
     if (target) std::cout << " (target " << *target << ", " << (meets_target ? "met" : "unmet") << ')';
-    std::cout << ", " << notebook_output::number(leaves)
-              << " leaves\n"
-              << "    Time              " << notebook_output::seconds(report.total_seconds) << '\n'
-              << "    Formula files     " << (relative_dir / (branch + ".txt")).string()
+    std::cout << ", " << notebook_output::number(leaves) << " leaves\n";
+    if (summand) std::cout << "    Permutation summand     " << *summand << " (weighted complexity)\n";
+    std::cout << "    Time                    " << notebook_output::seconds(report.total_seconds) << '\n'
+              << "    Formula files           " << (relative_dir / (branch + ".txt")).string()
               << "  (also .tex, .wl and .expr)" << std::endl;
 
     // As in the notebook, validate a shorter worked form before selecting it
@@ -250,12 +255,16 @@ selected_amplitude construct_helicity(const settings& run, const construction_mo
     if (!verified.passed())
         throw std::runtime_error("worked representative failed its own validation");
     notebook_output::write_expression(directory / (branch + ".selected"), *reference);
+    const auto worked_summand = measure_score([&] { return reference->permutation_summand_complexity(); },
+                                              log, branch + " worked summand complexity");
     scores << policy << '\t' << process.name << '\t' << branch << "\tWORKED_FORM_PASS\t"
            << *reference_score << '\t' << *target << '\t' << *reference_score << '\t' << run.engines.points
-           << "\t\tvalidated after construction\n"
+           << "\t\tvalidated after construction\t" << reference->leaf_count() << '\t'
+           << reference->leaf_count() << '\t' << (worked_summand ? std::to_string(*worked_summand) : "") << '\n'
            << std::flush;
     std::cout << "    Selected for export  " << (relative_dir / (branch + ".selected.txt")).string()
-              << " (complexity " << *reference_score << ")\n";
+              << " (elementary complexity " << *reference_score << ")\n";
+    if (worked_summand) std::cout << "    Permutation summand     " << *worked_summand << " (weighted complexity)\n";
     return {{legs, std::move(*reference)}, true};
 }
 
@@ -323,7 +332,7 @@ bool construct_family(const settings& run, const construction_models& models, co
         } catch (const std::exception& error) {
             const auto baseline = spurious ? entry.spurious : entry.physical;
             scores << policy << '\t' << process.name << '\t' << branch << "\tUNRESOLVED\t\t" << baseline
-                   << "\t\t\t\t" << clean_cell(error.what()) << '\n'
+                   << "\t\t\t\t" << clean_cell(error.what()) << "\t\t\t\n"
                    << std::flush;
             if (auto failure = dynamic_cast<const construction_validation_error*>(&error)) {
                 print_checks(log, failure->report);
@@ -375,7 +384,7 @@ bool run_families(const settings& run) {
 
     auto scores = file(run.output / "construction.tsv");
     scores << "preference\tfamily\thelicity\tstatus\tcpp_complexity\tthreshold\treference_complexity"
-              "\tpoints\tseconds\tdetail\tcpp_leaves\treference_leaves\n";
+              "\tpoints\tseconds\tdetail\tcpp_leaves\treference_leaves\tsummand_complexity\n";
 
     const auto families = selected_families(run);
     const auto total = families.size() * (run.preference == "both" ? 2 : 1);

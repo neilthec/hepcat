@@ -7,6 +7,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace hepcat {
@@ -28,6 +29,12 @@ struct permutation_formula {
     std::vector<int> legs;
     std::string summand;
     std::vector<std::size_t> orbit_sizes; // Empty for a kernel derived from ordered diagrams.
+};
+
+// Form K + sign * C(K), where C swaps every listed pair simultaneously.
+struct signed_exchange {
+    std::vector<std::pair<int,int>> swaps;
+    int sign;
 };
 
 // FullForm input preserves model-local symbolic masses. External particle
@@ -53,6 +60,18 @@ public:
         std::string summand;
     };
     std::optional<permutation_product> grouped_permutation_form() const;
+    // Each odd permutation in an alternating group contributes a minus sign.
+    // Apply joint_exchange to the summand first, then sum over the groups.
+    // The unsigned accessors expand the exchange and alternating groups.
+    struct signed_permutation_product {
+        std::vector<std::vector<int>> symmetric_groups, alternating_groups;
+        std::string summand;
+        std::optional<signed_exchange> joint_exchange{};
+        std::vector<std::size_t> orbit_sizes{};
+    };
+    std::optional<signed_permutation_product> signed_permutation_form() const;
+    // Weighted score of the displayed summand, before any permutation sums.
+    std::optional<std::size_t> permutation_summand_complexity() const;
     // Load HEPCAT, then evaluate the result in a Wolfram kernel. By default
     // the expression is paired with its external and diagram-local mass rules.
     std::string mathematica(bool include_mass_rules = true) const;
@@ -80,7 +99,7 @@ private:
     struct context;
     // This representation belongs to a certified complete graph sum. Propagate
     // it through exact reductions and drop it if completion changes the amplitude.
-    std::shared_ptr<const permutation_formula> ordered_formula_;
+    std::shared_ptr<const signed_permutation_product> ordered_formula_;
     struct cached_permutations;
     const cached_permutations& reduced_permutations() const; // caller holds context lock
     mutable std::shared_ptr<const cached_permutations> permutations_;
