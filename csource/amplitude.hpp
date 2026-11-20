@@ -156,6 +156,7 @@ public:
     std::size_t last_worker_count() const { return last_workers_; }
 
 private:
+    bool complete_color_rows(const factorization_options*, const high_energy_options*, const amp_expression* seed);
     validation_report validate_impl(amp_expression candidate, const amp_expression* original,
                                     const validation_options&, const amp_expression* reference = nullptr);
     amplitude& generate_rows(bool diagrams, bool products, bool feynman, std::size_t workers);

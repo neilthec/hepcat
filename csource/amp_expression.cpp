@@ -162,13 +162,21 @@ void amp_expression::set_from(const Algebra& source, Id result) {
 
 // A generated row is born in a worker arena borrowing the model. Run the
 // reduction there too, then retain only the two reachable output trees.
-void amp_expression::reduce_from(Algebra& worker, Id source) {
+void amp_expression::reduce_from(Algebra& worker, Id source, std::optional<Id> original) {
     auto masses=import_masses(worker);
     Shells shells;
     for(const auto& [cut,mass]:kinematics_->shells)
         shells.emplace(cut,copy_tree(*arena_,worker,mass));
     std::optional<Id> rest;
-    auto result=reduce_and_retain(worker,source,masses,shells,rest);
+    Id result;
+    if (original && *original != source) {
+        result = reduceInto(worker,source,masses,shells);
+        Id off_cut = reduceInto(worker,*original,masses,{});
+        Id difference = reduceInto(worker,worker.add({off_cut,worker.mul({worker.integer(-1),result})}),masses,{});
+        if (difference != worker.integer(0)) rest = difference;
+    } else {
+        result = reduce_and_retain(worker,source,masses,shells,rest);
+    }
     set_from(worker,result);
     if(rest) remainder_=copy_tree(worker,*arena_,*rest);
     reduced_=true;

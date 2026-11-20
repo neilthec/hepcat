@@ -1,4 +1,5 @@
 #include "high_energy_contacts.hpp"
+#include "four_point_numerators.hpp"
 #include <algorithm>
 #include <functional>
 #include <set>
@@ -222,8 +223,159 @@ class catalog_builder {
         }
     }
 
+    std::set<Id> numerator_shapes(const weights& w, unsigned insertions) {
+        weights left = w;
+        for (int& slots : left)
+            slots = std::abs(slots);
+        std::set<Id> shapes;
+        std::vector<Id> words;
+        std::function<void(unsigned)> generate_words = [&](unsigned left_insertions) {
+            std::size_t i = 0;
+            while (i < left.size() && !left[i])
+                ++i;
+            if (i == left.size()) {
+                if (left_insertions == 0)
+                    shapes.insert(a.mul(words));
+                return;
+            }
+            --left[i];
+            for (std::size_t j = i; j < left.size(); ++j)
+                if (left[j]) {
+                    --left[j];
+                    for (unsigned length = 0; length <= left_insertions; ++length) {
+                        if (i == j && !length)
+                            continue;
+                        std::vector<int> momenta;
+                        for (int k = 0; k < 4; ++k)
+                            if (k != int(i) && k != int(j))
+                                momenta.push_back(k);
+                        std::vector<std::vector<int>> sequences;
+                        if (!length)
+                            sequences.emplace_back();
+                        if (length == 1) {
+                            // The final choice is eliminated by momentum conservation
+                            // and the endpoint Dirac equations.
+                            for (std::size_t k = 0; k + 1 < momenta.size(); ++k)
+                                sequences.push_back({momenta[k]});
+                        }
+                        if (length == 2) {
+                            // Moving either endpoint momentum through the word produces
+                            // shorter words and dot products already in the basis.
+                            // Reversing the two interior momenta likewise gives their
+                            // anticommutator plus the original ordering.
+                            for (std::size_t k = 0; k < momenta.size(); ++k)
+                                for (std::size_t m = k + 1; m < momenta.size(); ++m)
+                                    sequences.push_back({momenta[k], momenta[m]});
+                        }
+                        for (const auto& sequence : sequences)
+                            for (bool angle : {false, true}) {
+                                bool right_angle = (length % 2) ? !angle : angle;
+                                if ((a.masses()[i] == zero && angle != (w[i] > 0)) ||
+                                    (a.masses()[j] == zero && right_angle != (w[j] > 0)))
+                                    continue;
+                                auto spin = [&](std::size_t leg, bool ang) {
+                                    return a.call(
+                                        "Spinor",
+                                        {a.atom(a.masses()[leg] == zero ? "\"Helicity\"" : "\"Spin\""),
+                                         a.atom(ang ? "\"Angle\"" : "\"Square\""), a.integer(leg + 1)});
+                                };
+                                std::vector<Id> word{spin(i, angle)};
+                                for (int k : sequence)
+                                    word.push_back(a.call("Mom", {a.integer(k + 1)}));
+                                word.push_back(spin(j, right_angle));
+                                words.push_back(a.call("SpinorChain", word));
+                                generate_words(left_insertions - length);
+                                words.pop_back();
+                            }
+                    }
+                    ++left[j];
+                }
+            ++left[i];
+        };
+        generate_words(insertions);
+        return shapes;
+    }
+
   public:
     explicit catalog_builder(Algebra& arena) : a(arena), zero(a.integer(0)), one(a.integer(1)) {}
+    std::vector<Id> numerator_basis(Id source, const std::vector<Id>& poles,
+                                    const std::vector<Id>& model_masses, unsigned insertions) {
+        // Four legs have two independent scalar invariants. Matching the
+        // little-group degrees fixes the number of spinor endpoints; mass
+        // dimension then fixes the remaining powers of masses and invariants.
+        if (poles.size() < 2 || poles.size() > 3 || a.masses().size() != 4)
+            return {};
+        auto w = signature(source);
+        int endpoints = 0;
+        for (int n : w)
+            endpoints += std::abs(n);
+        if (endpoints % 2 || endpoints == 0 || endpoints > 8)
+            return {};
+        std::set<Id> external;
+        for (auto m : a.masses())
+            if (m != zero)
+                external.insert(m);
+        masses.insert(external.begin(), external.end());
+        for (auto m : model_masses)
+            if (m != zero)
+                masses.insert(m);
+        std::set<Id> seen;
+        mass_labels(source, seen);
+        std::vector<Id> raw_coeffs;
+        for (auto c : coefficients(source)) {
+            raw_coeffs.push_back(c);
+            // Keep dimensionless interactions when identical massive external
+            // wavefunctions supply compensating powers of an external mass.
+            std::function<Id(Id)> strip_external = [&](Id x) {
+                if (external.count(x))
+                    return one;
+                const auto& n = a.node(x);
+                if (n.head != "Power" && n.head != "Times")
+                    return x;
+                std::vector<Id> children;
+                for (auto arg : n.args)
+                    children.push_back(strip_external(arg));
+                return a.call(n.head, children);
+            };
+            raw_coeffs.push_back(strip_external(c));
+        }
+        auto shapes = numerator_shapes(w, insertions);
+        std::set<Id> directions;
+        // Pairs of simple propagators span the four-point trees in this basis.
+        // The dimension of the common numerator is four.
+        std::map<int, std::set<Id>> powers{{0, {one}}};
+        auto monomials = [&](int degree) -> const std::set<Id>& {
+            for (int d = 1; d <= degree; ++d)
+                if (!powers.count(d)) {
+                    auto& products = powers[d];
+                    for (auto x : powers[d - 1])
+                        for (auto m : external)
+                            products.insert(a.mul({x, m}));
+                    if (d >= 2)
+                        for (auto x : powers[d - 2])
+                            for (std::size_t j = 0; j < 2; ++j)
+                                products.insert(a.mul({x, poles[j]}));
+                }
+            return powers.at(degree);
+        };
+        for (Id prefactor : raw_coeffs) {
+            int missing = 4 - endpoints / 2 - int(insertions) - dimension(prefactor);
+            if (missing < 0 || missing > 5)
+                continue;
+            for (auto extra : monomials(missing))
+                for (auto shape : shapes)
+                    for (std::size_t i = 0; i < poles.size(); ++i)
+                        for (std::size_t j = i + 1; j < poles.size(); ++j) {
+                            directions.insert(
+                                a.mul({prefactor, shape, extra, a.pow(poles[i], -1), a.pow(poles[j], -1)}));
+                            if (directions.size() > 3000)
+                                return {};
+                        }
+        }
+        std::vector<Id> result(directions.begin(), directions.end());
+        std::stable_sort(result.begin(), result.end(), [&](Id x, Id y) { return a.cost(x) < a.cost(y); });
+        return result;
+    }
     contact_catalog generate(Id seed) {
         contact_catalog result;
         try {
@@ -287,4 +439,12 @@ bool high_energy_local(const Algebra& a, Id id) {
     return local(a, id, cache);
 }
 contact_catalog high_energy_contact_catalog(Algebra& a, Id seed) { return catalog_builder(a).generate(seed); }
+std::vector<Id> four_point_numerators(Algebra& a, Id source, const std::vector<Id>& poles,
+                                      const std::vector<Id>& model_masses, unsigned insertions) {
+    try {
+        return catalog_builder(a).numerator_basis(source, poles, model_masses, insertions);
+    } catch (const unsupported_catalog&) {
+        return {};
+    }
+}
 } // namespace hepcat

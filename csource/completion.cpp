@@ -1,7 +1,9 @@
 #include "amplitude.hpp"
 #include "line_current.hpp"
+#include "four_point_numerators.hpp"
 #include "fermion_currents.hpp"
 #include "native_fit.hpp"
+#include "modular_fit.hpp"
 #include "continuations.hpp"
 #include "residue.hpp"
 #include "validation_inventory.hpp"
@@ -377,6 +379,55 @@ struct completion {
         return std::all_of(rows.begin(), rows.end(), [](const auto& r) { return r.values[0] == r.values[1]; });
     }
 
+    std::optional<Id> fit_numerator() {
+        if (basis.empty())
+            return {};
+        fit_detail::modular_system system(basis.size());
+        // Four consecutive samples visit both chiral branches on both cuts.
+        for (std::size_t batch = 0; batch <= basis.size() / 4 + 4; ++batch) {
+            auto rows = samples(seed, basis, 4, false);
+            auto before = system.rank();
+            for (const auto& row : rows) {
+                try {
+                    if (!system.add(row.values, 2, row.values[0] - row.values[1]))
+                        return {};
+                } catch (const residue_singular&) {
+                    continue;
+                }
+            }
+            if (auto coefficients = system.solution()) {
+                std::vector<Id> terms{seed};
+                for (std::size_t i = 0; i < basis.size(); ++i)
+                    if (coefficients->at(i) != 0)
+                        terms.push_back(a.mul({a.exact(coefficients->at(i)), basis[i]}));
+                Id answer = a.add(std::move(terms));
+                if (verified(answer)) {
+                    report.route = "LittleGroupNumerator";
+                    report.candidates = basis.size();
+                    report.rank = system.rank();
+                    return answer;
+                }
+            }
+            if (system.rank() == before) {
+                // The exact rational coefficients need not fit the reconstruction
+                // range of a single prime. Refit the active columns over Q before
+                // rejecting a consistent modular fit. Their support is typically
+                // much smaller than the catalog of possible numerator monomials.
+                auto entries = system.residues();
+                std::vector<Id> supported;
+                for (std::size_t i = 0; i < entries.size(); ++i)
+                    if (entries[i]) supported.push_back(basis[i]);
+                if (supported.empty()) return {};
+                auto catalog = std::move(basis);
+                basis = std::move(supported);
+                auto result = fit("LittleGroupNumerator");
+                basis = std::move(catalog);
+                return result;
+            }
+        }
+        return {};
+    }
+
     std::optional<Id> fit(const std::string& route) {
         if (basis.empty()) return {};
         auto training = samples(seed, basis, 4, false);
@@ -418,6 +469,111 @@ struct completion {
         }
     }
 };
+
+// For a single radiated massless vector, the orbital current contains a
+// two-momentum sandwich with the same massless spinor at both ends. Its spin
+// term contains bare brackets. Try those directions sharing a hard bracket
+// first, so a spectator spinor factor can stay outside the entire numerator.
+std::vector<Id> radiation_factors(const Algebra& a, Id direction, int light_leg) {
+    std::vector<Id> brackets;
+    const auto& n = a.node(direction);
+    auto factors = n.head == "Times" ? n.args : std::vector<Id>{direction};
+    for (Id factor : factors) {
+        const auto& power = a.node(factor);
+        if (power.head == "Power" && power.args.size() == 2 && a.leg(power.args[1]) > 0)
+            factor = power.args[0];
+        const auto& word = a.node(factor);
+        if (word.head != "SpinorChain")
+            continue;
+        const auto& first = a.node(word.args.front());
+        const auto& last = a.node(word.args.back());
+        if (first.args.size() != 3 || last.args.size() != 3)
+            return {};
+        const int l = a.leg(first.args[2]), r = a.leg(last.args[2]);
+        if (word.args.size() == 2) {
+            if (l != light_leg && r != light_leg)
+                brackets.push_back(factor);
+        } else if (word.args.size() != 4 || l != light_leg || r != light_leg)
+            return {};
+    }
+    return brackets;
+}
+
+std::optional<Id> physical_four_point_fit(completion& work, const model& model,
+                                          const std::vector<Id>& diagrams,
+                                          const std::vector<sewn_source>& products) {
+    auto& a = work.a;
+    std::vector<Id> poles, model_masses;
+    std::set<Cut> seen;
+    for (const auto& p : products) {
+        auto cut = key(a, p.channel.legs, a.parse(p.channel.mass));
+        if (!seen.insert(cut).second)
+            continue;
+        std::vector<Id> labels;
+        for (int leg : cut.first)
+            labels.push_back(a.integer(leg));
+        poles.push_back(a.call("PropDen", {a.call("Mom", {a.call("Multiparticle", labels)}), cut.second}));
+    }
+    if (poles.size() < 2 || poles.size() > 3)
+        return {};
+    for (const auto& particle : model.particles())
+        model_masses.push_back(a.parse(particle.mass));
+    const auto original = work.seed;
+    work.seed = work.trees.split_poles(original).first;
+    std::array<std::vector<Id>, 3> columns;
+    for (unsigned n = 0; n < columns.size(); ++n) {
+        std::set<Id> included;
+        for (Id source : diagrams)
+            for (Id d : four_point_numerators(a, source, poles, model_masses, n))
+                if (included.insert(d).second)
+                    columns[n].push_back(d);
+    }
+    if (std::count(a.masses().begin(), a.masses().end(), work.zero) == 1) {
+        int light =
+            1 + std::distance(a.masses().begin(), std::find(a.masses().begin(), a.masses().end(), work.zero));
+        std::map<Id, std::vector<Id>> by_factor;
+        for (auto n : {0, 2})
+            for (Id d : columns[n])
+                for (Id factor : radiation_factors(a, d, light))
+                    by_factor[factor].push_back(d);
+        std::optional<Id> best;
+        std::size_t score = 0, best_rank = 0, best_count = 0;
+        for (const auto& [factor, group] : by_factor) {
+            work.basis.clear();
+            work.known.clear();
+            for (Id d : group)
+                work.direction(d);
+            if (auto x = work.fit_numerator()) {
+                auto complexity = expression_complexity(a, *x);
+                if (!best || complexity < score || (complexity == score && a.cost(*x) < a.cost(*best))) {
+                    best = x;
+                    score = complexity;
+                    best_rank = work.report.rank;
+                    best_count = work.report.candidates;
+                }
+            }
+        }
+        if (best) {
+            work.report.rank = best_rank;
+            work.report.candidates = best_count;
+            return best;
+        }
+    }
+    work.basis.clear();
+    work.known.clear();
+    for (const auto& columns_with_same_degree : columns) {
+        auto before = work.basis.size();
+        for (Id d : columns_with_same_degree)
+            work.direction(d);
+        if (work.basis.size() != before)
+            if (auto x = work.fit_numerator())
+                return x;
+    }
+    work.seed = original;
+    work.known.clear();
+    work.basis.clear();
+    return {};
+}
 } // namespace
 
 validation_detail::cut_inventory validation_detail::validation_inventory(Algebra& a, const amplitude& process,
@@ -506,6 +662,7 @@ const amp_expression& amplitude::complete_factorization(const factorization_opti
         *this = std::move(prepared);
         return *completed_;
     }
+    if (complete_color_rows(&options, nullptr, nullptr)) return *completed_;
     Algebra a;
     std::vector<Id> masses;
     for (const auto& mass : masses_)
@@ -604,10 +761,28 @@ const amp_expression& amplitude::complete_factorization(const factorization_opti
     }
     if (products_.empty() && trees.has_pole(work.seed))
         throw residue_unsupported("a pole-bearing amplitude requires physical factorization channels");
-    if (work.verified(work.seed)) {
-        work.report.route = work.cuts.empty() ? "Contact" : "Unchanged";
-        return publish(work.seed);
+    std::exception_ptr singular_seed;
+    try {
+        if (work.verified(work.seed)) {
+            work.report.route = work.cuts.empty() ? "Contact" : "Unchanged";
+            return publish(work.seed);
+        }
+    } catch (const residue_unsupported&) {
+        if (masses_.size() != 4 || !vertices_model_)
+            throw;
+        singular_seed = std::current_exception();
     }
+    // At four points a reference chosen on one diagram can create a double
+    // pole on another diagram's cut. Fit a simple-pole numerator directly
+    // against the *own-cut* lower-point products in that situation.
+    if (vertices_model_ && masses_.size() == 4 && references_ != generation_references::cyclic &&
+        references_ != generation_references::keep &&
+        std::find(a.masses().begin(), a.masses().end(), zero) != a.masses().end()) {
+        if (auto answer = physical_four_point_fit(work, *vertices_model_, diagrams, products))
+            return publish(*answer);
+    }
+    if (singular_seed)
+        std::rethrow_exception(singular_seed);
     auto attempt = [&](const char* name, std::size_t before) -> std::optional<Id> {
         if (work.basis.size() == before) return {};
         return work.fit(name);

@@ -130,4 +130,54 @@ model::parameter_points model::high_energy_parameter_points(const std::vector<st
     }
     return points;
 }
+// Apply a model identity only if a sum of declared couplings reduces to an
+// exact constant. Masses, input values and other useful abbreviations stay symbolic.
+Id contract_model_couplings(Algebra &a, Id root, const model &m) {
+    if (m.functions().empty())
+        return root;
+    std::map<Id, Id> definitions, memo;
+    for (const auto &f : m.functions())
+        definitions.emplace(a.parse(m.algebra().format(f.symbol)), a.parse(m.algebra().format(f.definition)));
+    auto visit = [&](Id id, const auto &self) -> Id {
+        if (auto it = memo.find(id); it != memo.end())
+            return it->second;
+        const auto &n = a.node(id);
+        if (n.head != "Plus" && n.head != "Times" && n.head != "Power")
+            return id;
+        std::vector<Id> children;
+        for (Id x : n.args)
+            children.push_back(self(x, self));
+        Id out = children == n.args ? id : a.call(n.head, children);
+        if (n.head == "Plus") {
+            std::vector<Id> expanded;
+            for (Id term : children) {
+                const auto &product = a.node(term);
+                Id scalar = a.integer(1), symbol = term;
+                if (product.head == "Times" && product.args.size() == 2) {
+                    scalar = product.args[0];
+                    symbol = product.args[1];
+                    if (definitions.count(scalar))
+                        std::swap(scalar, symbol);
+                }
+                mpq_class q;
+                auto def = definitions.find(symbol);
+                if (def == definitions.end() || !a.number(scalar, q)) {
+                    expanded.clear();
+                    break;
+                }
+                const auto &rhs = a.node(def->second);
+                for (Id x : rhs.head == "Plus" ? rhs.args : std::vector<Id>{def->second})
+                    expanded.push_back(a.mul({scalar, x}));
+            }
+            if (!expanded.empty()) {
+                Id value = a.simplify(a.add(expanded));
+                mpq_class q;
+                if (a.number(value, q))
+                    out = value;
+            }
+        }
+        return memo.emplace(id, out).first->second;
+    };
+    return visit(root, visit);
+}
 } // namespace hepcat

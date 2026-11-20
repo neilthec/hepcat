@@ -9,11 +9,11 @@ find_library(GMP_LIBRARY gmp REQUIRED)
 
 add_library(hepcat_reduce
     model.cpp model_expression.cpp model_parameters.cpp generation_plan.cpp generation_sew.cpp generation_spin.cpp generation_null.cpp
-    generation_current.cpp generation_feynman.cpp generation.cpp amplitude.cpp construct.cpp line_current.cpp mixed_physical_current.cpp fermion_currents.cpp spinas_export.cpp external_export.cpp completion.cpp continuations.cpp null_shift.cpp residue.cpp
+    color_basis.cpp color_completion.cpp generation_current.cpp generation_chiral.cpp generation_feynman.cpp generation.cpp amplitude.cpp construct.cpp line_current.cpp mixed_physical_current.cpp fermion_currents.cpp spinas_export.cpp external_export.cpp completion.cpp continuations.cpp null_shift.cpp residue.cpp
     high_energy.cpp high_energy_chart.cpp high_energy_contacts.cpp
     validation.cpp validation_checks.cpp validation_numeric.cpp validation_feynman.cpp
     validation_precision_chart.cpp validation_precision_parameters.cpp
-    collect.cpp algebra.cpp amp_expression.cpp kinematics.cpp spinor.cpp vector_basis.cpp)
+    collect.cpp algebra.cpp amp_expression.cpp kinematics.cpp spinor.cpp vector_basis.cpp vector_compact.cpp)
 target_compile_features(hepcat_reduce PUBLIC cxx_std_17)
 target_include_directories(hepcat_reduce PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(hepcat_reduce SYSTEM PRIVATE ${GMP_INCLUDE_DIR})
@@ -29,6 +29,9 @@ target_link_libraries(hepcat-reduce-amplitude PRIVATE hepcat_reduce)
 add_executable(hepcat-qed ../tests/QED-6-point-construction.cpp)
 target_include_directories(hepcat-qed SYSTEM PRIVATE ${GMP_INCLUDE_DIR})
 target_link_libraries(hepcat-qed PRIVATE hepcat_reduce)
+
+add_executable(hepcat-sm-four-point ../tests/SM-4-point-construction.cpp)
+target_link_libraries(hepcat-sm-four-point PRIVATE hepcat_reduce)
 
 include(CTest)
 if(BUILD_TESTING)
@@ -62,6 +65,13 @@ if(BUILD_TESTING)
     target_link_libraries(test_construct PRIVATE hepcat_reduce)
     add_test(NAME construct COMMAND test_construct "${HEPCAT_TEST_MODELS}")
     add_test(NAME qed_inventory COMMAND hepcat-qed --list)
+    add_test(NAME sm_four_point_inventory COMMAND hepcat-sm-four-point --root "${HEPCAT_MODEL_ROOT}" --list)
+    foreach(family IN ITEMS sm11_eEMm sm61_UdZWp)
+        add_test(NAME sm_four_point_${family} COMMAND hepcat-sm-four-point --root "${HEPCAT_MODEL_ROOT}"
+                 --output "${CMAKE_CURRENT_BINARY_DIR}/Testing/sm-four-point" --family ${family}
+                 --construct-only --workers 2 --seed 41711)
+        set_tests_properties(sm_four_point_${family} PROPERTIES LABELS integration)
+    endforeach()
     foreach(suite IN ITEMS spinas_export external_export)
         add_executable(test_${suite} ${suite}_tests.cpp)
         target_include_directories(test_${suite} SYSTEM PRIVATE ${GMP_INCLUDE_DIR})
@@ -79,6 +89,9 @@ if(BUILD_TESTING)
                  "${HEPCAT_MODEL_ROOT}/tests/reference-models/calchep" ${rules} ${seed} ${ARGN})
         set_tests_properties(${name} PROPERTIES LABELS integration)
     endfunction()
+    add_validation_process(validation_scalar_radiation 1 1 1 41711 e E A.+ h)
+    add_validation_process(validation_mixed_gluon_quarks 1 1 1 41711 u U G.+ G.-)
+    add_validation_process(validation_vector_radiation 1 1 1 41711 A.+ h W+ W-)
     add_validation_process(validation_mixed_photons 3 4 2 41711 e E A.+ A.+ A.-)
     add_validation_process(validation_mixed_photons_precision 3 4 2 3051909980850375 e E A.+ A.+ A.-)
     add_validation_process(validation_wwww 1 2 1 41711 W+ W- W+ W-)

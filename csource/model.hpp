@@ -50,4 +50,5 @@ class model {
     struct data;
     std::shared_ptr<const data> data_;
 };
+std::uint32_t contract_model_couplings(Algebra&, std::uint32_t root, const model&);
 } // namespace hepcat

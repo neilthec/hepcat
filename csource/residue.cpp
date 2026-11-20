@@ -350,6 +350,16 @@ class Evaluator {
     PoleValue evaluate(Id id) {
         const auto& n = a.node(id);
         Q q;
+        if (n.head == "NullChannelBranch" && n.args.size() == 3) {
+            auto side = legs(n.args[0]);
+            if (c.internalMass || side.size() != 2 || !c.isCut(side))
+                throw residue_unsupported("three-point helicity branch outside its own massless cut");
+            auto i = side[0]-1, j = side[1]-1;
+            bool ang = a.node(n.args[1]).head == "\"Angle\"";
+            const auto& frames = ang ? c.angles : c.squares;
+            if (!bracket(ang, frames[i], frames[j])) return {0, Scalar{}};
+            return get(n.args[2]);
+        }
         if (n.head == "Plus") {
             PoleValue best;
             bool any = false;
@@ -440,7 +450,9 @@ class Evaluator {
         if (auto it = weights.find(id); it != weights.end()) return it->second;
         const auto& n = a.node(id);
         long weight = 0;
-        if (isX(n.head))
+        if (n.head == "NullChannelBranch" && n.args.size() == 3)
+            weight = internalWeight(n.args[2]);
+        else if (isX(n.head))
             weight = -2;
         else if (isXTilde(n.head))
             weight = 2;

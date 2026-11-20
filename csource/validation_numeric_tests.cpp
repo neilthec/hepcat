@@ -125,6 +125,15 @@ void check_evaluator() {
             ++active;
     }
     require(active > 20, "color sample diversity");
+    // Two contributions with internal colors 3 and 8 cancel for this external
+    // assignment. Rounding their separate matrix entries can leave a false pole test.
+    expression_evaluator mixed(a,a.parse("Times[ColorGenerator[ColorIndex[2],ColorIndex[1],u],"
+                                         "ColorStructure[u,ColorIndex[3],ColorIndex[4]]]"),{},{3,-3,8,8});
+    p.change_colors(11612486440731981006ULL);
+    color_chart.color_seed=p.color_seed;
+    require(mixed(p)==complex{} && mixed.precise(p,color_chart).magnitude()==0,
+            "exact cancellation of adjoint exchange at fixed external colors");
+
     bool caught = false;
     try {
         f("UnknownVertex[1]");

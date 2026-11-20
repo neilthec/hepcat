@@ -1,3 +1,4 @@
+#include "validation_inventory.hpp"
 #include "validation_checks.hpp"
 #include "validation_color.hpp"
 #include "chart_scalar.hpp"

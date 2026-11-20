@@ -59,9 +59,9 @@ discrepancy difference(const wide::number& lhs, const wide::number& rhs) {
             scale == 0 ? 0 : wide::narrow_real(wide::scalar(error / scale, wide::bits))};
 }
 
-template <class Replay>
+template <class Replay, class Roundoff>
 void compare(numerical_check& row, complex lhs, complex rhs, std::uint64_t seed,
-             const validation_options& options, Replay replay) {
+             const validation_options& options, Replay replay, Roundoff roundoff) {
     const auto raw = difference(lhs, rhs);
     row.max_absolute_error = std::max(row.max_absolute_error, raw.absolute);
     row.max_relative_error = std::max(row.max_relative_error, raw.relative);
@@ -73,7 +73,7 @@ void compare(numerical_check& row, complex lhs, complex rhs, std::uint64_t seed,
         const auto precise = difference(a, b);
         row.max_replay_absolute_error = std::max(row.max_replay_absolute_error, precise.absolute);
         row.max_replay_relative_error = std::max(row.max_replay_relative_error, precise.relative);
-        if (precise.exceeds(options)) {
+        if (precise.exceeds(options) && precise.absolute > roundoff()) {
             ++row.failures;
             if (!row.first_failure_seed)
                 row.first_failure_seed = seed;
@@ -237,6 +237,7 @@ validation_report amplitude::validate_impl(amp_expression candidate, const amp_e
         if (contains_reference(tree, root))
             probes.push_back({comparison::reference, "Reference", {}});
         Algebra feynman_tree;
+        std::vector<expression_evaluator> zero_comparison_terms;
         if (feynman_model_) {
             try {
                 if (!feynman_generated_)
@@ -260,6 +261,9 @@ validation_report amplitude::validate_impl(amp_expression candidate, const amp_e
                     auto raw = row.expression.import_into(feynman_tree);
                     terms.push_back(feynman_to_spinors(feynman_tree, raw));
                 }
+                if (root == tree.integer(0) && terms.size() > 1)
+                    for (Id term : terms)
+                        zero_comparison_terms.emplace_back(feynman_tree, term, fvalues, colors, &exact_fvalues);
                 auto sum = feynman_tree.add(std::move(terms));
                 probes.push_back({comparison::feynman, "Feynman",
                                   expression_evaluator(feynman_tree, sum, fvalues, colors, &exact_fvalues)});
@@ -314,6 +318,17 @@ validation_report amplitude::validate_impl(amp_expression candidate, const amp_e
                                 }
                                 return std::make_pair(std::move(lhs),
                                                       evaluator.precise(target_point, *wide_point));
+                            }, [&]() -> real {
+                                // Where an exact zero is compared to canceling independent diagrams,
+                                // measure 160-bit rounding against the size of the summands. A
+                                // physically small but noncanceling amplitude retains relative sensitivity.
+                                if (p.type != comparison::feynman || zero_comparison_terms.empty()) return 0;
+                                real scale = 0;
+                                for (const auto& term : zero_comparison_terms)
+                                    scale += wide::narrow_real(term.precise(target_point, *wide_point).magnitude());
+                                if (!std::isfinite(scale))
+                                    throw std::runtime_error("Nonfinite diagram scale in precision replay");
+                                return std::ldexp(scale, -static_cast<int>(wide::bits) + 24);
                             });
                         } catch (const std::exception& e) {
                             unresolved(local[i], point_seed, e.what());

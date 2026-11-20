@@ -1,4 +1,4 @@
-#include "validation_color_polynomial.hpp"
+#include "validation_color.hpp"
 #include "validation_numeric.hpp"
 #include "validation_precision.hpp"
 #include "validation_precision_parameters.hpp"
@@ -604,181 +604,82 @@ struct replay_step {
     long exponent = 0;
     wide_operation evaluate;
 };
-template <class Number> Number diagonal_generator() {
-    if constexpr (std::is_same_v<Number, complex>)
-        return 1.L / (2 * std::sqrt(3.L));
-    else {
-        precision::scalar three(3, precision::bits);
-        return Number(precision::scalar(1 / (2 * sqrt(three)), precision::bits));
-    }
-}
-template <class Number> Number twice_imaginary_part(const Number &z) {
-    if constexpr (std::is_same_v<Number, complex>)
-        return 2.L * z.imag();
-    else
-        return Number(precision::scalar(2 * z.y, precision::bits));
-}
-bool zero(const complex &x) {
-    return x == complex{};
-}
-bool zero(const wide_complex &x) {
-    return x.x == 0 && x.y == 0;
-}
-template <class Number> struct color_constants {
-    Number generators[8][3][3]{};
-    Number structure[8][8][8]{};
-    color_constants() {
-        int even[] = {0, 3, 5}, odd[] = {1, 4, 6}, left[] = {0, 0, 1}, right[] = {1, 2, 2};
-        Number half(complex{.5L, 0}), half_i(complex{0, .5L});
-        for (int k = 0; k < 3; ++k) {
-            auto i = left[k], j = right[k];
-            generators[even[k]][i][j] = generators[even[k]][j][i] = half;
-            generators[odd[k]][i][j] = -half_i;
-            generators[odd[k]][j][i] = half_i;
-        }
-        generators[2][0][0] = half;
-        generators[2][1][1] = -half;
-        auto diagonal = diagonal_generator<Number>();
-        generators[7][0][0] = generators[7][1][1] = diagonal;
-        generators[7][2][2] = -(diagonal + diagonal);
-        for (int a = 0; a < 8; ++a)
-            for (int b = 0; b < 8; ++b)
-                for (int c = 0; c < 8; ++c)
-                    for (int i = 0; i < 3; ++i)
-                        for (int j = 0; j < 3; ++j)
-                            for (int k = 0; k < 3; ++k) {
-                                if (zero(generators[c][k][i]))
-                                    continue;
-                                auto comm = generators[a][i][j] * generators[b][j][k] -
-                                            generators[b][i][j] * generators[a][j][k];
-                                structure[a][b][c] += twice_imaginary_part(comm * generators[c][k][i]);
-                            }
-    }
-};
-template <class Number> const color_constants<Number> &su3() {
-    static const color_constants<Number> tables;
-    return tables;
-}
-struct tensor {
-    enum type { delta, generator, structure, trace } kind;
-    std::vector<int> indices;
-};
-struct color_term {
-    std::vector<tensor> tensors;
-    std::vector<int> dimensions, external; // external leg or -1 for summed index
-    color_term(const Algebra &a, const std::vector<Id> &factors, const std::vector<int> &reps) {
-        std::map<Id, int> slots;
-        std::vector<int> incidence;
-        auto constrain = [&](int slot, int d) {
-            if (d != 3 && d != 8)
-                throw std::invalid_argument("unsupported SU(3) representation");
-            if (dimensions[slot] && dimensions[slot] != d)
-                throw std::invalid_argument("incompatible color indices");
-            dimensions[slot] = d;
-        };
-        for (Id id : factors) {
-            const auto &n = a.node(id);
-            auto h = head(n);
-            auto type = h == "ColorDelta"       ? tensor::delta
-                        : h == "ColorGenerator" ? tensor::generator
-                        : h == "ColorStructure" ? tensor::structure
-                                                : tensor::trace;
-            if ((type == tensor::delta && n.args.size() != 2) ||
-                ((type == tensor::generator || type == tensor::structure) && n.args.size() != 3))
-                throw std::invalid_argument("incorrect color tensor rank");
-            auto &t = tensors.emplace_back(tensor{type, {}});
-            for (Id x : n.args) {
-                auto [it, inserted] = slots.emplace(x, slots.size());
-                int slot = it->second;
-                if (inserted) {
-                    const auto &index = a.node(x);
-                    int leg_id = -1;
-                    dimensions.push_back(0);
-                    incidence.push_back(0);
-                    if (head(index) == "ColorIndex" && index.args.size() == 1) {
-                        leg_id = leg(a, index.args[0]);
-                        if (static_cast<size_t>(leg_id) >= reps.size())
-                            throw std::invalid_argument("missing external color representation");
-                        constrain(slot, std::abs(reps[leg_id]));
-                    } else if (head(index) == "colorInternalIndex" && index.args.size() == 2)
-                        constrain(slot, a.leg(index.args[1]));
-                    else if (index.compound)
-                        throw std::invalid_argument("invalid color index " + a.format(x));
-                    external.push_back(leg_id);
-                }
-                ++incidence[slot];
-                if (type != tensor::delta)
-                    constrain(slot, type == tensor::generator && t.indices.size() < 2 ? 3 : 8);
-                t.indices.push_back(slot);
+// Color contractions are kinematics independent. In particular two nonzero
+// adjoint components can cancel exactly for a fixed external color choice.
+class color_term {
+    validation_detail::color_network network;
+    std::vector<int> dimensions, degrees, legs;
+    std::vector<unsigned> lookup;
+    std::vector<std::pair<complex, wide_complex>> weights;
+
+    wide_complex evaluate(const std::vector<int> &colors) const {
+        auto v = network(colors);
+        if (v.real() == 0 && v.imag() == 0)
+            return {};
+        mpz_class denominator = 1;
+        for (auto i : legs)
+            if (dimensions[i] == 8) {
+                auto metric = validation_detail::color_basis::metric(colors[i]);
+                for (int k = 0; k < degrees[i]; ++k)
+                    denominator *= metric;
             }
-        }
-        bool changed = true;
-        while (changed) {
-            changed = false;
-            for (const auto &t : tensors)
-                if (t.kind == tensor::delta) {
-                    int i = t.indices[0], j = t.indices[1];
-                    if (dimensions[i] && dimensions[j] != dimensions[i]) {
-                        constrain(j, dimensions[i]);
-                        changed = true;
-                    }
-                    if (dimensions[j] && !dimensions[i]) {
-                        constrain(i, dimensions[j]);
-                        changed = true;
-                    }
-                }
-        }
-        for (size_t i = 0; i < external.size(); ++i)
-            if (!dimensions[i] || (external[i] < 0 && incidence[i] != 2))
-                throw std::invalid_argument("ambiguous or unpaired color index");
+        precision::scalar scale(sqrt(precision::scalar(denominator, precision::bits)), precision::bits);
+        return {precision::scalar(precision::scalar(v.real(), precision::bits) / scale, precision::bits),
+                precision::scalar(precision::scalar(v.imag(), precision::bits) / scale, precision::bits)};
     }
-    template <class Number> Number sum(size_t next, std::vector<int> &values) const {
-        for (size_t i = next; i < external.size(); ++i)
-            if (external[i] < 0) {
-                Number v{};
-                for (int j = 0; j < dimensions[i]; ++j) {
-                    values[i] = j;
-                    v += sum<Number>(i + 1, values);
-                }
-                return v;
+
+  public:
+    color_term(const Algebra &a, const std::vector<Id> &factors, const std::vector<int> &reps)
+        : network(a, reps, factors), dimensions(reps), degrees(network.external_degrees(reps.size())) {
+        // Keep precomputation bounded at higher multiplicity. A large tensor
+        // contracts exactly at the individual color assignments sampled instead.
+        std::size_t count = 1;
+        constexpr size_t limit = 8192;
+        for (size_t i = 0; i < reps.size(); ++i)
+            if (degrees[i]) {
+                legs.push_back(i);
+                dimensions[i] = std::abs(reps[i]);
+                if (count <= limit)
+                    count *= dimensions[i];
             }
-        Number v(complex{1, 0});
-        for (const auto &t : tensors) {
-            auto arg = [&](size_t j) { return values[t.indices[j]]; };
-            if (t.kind == tensor::delta) {
-                if (arg(0) != arg(1))
-                    return Number{};
-            } else if (t.kind == tensor::generator)
-                v *= su3<Number>().generators[arg(2)][arg(0)][arg(1)];
-            else if (t.kind == tensor::structure)
-                v *= su3<Number>().structure[arg(0)][arg(1)][arg(2)];
-            else {
-                std::array<std::array<Number, 3>, 3> m{};
-                for (int j = 0; j < 3; ++j)
-                    m[j][j] = Number(complex{1, 0});
-                for (auto index : t.indices) {
-                    const auto &g = su3<Number>().generators[values[index]];
-                    decltype(m) product{};
-                    for (int i = 0; i < 3; ++i)
-                        for (int j = 0; j < 3; ++j)
-                            for (int k = 0; k < 3; ++k)
-                                product[i][j] += m[i][k] * g[k][j];
-                    m = product;
-                }
-                v *= m[0][0] + m[1][1] + m[2][2];
+        if (count > limit)
+            return;
+        std::map<std::pair<precision::scalar, precision::scalar>, unsigned> distinct;
+        std::vector<int> colors(reps.size());
+        lookup.reserve(count);
+        for (size_t index = 0; index < count; ++index) {
+            size_t code = index;
+            for (auto i : legs) {
+                colors[i] = code % dimensions[i];
+                code /= dimensions[i];
             }
-            if (zero(v))
-                return Number{};
+            auto value = evaluate(colors);
+            auto [it, added] = distinct.emplace(std::make_pair(value.x, value.y), weights.size());
+            if (added)
+                weights.emplace_back(value.narrow(), std::move(value));
+            lookup.push_back(it->second);
         }
-        return v;
     }
     template <class Chart> auto operator()(const Chart &p) const {
         using Number = typename std::decay_t<decltype(p.angles)>::value_type::value_type;
-        std::vector<int> values(external.size());
-        for (size_t i = 0; i < external.size(); ++i)
-            if (external[i] >= 0)
-                values[i] = mix(p.color_seed ^ mix(external[i] + 1)) % dimensions[i];
-        return sum<Number>(0, values);
+        if (lookup.empty()) {
+            std::vector<int> colors(dimensions.size());
+            for (auto i : legs)
+                colors[i] = mix(p.color_seed ^ mix(i + 1)) % dimensions[i];
+            auto value = evaluate(colors);
+            if constexpr (std::is_same_v<Number, complex>)
+                return value.narrow();
+            else
+                return value;
+        }
+        size_t index = 0;
+        for (auto it = legs.rbegin(); it != legs.rend(); ++it)
+            index = index * dimensions[*it] + mix(p.color_seed ^ mix(*it + 1)) % dimensions[*it];
+        const auto &pair = weights[lookup[index]];
+        if constexpr (std::is_same_v<Number, complex>)
+            return pair.first;
+        else
+            return pair.second;
     }
 };
 class compiler {
@@ -964,8 +865,9 @@ class compiler {
         std::vector<size_t> total;
         for (auto &[factors, coeffs] : grouped) {
             size_t coefficient = arith(std::move(coeffs), true);
-            color_term color(a, factors, reps);
-            auto tensor = typed([color = std::move(color)](const auto &p, const auto &) { return color(p); });
+            auto color = std::make_shared<color_term>(a, factors, reps);
+            auto tensor =
+                typed([color = std::move(color)](const auto &p, const auto &) { return (*color)(p); });
             total.push_back(arith({tensor, coefficient}, false));
         }
         return arith(std::move(total), true);

@@ -25,6 +25,8 @@ class sewing {
     const term& tree;
     bool channel, cyclic, physical;
     bool stored_reference = false;
+    std::optional<std::size_t> chiral_vertex;
+    unsigned chiral_kind = 0;
     Id zero, one, angle, square, spin, helicity, xi, upper, lower;
     std::vector<Id> mass;
     std::vector<int> light;
@@ -148,7 +150,7 @@ class sewing {
                 bool ang = is_x(n.head);
                 int sign = raw_label(v, port) == edge.aligned ? 1 : -1;
                 ids prefix;
-                if (cyclic && !light.empty()) {
+                if (!chiral_vertex && cyclic && !light.empty()) {
                     int probe = light.front();
                     prefix = {external_spinor(a.integer(probe), helicity, ang)};
                 } else
@@ -193,8 +195,10 @@ class sewing {
         const auto& row = mdl.vertices().at(tree.vertices[v].row);
         std::unordered_map<Id, Id> cache;
         stored_reference = false;
-        Id expr = a.mul({kinematic(v, row.factor, cache), kinematic(v, row.expression, cache),
-                         vertex_color(a, mdl, tree, v, process)});
+        Id kinematics = kinematic(v, row.expression, cache);
+        if (chiral_vertex && *chiral_vertex == v)
+            kinematics = a.call("NullChannelBranch", {group(light), chiral_kind == 1 ? angle : square, kinematics});
+        Id expr = a.mul({kinematic(v, row.factor, cache), kinematics, vertex_color(a, mdl, tree, v, process)});
         return cyclic && stored_reference ? replace_stored_references(expr) : expr;
     }
     Id leg_spinor(size_t v, size_t slot, bool ang, int& coefficient) {
@@ -471,37 +475,38 @@ class sewing {
                 out.push_back(i);
         return out;
     }
+    int chirality(std::size_t v) {
+        const auto& row = mdl.vertices()[tree.vertices[v].row];
+        if (row.legs.size() != 3) return 0;
+        for (const auto& leg : row.legs) if (mdl.particle(leg).mass != "0") return 0;
+        int kinds = 0;
+        std::set<Id> seen;
+        auto visit = [&](auto& self, Id id) -> void {
+            if (kinds == 3 || !seen.insert(id).second) return;
+            const auto& n = a.node(id);
+            if (n.head == "Spinor") {
+                if (n.args.size() != 3 || n.args[0] != helicity) kinds = 3;
+                else kinds |= n.args[1] == angle ? 1 : 2;
+            } else if (n.head == "Mom" || n.head == "MomProd" || is_x(n.head) || is_xt(n.head))
+                kinds = 3;
+            else for (Id child : n.args) self(self,child);
+        };
+        visit(visit,row.expression);
+        return kinds == 3 ? 0 : kinds;
+    }
     std::pair<int, int> branch() {
-        if (process.size() != 4 || light.size() != 4 || tree.vertices.size() != 2 || edges.size() != 1 ||
-            edges.front().massive)
+        if (process.size() != 4 || tree.vertices.size() != 2 || edges.size() != 1 || edges.front().massive)
             return {};
-        std::array<int, 2> kinds{};
-        for (size_t i = 0; i < 2; ++i) {
-            auto& row = mdl.vertices()[tree.vertices[i].row];
-            if (row.legs.size() != 3) return {};
-            std::set<Id> seen;
-            auto visit = [&](auto& self, Id id) -> void {
-                if (!seen.insert(id).second) return;
-                const auto& n = a.node(id);
-                if (n.head == "Spinor") {
-                    if (n.args.size() != 3 || n.args[0] != helicity) {
-                        kinds[i] = 3;
-                        return;
-                    }
-                    kinds[i] |= (n.args[1] == angle ? 1 : 2);
-                    return;
-                }
-                if (n.head == "Mom" || n.head == "MomProd" || is_x(n.head) || is_xt(n.head)) {
-                    kinds[i] = 3;
-                    return;
-                }
-                for (Id child : n.args)
-                    self(self, child);
-            };
-            visit(visit, row.expression);
-            if (kinds[i] != 1 && kinds[i] != 2) return {};
+        auto left = chirality(0), right = chirality(1);
+        if (light.size() == 4) return {left, right};
+        if (channel && light.size() == 2 && (left || right)) {
+            // On the massless three-particle side only the corresponding
+            // chiral branch contributes. The cubic vertex on the massive
+            // side has generic spinor references on both branches.
+            chiral_vertex = left ? 0 : 1;
+            chiral_kind = left ? left : right;
         }
-        return {kinds[0], kinds[1]};
+        return {};
     }
     Id run(const std::vector<size_t>& paired) {
         ids factors;
@@ -524,7 +529,7 @@ class sewing {
         for (const auto& e : edges) {
             if (e.massive && e.spin > 0)
                 out = sew_spin(a, out, e.aligned, e.mass, e.spin);
-            else if (!e.massive && e.spin > 0)
+            else if (!e.massive && e.spin > 0 && !chiral_vertex)
                 out = sew_null_spin(a, out, e.aligned, light, cyclic);
         }
         std::unordered_map<Id, Id> cache;
