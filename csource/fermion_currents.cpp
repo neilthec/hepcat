@@ -479,10 +479,18 @@ exchange_key swapped_key(exchange_key tree, int l, int r, size_t legs) {
   return tree;
 }
 
+struct ordered_tree_orbits {
+  std::vector<exchange_key> seeds;
+  std::map<exchange_key, size_t> orbit_of;
+  mpz_class group_order;
+};
+using ordered_source_map = std::map<exchange_key, std::pair<const generation::term *, Id>>;
+
 // Orbit closure needs only adjacent transpositions, even when the product
 // of the permutation groups is much larger than the set of distinct trees.
 std::optional<permutation_sum> tree_orbits(builder& b, const std::map<exchange_key,Id>& terms,
-                                            Id direct, bool physical) {
+                                            Id direct, bool physical,
+                                            ordered_tree_orbits *partition = nullptr) {
   if (terms.empty() || direct == b.integer(0)) return {};
   std::map<std::string,labels> signed_classes, photon_classes;
   for (size_t i=0;i<b.external.size();++i) {
@@ -509,10 +517,12 @@ std::optional<permutation_sum> tree_orbits(builder& b, const std::map<exchange_k
   std::set<exchange_key> visited;
   std::vector<size_t> orbit_sizes;
   std::vector<Id> representatives;
+  if (partition) partition->group_order = order;
   for (const auto& [base,initial] : terms) {
     if (!visited.insert(base).second) continue;
     std::vector<exchange_key> orbit{base};
     Id best = initial;
+    auto best_key = base;
     for (size_t k=0; k<orbit.size(); ++k)
       for (auto [l,r] : generators) {
         auto next = swapped_key(orbit[k],l,r,b.external.size());
@@ -520,11 +530,18 @@ std::optional<permutation_sum> tree_orbits(builder& b, const std::map<exchange_k
         auto found = terms.find(next);
         if (found == terms.end()) return {};
         orbit.push_back(std::move(next));
-        if (b.a.cost(found->second) < b.a.cost(best)) best = found->second;
+        if (b.a.cost(found->second) < b.a.cost(best)) {
+          best = found->second;
+          best_key = found->first;
+        }
       }
     mpq_class weight(mpz_class(orbit.size()),order);
     weight.canonicalize();
     representatives.push_back(b.prod({b.a.exact(weight),best}));
+    if (partition) {
+      for (const auto &key : orbit) partition->orbit_of.emplace(key, orbit_sizes.size());
+      partition->seeds.push_back(std::move(best_key));
+    }
     orbit_sizes.push_back(orbit.size());
   }
   if (b.starts.size()==3 && b.photons.size()==1 && signed_classes.size()==2 &&
@@ -549,6 +566,73 @@ std::optional<permutation_sum> tree_orbits(builder& b, const std::map<exchange_k
   auto primary = symmetric.empty() ? labels{} : symmetric.front();
   if (!symmetric.empty()) symmetric.erase(symmetric.begin());
   return permutation_sum{primary,b.a.add(representatives),orbit_sizes,symmetric,alternating};
+}
+
+// Reversing a nonterminal charged line changes its ordered fermion poles.
+// Count the images within the already certified external permutation orbits.
+// Comparing the counts with their sizes fixes the normalization even when
+// reversal of a whole branch is already present among the identical-leg swaps.
+std::optional<permutation_sum> project_ordered_trees(
+    builder &b, const ordered_source_map &sources, const ordered_tree_orbits &partition,
+    const permutation_sum &ordinary) {
+  if (sources.size() != partition.orbit_of.size() || partition.seeds.empty()) return {};
+  auto result = ordinary;
+  result.orbit_sizes.clear();
+  std::set<size_t> covered;
+  for (size_t i = 0; i < partition.seeds.size(); ++i) {
+    if (covered.count(i)) continue;
+    const auto &key = partition.seeds[i];
+    auto [tree, coefficient] = sources.at(key);
+    radiative_detail::tree_current current(b.a, b.m, b.external, *tree, {});
+    auto reversals = current.ordered_line_reversals();
+    if (reversals.size() > 10) return {};
+    auto count_images = [&](const std::vector<signed_exchange> &ops) {
+      std::map<size_t, size_t> counts;
+      std::vector<exchange_key> images{key};
+      for (const auto &op : ops) {
+        const auto [l, r] = op.swaps.front();
+        const size_t n = images.size();
+        for (size_t j = 0; j < n; ++j)
+          images.push_back(swapped_key(images[j], l, r, b.external.size()));
+      }
+      for (const auto &image : images) {
+        auto k = partition.orbit_of.find(image);
+        if (k == partition.orbit_of.end()) return decltype(counts){};
+        ++counts[k->second];
+      }
+      return counts;
+    };
+    auto counts = count_images(reversals);
+    if (counts.empty()) return {};
+    // Drop any (1 +/- P) which duplicates the same distribution of orders.
+    for (size_t j = reversals.size(); j-- > 0;) {
+      auto trial = reversals;
+      trial.erase(trial.begin() + j);
+      auto fewer = count_images(trial);
+      if (fewer.size() == counts.size() &&
+          std::all_of(fewer.begin(), fewer.end(), [&](const auto &entry) {
+            return counts.at(entry.first) == 2 * entry.second;
+          })) {
+        counts = std::move(fewer);
+        reversals = std::move(trial);
+      }
+    }
+    const size_t images = size_t{1} << reversals.size();
+    size_t size = 0;
+    for (const auto &[orbit, hits] : counts) size += ordinary.orbit_sizes[orbit];
+    for (const auto &[orbit, hits] : counts)
+      if (mpz_class(hits) * size != mpz_class(ordinary.orbit_sizes[orbit]) * images ||
+          !covered.insert(orbit).second) return {};
+    mpq_class weight(mpz_class(size), partition.group_order * images);
+    weight.canonicalize();
+    auto ops = current.leaf_exchanges();
+    ops.insert(ops.end(), reversals.begin(), reversals.end());
+    auto seed = b.prod({b.a.exact(weight), current.expression(coefficient, true)});
+    result.projected_terms.push_back({seed, std::move(ops)});
+    result.orbit_sizes.push_back(size);
+  }
+  result.kernel = sum_projected_terms(b.a, result.projected_terms);
+  return result;
 }
 
 // Radiation assigned to either side of the exchanged photon is separately
@@ -661,6 +745,7 @@ fermion_current_proposal(Algebra &a, const model &m,
     // transform with the labels. The emitting endpoint and the only other
     // external photon both have this property.
     const bool ordered_gauge = physical || b.photons.size() <= 2;
+    std::map<std::vector<Id>,std::pair<const generation::term*,Id>> ordered_source;
     std::optional<Id> direct_coefficient;
     bool common = true;
     struct orbit {
@@ -719,8 +804,11 @@ fermion_current_proposal(Algebra &a, const model &m,
       if (first) {
         const Id term = current.expression(g.coefficient);
         attachments[exchange].push_back(term);
-        if (presentation && common && ordered_gauge)
-          ordered_attachments[current.core_poles()].push_back(term);
+        if (presentation && common && ordered_gauge) {
+          auto key = current.core_poles();
+          if (b.photons.empty()) ordered_source.emplace(key,std::make_pair(&tree,g.coefficient));
+          ordered_attachments[key].push_back(term);
+        }
       }
     }
     std::vector<Id> terms;
@@ -746,17 +834,35 @@ fermion_current_proposal(Algebra &a, const model &m,
       if (*presentation && (*presentation)->projected_terms.empty() &&
           ordered_attachments.size() > grouped.size()) {
         std::map<exchange_key,Id> by_order;
+        ordered_source_map by_labels;
         for (const auto &[poles, rows] : ordered_attachments) {
           exchange_key key;
           for (Id pole : poles) key.push_back(pole_side(a,pole));
           std::sort(key.begin(), key.end());
+          if (rows.size()==1 && ordered_source.count(poles))
+            by_labels.emplace(key,ordered_source.at(poles));
           by_order.emplace(std::move(key), collect_scalar_factors(a, a.factorSum(a.add(rows))));
         }
-        auto finer = tree_orbits(b,by_order,*direct_coefficient,physical);
-        if (finer && a.cost(finer->kernel) < a.cost((*presentation)->kernel)) {
+        ordered_tree_orbits partition;
+        auto finer = tree_orbits(b, by_order, *direct_coefficient, physical,
+                                 by_labels.empty() ? nullptr : &partition);
+        if (finer) {
           try {
-            if (expression_complexity(a,finer->kernel) <= expression_complexity(a,(*presentation)->kernel))
-              *presentation = std::move(finer);
+            auto score = expression_complexity(a, (*presentation)->kernel);
+            const auto consider = [&](const permutation_sum &form) {
+              size_t weight = 0;
+              if (form.projected_terms.empty())
+                weight = expression_complexity(a, form.kernel);
+              else
+                for (const auto &part : form.projected_terms) weight += expression_complexity(a, part.kernel);
+              if (weight < score) {
+                score = weight;
+                *presentation = form;
+              }
+            };
+            consider(*finer);
+            if (auto projected = project_ordered_trees(b, by_labels, partition, *finer))
+              consider(*projected);
           } catch (const std::length_error &) {
           } catch (const std::overflow_error &) {
           }

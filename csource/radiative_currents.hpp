@@ -248,12 +248,16 @@ class tree_current {
   const Id one, zero;
 
   Id lorentz(int port) { return a.atom("mu" + std::to_string(port)); }
-  Id endpoint(const char *kind, int leg) {
+  Id endpoint(const char *kind, int leg, bool one_chirality = false) {
     return a.call(kind,
-                  {a.integer(leg), a.masses()[leg - 1], a.atom("\"Dirac\"")});
+                  {a.integer(leg), a.masses()[leg - 1], a.atom(one_chirality ? "\"R\"" : "\"Dirac\"")});
   }
 
-  Id line(const path &p) {
+  bool bare_leaf(const path &p) const {
+    return p.core.size() == 1 && radiated.at(p.bar).empty() && radiated.at(p.ket).empty();
+  }
+
+  Id line(const path &p, bool project_leaves) {
     struct summand {
       Id factor;
       std::vector<Id> word;
@@ -285,7 +289,7 @@ class tree_current {
     for (auto &s : words)
       terms.push_back(
           a.mul({s.factor,
-                 a.call("DiracChain", {endpoint("FermionBar", p.bar),
+                 a.call("DiracChain", {endpoint("FermionBar", p.bar, project_leaves && bare_leaf(p)),
                                        a.call("DiracWord", std::move(s.word)),
                                        endpoint("FermionKet", p.ket)})}));
     return a.add(std::move(terms));
@@ -419,12 +423,29 @@ public:
     return poles;
   }
 
-  Id expression(Id coefficient) {
+  std::vector<signed_exchange> leaf_exchanges() const {
+    std::vector<signed_exchange> result;
+    for (const auto &p : paths)
+      if (bare_leaf(p)) result.push_back({{{p.bar,p.ket}},1});
+    return result;
+  }
+
+  // Charge conjugation reverses a line of k vector insertions with sign
+  // (-1)^(k-1). A single attachment has no separate reversed ordering.
+  std::vector<signed_exchange> ordered_line_reversals() const {
+    std::vector<signed_exchange> result;
+    for (const auto &p : paths)
+      if (p.core.size() > 1)
+        result.push_back({{{p.bar, p.ket}}, p.core.size() % 2 ? 1 : -1});
+    return result;
+  }
+
+  Id expression(Id coefficient, bool project_leaves = false) {
     size_t core_vertices = 0;
     int sign = 1;
     std::vector<Id> numerator, factors{coefficient};
     for (const auto &p : paths)
-      numerator.push_back(line(p));
+      numerator.push_back(line(p,project_leaves));
     for (size_t i = 0; i < tree.vertices.size(); ++i) {
       if (!keep[i])
         continue;

@@ -265,8 +265,8 @@ void check_exchange_orderings(const model &vertices) {
     throw std::runtime_error("Missing the complete eight-fermion tree sum");
   auto sizes = form->orbit_sizes;
   std::sort(sizes.begin(),sizes.end());
-  if (sizes != std::vector<size_t>{288,288,576,576})
-    throw std::runtime_error("Incorrect ordered star and path orbit sizes");
+  if (sizes != std::vector<size_t>{576,1152} || form->projected_terms.size() != 2)
+    throw std::runtime_error("Missing the two ordered star and path kernels");
   const expression_evaluator full(a,*elementary,parameters);
   const expression_evaluator projected(a,expand_permutation_groups(a,form->kernel,form->alternating_groups,true),
                                        parameters);

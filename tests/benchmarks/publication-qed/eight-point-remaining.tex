@@ -1,0 +1,226 @@
+\subsection{Three photons of each helicity}\label{sec:eight-balanced}
+
+For $\M(1_e,2_E,3^+,4^+,5^+,6^-,7^-,8^-)$ put
+$(a,b,c)=(3,4,5)$ and $(h,i,j)=(6,7,8)$. Use the three-photon currents
+$D$ of Eq.~\eqref{eq:eight-two-bridge}. Let $\Sigma$ sum the two triples
+of labels independently over their six permutations. With the common
+physical reference $p_1$, the result is
+\begin{align}
+ \M^{\phys}_{+++---}=-(\sqrt2 e)^6\,\Sigma\!
+ \left\{\frac{D(abc|hij)+D(hij|abc)}{36}
+      +\frac{D(abh|cij)+D(ahi|bcj)}{4}\right\}.
+ \label{eq:eight-balanced-phys}
+\end{align}
+Each extreme partition occurs once. There are nine partitions with one
+negative on the electron side and nine with two. Each partition contains
+the $3!^2$ orders within its two currents.
+
+For the spurious form choose leg 6 as the angle reference of each positive
+photon. Use square references $7,8,6$ for negative legs $6,7,8$,
+respectively. In the following sum first assign the six labels, then
+look up each photon's reference in this fixed table. Reversing the
+charged line exchanges the two complementary partitions with a minus
+sign. The same reference table works on both sides, giving
+\begin{equation}
+ \M^{\spur}_{+++---}=-(\sqrt2 e)^6(1-P_{12})\,\Sigma\!
+ \left\{\frac{D(abc|hij)}{36}+\frac{D(abh|cij)}4\right\}.
+ \label{eq:eight-balanced-spur}
+\end{equation}
+The expression in braces generates ten partitions. The endpoint
+exchange supplies their ten complements. Parity and a photon relabeling
+map this helicity sector to itself. On 100,000 phase-space and spin samples
+both expressions agreed with the signed sum of 720 diagrams to
+$8.11\times10^{-11}$. On a separate 100,000 momenta the largest relative
+differences from the polarized MadGraph rate were $5.85\times10^{-12}$ and
+$1.67\times10^{-11}$ for the physical and spurious forms, respectively.
+
+\subsection{Two fermion pairs and four photons}\label{sec:eight-two-pairs}
+
+Pair $(1_e,2_E)$ and $(4_e,3_E)$ for the direct term. Define $K(L|R)$
+by attaching the photons in $L$ and $R$ to the first and second pair.
+Let $\mathcal P=(1-P_{14})(1-P_{23})\mathcal S_+\mathcal S_-$,
+where each $\mathcal S$ sums all permutations of photons of that helicity
+with unit weight. In each row $a,b,c,d$ denote successive positive
+photons and $h,i$ successive negative ones, in external order. The
+amplitudes are
+\begin{align}
+ \M_{++++} &= \mathcal P\left\{
+  \frac{K(\varnothing|abcd)}{24}+\frac{K(a|bcd)}6+\frac{K(ab|cd)}8\right\},\nonumber\\
+ \M_{+++-} &= \mathcal P\left\{
+  \frac{K(\varnothing|abch)+K(h|abc)}6
+   +\frac{K(a|bch)+K(ah|bc)}2\right\},\nonumber\\
+ \M_{++--} &= \mathcal P\left\{
+  \frac{K(\varnothing|abhi)+K(hi|ab)}4
+  +\frac{K(h|abi)+K(a|bhi)+K(ah|bi)}2\right\}.
+ \label{eq:eight-four-fermions}
+\end{align}
+For example, $K(ab|cd)$ is unchanged under either exchange within a
+pair of photons and under exchange of the two complete charged lines.
+These three factors of two give its divisor eight. In the mixed
+$K(ah|bi)$ term only the joint line exchange survives.
+
+The same spinor contraction serves both pole choices. For a pair $(t,u)$
+write $J_{tu}(L)$ as a sum of angle-square spinor pairs. Contract
+$(|x\rangle,|y])$ from one current with $(|v\rangle,|w])$ from the
+other as $\langle xv\rangle[yw]$ and extend linearly. Then
+\begin{equation}
+ K(L|R)=-(\sqrt2 e)^6\,
+ \frac{J_{12}(L)\cdot J_{43}(R)}
+      {(p_1+p_2+\sum_{i\in L}p_i)^2}.
+ \label{eq:eight-four-kernel}
+\end{equation}
+To construct $J_{tu}(L)$, sum over subsets $B\subseteq L$ and add the
+two orientations
+\[
+ (W_t^\angle(B),W_u^\square(L\setminus B))
+  +(W_u^\angle(L\setminus B),W_t^\square(B)).
+\]
+The two orientations give the ordinary massive vector current at
+$L=\varnothing$. For a nonempty set $B$ write $Q_t(B)=p_t+\sum_{i\in B}p_i$
+and $\eta_t=+1$ for the electron and $-1$ for the positron.
+The wave on one endpoint satisfies
+\begin{align}
+ [Q_t(B)^2-m^2] W_t^\chi(B)
+ &=\sum_{i\in B}\!\left[\eta_t\sqrt2\,
+ Q_t(B\setminus i)\cdot\varepsilon_i+F_{ti}^\chi\right]W_t^\chi(B\setminus i)
+ \nonumber\\*[-2pt]
+ &\quad-\sum_{\{i,j\}\subseteq B}
+ (\varepsilon_i\cdot\varepsilon_j)W_t^\chi(B\setminus\{i,j\}),
+ \qquad W_t^\chi(\varnothing)=|\mathbf t\rangle_\chi .
+ \label{eq:eight-charged-wave}
+\end{align}
+Here $B\setminus i$ means removal of that photon. On a square spinor
+$|x]$, a positive photon gives $F_{ti}^\square|x]=\eta_t[i x]|i]$.
+On an angle spinor $|x\rangle$, a negative photon gives
+$F_{ti}^\angle|x\rangle=\eta_t\langle i x\rangle|i\rangle$. The other
+actions vanish. The two-photon term follows by commuting the momentum
+through the two adjacent polarization matrices and summing their
+orders. Thus each subset wave can be reused when a fourth photon is
+added.
+
+For AllPhysical take the electron momentum of the emitting pair as
+each polarization reference. Use its projected spinors as in
+Sec.~\ref{sec:eight-two-minus}, with $p_1$ replaced by this momentum.
+For AllSpurious use the first photon of opposite helicity if one
+exists. If all helicities agree, use the next photon cyclically.
+A line current contains every attachment order, so its Ward identity
+allows these choices for each fixed partition. Apply the permutation
+operators to the complete kernel including its references.
+Parity gives the remaining helicities.
+
+\subsection{Three fermion pairs and two photons}\label{sec:eight-three-pairs}
+
+Use the direct pairs $A=(1,2)$, $B=(3,4)$ and $C=(5,6)$ with an
+electron first in each. The exchanged photons connect the path $A,B,C$.
+Write $H(L|M|R)$ for external photon sets on the left, middle and right
+lines, respectively. Write $0$ for an empty set in the following two
+equations and let $\mathcal A$ antisymmetrize the three electron and the
+three positron labels independently without normalization. For $i=7,j=8$,
+\begin{align}
+ \M_{++} &=\mathcal A(1+P_{ij})\left\{
+ \frac{H(ij|0|0)}2+\frac{H(0|ij|0)}4
+ +\frac{H(i|0|j)}2+H(i|j|0)\right\},\nonumber\\
+ \M_{+-} &=\mathcal A\left\{
+ H(ij|0|0)+\frac{H(0|ij|0)}2+H(i|0|j)
+ +H(i|j|0)+H(j|i|0)\right\}.
+ \label{eq:eight-six-fermions}
+\end{align}
+For opposite helicities, emission of the positive photon from the middle
+and emission of the negative photon from the middle require separate terms.
+For two equal helicities they are exchanged by $P_{ij}$.
+
+The following open-line tensor specifies each kernel, including emission
+between two exchanged photons. At each attachment use $G_i=\not\!\varepsilon_i$
+for an external photon or $G_i=\gamma^{\mu_i}$ for an exchanged one.
+For a charged pair $(t,u)$ in electron, positron order, define
+\begin{equation}
+ T_{tu}(1,\ldots,k)=\sum_{\pi\in S_k}
+ \bar v_u G_{\pi_1}
+ \prod_{j=1}^{k-1}
+ \left[\frac{m-\not\! Q_j}{Q_j^2-m^2}\,G_{\pi_{j+1}}\right]u_t,
+ \qquad Q_j=p_u+\sum_{b=1}^{j}q_{\pi_b}.
+ \label{eq:eight-ordered-tensor}
+\end{equation}
+The attachment numbers in $T$ label its arguments locally. For an external
+photon $q_i=p_i$. For an exchanged photon $q_i$ is the sum of the external
+momenta on its far side as seen from the charged line in question. The two
+lines at that photon therefore use opposite momenta. Each ordered product
+runs from the positron bra to the electron ket. With
+$k_A=p_1+p_2+\sum_{i\in L}p_i$ and $k_C=p_5+p_6+\sum_{i\in R}p_i$,
+\begin{equation}
+ H(L|M|R)=-e^6\frac{
+ T_{12}^{\mu}(L)\,T_{34,\mu\nu}(M)\,T_{56}^{\nu}(R)}
+ {k_A^2 k_C^2}.
+ \label{eq:eight-six-kernel}
+\end{equation}
+The displayed Lorentz indices denote the exchanged attachments in
+Eq.~\eqref{eq:eight-ordered-tensor}. The physical reference is the
+electron on the line emitting the photon. In the spurious form the two
+external photons use each other as their references.
+
+\subsection{Four fermion pairs}\label{sec:eight-four-pairs}
+
+With no external photons, both pole choices give the same expression.
+There are two ways to connect four charged lines with three photon
+exchanges. In the star one line has three vector attachments and in
+the path two lines have two. Pair the legs as $(1,2),(3,4),(5,6),(7,8)$,
+and let $\mathcal A$ antisymmetrize $1,3,5,7$ and $2,4,6,8$
+independently. Let $U^{\mu\nu\cdots}_{tu}$ be the single ordered product in
+Eq.~\eqref{eq:eight-ordered-tensor}, with the attachments in the displayed
+index order. Write $J_{tu}^{\mu}=\bar v_u\gamma^\mu u_t$. The amplitude is
+\begin{align}
+ \M=e^6\mathcal A\!\left[
+ \frac{U_{12}^{\mu\nu\rho}J_{34,\mu}J_{56,\nu}J_{78,\rho}}
+      {s_{34}s_{56}s_{78}}
+ +\frac{(1-P_{34})(1-P_{56})}{2}
+ \frac{J_{12}^{\mu}U_{34,\mu\nu}U_{56}^{\nu\rho}J_{78,\rho}}
+      {s_{12}s_{1234}s_{78}}\right].
+ \label{eq:eight-eight-fermions}
+\end{align}
+The three star leaves can occur in any order. Every permutation of
+these leaves exchanges electrons and positrons together, so its sign
+in $\mathcal A$ is positive. The six permutations supply the six
+distinct orders on the central line. On the path, reversing either
+two-vector line exchanges its two vector attachments with a minus
+sign. The two factors $1-P$ therefore supply the four attachment
+orders. The divisor two accounts for the two orientations of the path.
+There are $4!$ matchings. For each matching the four choices of star
+center give $4\cdot 3!$ diagrams, and the twelve paths give $12\cdot 2^2$
+more. The sum accounts for all 1,728 tree diagrams.
+
+The same two terms have a short expression in spinor brackets. Contract
+a terminal pair $(c_e,d_E)$ into its neighbour, keeping one chirality
+of the pair. The other chirality is supplied by $1+P_{cd}$. Suppress the
+factor two from this Fierz contraction and denote the resulting endpoint
+by a tilde. For a positron bra $b$ or an electron ket $t$, use
+$Q_x=p_x+p_c+p_d$ and the following four spinors:
+\begin{align}
+ \langle\widetilde b|&=\langle d b\rangle[c|Q_b-m[b c]\langle d|,&
+ [\widetilde b|&=-[b c]\langle d|Q_b+m\langle d b\rangle[c|,\nonumber\\
+ |\widetilde t\rangle&=\langle d t\rangle Q_t|c]-m[c t]|d\rangle,&
+ |\widetilde t]&=[c t]Q_t|d\rangle-m\langle d t\rangle|c].
+ \label{eq:eight-dressed-leaf}
+\end{align}
+For the star use pair $(3,4)$ for $\widetilde2$ and $(7,8)$ for
+$\widetilde1$. For the path use $(1,2)$ for $\widetilde4$ and $(7,8)$
+for $\widetilde5$. The two scalar numerators are
+\begin{align}
+ N_{\rm star}&=\langle6\,\widetilde1\rangle[\widetilde2\,5]
+                 +\langle\widetilde2\,6\rangle[5\,\widetilde1],\nonumber\\
+ N_{\rm path}&=\langle63\rangle[\widetilde4\,\widetilde5]
+           -\langle\widetilde4\,6\rangle[3\,\widetilde5]
+           -\langle3\,\widetilde5\rangle[\widetilde4\,6]
+           +\langle\widetilde4\,\widetilde5\rangle[63].
+ \label{eq:eight-star-path-numerators}
+\end{align}
+With $S_{ij}=1+P_{ij}$ and $A_{ij}=1-P_{ij}$, the bracket formula reads
+\begin{align}
+ \M=8e^6\mathcal A\!\left[
+ S_{34}S_{56}S_{78}\frac{N_{\rm star}}{s_{34}s_{56}s_{78}\tau_{234}\tau_{178}}
+ +\frac{A_{34}A_{56}S_{12}S_{78}}2\,
+ \frac{N_{\rm path}}{s_{12}s_{1234}s_{78}\tau_{124}\tau_{578}}\right].
+ \label{eq:eight-eight-weyl}
+\end{align}
+Here the local exchanges act inside the outer fermion antisymmetrization.
+The factor eight comes from the three photon contractions. This form
+exhibits all five physical propagators in each term.
