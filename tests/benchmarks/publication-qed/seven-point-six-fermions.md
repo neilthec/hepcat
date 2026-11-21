@@ -79,7 +79,29 @@ The last column counts the expressions inside the signed sums. The weights inclu
 
 On construction, the C++ reducer groups complete attachment orders by their exchanged-vector poles and orbits under identical-particle permutations. For a path of three equal-mass fermion lines with minimal vector couplings, it joins the two orientations of a bare or radiating end current with the corresponding sign. On reloading an elementary expression, it checks all signed Laurent coefficients against the generated current up to one common scalar before applying those operations. A pole graph alone cannot fix relative signs.
 
+We compared the signed complex amplitudes with the 252 independent Feynman diagrams at 100,000 common momenta and massive-spin assignments for each photon helicity (seed 706181). The signed replay uses the ordinary order of the 288 projected images, including for the spurious form. It reconstructs any point exceeding a relative error of $10^{-8}$ at 160-bit precision. The following are the raw maxima and the number of reconstructed points. Every reconstructed case passed.
+
+| Photon | Representation | Paper raw maximum | Native raw maximum | Paper / native replays | Largest replay error |
+| --- | --- | ---: | ---: | ---: | ---: |
+| $+$ | Physical | $1.27\times10^{-11}$ | $1.61\times10^{-11}$ | 0 / 0 | |
+| $-$ | Physical | $8.67\times10^{-12}$ | $6.90\times10^{-12}$ | 0 / 0 | |
+| $+$ | Spurious | $3.13\times10^{-4}$ | $3.02\times10^{-4}$ | 41 / 42 | $3.97\times10^{-38}$ |
+| $-$ | Spurious | $3.67\times10^{-4}$ | $3.30\times10^{-4}$ | 40 / 42 | $4.35\times10^{-38}$ |
+
 On a conserved on-shell trajectory through $w=0$, the eight images that reconstruct one middle-line routing provide a direct check of the apparent pole. At $|w|=5.01\times10^{-14}$ the largest term has magnitude $2.07\times10^{10}$, while the signed sum has magnitude $1.03\times10^{-3}$. Approaching from either side at extended precision gives relative agreement with the physical middle-line current within $2.33\times10^{-32}$. At the cut, the magnitude of the cleared residue sum divided by the largest individual residue is below $7.7\times10^{-58}$ for four spin states. The [pole test](seven-point-six-fermions-pole.cpp) also probes much smaller $|w|$, comparing direct division with summing the residues first.
+
+The crossed external reaction has two incoming fermions and four outgoing fermions plus a photon. The squared matrix element includes the initial spin average $1/4$ and the identical-final-particle factor $1/(2!\,2!)$, giving $1/16$ in total. The fixed-helicity MadGraph comparisons sum over all 64 massive-spin assignments per photon helicity. CalcHEP supplies the full polarization sum.
+
+The physical and common-denominator spurious exports passed all external comparisons at native precision. CalcHEP used the original 100,000 independent matrix elements and identical saved momenta at seed 704761. The MadGraph rows use 100,000 common momenta at seed 706181, separately for each photon helicity and for its exhaustive polarization sum. Threshold $10^{-7}$, widths zero.
+
+| Numerical form | CalcHEP, spin sum | MadGraph, photon $-$ | MadGraph, photon $+$ | MadGraph, spin sum |
+| --- | ---: | ---: | ---: | ---: |
+| AllPhysical | $7.626\times10^{-9}$ | $1.952\times10^{-10}$ | $1.952\times10^{-10}$ | $1.952\times10^{-10}$ |
+| AllSpurious, common denominators | $7.626\times10^{-9}$ | $3.055\times10^{-10}$ | $3.055\times10^{-10}$ | $3.055\times10^{-10}$ |
+
+For the raw separate divisions, the 100,000-point spin-summed comparison with CalcHEP had five outliers at $10^{-7}$, with maximum relative error $7.45\times10^{-6}$. MadGraph had six common outlying momenta across both helicities and the polarization sum, maximum $2.13\times10^{-6}$. We evaluated both signed formulas on the original binary64 momenta at 160-bit arithmetic and on a nearby exactly conserved, on-shell chart. The largest component shift was below $4.66\times10^{-16}$ GeV. On the restored chart the raw spurious form agreed with the physical form within $3.69\times10^{-42}$. The corresponding rates agreed with the original CalcHEP values within $2.25\times10^{-13}$ and with the 113-bit MadGraph references within $9.08\times10^{-13}$.
+
+The [eleven original momenta and raw rates](seven-point-six-fermions-outliers.csv) allow both stages to be reproduced. For example, MadGraph point 32123 has a raw polarization-sum error of $2.13\times10^{-6}$. Restoring the kinematics shifts any component by at most $2.17\times10^{-16}$ GeV. The two helicity rates of the restored physical amplitude are both $0.02993120631273257$. On the original input the 160-bit direct spurious evaluation still differs by $1.10\times10^{-5}$. Collecting the common denominators gives a polarization-sum error of $2.49\times10^{-11}$ even in native arithmetic on the original momenta.
 
 ## Reproduce
 
@@ -122,7 +144,7 @@ c++ -std=c++17 -O2 -Icsource "$bench/seven-point-six-fermions-pole.cpp" \
     "$run_dir/paper/+/spurious-center.expr"
 ```
 
-For a numerical export of the full paper formula, replace `--piece "$part"` with `--expanded`. This acts on the momentum labels inside the spinor chains and propagators as well as on the external spinors.
+For a numerical export of the full paper formula, replace `--piece "$part"` with `--expanded`. It relabels every spinor, insertion and propagator. In the spurious representation, reversing the central line sends $Q$ to $-Q-k$ and hence $w$ to $-w$. The expansion sums the residues over each of the nine distinct $w$ denominators before it divides. The option `--raw-expanded` exposes the original separate divisions for studying cancellation. Both choices implement the same printed expression on conserved, on-shell momenta.
 
 To run the compact formulas themselves against an external matrix element, expand both helicities into the same directory. The example uses MadGraph with the QED-only interactions of its massive-electron model. To run the spin-summed comparison with CalcHEP, substitute `--calchep "$calchep_dir"` and choose a separate output directory.
 
@@ -139,4 +161,13 @@ for pref in physical spurious; do
     "$build/replay-external" "$dir" "$dir/mg-project" "$spinas_dir" \
         --madgraph "$madgraph_dir" 100000 706181
 done
+```
+
+The physical-momenta replay takes directories containing `+.expr` and `-.expr` for each form. Generate the spurious directory once with `--raw-expanded` and once with `--expanded` to compare their evaluation orders.
+
+```sh
+c++ -std=c++17 -O2 -Icsource "$bench/seven-point-six-fermions-outlier.cpp" \
+    "$build/libhepcat_reduce.a" -lgmpxx -lgmp -o "$build/replay-radiation-outliers"
+"$build/replay-radiation-outliers" "$physical_dir" "$spurious_dir" \
+    "$bench/seven-point-six-fermions-outliers.csv"
 ```

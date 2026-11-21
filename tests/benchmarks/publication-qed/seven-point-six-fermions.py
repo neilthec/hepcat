@@ -41,7 +41,11 @@ def bracket(square, left, right, *insertions):
                 spin(square ^ bool(len(insertions) % 2), right))
 
 
-def summand(piece, preference, positive, mass, charge, legs=range(1, 8)):
+def coupling_factor(charge):
+    return mul(-1, call("Power", mul(call("Power", 2, call("Rational", 1, 2)), charge), 5))
+
+
+def summand(piece, preference, positive, mass, charge, legs=range(1, 8), *, split_spurious=False):
     a, b, x, y, c, d, k = legs
 
     # Parity interchanges the two spinor brackets, including inserted chains.
@@ -87,6 +91,11 @@ def summand(piece, preference, positive, mass, charge, legs=range(1, 8)):
                                mul(-1, active(b, x), active(k, a, x), passive(y, d), active(k, c))),
                            2, tau(x, k))
         else:
+            orbital_numerator = over(mul(-1, active(k, k, (a, b), x)), tau(x, k))
+            if split_spurious:
+                # Omit the common outer propagators here. The full expansion
+                # sums both charge orientations before dividing by w.
+                return mul(shift(x), shifted_x), add(mul(orbital_numerator, bare), mul(-1, open_spin))
             omega = active(k, k, (a, b, x))
             orbital = over(mul(-1, active(k, k, (a, b), x)), tau(x, k), omega)
             spin_factor = over(-1, omega)
@@ -94,12 +103,18 @@ def summand(piece, preference, positive, mass, charge, legs=range(1, 8)):
         source = over(add(mul(orbital, bare), mul(shift(x), shifted_x),
                           mul(spin_factor, open_spin), contact), s(a, b))
 
-    coupling = mul(-1, call("Power", mul(call("Power", 2, call("Rational", 1, 2)), charge), 5))
-    return over(mul(coupling, source), s(c, d), tau(c, d, y))
+    return over(mul(coupling_factor(charge), source), s(c, d), tau(c, d, y))
 
 
-def expanded(preference, positive, mass, charge):
-    """Apply the signed operators in the paper, acting on all labels at once."""
+def expanded(preference, positive, mass, charge, *, raw=False):
+    """Apply the signed operators, collecting a common spurious divisor before division."""
+    group_poles = preference == "spurious" and not raw
+    k = 7
+    residues = {}
+
+    def den(internal_mass, *labels):
+        return call("PropDen", momentum(labels), internal_mass)
+
     def parity(p):
         return (-1) ** sum(x > y for i, x in enumerate(p) for y in p[i+1:])
     terms = []
@@ -108,13 +123,37 @@ def expanded(preference, positive, mass, charge):
             a, x, c = electrons
             b, y, d = positrons
             sign = parity(electrons) * parity(positrons)
+            side_residues = []
+            if group_poles:
+                same_pair = over(mul(sign, coupling_factor(charge)), den(0, a, b), den(0, c, d))
             for left, right, i, j, u, v in ((a,b,x,y,c,d), (d,c,y,x,b,a)):
+                regular, numerator = [], []
                 for z, t in ((u,v), (v,u)):
                     for l, r, odd in ((left,right,1), (right,left,-1)):
-                        legs = (l,r,i,j,z,t,7)
+                        legs = (l,r,i,j,z,t,k)
                         leaf = summand("leaf", preference, positive, mass, charge, legs)
-                        center = summand("center", preference, positive, mass, charge, legs)
-                        terms.append(mul(sign, add(mul(odd,leaf), center)))
+                        if group_poles:
+                            terms.append(mul(sign * odd, leaf))
+                            shift, residue = summand("center", preference, positive, mass, charge,
+                                                     legs, split_spurious=True)
+                            regular.append(shift)
+                            numerator.append(residue)
+                        else:
+                            center = summand("center", preference, positive, mass, charge, legs)
+                            terms.append(mul(sign, add(mul(odd, leaf), center)))
+                if group_poles:
+                    central_pole = den(mass, u, v, j)
+                    terms.append(mul(same_pair, over(add(*regular), central_pole)))
+                    side_residues.append(over(add(*numerator), central_pole))
+            if group_poles:
+                # Q' on the reversed line is -Q-k. Both local endpoint
+                # exchanges leave 2 k.Q unchanged. Only reversal negates w.
+                key = tuple(sorted((a,b,x)))
+                residue = add(side_residues[0], mul(-1, side_residues[1]))
+                residues.setdefault(key, []).append(mul(same_pair, residue))
+    for triple, numerators in residues.items():
+        omega = bracket(positive, k, k, triple)
+        terms.append(over(add(*numerators), omega))
     return add(*terms)
 
 
@@ -124,6 +163,8 @@ if __name__ == "__main__":
     parser.add_argument("elementary", type=Path, help="source of the model's mass and coupling identifiers")
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument("--expanded", action="store_true", help="write the complete sum for numerical export")
+    mode.add_argument("--raw-expanded", action="store_true",
+                      help="write the direct operator sum with each oriented divisor evaluated separately")
     mode.add_argument("--piece", choices=("leaf", "center"),
                         help="emit on an outer pair (odd under a,b exchange) or on the central line (even)")
     parser.add_argument("--helicity", choices=("+", "-"), default="+")
@@ -135,4 +176,7 @@ if __name__ == "__main__":
             parser.error(f"Missing model parameter {name}")
         return match[0]
     inputs = (args.preference, args.helicity == "+", parameter("Me"), parameter("EE"))
-    print(expanded(*inputs) if args.expanded else summand(args.piece, *inputs))
+    if args.piece:
+        print(summand(args.piece, *inputs))
+    else:
+        print(expanded(*inputs, raw=args.raw_expanded))
