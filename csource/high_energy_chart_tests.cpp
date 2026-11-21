@@ -73,6 +73,16 @@ int main() {
     check(high_energy_validate_chart(a, tuned, 0, 0, params, 1).passes, "fixed-spin control");
     check(!high_energy_validate_chart(a, tuned, 0, 0, params, 128).passes,
           "missed failure in another spin state");
+    // The scalar coefficient can vary with energy but has no spin
+    // dependence. An exact reciprocal degree certifies every spin at once.
+    auto many = [&](Id term) { return a.raw("Plus",std::vector<Id>(3000,term),true); };
+    auto falling=many(a.mul({b,a.pow(f,-1)}));
+    v=high_energy_validate_chart(a,falling,-1,0,params,2);
+    check(v.passes && v.exhaustive_spin && v.spin_states==1,"termwise bound on a whole spin space");
+    check(!high_energy_validate_chart(a,many(tuned),0,0,params,128).passes,
+          "power counting cannot assume cancellation tuned to one spin");
+    check(!high_energy_validate_chart(a,many(a.pow(b,-1)),1,0,params,128).exhaustive_spin,
+          "a spin-dependent reciprocal needs its Laurent grid");
     bool rejected = false;
     try {
         high_energy_chart_rows(a, {a.call("UnknownTensor", {one})}, 0, 0, params);

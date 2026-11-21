@@ -485,6 +485,26 @@ class Evaluation {
         }
     }
     Jet invariant(Id mom) { return det(momentum(mom)); }
+    // On a fixed-angle chart every external spinor component is O(u),
+    // for any coherent massive-spin coefficients. Reference spinors are
+    // constant. Momentum matrices and their coefficients are spin independent.
+    std::optional<int> chain_ceiling(const std::vector<Id>& w) {
+        if (w.size() < 2 || w.size() > 40000) return std::nullopt;
+        if ((angle(w.front()) == angle(w.back())) != ((w.size() - 2) % 2 == 0))
+            throw residue_unsupported("inconsistent chain chirality");
+        int power = 0;
+        for (Id end : {w.front(), w.back()}) {
+            spinor(end); // Check the endpoint, including its mass and spin index.
+            if (a.node(a.node(end).args[0]).head != "\"Xi\"") ++power;
+        }
+        for (std::size_t i = 1; i + 1 < w.size(); ++i) {
+            const auto matrix = momentum(w[i]);
+            int leading = exact;
+            for (const auto& entry : matrix) leading = std::max(leading, entry.degree());
+            power = shift(power, leading);
+        }
+        return power;
+    }
     void forget_spin(const std::vector<Id>& affected) {
         for (Id id : affected) {
             memo.erase(id);
@@ -545,6 +565,50 @@ class SpinDegree {
         return memo.emplace(id, std::move(result)).first->second;
     }
 };
+// Propagate an upper bound through sums and products. For an inverse, use
+// its actual Laurent jet only when its denominator is independent of the
+// coherent spins. If a cancellation between terms is needed, the ordinary
+// Laurent calculation below still decides the bound.
+std::optional<int> termwise_ceiling(const Algebra& a, Id root, Evaluation& chart, SpinDegree& spin) {
+    std::unordered_map<Id, std::optional<int>> memo;
+    auto visit = [&](auto& self, Id id) -> std::optional<int> {
+        if (auto it = memo.find(id); it != memo.end()) return it->second;
+        const auto& n = a.node(id);
+        std::optional<int> value;
+        if (n.head == "SpinorChain") {
+            value = chart.chain_ceiling(n.args);
+        } else if (n.head == "Plus" || n.head == "Times") {
+            const bool sum = n.head == "Plus";
+            value = sum ? exact : 0;
+            for (Id arg : n.args) {
+                auto child = self(self, arg);
+                if (!child) return std::nullopt;
+                if (sum) {
+                    *value = std::max(*value, *child);
+                } else if (*value == exact || *child == exact) {
+                    *value = exact;
+                } else {
+                    *value += *child;
+                    if (std::abs(*value) > 100000) return std::nullopt;
+                }
+            }
+        } else if (n.head == "Power" && n.args.size() == 2 && a.leg(n.args[1]) &&
+                   a.leg(n.args[1]) <= 4096 && a.node(n.args[0]).head != "Mom") {
+            if (auto base = self(self, n.args[0])) {
+                auto degree = static_cast<long long>(*base) * a.leg(n.args[1]);
+                if (*base == exact) value = exact;
+                else if (std::abs(degree) <= 100000) value = static_cast<int>(degree);
+            }
+        } else {
+            const auto& d = spin.get(id);
+            if (std::all_of(d.begin(), d.end(), [](auto k) { return k == 0; }))
+                value = chart.get(id).degree();
+        }
+        memo.emplace(id, value);
+        return value;
+    };
+    return visit(visit, root);
+}
 } // namespace
 
 bool equal_at_external_point(const Algebra& a, const std::vector<std::vector<Id>>& pairs,
@@ -629,6 +693,13 @@ energy_chart_validation high_energy_validate_chart(const Algebra& algebra, Id ex
         auto frame = initial;
         Evaluation evaluator(algebra, parameters, frame, sample, width);
         try {
+            // For large amplitudes a complete Laurent coefficient can involve
+            // thousands of rational summands even when every term already
+            // obeys the bound. Smaller expressions use the usual grid directly.
+            if (algebra.cost(expression) > 24000) {
+                auto ceiling = termwise_ceiling(algebra, expression, evaluator, degree);
+                if (ceiling && *ceiling <= 2 * bound) return {true, 1, true};
+            }
             for (std::size_t point = 0; point < count; ++point) {
                 if (point) {
                     auto code = point;
