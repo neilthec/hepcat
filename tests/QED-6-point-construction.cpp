@@ -4,7 +4,8 @@
 //   tests/results/native-reduce-build/hepcat-qed --family eeAA --preference physical
 // The example above constructs all four photon helicities and runs the CalcHEP
 // and MadGraph checks at 100,000 phase-space points by default. To run the entire
-// study, including all seven-point processes and the all-positive formula
+// study, including all seven-point processes, the eight-point equal-helicity
+// construction, and the independent formula
 // comparisons through eight photons, run without arguments. Use --legs 7
 // to construct just the seven-point processes.
 // Use --list to see families and --help for installation paths and other options.
@@ -44,6 +45,7 @@ struct helicity_case {
     std::string helicities;         // One sign for each photon, in all-incoming order.
     std::size_t physical = 0, spurious = 0; // Zero means no pre-existing score target.
     reference_source reference = reference_source::model_catalog;
+    bool in_publication_catalog = true;
 };
 
 struct family {
@@ -55,7 +57,7 @@ struct family {
 // A measured size can guard a new prediction even when its only signed
 // reference is the independent Feynman model. The constructor never sees it.
 helicity_case prediction(std::string helicities, std::size_t physical = 0, std::size_t spurious = 0) {
-    return {std::move(helicities), physical, spurious, reference_source::feynman_only};
+    return {std::move(helicities), physical, spurious, reference_source::feynman_only, false};
 }
 
 // Add a family or helicity here. For example, {"++-", 62, 63} measures three
@@ -97,6 +99,9 @@ const std::vector<family> notebook = {
       prediction("+--", 41280, 27648), prediction("---", 33792, 25792)}},
     {"eeeeeeA", {"e", "E", "e", "E", "e", "E"},
      {prediction("+", 85248, 85248), prediction("-", 85248, 85248)}},
+
+    // The first eight-point construction tests the equal-helicity formula after sewing.
+    {"eeAAAAAA", {"e", "E"}, {{"++++++", 16515, 16530, reference_source::all_positive_formula, false}}},
 };
 
 struct settings {
@@ -363,7 +368,7 @@ std::vector<family> selected_families(const settings& run) {
             continue;
         auto& entries = process.examples;
         entries.erase(std::remove_if(entries.begin(), entries.end(), [&](const helicity_case& entry) {
-            return (run.publication && entry.reference == reference_source::feynman_only) ||
+            return (run.publication && !entry.in_publication_catalog) ||
                    (!run.helicity_filter.empty() && run.helicity_filter != entry.helicities);
         }), entries.end());
         if (!entries.empty()) selected.push_back(std::move(process));
@@ -503,7 +508,7 @@ publication_table read_publication(const fs::path& path, const std::string& scop
     }
     for (const auto& f : notebook)
         for (const auto& entry : f.examples)
-            if (entry.reference != reference_source::feynman_only)
+            if (entry.in_publication_catalog)
                 for (const auto* mode : {"physical", "spurious"})
                     if (!table.count({mode, f.name, entry.helicities.empty() ? "massive" : entry.helicities}))
                         throw std::runtime_error("missing publication reference for " + f.name + " " + entry.helicities);
@@ -685,11 +690,12 @@ Usage
   hepcat-qed --family eeAA --preference physical
   hepcat-qed --family eeAAA --helicity ++- --construct-only
   hepcat-qed --legs 7 --construct-only
+  hepcat-qed --legs 8 --workers 1 --skip-formulas
   hepcat-qed --formulas-only --photons 2
 
 Process selection
   --list                     Show the available families, helicities, and score targets.
-  --legs N                   Select processes with N external particles (4 through 7).
+  --legs N                   Select processes with N external particles (4 through 8).
   --family NAME              Run one family from the list.
   --helicity SIGNS           Select one entry with --family. Its external test uses polarized MadGraph.
   --preference MODE          physical, spurious, or both (default).
@@ -785,7 +791,7 @@ settings options(int argc, char** argv) {
             s.workers = integer_option(v);
         else if (key == "--legs") {
             auto n = integer_option(v);
-            if (n < 4 || n > 7) throw std::invalid_argument("--legs must be 4 through 7");
+            if (n < 4 || n > 8) throw std::invalid_argument("--legs must be 4 through 8");
             s.legs = static_cast<unsigned>(n);
         }
         else if (key == "--points") {

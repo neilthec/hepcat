@@ -139,7 +139,7 @@ The call generates and reduces the tree diagrams and factorization products, com
 
 Both C++ notebooks save each amplitude in the four expression formats above. The terminal shows short amplitudes inline. Each validation table gives the check, its outcome and the number of checks or phase-space points covered.
 
-The [C++ QED example](../tests/QED-6-point-construction.cpp) covers the notebook's helicity families through six external legs, all three seven-point tree families of electron-photon QED, and the separate all-positive formula study. From the HEPCAT repository root, run one complete family with
+The [C++ QED example](../tests/QED-6-point-construction.cpp) covers the notebook's helicity families through six external legs, all three seven-point tree families of electron-photon QED, the eight-point construction with six positive-helicity photons, and the separate all-positive formula study. From the HEPCAT repository root, run one complete family with
 
 ```sh
 tests/results/native-reduce-build/hepcat-qed --family eeAA --preference physical --skip-formulas \

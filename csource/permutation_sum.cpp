@@ -137,8 +137,8 @@ public:
 // factors already chosen. No distribution of an opaque spinor chain is needed.
 using OrbitChoices = std::vector<Terms>;
 
-Id factor_choices(Algebra& a, const OrbitChoices& rows, unsigned preference,
-                  std::size_t& budget) {
+Id factor_choices(Algebra& a, const OrbitChoices& rows, bool weight_by_size,
+                  std::size_t& budget, bool prefer_last_tie = false) {
     std::map<Id,std::size_t> coverage;
     auto factors = [&](Id id) {
         const auto& n = a.node(id);
@@ -167,8 +167,8 @@ Id factor_choices(Algebra& a, const OrbitChoices& rows, unsigned preference,
     std::size_t best = 0;
     for (auto [f,count] : coverage) {
         if (count < 2) continue;
-        const auto gain = (count-1) * (preference ? a.cost(f) : 1);
-        if (gain > best) { common=f; best=gain; }
+        const auto gain = (count-1) * (weight_by_size ? a.cost(f) : 1);
+        if (gain > best || (prefer_last_tie && gain == best)) { common=f; best=gain; }
     }
     if (!best) return plain();
     OrbitChoices shared, remaining;
@@ -184,9 +184,9 @@ Id factor_choices(Algebra& a, const OrbitChoices& rows, unsigned preference,
         if (stripped.empty()) remaining.push_back(row);
         else shared.push_back(std::move(stripped));
     }
-    const Id product = a.mul({common,factor_choices(a,shared,preference,budget)});
+    const Id product = a.mul({common,factor_choices(a,shared,weight_by_size,budget,prefer_last_tie)});
     if (remaining.empty()) return product;
-    return a.add({product,factor_choices(a,remaining,preference,budget)});
+    return a.add({product,factor_choices(a,remaining,weight_by_size,budget,prefer_last_tie)});
 }
 
 // Inside a complete permutation sum a summand may be replaced by any of its
@@ -322,12 +322,15 @@ std::optional<permutation_sum> try_group(Algebra& a, Id input, Id expanded,
         multiplicity.canonicalize();
         const Id norm = a.exact(multiplicity);
         // Equivalent representatives can expose common factors in the kernel.
-        Id chosen = first;
+        Id chosen = a.mul({norm,first});
         std::size_t cost = std::numeric_limits<std::size_t>::max();
         Terms options;
         for (Id k : orbit) {
             Id term = a.mul({norm,k});
             options.push_back(term);
+            // The joint factor search below considers all orbit images. For wide
+            // polynomials avoid building a separate factored sum for each image.
+            if (n.args.size() > max_terms) continue;
             auto trial = seeds;
             trial.push_back(term);
             const auto size = a.cost(a.factorSum(a.add(trial)));
@@ -341,9 +344,10 @@ std::optional<permutation_sum> try_group(Algebra& a, Id input, Id expanded,
     Id kernel = compact_commuting_products(a,a.add(seeds));
     kernel = collect_scalar_factors(a,kernel,3);
     if (choices.size() >= 5 && choices.size() <= 160) {
-        for (unsigned preference : {0u,1u}) {
-            std::size_t budget = 200000;
-            auto factored = factor_choices(a,choices,preference,budget);
+        const bool wide = n.args.size() > max_terms;
+        for (unsigned preference = 0; preference < (wide ? 4u : 2u); ++preference) {
+            std::size_t budget = wide ? 500000 : 200000;
+            auto factored = factor_choices(a,choices,preference % 2 != 0,budget,preference >= 2);
             factored = collect_scalar_factors(a,compact_commuting_products(a,factored),3);
             if (a.cost(factored) < a.cost(kernel) &&
                 expression_complexity(a,factored) <= expression_complexity(a,kernel))
@@ -784,7 +788,8 @@ Id simplify_signed_kernel(Algebra& a, Id input, const permutation_sum& sum) {
 std::optional<permutation_sum> compact_permutations(Algebra& a, Id input) {
     // Equal external masses permit the relabeling. The terms and their signs
     // must still prove that the expression is invariant under every swap.
-    if (a.cost(input) < 300 || a.cost(input) > 18000 || !a.shells().empty()) return {};
+    const auto leaves = a.cost(input);
+    if (leaves < 300 || leaves > 180000 || !a.shells().empty()) return {};
     std::map<Id,std::vector<int>> groups;
     for (std::size_t i = 0; i < a.masses().size(); ++i)
         groups[a.masses()[i]].push_back(static_cast<int>(i + 1));
@@ -792,11 +797,17 @@ std::optional<permutation_sum> compact_permutations(Algebra& a, Id input) {
     if (std::none_of(groups.begin(),groups.end(),[](const auto& group) {
             return group.second.size() >= 3 && group.second.size() <= 12;
         })) return {};
+    // A single orbit on six labels can already contain 720 monomials.
+    // Reserve the larger bounded expansion only for a matching external group.
+    const bool wide = std::any_of(groups.begin(),groups.end(),[](const auto& group) {
+        return group.second.size() >= 6 && group.second.size() <= 12;
+    });
+    if (!wide && leaves > 18000) return {};
     std::optional<permutation_sum> best;
     try {
         relabel canonical(a,{},{});
-        std::size_t work = 50000;
-        const auto expanded = a.add(expand(a,canonical(input),work));
+        std::size_t work = wide ? 600000 : 50000;
+        const auto expanded = a.add(expand(a,canonical(input),work,wide ? 8192 : max_terms));
         const auto& polynomial = a.node(expanded);
         if (polynomial.head != "Plus" || polynomial.args.size() < 6) return {};
         std::set<Id> support(polynomial.args.begin(),polynomial.args.end());

@@ -241,16 +241,17 @@ void test_signed_scalar_kernel() {
             "failed to protect the spectator or the ordered exchange operators");
 }
 
-void test_current(const model& qed, bool physical) {
-    std::vector<std::string> particles{"e","E","A.+","A.+","A.+","A.+","A.+"};
+void test_current(const model& qed, bool physical, unsigned photons = 5) {
+    std::vector<std::string> particles{"e","E"};
+    particles.insert(particles.end(),photons,"A.+");
     std::vector<std::string> masses;
     for (const auto& p : particles) masses.push_back(qed.particle(p).mass);
     Algebra a(&qed.algebra());
     std::vector<Id> mass_ids;
     for (const auto& mass : masses) mass_ids.push_back(a.parse(mass));
     a.setKinematics(mass_ids, {});
-    const auto original = dirac_line_proposal(a,qed,particles,120,physical);
-    require(original.has_value(),"missing seven-point amplitude");
+    const auto original = dirac_line_proposal(a,qed,particles,photons == 5 ? 120 : 720,physical);
+    require(original.has_value(),"missing equal-helicity amplitude");
     amp_expression amp(a.format(*original),masses);
     amp.reduce();
     const auto compact = amp.permutation_form();
@@ -260,19 +261,28 @@ void test_current(const model& qed, bool physical) {
             "signed presentation lost orbit sizes");
     auto lengths = compact->orbit_sizes;
     std::sort(lengths.begin(),lengths.end());
-    require(lengths == (physical ? std::vector<std::size_t>{10,30,60}
-                                 : std::vector<std::size_t>{20,60,60,60}), "wrong signed orbit sizes");
-    require(amp.complexity() == (physical ? 820u : 920u), "expanded complexity changed");
     const amp_expression kernel(compact->summand,masses);
-    require(kernel.complexity() == (physical ? 39u : 24u), "wrong summand complexity");
+    if (photons == 5) {
+        require(lengths == (physical ? std::vector<std::size_t>{10,30,60}
+                                     : std::vector<std::size_t>{20,60,60,60}), "wrong seven-point orbit sizes");
+        require(amp.complexity() == (physical ? 820u : 920u), "seven-point expanded complexity changed");
+        require(kernel.complexity() == (physical ? 39u : 24u), "seven-point summand complexity changed");
+    } else {
+        require(lengths == (physical ? std::vector<std::size_t>{15,90,90,360,360,360,360}
+                                     : std::vector<std::size_t>{30,180,360,360,360,360,720,720}),
+                "wrong eight-point orbit sizes");
+        require(kernel.complexity() <= (physical ? 91u : 60u), "eight-point summand complexity increased");
+    }
     require(amp.plain_text().find("Sum over all permutations") == 0 &&
             amp.latex().find("\\sum_") == 0, "missing typeset permutation sum");
 
     const auto parameters = model_parameters(qed);
     expression_evaluator full(a,*original,parameters), seed(a,a.parse(compact->summand),parameters);
     const auto mass = evaluate_scalar(a,a.parse(masses.front()),parameters).real();
+    std::vector<real> numerical_masses(particles.size());
+    numerical_masses[0] = numerical_masses[1] = mass;
     for (unsigned sample = 0; sample < 8; ++sample) {
-        const auto p = sample_point({mass,mass,0,0,0,0,0},88031+sample);
+        const auto p = sample_point(numerical_masses,88031+sample);
         auto order = compact->legs;
         complex sum = 0;
         do { sum += seed(permute(p,compact->legs,order)); }
@@ -285,7 +295,8 @@ void test_current(const model& qed, bool physical) {
     amp_expression broken("Plus[" + amp.str() + ",SpinorChain[Spinor[\"Helicity\",\"Square\",3],"
                           "Spinor[\"Helicity\",\"Square\",4]]]",masses);
     const auto residual_symmetry = broken.reduce().permutation_form();
-    require(!residual_symmetry || residual_symmetry->legs == std::vector<int>({5,6,7}),
+    const std::vector<int> spectators(compact->legs.begin()+2,compact->legs.end());
+    require(!residual_symmetry || residual_symmetry->legs == spectators,
             "permuted a leg whose signed orbit was broken");
     amp_expression on_cut(amp.str(),masses,{{{1,3},masses.front()}});
     require(!on_cut.reduce().permutation_form(),"permuted a diagram-local shell");
@@ -311,7 +322,9 @@ int main(int argc, char** argv) {
         model qed(argv[1],3);
         test_current(qed,true);
         test_current(qed,false);
-        std::cout << "Both seven-point kernels reconstruct the signed amplitudes.\n";
+        test_current(qed,true,6);
+        test_current(qed,false,6);
+        std::cout << "Seven- and eight-point kernels reconstruct the signed amplitudes.\n";
     } catch (const std::exception& e) {
         std::cerr << e.what() << '\n';
         return 1;

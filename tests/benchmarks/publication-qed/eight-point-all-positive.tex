@@ -1,0 +1,83 @@
+\section{Six positive-helicity photons}\label{sec:eight-point}
+For $\M(1_e,2_E,3^+,4^+,5^+,6^+,7^+,8^+)$ there are $6!=720$
+orders of the photons along the fermion line. An electron propagator
+separates a nonempty proper subset of the photons from its complement,
+giving $2^6-2=62$ distinct physical channels. The leg containing the
+electron distinguishes the two sides. Write $\sum_{S_6}$ for the
+unnormalized sum over the six photon labels, acting on every occurrence
+of each label, and set
+\[
+ C=m(\sqrt{2}e)^6\ang{\mathbf1\mathbf2},\qquad
+ x_i=\frac{[i12i]}{\tau_{2i}} .
+\]
+
+\paragraph{Physical poles.}
+Choose photons 3 and 4 as the first unordered pair. The first term
+below is symmetric in all four remaining photons. The mass correction
+selects a second pair, 5 and 6. Two contractions enter that correction,
+\[
+ U=[57][715\rangle,\qquad
+ V=[8|p_1(p_5+p_6+p_7)|8].
+\]
+Splitting the three null momenta gives
+$V=[58][815\rangle+[68][816\rangle+[78][817\rangle$.
+With complementary labels shortened by momentum conservation, we find
+\begin{equation}\label{eq:eight-physical}
+\begin{aligned}
+ \M_{++++++}^{\phys}={}&\frac{C}{48}\sum_{S_6}
+ \frac{[34]^2}{\tau_{15}\tau_{16}\tau_{17}\tau_{18}}
+ \bigg\{\frac{x_5 x_6 x_7 x_8}{\tau_{13}\tau_{14}}\\
+ &+\frac{6m^2[56]^2}{\tau_{23}\tau_{24}\tau_{156}}
+ \left[-x_7x_8+\frac{m^2[78]^2}{\tau_{234}}
+ +\frac{4U}{\tau_{1567}}\left(x_8-\frac{V}{\tau_{234}}\right)\right]\bigg\}.
+\end{aligned}
+\end{equation}
+The leading term has $\binom62=15$ distinct images.
+It occurs $2!4!=48$ times under the full sum, accounting for its
+coefficient. On distribution the entire expression has seven photon
+permutation orbits.
+
+\paragraph{Spurious poles.}
+Let $H_i=[i13\rangle$ and $B=6m^2[78]^2/\tau_{234}$.
+The eight orbits of the spurious-pole expression combine into
+\begin{equation}\label{eq:eight-spurious}
+\begin{aligned}
+ \M_{++++++}^{\spur}={}&\frac{C}{24}\sum_{S_6}
+ \frac{[34]}{\tau_{17}\tau_{18}\tau_{23}\ang{35}\ang{36}}
+ \bigg\{\frac{H_5H_6}{\ang{34}\tau_{15}\tau_{16}}
+ \left[\frac{H_7 H_8}{\ang{37}\ang{38}}-B\right]\\
+ &+\frac{2B}{\tau_{1578}}\left([46]+\frac{[623\rangle}{\ang{34}}\right)
+ \left[\frac{H_5}{\tau_{15}}+
+       \frac{H_5-2\ang{37}[57]}{\tau_{178}}\right]\bigg\}.
+\end{aligned}
+\end{equation}
+
+A different arrangement gives a single product for each photon order.
+Take 7 as the reference for the four emissions $3,4,5,6$ and 8 as
+its partner. The successive electron momenta enter the four numerators.
+In the last emission, momentum conservation replaces
+$p_1+p_3+p_4+p_5$ by $-(p_2+p_8)$ inside the sandwich, since $p_6$
+and $p_7$ annihilate its endpoints. With
+$\langle i(ab\ldots)j]=\langle i|(p_a+p_b+\cdots)|j]$, this gives
+\begin{equation}\label{eq:eight-ordered}
+ \M_{++++++}^{\spur}=-C\sum_{S_6}
+ \frac{[78]\,\langle713]\,\langle7(13)4]\,
+        \langle7(134)5]\,\langle7(28)6]}
+ {\ang{78}\ang{73}\ang{74}\ang{75}\ang{76}\,
+  \tau_{27}\tau_{13}\tau_{134}\tau_{1345}\tau_{278}} .
+\end{equation}
+Each choice of the ordered pair $(7,8)$ leaves $4!$ emission orders.
+Thus $6\cdot5\cdot4!=720$ counts every term once. Equation~\eqref{eq:eight-ordered}
+is the shortest to write. Equation~\eqref{eq:eight-spurious} has a lower
+weighted complexity when the momentum sums are counted.
+
+Both constructions obey the 62 signed factorization conditions and the
+fixed-angle $E^{-4}$ bound. We also transcribed
+Eqs.~\eqref{eq:eight-physical}--\eqref{eq:eight-ordered} and tested each
+against the signed sum of 720 Feynman diagrams at 100,000 phase-space
+points. Two points required 160-bit kinematics, where all three formulas
+agreed within $9.1\times10^{-47}$ in relative amplitude. At fixed photon
+helicity and summed over the two fermion spins, polarized MadGraph agreed
+at all 100,000 test points. The largest relative differences in the squared
+amplitude were $2.52\times10^{-12}$, $1.12\times10^{-11}$ and
+$6.88\times10^{-12}$ for the three equations, respectively.
