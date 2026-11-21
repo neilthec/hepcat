@@ -79,6 +79,10 @@ The last column counts the expressions inside the signed sums. The weights inclu
 
 On construction, the C++ reducer groups complete attachment orders by their exchanged-vector poles and orbits under identical-particle permutations. For a path of three equal-mass fermion lines with minimal vector couplings, it joins the two orientations of a bare or radiating end current with the corresponding sign. On reloading an elementary expression, it checks all signed Laurent coefficients against the generated current up to one common scalar before applying those operations. A pole graph alone cannot fix relative signs.
 
+The full C++ construction of the positive-helicity representative at seed 706181 returned these two summands automatically in 159 seconds per pole choice on one worker, including 100,000-point validation. Each passed all 42 physical factorization residues on 1,008 chart samples, fixed-angle $E^{-3}$ growth, reference independence and checks against signed Feynman diagrams. Its elementary output matched the previous seven-point checkpoint byte for byte in both modes. The displayed spurious summand has an additional divisor, independently tested below.
+
+All 47 native regression tests passed. The 40 four-, five- and six-point QED construction rows passed their existing complexity targets and 10,000-point checks (seed 706191). The seven-point four-fermion, three-photon signed replay also passed for both $+++$ and $++-$, at 1,000 points per pole form.
+
 We compared the signed complex amplitudes with the 252 independent Feynman diagrams at 100,000 common momenta and massive-spin assignments for each photon helicity (seed 706181). The signed replay uses the ordinary order of the 288 projected images, including for the spurious form. It reconstructs any point exceeding a relative error of $10^{-8}$ at 160-bit precision. The following are the raw maxima and the number of reconstructed points. Every reconstructed case passed.
 
 | Photon | Representation | Paper raw maximum | Native raw maximum | Paper / native replays | Largest replay error |
