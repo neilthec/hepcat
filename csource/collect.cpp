@@ -778,4 +778,100 @@ std::size_t expression_complexity(const Algebra& source, Id root) {
         throw std::length_error("complexity expansion exceeds the monomial budget");
     }
 }
+
+// A propagator has unit branch count and zero numerator momentum degree.
+// Distinct monomials in these formal variables cannot cancel each other.
+// Expand each coefficient separately to keep large reported scores exact.
+namespace {
+class PropagatorCoefficients {
+    using Blocks = std::map<Id, Id>;
+    Algebra a;
+    const Id one;
+    std::unordered_map<Id, Blocks> memo;
+    std::size_t work = 0;
+    static constexpr std::size_t max_blocks = 20000;
+
+    const Blocks& split(Id id) {
+        if (auto it = memo.find(id); it != memo.end()) return it->second;
+        const auto& n = a.node(id);
+        Blocks result;
+        if (n.head == "PropDen") {
+            result.emplace(id, one);
+        } else if (n.head == "Plus") {
+            std::map<Id, Terms> sums;
+            for (Id term : n.args) {
+                for (auto [key, coeff] : split(term)) sums[key].push_back(coeff);
+                if (sums.size() > max_blocks) throw TooLarge{};
+            }
+            for (auto& [key, terms] : sums) result.emplace(key, a.add(std::move(terms)));
+            if (sums.empty()) result.emplace(one, a.integer(0));
+        } else if (n.head == "Times") {
+            result.emplace(one, one);
+            for (Id factor : n.args) {
+                const auto& other = split(factor);
+                if (other.size() > max_blocks / result.size() ||
+                    (work += other.size() * result.size()) > 4000000) throw TooLarge{};
+                std::map<Id, Terms> sums;
+                for (auto [i, u] : result)
+                    for (auto [j, v] : other)
+                        sums[a.mul({i, j})].push_back(a.mul({u, v}));
+                result.clear();
+                for (auto& [key, terms] : sums) result.emplace(key, a.add(std::move(terms)));
+            }
+        } else if (n.head == "Power" && n.args.size() == 2) {
+            const auto base = n.args.front();
+            const auto& head = a.node(base).head;
+            mpq_class exponent;
+            const bool integer = a.number(n.args[1], exponent) && exponent.get_den() == 1 &&
+                                 exponent.get_num().fits_slong_p();
+            if (head == "PropDen" && integer) {
+                result.emplace(a.pow(base, exponent.get_num().get_si()), one);
+            } else {
+                // Inverses of compound polynomials can absorb grouped factors.
+                // Leave such rational normal forms to the ordinary expansion.
+                mpq_class constant, inner_exponent;
+                const auto& inner = a.node(base);
+                const bool scalar_power = head == "Power" && inner.args.size() == 2 &&
+                    a.number(inner.args[0], constant) && constant > 0 && a.number(inner.args[1], inner_exponent);
+                if (head == "PropDen" || (head == "Power" && !scalar_power) ||
+                    ((head == "Plus" || head == "Times") &&
+                     (!integer || exponent <= 0 || split(base).size() != 1 ||
+                      split(base).begin()->first != one))) throw TooLarge{};
+                result.emplace(one, id);
+            }
+        } else {
+            result.emplace(one, id);
+        }
+        return memo.emplace(id, std::move(result)).first->second;
+    }
+
+  public:
+    explicit PropagatorCoefficients(const Algebra& source) : a(&source), one(a.integer(1)) {}
+    std::size_t score(Id id) {
+        const auto& blocks = split(id);
+        if (blocks.size() <= 1) throw TooLarge{};
+        std::unordered_map<Id, std::size_t> measured;
+        std::size_t total = 0;
+        for (const auto& entry : blocks) {
+            auto [it, fresh] = measured.try_emplace(entry.second);
+            if (fresh) it->second = expression_complexity(a, entry.second);
+            if (it->second >= maxScore - total) throw std::overflow_error("expression complexity overflow");
+            total += it->second;
+        }
+        return total;
+    }
+};
+} // namespace
+
+std::size_t reported_expression_complexity(const Algebra& a, Id id) {
+    try {
+        return expression_complexity(a, id);
+    } catch (const std::length_error&) {
+        try {
+            return PropagatorCoefficients(a).score(id);
+        } catch (const TooLarge&) {
+            throw std::length_error("complexity expansion exceeds the monomial budget");
+        }
+    }
+}
 } // namespace hepcat

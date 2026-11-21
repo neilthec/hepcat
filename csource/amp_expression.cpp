@@ -490,7 +490,7 @@ std::size_t amp_expression::leaf_count() const {
 }
 std::size_t amp_expression::complexity() const {
     std::lock_guard<std::mutex> guard(*kinematics_->lock);
-    return expression_complexity(*arena_, root_);
+    return reported_expression_complexity(*arena_, root_);
 }
 std::size_t amp_expression::particle_count() const { return kinematics_->masses.size(); }
 

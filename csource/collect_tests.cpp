@@ -111,5 +111,17 @@ int main() {
             throw std::runtime_error("Reorganized an unsupported or higher-order pole");
     }
 
+    // More than 131072 full monomials, sharing one small coefficient over
+    // independent poles. Two printed contributions in the first class cancel.
+    std::vector<Id> poles, numerators;
+    for (int i = 0; i < 1024; ++i)
+        poles.push_back(a.pow(a.call("PropDen", {a.integer(i + 1), mass}), -1));
+    for (int i = 0; i < 130; ++i) numerators.push_back(a.atom("n" + std::to_string(i)));
+    auto coefficient = a.mul({a.add(numerators), a.call("MomProd", {a.integer(1), a.integer(2)})});
+    auto many_poles = a.add({a.mul({a.add(poles), coefficient}),
+                             a.mul({a.integer(-1), poles.front(), coefficient})});
+    if (reported_expression_complexity(a, a.mul({a.pow(sqrt2,6), many_poles})) != 1023 * 130 * 9)
+        throw std::runtime_error("Large pole classes did not combine with their correct weights");
+
     std::cout << "Sparse collection identities passed\n";
 }

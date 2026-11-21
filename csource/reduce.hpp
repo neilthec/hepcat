@@ -69,6 +69,7 @@ Id collect_scalar_factors(Algebra&, Id, unsigned max_passes = 1);
 Id collect_simple_fractions(Algebra&, Id);
 Id compact_commuting_products(Algebra&, Id);
 std::size_t expression_complexity(const Algebra&, Id);
+std::size_t reported_expression_complexity(const Algebra&, Id);
 Id reduceSpinor(Algebra&, Id);
 std::optional<Id> commonMomentumSwap(Algebra&, Id first, Id second);
 Id canonical_propagator(Algebra&, Id);
