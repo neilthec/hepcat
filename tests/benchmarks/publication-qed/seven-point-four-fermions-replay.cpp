@@ -1,5 +1,5 @@
-// Compare each signed permutation sum directly with 240 Feynman diagrams.
-// Build and run instructions are in seven-point-four-fermions.md.
+// Compare the signed seven-point permutation sums with the independent Feynman model.
+// Build and run instructions are in seven-point-four-fermions.md and seven-point-six-fermions.md.
 #include "amp_expression.hpp"
 #include "generation_feynman.hpp"
 #include "validation_feynman.hpp"
@@ -25,30 +25,63 @@ using labels = std::array<unsigned, 7>;
 struct image {
     labels from;
     int sign;
+    int leaf_sign = 1;
 };
 
-std::vector<image> signed_images(bool equal_helicities) {
-    std::vector<image> result;
-    labels photons{0, 1, 2, 3, 4, 5, 6};
-    // Leg 7 is fixed when it carries the opposite helicity.
-    const auto photon_end = equal_helicities ? photons.end() : photons.end() - 1;
+// Act on the paper's labels directly. Each Bose group contributes unit
+// weights, while a permutation of either charged species contributes its sign.
+void append_permutations(std::vector<image>& images, const std::vector<unsigned>& positions, bool alternating) {
+    auto order = positions;
+    std::vector<image> next;
     do {
-        for (bool electron : {false, true})
-            for (bool positron : {false, true}) {
-                auto g = photons;
-                if (electron)
-                    std::swap(g[0], g[3]);
-                if (positron)
-                    std::swap(g[1], g[2]);
-                const int sign = electron == positron ? 1 : -1;
-                result.push_back({g, sign});
-                // C acts first on the summand, before the two Fermi exchanges.
-                std::swap(g[0], g[1]);
-                std::swap(g[3], g[2]);
-                result.push_back({g, -sign});
-            }
-    } while (std::next_permutation(photons.begin() + 4, photon_end));
-    return result;
+        int sign = 1;
+        if (alternating)
+            for (size_t i = 0; i < order.size(); ++i)
+                for (size_t j = 0; j < i; ++j)
+                    if (order[j] > order[i]) sign = -sign;
+        for (const auto& in : images) {
+            auto out = in;
+            for (size_t i = 0; i < order.size(); ++i)
+                out.from[positions[i]-1] = in.from[order[i]-1];
+            out.sign *= sign;
+            next.push_back(out);
+        }
+    } while (std::next_permutation(order.begin(),order.end()));
+    images = std::move(next);
+}
+
+std::vector<image> signed_images(const std::vector<std::vector<int>>& photon_groups,
+                                 const std::vector<std::vector<int>>& charged_groups,
+                                 const signed_exchange& charge_reversal) {
+    std::vector<image> images{{{0,1,2,3,4,5,6},1}};
+    for (const auto& legs : photon_groups)
+        append_permutations(images,{legs.begin(),legs.end()},false);
+    for (const auto& legs : charged_groups)
+        append_permutations(images,{legs.begin(),legs.end()},true);
+    const auto count = images.size();
+    for (size_t h = 0; h < count; ++h) {
+        auto reversed = images[h];
+        for (auto [l,r] : charge_reversal.swaps) std::swap(reversed.from[l-1],reversed.from[r-1]);
+        reversed.sign *= charge_reversal.sign;
+        images.push_back(reversed);
+    }
+    return images;
+}
+
+// Compose the two outer-current reversals on the right of charge reversal.
+// Only the emitting-leaf contribution changes sign under a <-> b.
+void append_local_reversal(std::vector<image>& images, unsigned a, unsigned b, int leaf_sign) {
+    const auto size = images.size();
+    for (size_t i = 0; i < size; ++i) {
+        auto next = images[i];
+        std::swap(next.from[a-1], next.from[b-1]);
+        next.leaf_sign *= leaf_sign;
+        images.push_back(next);
+    }
+}
+bool single_swap(const std::vector<signed_exchange>& exchanges, int a, int b, int sign) {
+    return exchanges.size() == 1 && exchanges[0].sign == sign &&
+        exchanges[0].swaps == std::vector<std::pair<int,int>>{{a,b}};
 }
 
 template <class Chart> Chart relabel(const Chart& in, const labels& from) {
@@ -77,59 +110,96 @@ std::string read(const fs::path& path) {
 
 struct comparison {
     std::string name;
-    expression_evaluator seed;
+    expression_evaluator center;
+    std::optional<expression_evaluator> leaf;
     real raw_max = 0, replay_max = 0;
     unsigned replays = 0, failures = 0;
+    std::uint64_t worst_seed = 0;
 };
 
 int run(const fs::path& construction, const fs::path& paper, unsigned points, std::uint64_t first_seed,
         const std::string& helicities) {
-    if (helicities != "+++" && helicities != "++-")
-        throw std::invalid_argument("Expected photon helicities +++ or ++-");
-    const bool equal_helicities = helicities == "+++";
-    const std::vector<std::vector<int>> photon_group{equal_helicities ? std::vector<int>{5, 6, 7}
-                                                                     : std::vector<int>{5, 6}};
-    const auto group = signed_images(equal_helicities);
-    if (group.size() != (equal_helicities ? 48u : 16u))
+    const bool six_fermions = helicities == "+" || helicities == "-";
+    if (!six_fermions && helicities != "+++" && helicities != "++-")
+        throw std::invalid_argument("Expected + or - for six fermions, +++ or ++- for four");
+    using groups = std::vector<std::vector<int>>;
+    const groups photons = six_fermions ? groups{} : helicities == "+++" ? groups{{5,6,7}} : groups{{5,6}};
+    const groups charges = six_fermions ? groups{{1,3,5},{2,4,6}} : groups{{1,4},{2,3}};
+    const signed_exchange reversal = six_fermions ? signed_exchange{{{1,6},{3,4},{5,2}},1}
+                                                 : signed_exchange{{{1,2},{4,3}},-1};
+    auto group = signed_images(photons,charges,reversal);
+    if (six_fermions) {
+        append_local_reversal(group,5,6,1);
+        append_local_reversal(group,1,2,-1);
+    }
+    if (group.size() != (six_fermions ? 288u : helicities == "+++" ? 48u : 16u))
         throw std::runtime_error("Incomplete signed permutation group");
-    std::vector<std::string> names{"e", "E", "E", "e"};
+    std::vector<std::string> names = six_fermions ? std::vector<std::string>{"e","E","e","E","e","E"}
+                                                  : std::vector<std::string>{"e","E","E","e"};
     for (const auto helicity : helicities)
         names.push_back(std::string("A.") + helicity);
     model qed("models", 3), rules("tests/reference-models/calchep", 2);
     Algebra a(&qed.algebra()), fa(&rules.algebra());
-    const auto mass = qed.particle("e").mass;
-    const auto m = a.parse(mass), z = a.integer(0);
-    a.setKinematics({m, m, m, m, z, z, z}, {});
-    std::vector<Id> fm, trees;
-    for (const auto& name : names)
+    std::vector<Id> model_masses, fm, trees;
+    std::vector<std::string> mass_rules;
+    std::vector<real> masses;
+    const auto parameters = model_parameters(qed);
+    for (const auto& name : names) {
+        mass_rules.push_back(qed.particle(name).mass);
+        model_masses.push_back(a.parse(mass_rules.back()));
+        masses.push_back(evaluate_scalar(a,model_masses.back(),parameters).real());
         fm.push_back(fa.parse(rules.particle(generation::feynman_external(rules, name)).mass));
+    }
+    a.setKinematics(model_masses, {});
     fa.setKinematics(fm, {});
     for (const auto& graph : generation::diagram_plans(rules, names))
         trees.push_back(feynman_to_spinors(fa, generation::sew_feynman(fa, rules, names, graph)));
-    if (trees.size() != 240)
+    if (trees.size() != (six_fermions ? 252u : 240u))
         throw std::runtime_error("Incomplete Feynman diagram inventory");
     const expression_evaluator reference(fa, fa.add(trees), model_parameters(rules));
-    const auto parameters = model_parameters(qed);
-    const auto mass_value = evaluate_scalar(a, m, parameters).real();
-    const std::vector<real> masses{mass_value, mass_value, mass_value, mass_value, 0, 0, 0};
-    const std::vector<std::string> mass_rules{mass, mass, mass, mass, "0", "0", "0"};
     std::vector<comparison> cases;
     for (const std::string pref : {"physical", "spurious"}) {
-        auto input = read(construction / pref / "eeeeAAA" / (helicities + ".expr"));
+        auto input = read(construction / pref / (six_fermions ? "eeeeeeA" : "eeeeAAA") / (helicities + ".expr"));
         amp_expression expression(input, mass_rules);
-        const auto native = expression.reduce().signed_permutation_form();
-        if (!native || native->symmetric_groups != photon_group ||
-            native->alternating_groups != std::vector<std::vector<int>>{{1, 4}, {2, 3}} ||
-            !native->joint_exchange || native->joint_exchange->sign != -1 ||
-            native->joint_exchange->swaps != std::vector<std::pair<int, int>>{{1, 2}, {4, 3}})
+        if (six_fermions) expression.reduce(pref == "physical" ? generation_references::physical
+                                                              : generation_references::cyclic);
+        else expression.reduce();
+        const auto native = expression.signed_permutation_form();
+        if (!native || native->symmetric_groups != photons || native->alternating_groups != charges ||
+            !native->joint_exchange || native->joint_exchange->sign != reversal.sign ||
+            native->joint_exchange->swaps != reversal.swaps)
             throw std::runtime_error("Unexpected native permutation group for " + pref);
+        auto evaluator = [&](const std::string& text) {
+            return expression_evaluator(a, a.parse(text), parameters);
+        };
+        std::string native_leaf, native_center;
+        if (six_fermions) {
+            if (!single_swap(native->inner_exchanges,5,6,1) || native->projected_terms.size() != 2)
+                throw std::runtime_error("Unexpected common outer-current projection for " + pref);
+            for (const auto& term : native->projected_terms) {
+                if (single_swap(term.exchanges,1,2,-1)) native_leaf = term.summand;
+                else if (single_swap(term.exchanges,1,2,1)) native_center = term.summand;
+                else throw std::runtime_error("Unknown emitting-line projection");
+            }
+            if (native_leaf.empty() || native_center.empty())
+                throw std::runtime_error("Incomplete emitting-line projections");
+        }
         for (bool automatic : {false, true}) {
-            auto text = automatic ? native->summand : read(paper / (pref + ".expr"));
-            std::string name = pref + (automatic ? " native" : " paper");
-            amp_expression seed(text, mass_rules);
-            std::cout << name << " summand weight " << seed.complexity() << ", leaves " << seed.leaf_count()
-                      << '\n';
-            cases.push_back({name, expression_evaluator(a, a.parse(text), parameters)});
+            const auto name = pref + (automatic ? " native" : " paper");
+            const auto center = automatic ? (six_fermions ? native_center : native->summand)
+                : read(paper / (pref + (six_fermions ? "-center.expr" : ".expr")));
+            amp_expression core(center, mass_rules);
+            comparison result{name, evaluator(center), {}};
+            auto weight = core.complexity(), leaves = core.leaf_count();
+            if (six_fermions) {
+                const auto leaf = automatic ? native_leaf : read(paper / (pref + "-leaf.expr"));
+                amp_expression emission(leaf, mass_rules);
+                weight += emission.complexity();
+                leaves += emission.leaf_count();
+                result.leaf.emplace(evaluator(leaf));
+            }
+            std::cout << name << " summand weight " << weight << ", leaves " << leaves << '\n';
+            cases.push_back(std::move(result));
         }
     }
     std::cout << helicities << ", " << group.size() << " signed images, " << trees.size()
@@ -141,8 +211,11 @@ int run(const fs::path& construction, const fs::path& paper, unsigned points, st
         std::vector<complex> sums(cases.size());
         for (const auto& g : group) {
             auto scene = relabel(p, g.from);
-            for (size_t j = 0; j < cases.size(); ++j)
-                sums[j] += real(g.sign) * cases[j].seed(scene);
+            for (size_t j = 0; j < cases.size(); ++j) {
+                auto term = cases[j].center(scene);
+                if (cases[j].leaf) term += real(g.leaf_sign) * (*cases[j].leaf)(scene);
+                sums[j] += real(g.sign) * term;
+            }
         }
         std::optional<precision::phase_point> wide;
         precision::number wide_ref;
@@ -150,7 +223,10 @@ int run(const fs::path& construction, const fs::path& paper, unsigned points, st
             auto& c = cases[j];
             const auto scale = std::max(std::abs(ref), std::abs(sums[j]));
             const auto rel = scale == 0 ? 0 : std::abs(ref - sums[j]) / scale;
-            c.raw_max = std::max(c.raw_max, rel);
+            if (rel > c.raw_max || !std::isfinite(rel)) {
+                c.raw_max = rel;
+                c.worst_seed = first_seed + i;
+            }
             if (std::isfinite(rel) && rel <= tolerance)
                 continue;
             ++c.replays;
@@ -160,7 +236,12 @@ int run(const fs::path& construction, const fs::path& paper, unsigned points, st
             }
             precision::number sum;
             for (const auto& g : group) {
-                auto value = c.seed.precise(p, relabel(*wide, g.from));
+                const auto scene = relabel(*wide, g.from);
+                auto value = c.center.precise(p, scene);
+                if (c.leaf) {
+                    const auto addition = c.leaf->precise(p, scene);
+                    value = g.leaf_sign < 0 ? value - addition : value + addition;
+                }
                 sum = g.sign < 0 ? sum - value : sum + value;
             }
             const auto denom = std::max(sum.magnitude(), wide_ref.magnitude());
@@ -174,7 +255,7 @@ int run(const fs::path& construction, const fs::path& paper, unsigned points, st
     for (const auto& c : cases) {
         failures += c.failures;
         std::cout << c.name << ", " << points << " points, native maximum " << c.raw_max
-                  << ", 160-bit replays " << c.replays << ", replay maximum " << c.replay_max << ", failures "
+                  << ", worst seed " << c.worst_seed << ", 160-bit replays " << c.replays << ", replay maximum " << c.replay_max << ", failures "
                   << c.failures << '\n';
     }
     return failures ? 1 : 0;
@@ -183,7 +264,7 @@ int run(const fs::path& construction, const fs::path& paper, unsigned points, st
 
 int main(int argc, char** argv) {
     if (argc < 3 || argc > 6) {
-        std::cerr << "Usage: replay-four-fermions RUN_DIR PAPER_SEED_DIR [POINTS [SEED [+++|++-]]]\n";
+        std::cerr << "Usage: replay-four-fermions RUN_DIR PAPER_SEED_DIR [POINTS [SEED [+|-|+++|++-]]]\n";
         return 2;
     }
     try {
