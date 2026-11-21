@@ -330,6 +330,19 @@ Id fourPointCutMinor(Algebra& a, Id product) {
 
 } // namespace
 
+// For a squared propagator momentum, either side of an all-incoming
+// partition gives the same virtuality, with the same internal mass.
+Id canonical_propagator(Algebra& algebra, Id id) {
+    const auto& pole = algebra.node(id);
+    if (pole.head != "PropDen" || pole.args.size() != 2) return id;
+    const auto side = insertion(algebra,pole.args.front());
+    if (!side || side->size() < 2 || side->size()+2 > algebra.masses().size()) return id;
+    const auto other = complement(algebra,*side);
+    const auto& legs = other.size() < side->size() ||
+        (other.size() == side->size() && other < *side) ? other : *side;
+    return algebra.call("PropDen",{momentum(algebra,legs),pole.args.back()});
+}
+
 Id reduceKinematics(Algebra& algebra, Id id, bool useInternal) {
     const auto& n = algebra.node(id);
     if (n.head == "Times" && useInternal && algebra.masses().size() == 4 && !algebra.shells().empty())

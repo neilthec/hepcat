@@ -1,0 +1,136 @@
+\subsection{Five positive helicities and one negative}\label{sec:eight-one-minus}
+Consider $\M(1_e,2_E,3^+,4^+,5^+,6^+,7^+,8^-)$. Write $h=8$ and sum
+over the 120 orderings $(a,b,c,d,f)$ of the positive photons. We use
+$U=\ang{\mathbf1\mathbf2}$ and $H=\ang{\mathbf1 h}\ang{h\mathbf2}$.
+The product of six cubic couplings fixes the common normalization
+$G=-(\sqrt2 e)^6/m$.
+
+\paragraph{Physical poles.}
+Choose the electron as the reference for the positive photons and the
+positron for the negative photon, using the massive momentum projections
+\[
+ V_i(P)=\frac{[i|p_1 P|i]}{\tau_{1i}},\qquad
+ V_h(P)=\frac{\langle h|p_2 P|h\rangle}{\tau_{2h}},\qquad
+ b_{ti}=[ith\rangle .
+\]
+For two positive photons the contact is
+$C_{ij}=-m^2[ij]^2/(\tau_{1i}\tau_{1j})$. For opposite helicities
+it is $C_{hi}=-b_{1i}b_{2i}/(\tau_{1i}\tau_{2h})$.
+The physical result splits into two terms according to the first pair
+on the electron end,
+\begin{equation}\label{eq:eight-one-physical}
+\begin{aligned}
+ \M^{\phys}_{+++++-}=\frac{G}{12}\sum_{S_5}\bigg\{&
+ B_1(a)\big[2V_b(p_a+p_h)R_{cdf}+3C_{bc}R_{df}\big] \\
+ +L_{ab}\big[&
+ (H-3U V_h(p_c)+\tau_{1ab}B_1(\varnothing))R_{cdf}
+ +3U C_{hc}R_{df}\\
+ &+6V_c(p_a)B_2(df)+3C_{cd}B_2(f)\big]\bigg\}.
+\end{aligned}
+\end{equation}
+Here $L_{ab}=C_{ab}/\tau_{1ab}$ attaches the two positive photons to the
+electron. The positive-photon currents at the positron end are
+\begin{align}
+ R_i&=-V_i(p_2)/\tau_{2i},&
+ R_{ij}&=R_iR_j-\frac{m^2[ij]^2}{\tau_{2i}\tau_{2j}\tau_{2ij}},
+ \nonumber\\
+ R_{cdf}&=\frac{1}{\tau_{2cdf}}\sum_{\rm cyc(c,d,f)}
+    \big[C_{df}R_c-V_c(p_2+p_d+p_f)R_{df}\big].
+ \label{eq:eight-one-right}
+\end{align}
+A current $B_t$ includes photon $h$ and the indicated positive photons.
+With $\sigma_1=+1$, $\sigma_2=-1$,
+\[
+ B_t(\varnothing)=\frac{H+U V_h(p_t)}{\tau_{th}},\qquad
+ B_t(i)=\frac{-U b_{ti}^2+\sigma_t H\big(b_{ti}[hi]+V_i(p_t)\tau_{thi}\big)}
+                  {\tau_{th}\tau_{ti}\tau_{thi}} .
+\]
+\begin{equation}\label{eq:eight-one-mixed-end}
+\begin{aligned}
+ \tau_{2dfh}B_2(df)={}&
+ -2V_f(p_2+p_d+p_h)B_2(d)+(H-2U V_h(p_d))R_{df}\\
+ &+ C_{df}B_2(\varnothing)+2U C_{hd}R_f .
+\end{aligned}
+\end{equation}
+The last line uses the exchange of $d$ and $f$ under the permutation
+sum. Cutting a double-sided fermion current between its third and fourth
+emissions gives a product of two three-photon currents, or a contact
+joining two two-photon currents. Expanding the last emission of the left
+three-photon current gives Eq.~\eqref{eq:eight-one-physical}.
+For example $V_i(p_1)=0$, so three positives at the left end start with
+a pair. Their six orderings give the term $6L_{ab}V_c(p_a)B_2(df)$.
+All denominators in these currents are physical electron propagators.
+
+\paragraph{Spurious poles.}
+Choose $h$ as the common reference for the positives. There is a short
+product form in which all spurious denominators are brackets between
+external photons. For a word $(i_1,\ldots,i_5)=(a,b,c,d,f)$ choose the
+middle photon $c$ as the square reference of $h$. Define
+\[
+ Q_k=p_1+\sum_{j=1}^k p_{i_j},\qquad
+ x_j=[i_j|Q_{j-1}|h\rangle,\qquad
+ H_k=H+U\frac{[c|Q_k|h\rangle}{[ch]} .
+\]
+Let $P_{12}$ exchange the two massive momenta and their spin labels.
+Combining the six positions of $h$ in reverse-order pairs gives
+\begin{equation}\label{eq:eight-one-gaps}
+ \M^{\spur}_{+++++-}=G(1-P_{12})\sum_{S_5}
+ \frac{\displaystyle\prod_{j=1}^5 \big(x_j/\ang{h i_j}\big)}
+      {\tau_{2cdf}\tau_{2df}\tau_{2f}}
+ \left[\frac{H_0/\tau_{1h}+H_1/\tau_{1a}}{\tau_{1ah}}
+           +\frac{H_2}{\tau_{1a}\tau_{1ab}}\right].
+\end{equation}
+Indeed $[i|p_h|h\rangle=0$, so every gap has the same orbital product.
+At a fixed positive-photon order the Ward identity telescopes between
+successive gaps, allowing the reference choice $c$ for that order.
+Reversal preserves the middle photon. Exchanging the two endpoints then
+takes each $x_j$ to the negative of its mirror and leaves the mirrored
+$H_k$ invariant. Five orbital factors supply the minus in $1-P_{12}$.
+
+A lower-weight form combines the positive emissions on each side of a
+marked photon before multiplying the currents. Use the insertion
+$W_i$ of Eq.~\eqref{eq:seven-insertion} with $h=8$:
+$W_i=x(Ux-H[hi])/(ZZ')$, where $x=[i|Q|h\rangle$ and
+$Z=[h|Q|h\rangle$, $Z'=[h|Q+p_i|h\rangle$. Here $Q$ is the
+electron momentum just before emitting $i$. The five marked emissions
+give two mirror pairs and a central term,
+\begin{equation}\label{eq:eight-one-ward}
+\begin{aligned}
+ \M^{\spur}_{+++++-}=G(1-P_{12})\sum_{S_5}\big[&
+ W_a J_2(f,d,c,b)+J_1(a)W_bJ_2(f,d,c)\\
+ &+\tfrac12 J_1(a,b)W_c J_2(f,d)\big].
+\end{aligned}
+\end{equation}
+The half counts the central insertion once. The one-, two- and three-photon
+currents are given in Eq.~\eqref{eq:seven-ends} with $7$ replaced by $h$.
+Only one longer current is needed. Write $\ell_i=J_t(i)$,
+$C=-m^2[ij]^2/(\tau_{ti}\tau_{tj}\tau_{tij})$ and
+$w=\sigma_t[l|(p_t+p_i+p_j+p_k)|h\rangle/\ang{hl}$. Then
+\begin{equation}\label{eq:eight-one-tail}
+ J_t(i,j,k,l)=\frac{\ell_i\ell_j\ell_k\ell_l}{24}
+ +\frac{C}{4\tau_{tijkl}}\left[
+  2w\left(\ell_k-\frac{2\sigma_t[ki][kti\rangle}{\tau_{tk}\tau_{tijk}}\right)
+     +\tau_{tij}\ell_k\ell_l\right].
+\end{equation}
+The first term sums four independent emissions. In the remainder, a
+two-photon contraction either seeds the four-photon current directly or
+is inherited from the three-photon current through the last emission.
+Equation~\eqref{eq:eight-one-gaps} avoids the internal $Z$ poles that
+cancel between terms in Eq.~\eqref{eq:eight-one-ward}.
+
+\paragraph{Numerical checks.}
+Both constructions satisfy all 62 physical residues and the fixed-angle
+$E^{-4}$ bound. We compared independent transcriptions of
+Eqs.~\eqref{eq:eight-one-physical}, \eqref{eq:eight-one-gaps}
+and \eqref{eq:eight-one-ward} with the signed sum of 720 Feynman
+diagrams at the same 100,000 phase-space points. At $m=0.0005$ the
+three formulas required 0, 535 and 11,317 replays, respectively, above
+a native relative tolerance of $10^{-8}$. All passed at 160 bits.
+At a separate 100,000 points with $m=1$ we compared the squared
+amplitudes with polarized MadGraph, summing the four electron and positron
+spin assignments. The physical and external-bracket formulas agreed to
+$7.8\times10^{-12}$ and $5.1\times10^{-10}$, respectively, in native
+arithmetic. The Ward form required 77 replays above $10^{-7}$ and agreed
+to $3.1\times10^{-13}$ on those points. The external-bracket form thus
+retains the compact permutation sum with substantially less cancellation
+in these samples.

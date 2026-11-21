@@ -50,6 +50,7 @@ Terms expand(Algebra& a, Id id, std::size_t& work, std::size_t limit = max_terms
 class relabel {
     Algebra& a;
     std::vector<int> images;
+    bool match_partitions;
     std::unordered_map<Id, Id> cache;
 
     Id label(Id id) {
@@ -68,8 +69,8 @@ class relabel {
         return a.integer(images[k - 1]);
     }
 public:
-    relabel(Algebra& a, const std::vector<int>& from, const std::vector<int>& to)
-        : a(a), images(a.masses().size()) {
+    relabel(Algebra& a, const std::vector<int>& from, const std::vector<int>& to, bool match_partitions = false)
+        : a(a), images(a.masses().size()), match_partitions(match_partitions) {
         for (std::size_t i = 0; i < images.size(); ++i) images[i] = static_cast<int>(i + 1);
         for (std::size_t i = 0; i < from.size(); ++i) images[from[i] - 1] = to[i];
     }
@@ -124,6 +125,7 @@ public:
                 }
             }
             out = a.call(n.head,std::move(args));
+            if (match_partitions && n.head == "PropDen") out = canonical_propagator(a,out);
             if (negative) out = a.mul({a.integer(-1),out});
         } else if (n.compound && n.head != "Rational" && n.head != "ModelParameter") {
             throw Unsupported{};
@@ -261,12 +263,13 @@ public:
     kernel_reducer(Algebra& algebra, const std::vector<std::vector<int>>& groups) : a(algebra) {
         std::vector<int> from;
         std::vector<std::vector<int>> images(1);
+        const auto limit = groups.size()==1 && groups.front().size()==5 ? 120u : 24u;
         for (auto group : groups) {
             std::sort(group.begin(),group.end());
             from.insert(from.end(),group.begin(),group.end());
             std::vector<std::vector<int>> product;
             do {
-                if (product.size()+images.size()>24) throw Unsupported{};
+                if (product.size()+images.size()>limit) throw Unsupported{};
                 for (auto prefix : images) {
                     prefix.insert(prefix.end(),group.begin(),group.end());
                     product.push_back(std::move(prefix));
@@ -588,7 +591,8 @@ std::optional<permutation_sum> recognize_ordered_current(Algebra& a, Id input, s
     const auto massless = static_cast<std::size_t>(std::count(masses.begin(),masses.end(),zero));
     try {
         if (masses.size() == 7 && (massless == 3 || massless == 1)) return recognize_exchange(a,input,preference);
-        if (massless + 2 != masses.size() || a.cost(input) > 18000) return {};
+        const bool wide = massless >= 6;
+        if (massless + 2 != masses.size() || a.cost(input) > (wide ? 120000u : 18000u)) return {};
         const auto weights = external_spin_weights(a,input);
         if (!weights) return {};
         std::vector<int> ends, positive, negative;
@@ -603,10 +607,11 @@ std::optional<permutation_sum> recognize_ordered_current(Algebra& a, Id input, s
         const bool paired = count == 2 && positive.size()+negative.size() == 5;
         if (ends.size() != 2 || masses[ends[0]-1] != masses[ends[1]-1] ||
             (count != 1 && !paired)) return {};
-        relabel canonical(a,{},{});
+        relabel canonical(a,{},{},true);
         auto expanded = [&](Id expr) {
-            std::size_t work = paired ? 200000 : 50000;
-            return a.add(expand(a,canonical(expr),work,paired ? 4096 : max_terms));
+            // Certify the larger currents against every signed Laurent coefficient.
+            std::size_t work = wide ? 800000 : paired ? 200000 : 50000;
+            return a.add(expand(a,canonical(expr),work,wide ? 16000 : paired ? 4096 : max_terms));
         };
         const auto original = expanded(input);
         const auto& sum = a.node(original);
@@ -708,7 +713,7 @@ Id expand_signed_operators(Algebra& a, const permutation_sum& sum) {
 
 Id simplify_permutation_kernel(Algebra& a, Id input, const std::vector<int>& legs,
                                const std::vector<std::vector<int>>& other_groups) {
-    if (legs.size() < 3 || legs.size() > 4 || a.cost(input) > 16000) return input;
+    if (legs.size() < 3 || legs.size() > 5 || a.cost(input) > 16000) return input;
     try {
         std::vector<std::vector<int>> groups{legs};
         groups.insert(groups.end(),other_groups.begin(),other_groups.end());

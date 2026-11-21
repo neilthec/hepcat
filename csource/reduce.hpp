@@ -71,6 +71,7 @@ Id compact_commuting_products(Algebra&, Id);
 std::size_t expression_complexity(const Algebra&, Id);
 Id reduceSpinor(Algebra&, Id);
 std::optional<Id> commonMomentumSwap(Algebra&, Id first, Id second);
+Id canonical_propagator(Algebra&, Id);
 Id reduceKinematics(Algebra&, Id, bool useInternal = true);
 
 } // namespace hepcat

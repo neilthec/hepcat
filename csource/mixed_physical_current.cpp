@@ -60,7 +60,7 @@ struct dirac_recursion {
     // Sum the insertions of the only opposite-helicity photon into a fixed
     // ordering of its companions. Their common chiral reference makes every
     // orbital numerator independent of the position of the insertion.
-    Id ward_summand() {
+    Id ward_summand(bool fold_ends) {
         const int n = static_cast<int>(vectors.size()) - 1;
         const int h = vectors.back();
         auto prefix = [](int k) -> mask { return (mask{1} << k) - 1; };
@@ -95,32 +95,52 @@ struct dirac_recursion {
         auto tail = [&](bool left, int marked) {
             const int end = left ? l : r;
             const int count = left ? marked : n-1-marked;
-            if (count == 2 || count == 3) {
-                // Sum the permutations of three orbital emissions before attaching
-                // them. The disconnected product has six equal images. A marked
-                // determinant has two; its recoil can use either leg of the pair.
+            if (count >= 2) {
+                // Write the symmetric scalar tail as its product of independent
+                // endpoint emissions plus a remainder. The remainder is sourced
+                // by one unordered two-photon determinant. At rank s it can
+                // also inherit the remainder at rank s-1 through one emission.
                 const int step = left ? 1 : -1;
                 const int i = left ? 0 : n-1, j = i+step;
-                auto bit = [](int i) { return mask{1} << i; };
+                auto bit = [](int v) { return mask{1} << v; };
                 auto single = [&](int index) {
                     const int v = vectors[index];
                     const Id numerator = chain(!swapped,v,{end},h);
                     return a.mul({left ? numerator : neg(numerator),inv(pole(end,bit(index))),
                                   inv(chain(swapped,h,{},v))});
                 };
-                const Id pair = neg(a.mul({a.pow(mass,2),a.pow(chain(!swapped,vectors[i],{},vectors[j]),2),
-                                      inv(pole(end,bit(i))),inv(pole(end,bit(j))),inv(pole(end,bit(i)|bit(j)))}));
-                if (count == 2)
-                    return a.mul({inv(a.integer(2)),a.add({a.mul({single(i),single(j)}),pair})});
-                const int k = j+step;
-                const Id recoil = a.mul({a.integer(left ? -1 : 1),chain(!swapped,vectors[k],{},vectors[i]),
-                                         chain(!swapped,vectors[k],{end},vectors[i]),inv(pole(end,bit(k)))});
-                const mask three = bit(i)|bit(j)|bit(k);
-                const bool shorter_complement = std::bitset<32>(full ^ three).count() < 3;
-                const Id total_pole = shorter_complement ? pole(left ? r : l,full ^ three) : pole(end,three);
-                return a.add({a.mul({single(i),single(j),single(k),inv(a.integer(6))}),
-                              a.mul({pair,inv(a.integer(2)),
-                                     a.add({single(k),a.mul({a.integer(2),recoil,inv(total_pole)})})})});
+                const auto total_pole = [&](mask set) {
+                    return std::bitset<32>(full^set).count() < std::bitset<32>(set).count()
+                        ? pole(left ? r : l,full^set) : pole(end,set);
+                };
+                mask set = bit(i)|bit(j);
+                const Id source = neg(a.mul({a.pow(mass,2),a.pow(chain(!swapped,vectors[i],{},vectors[j]),2),
+                                              inv(pole(end,bit(i))),inv(pole(end,bit(j)))}));
+                const Id pair = a.mul({source,inv(total_pole(set))});
+                Id product = a.mul({single(i),single(j)});
+                Id remainder = a.mul({pair,inv(a.integer(2))});
+                Id spectators = one();
+                unsigned factorial = 2;
+                for (int s=3; s<=count; ++s) {
+                    const int k=i+step*(s-1), leg=vectors[k];
+                    set |= bit(k);
+                    factorial *= s;
+                    const Id emission=single(k);
+                    product=a.mul({product,emission});
+                    spectators=a.mul({spectators,emission});
+                    if (s==3) {
+                        const Id recoil = a.mul({a.integer(left ? -1 : 1),chain(!swapped,leg,{},vectors[i]),
+                            chain(!swapped,leg,{end},vectors[i]),inv(pole(end,bit(k)))});
+                        remainder = a.mul({pair,inv(a.integer(2)),
+                                    a.add({emission,a.mul({a.integer(2),recoil,inv(total_pole(set))})})});
+                    } else {
+                        const auto vertex=a.mul({sandwich(leg,k),inv(chain(swapped,h,{},leg))});
+                        const auto pairs=inv(a.integer(factorial/(s*(s-1)/2)));
+                        remainder=a.mul({inv(total_pole(set)),
+                               a.add({a.mul({vertex,remainder}),a.mul({pairs,source,spectators})})});
+                    }
+                }
+                return a.add({a.mul({product,inv(a.integer(factorial))}),remainder});
             }
             std::vector<Id> factors;
             for (int j = left ? 0 : marked+1; j < (left ? marked : n); ++j)
@@ -130,11 +150,16 @@ struct dirac_recursion {
         };
         std::vector<Id> marked;
         for (int k = 0; k < n; ++k) {
+            // Reflect the ordered word and exchange the massive endpoints.
+            // The orbital tails give (-1)^(n-1) and the marked vertex gives -1.
+            // An unpaired central insertion occurs twice under this projector.
+            if (fold_ends && k > n-1-k) break;
+            const Id multiplicity = fold_ends && k==n-1-k ? inv(a.integer(2)) : one();
             const int leg = vectors[k];
             const Id momentum = sandwich(leg,k);
             // Consecutive insertion weights differ by Schouten. Their
             // longitudinal parts telescope, including the two external ends.
-            marked.push_back(a.mul({tail(true,k),tail(false,k),momentum,
+            marked.push_back(a.mul({multiplicity,tail(true,k),tail(false,k),momentum,
                     a.add({a.mul({unit,momentum}),neg(a.mul({spin,chain(!swapped,h,{},leg)}))}),
                     inv(difference(k)),inv(difference(k+1))}));
         }
@@ -731,7 +756,10 @@ std::optional<permutation_sum> ordered_minority_sum(Algebra& a, int l, int r, Id
     auto vectors = companions;
     vectors.push_back(minority.front());
     dirac_recursion line{a,l,r,mass,coefficient,vectors,{},swapped,(1u << vectors.size())-1};
-    return permutation_sum{companions,line.ward_summand(),{}};
+    const bool fold_ends = companions.size() >= 5;
+    permutation_sum sum{companions,line.ward_summand(fold_ends),{}};
+    if (fold_ends) sum.joint_exchange = signed_exchange{{{l,r}},companions.size()%2 ? -1 : 1};
+    return sum;
 }
 
 std::optional<permutation_sum> paired_weyl_sum(Algebra& a, int l, int r, Id mass,

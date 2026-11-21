@@ -86,7 +86,9 @@ void test_single_minority(std::vector<int> majority, int minority, bool conjugat
     for (const auto& sum : {physical,ward}) {
         if (!sum) continue;
         const Id reduced = simplify_permutation_kernel(a,sum->kernel,majority);
-        const expression_evaluator kernel(a,reduced,{});
+        auto projected = *sum;
+        projected.kernel = reduced;
+        const expression_evaluator kernel(a,expand_signed_operators(a,projected),{});
         for (unsigned sample = 0; sample < 5; ++sample) {
             const auto p = sample_point(numerical_masses,553171+sample);
             const auto expected = full(p);
@@ -150,38 +152,54 @@ void test_paired_weyl(bool physical, bool conjugate, bool shuffled) {
     require(!recognize_ordered_current(a,changed),"stripped a momentum-dependent coefficient");
 }
 
-void test_reloaded_minority(bool physical, bool conjugate, bool shuffled) {
+void test_reloaded_minority(bool physical, bool conjugate, bool shuffled, bool five = false) {
     Algebra a;
     const Id mass = a.atom("m"), zero = a.integer(0);
-    std::vector<std::string> masses(7,"0");
+    std::vector<std::string> masses(five ? 8 : 7,"0");
     int left = shuffled ? 5 : 1, right = 2;
     masses[left-1] = masses[right-1] = "m";
-    std::vector<Id> shell(7,zero);
+    std::vector<Id> shell(masses.size(),zero);
     shell[left-1] = shell[right-1] = mass;
     a.setKinematics(shell,{});
     // Change the fixed square reference, fermion ordering, names and overall
     // normalization. No model, particles, graphs or saved kernel are passed
     // to amp_expression.
-    const std::vector<int> majority = shuffled ? std::vector<int>{6,1,3,4} : std::vector<int>{3,4,5,6};
-    const std::vector<int> minority{7};
+    std::vector<int> majority = shuffled ? std::vector<int>{6,1,3,4} : std::vector<int>{3,4,5,6};
+    if (five) majority.push_back(7);
+    const std::vector<int> minority{five ? 8 : 7};
     const auto& plus = conjugate ? minority : majority;
     const auto& minus = conjugate ? majority : minority;
     const auto build = physical ? mixed_physical_current : mixed_spurious_current;
     const Id normalization = a.mul({a.exact(mpq_class(-7,3)),a.pow(a.atom("g"),5)});
     const Id original = build(a,left,right,mass,plus,minus,normalization).value();
-    amp_expression loaded(a.format(original),masses);
+    auto saved = a.format(original);
+    if (five && !physical) {
+        // A saved construction can name either side of an electron pole.
+        // Change a single occurrence, leaving the remaining orderings alone.
+        const std::string side = "PropDen[Mom[Multiparticle[2,3,4,5]],m]";
+        const auto position = saved.find(side);
+        require(position != std::string::npos,"missing central test propagator");
+        saved.replace(position,side.size(),"PropDen[Mom[Multiparticle[1,6,7,8]],m]");
+    }
+    amp_expression loaded(saved,masses);
     const auto sum = loaded.reduce().permutation_form();
     auto sorted = majority;
     std::sort(sorted.begin(),sorted.end());
     require(sum && sum->legs == sorted && sum->orbit_sizes.empty(),
             "standalone reduction did not recover the ordered-current representation");
-    if (!shuffled) {
+    if (five) {
+        const auto projection=loaded.signed_permutation_form();
+        require(projection && (physical || (projection->joint_exchange &&
+                projection->joint_exchange->sign==-1)), "missing fermion-line reflection");
+        const auto weight=loaded.permutation_summand_complexity().value();
+        require(weight <= (physical ? 1028u : 807u),"six-photon summand grew");
+    } else if (!shuffled) {
         amp_expression kernel(sum->summand,masses);
         require(kernel.complexity() <= (physical ? 331u : 408u),"standalone summand regressed in complexity");
     }
     parameters pars{{"g",2},{"m",1}};
     expression_evaluator kernel(a,a.parse(sum->summand),pars), full(a,original,pars);
-    std::vector<real> values(7,0);
+    std::vector<real> values(masses.size(),0);
     values[left-1] = values[right-1] = 1;
     for (unsigned i=0;i<4;++i) {
         const auto p = sample_point(values,132317+i);
@@ -191,7 +209,7 @@ void test_reloaded_minority(bool physical, bool conjugate, bool shuffled) {
         const auto expected = full(p);
         require(std::abs(total-expected) <= 1e-7L*std::abs(expected),"reloaded signed amplitude differs");
     }
-    if (shuffled) return;
+    if (shuffled || five) return;
     const Id spectator = a.call("PropDen",{a.call("Mom",{a.call("Multiparticle",{a.integer(left),a.integer(3)})}),mass});
     require(!recognize_ordered_current(a,a.mul({spectator,original})),
             "pulled a leg-dependent factor through a permutation sum");
@@ -315,6 +333,8 @@ int main(int argc, char** argv) {
         test_reloaded_minority(true,false,false);
         test_reloaded_minority(false,false,false);
         test_reloaded_minority(false,true,true);
+        test_reloaded_minority(true,false,false,true);
+        test_reloaded_minority(false,false,false,true);
         test_paired_weyl(true,false,false);
         test_paired_weyl(false,false,false);
         test_paired_weyl(true,true,true);

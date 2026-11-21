@@ -5,7 +5,7 @@
 // The example above constructs all four photon helicities and runs the CalcHEP
 // and MadGraph checks at 100,000 phase-space points by default. To run the entire
 // study, including all seven-point processes, the eight-point equal-helicity
-// construction, and the independent formula
+// and single-negative-photon constructions, and the independent formula
 // comparisons through eight photons, run without arguments. Use --legs 7
 // to construct just the seven-point processes.
 // Use --list to see families and --help for installation paths and other options.
@@ -100,8 +100,9 @@ const std::vector<family> notebook = {
     {"eeeeeeA", {"e", "E", "e", "E", "e", "E"},
      {prediction("+", 85248, 85248), prediction("-", 85248, 85248)}},
 
-    // The first eight-point construction tests the equal-helicity formula after sewing.
-    {"eeAAAAAA", {"e", "E"}, {{"++++++", 16515, 16530, reference_source::all_positive_formula, false}}},
+    // Six photons, with an independent equal-helicity reference or a signed Feynman comparison.
+    {"eeAAAAAA", {"e", "E"}, {{"++++++", 16515, 16530, reference_source::all_positive_formula, false},
+                              prediction("+++++-", 59110, 69988)}},
 };
 
 struct settings {
@@ -355,8 +356,24 @@ bool construct_family(const settings& run, const construction_models& models, co
         return false;
     }
     std::cout << "\n  External validation\n" << std::flush;
-    const bool external_passed =
-        validate_export(run, models.vertices, process, components, directory, log);
+    // Photon permutations preserve the number of negative helicities. Until
+    // every such sector is available, export each known helicity separately.
+    const auto photons = process.examples.front().helicities.size();
+    std::set<std::size_t> sectors;
+    for (const auto& entry : process.examples)
+        sectors.insert(std::count(entry.helicities.begin(),entry.helicities.end(),'-'));
+    bool external_passed = true;
+    if (components.size()>1 && sectors.size()!=photons+1) {
+        for (std::size_t i=0; i<components.size(); ++i) {
+            const auto& entry=process.examples[i];
+            const family polarized{process.name,process.fermions,{entry}};
+            const auto destination=directory/entry.helicities;
+            fs::create_directories(destination);
+            external_passed &= validate_export(run,models.vertices,polarized,{components[i]},destination,log);
+        }
+    } else {
+        external_passed = validate_export(run, models.vertices, process, components, directory, log);
+    }
     return meets_targets && external_passed;
 }
 
