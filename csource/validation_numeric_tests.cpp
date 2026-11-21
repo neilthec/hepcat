@@ -65,6 +65,41 @@ void check_evaluator() {
         p.change_references(k + 1000);
         require(std::abs(ref(p) - before) > 1e-12L && brackets(p) == b, "reference-only change");
     }
+    // The two brackets depend on overlapping subsets, and the fourth
+    // massive leg is absent. Test a partial spin sum in a permuted order.
+    const auto multispin =
+        f("Plus[Power[SpinorChain[Spinor[\"Spin\",\"Angle\",1],Spinor[\"Spin\",\"Angle\",2]],2],"
+          "Times[SpinorChain[Spinor[\"Spin\",\"Square\",2],Mom[4],Spinor[\"Spin\",\"Angle\",3]],"
+          "Power[PropDen[Mom[Multiparticle[1,3]],0],-1]]]");
+    const auto bilinear = [](unsigned i, unsigned j) {
+        return "SpinorChain[Spinor[\"Spin\",\"Angle\"," + std::to_string(i) + "],Spinor[\"Spin\",\"Angle\"," +
+               std::to_string(j) + "]]";
+    };
+    const auto ab = bilinear(1, 2), cd = bilinear(3, 4), bc = bilinear(2, 3), ad = bilinear(1, 4);
+    const auto shared =
+        f("Plus[Times[" + ab + "," + bc + "," + cd + "],Times[-1," + ab + "," + bc + "," + ad +
+          "],"
+          "Times[" +
+          ab + "," + ad + "," + cd + "],Times[-1," + bc + "," + ad + "," + cd + "]]");
+    for (const auto &amplitude : {multispin, shared}) {
+        for (const auto legs : {std::vector<size_t>{}, {2, 0}, {3, 2, 0, 1}}) {
+            const auto sum = amplitude.spin_sum(legs);
+            for (unsigned k = 0; k < 4; ++k) {
+                auto p = sample_point({1, 1, 1, 1}, 83700 + k);
+                const auto fast = sum(p);
+                real expected = 0;
+                for (size_t state = 0; state < (size_t{1} << legs.size()); ++state) {
+                    for (size_t j = 0; j < legs.size(); ++j) {
+                        const auto t = legs[j], spin = (state >> j) & 1;
+                        p.angles[t] = p.angle_basis[t][spin];
+                        p.squares[t] = p.square_basis[t][spin];
+                    }
+                    expected += std::norm(amplitude(p));
+                }
+                require(std::abs(fast - expected) < 1e-13L * expected, "factorized massive spin sum");
+            }
+        }
+    }
     // The scalar arithmetic loses both components of a small complex summand.
     // Replay must use the same spinor sample, including its imaginary phase.
     std::string chain = "SpinorChain[Spinor[\"Spin\",\"Angle\",1],Spinor[\"Helicity\",\"Angle\",3]]";

@@ -1,15 +1,16 @@
 // Compare each full printed formula to the signed tree sum or a polarized MadGraph rate.
 #pragma once
-#include "generation_feynman.hpp"
 #include "continuations.hpp"
+#include "generation_feynman.hpp"
+#include "madgraph-runtime.hpp"
 #include "validation_feynman.hpp"
 #include "validation_numeric.hpp"
 #include "validation_precision.hpp"
-#include "madgraph-runtime.hpp"
 #include <algorithm>
 #include <cmath>
 #include <iostream>
 #include <map>
+#include <numeric>
 #include <optional>
 #include <stdexcept>
 
@@ -17,7 +18,9 @@ namespace eight_point_validation {
 using namespace hepcat;
 using namespace hepcat::validation;
 using formulas = std::vector<std::pair<const char *, Id>>;
-template <class Build> int run(int argc, char **argv, const std::vector<int> &photons, Build build) {
+template <class Build>
+int run(int argc, char **argv, const std::vector<int> &photons, Build build,
+        std::vector<std::string> names = {"e", "E"}, std::size_t expected_trees = 720) {
     try {
         if (argc != 3 && argc != 4)
             throw std::invalid_argument("usage: replay POINTS SEED [MG_LIBRARY]");
@@ -30,7 +33,7 @@ template <class Build> int run(int argc, char **argv, const std::vector<int> &ph
         Algebra a(&qed.algebra()), fa(&rules.algebra());
         const auto parameters =
             mg ? model_parameters(qed, {{"Me", 1}, {"EE", 1.L / 3}}) : model_parameters(qed);
-        std::vector<std::string> names{"e", "E"};
+        const auto fermions = names.size();
         for (int sign : photons)
             names.push_back(sign > 0 ? "A.+" : "A.-");
         std::vector<Id> masses, fm;
@@ -55,6 +58,13 @@ template <class Build> int run(int argc, char **argv, const std::vector<int> &ph
         std::vector<test> comparisons;
         for (auto [name, sum] : build(a, masses.front(), e->symbol))
             comparisons.push_back({name, expression_evaluator(a, sum, parameters)});
+        std::vector<std::function<real(const point &)>> spin_sums;
+        if (mg) {
+            std::vector<size_t> massive(fermions);
+            std::iota(massive.begin(), massive.end(), 0);
+            for (const auto &t : comparisons)
+                spin_sums.push_back(t.evaluator.spin_sum(massive));
+        }
         std::optional<expression_evaluator> feynman, replay_feynman;
         std::optional<hepcat_spinas::madgraph_detail::Reference> external;
         if (mg)
@@ -63,25 +73,25 @@ template <class Build> int run(int argc, char **argv, const std::vector<int> &ph
             std::vector<Id> trees;
             for (const auto &tree : generation::diagram_plans(rules, names))
                 trees.push_back(feynman_to_spinors(fa, generation::sew_feynman(fa, rules, names, tree)));
-            if (trees.size() != 720)
-                throw std::runtime_error("expected 720 Feynman diagrams");
+            if (trees.size() != expected_trees)
+                throw std::runtime_error("unexpected Feynman graph count " + std::to_string(trees.size()));
             const auto tree_sum = fa.add(trees);
             feynman.emplace(fa, tree_sum, model_parameters(rules));
             // The native test uses independent Xi spinors. In the 160-bit
-            // replay, the same six polarizations can use a common chiral
-            // reference. Vanishing brackets then drop out of the same 720 trees.
+            // replay, the external polarizations can use known chiral
+            // reference. Vanishing brackets then drop out of the same tree sum.
             std::map<Id, reference_choice> refs;
             for (std::size_t i = 0; i < photons.size(); ++i) {
-                const int leg = static_cast<int>(i) + 3;
+                const int leg = static_cast<int>(fermions + i + 1);
                 auto opposite = std::find(photons.begin(), photons.end(), -photons[i]);
                 if (opposite == photons.end())
-                    throw std::logic_error("expected mixed photon helicities");
+                    opposite = photons.begin() + (i + 1) % photons.size();
                 if (photons[i] < 0) {
                     const auto second = std::find(opposite + 1, photons.end(), 1);
                     if (second != photons.end())
                         opposite = second;
                 }
-                const int ref = 3 + static_cast<int>(opposite - photons.begin());
+                const int ref = static_cast<int>(fermions + 1 + (opposite - photons.begin()));
                 auto xi = fa.call("Spinor",
                                   {fa.atom("\"Xi\""), fa.atom(photons[i] > 0 ? "\"Angle\"" : "\"Square\""),
                                    fa.integer(leg)});
@@ -102,27 +112,22 @@ template <class Build> int run(int argc, char **argv, const std::vector<int> &ph
                     for (auto x : p.momenta[i])
                         momenta.push_back(i < 2 ? x : -x);
                 std::vector<int> helicities(names.size(), 1);
-                std::copy(photons.begin(), photons.end(), helicities.begin() + 2);
+                std::copy(photons.begin(), photons.end(), helicities.begin() + fermions);
                 real expected = 0;
                 std::vector<real> rates(comparisons.size(), 0);
-                for (int i : {0, 1})
-                    for (int j : {0, 1}) {
-                        helicities[0] = 2 * i - 1;
-                        helicities[1] = 2 * j - 1;
-                        const auto weight = external->evaluate(momenta, helicities);
-                        if (!(std::isfinite(weight) && weight >= 0))
-                            throw std::runtime_error("invalid MadGraph weight");
-                        expected += weight;
-                        for (unsigned t : {0u, 1u}) {
-                            const int s = t == 0 ? i : j;
-                            p.angles[t] = p.angle_basis[t][s];
-                            p.squares[t] = p.square_basis[t][s];
-                        }
-                        for (unsigned k = 0; k < rates.size(); ++k)
-                            rates[k] += std::norm(comparisons[k].evaluator(p));
+                for (unsigned state = 0; state < (1u << fermions); ++state) {
+                    for (unsigned t = 0; t < fermions; ++t) {
+                        const int s = (state >> t) & 1;
+                        helicities[t] = 2 * s - 1;
                     }
+                    const auto weight = external->evaluate(momenta, helicities);
+                    if (!(std::isfinite(weight) && weight >= 0))
+                        throw std::runtime_error("invalid MadGraph weight");
+                    expected += weight;
+                }
                 for (unsigned k = 0; k < rates.size(); ++k) {
                     auto &t = comparisons[k];
+                    rates[k] = spin_sums[k](p);
                     const auto scale = std::max(rates[k], expected);
                     const auto diff = scale ? std::abs(rates[k] - expected) / scale : 0;
                     t.maximum = std::max(t.maximum, diff);
@@ -131,16 +136,15 @@ template <class Build> int run(int argc, char **argv, const std::vector<int> &ph
                     ++t.replays;
                     auto chart = precision::reconstruct(p);
                     precision::scalar total(0, precision::bits);
-                    for (int i : {0, 1})
-                        for (int j : {0, 1}) {
-                            for (unsigned leg : {0u, 1u}) {
-                                const int state = leg == 0 ? i : j;
-                                chart.angles[leg] = chart.angle_basis[leg][state];
-                                chart.squares[leg] = chart.square_basis[leg][state];
-                            }
-                            const auto z = t.evaluator.precise(p, chart);
-                            total += z.x * z.x + z.y * z.y;
+                    for (unsigned state = 0; state < (1u << fermions); ++state) {
+                        for (unsigned leg = 0; leg < fermions; ++leg) {
+                            const int spin = (state >> leg) & 1;
+                            chart.angles[leg] = chart.angle_basis[leg][spin];
+                            chart.squares[leg] = chart.square_basis[leg][spin];
                         }
+                        const auto z = t.evaluator.precise(p, chart);
+                        total += z.x * z.x + z.y * z.y;
+                    }
                     const auto corrected = precision::narrow_real(total);
                     const auto high_scale = std::max(corrected, expected);
                     const auto replay = high_scale ? std::abs(corrected - expected) / high_scale : 0;

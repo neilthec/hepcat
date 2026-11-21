@@ -603,6 +603,7 @@ struct replay_step {
     std::vector<size_t> inputs;
     long exponent = 0;
     wide_operation evaluate;
+    std::array<int,2> spin_legs{-1,-1};
 };
 // Color contractions are kinematics independent. In particular two nonzero
 // adjoint components can cancel exactly for a fixed external color choice.
@@ -696,8 +697,11 @@ class compiler {
         ops.push_back(std::move(op));
         return ops.size() - 1;
     }
-    template <class Op> size_t typed(Op op) {
+    template <class Op>
+    size_t typed(Op op, std::array<int,2> spin_legs = {-1,-1}, std::vector<size_t> inputs = {}) {
         replay_step step;
+        step.spin_legs = spin_legs;
+        step.inputs = std::move(inputs);
         step.evaluate = [op](const precision::phase_point &p, const wide_registers &r) {
             return wide_complex(op(p, r));
         };
@@ -762,6 +766,7 @@ class compiler {
                 step.evaluate = [](const precision::phase_point &, const wide_registers &) -> wide_complex {
                     throw std::invalid_argument("unsupported non-half-integer precision replay power");
                 };
+            step.inputs = {b};
             auto exponent = evaluate_scalar(a, n.args[1], pars);
             return store(
                 [b, exponent](const point &, const registers &r) { return std::pow(r[b], exponent); },
@@ -776,17 +781,22 @@ class compiler {
                 v.push_back(mom(n.args[j]));
             if ((l.angle == r.angle) != (v.size() % 2 == 0))
                 throw std::invalid_argument("inconsistent spinor-chain chirality");
-            return typed([l, r, v = std::move(v)](const auto &p, const auto &) {
-                auto x = l(p), y = r(p);
-                if (l.angle)
-                    x = raised(x);
-                if (!r.angle)
-                    y = raised(y);
-                for (size_t i = 0; i < v.size(); ++i) {
-                    x = apply_momentum(p, x, v[i], (i % 2 == 0) != l.angle);
-                }
-                return x[0] * y[0] + x[1] * y[1];
-            });
+            const auto free_leg = [](const endpoint &end) {
+                return end.kind == endpoint::massive && end.column < 0 ? static_cast<int>(end.label) : -1;
+            };
+            return typed(
+                [l, r, v = std::move(v)](const auto &p, const auto &) {
+                    auto x = l(p), y = r(p);
+                    if (l.angle)
+                        x = raised(x);
+                    if (!r.angle)
+                        y = raised(y);
+                    for (size_t i = 0; i < v.size(); ++i) {
+                        x = apply_momentum(p, x, v[i], (i % 2 == 0) != l.angle);
+                    }
+                    return x[0] * y[0] + x[1] * y[1];
+                },
+                {free_leg(l),free_leg(r)});
         }
         if (h == "SpinorTrace") {
             if (n.args.size() % 2)
@@ -824,9 +834,9 @@ class compiler {
             return typed([i = leg(a, n.args[0])](const auto &p, const auto &) { return p.masses.at(i); });
         if (h == "PropDen" && n.args.size() == 2) {
             auto mass = numeric(n.args[1]);
-            return typed([m = mom(n.args[0]), mass](const auto &p, const auto &r) {
-                return invariant(p, m, r[mass]);
-            });
+            return typed(
+                [m = mom(n.args[0]), mass](const auto &p, const auto &r) { return invariant(p, m, r[mass]); },
+                {-1,-1}, {mass});
         }
         complex constant = evaluate_scalar(a, id, pars);
         replay_step step;
@@ -901,6 +911,275 @@ complex expression_evaluator::operator()(const point &p) const {
     }
     return out[code_->result];
 }
+namespace {
+// Each node holds a table only for the requested external spins on which it
+// depends. Build shared products before broadcasting them to larger spin sets.
+class spin_sum_plan {
+    using mask = size_t;
+    using indices = std::vector<size_t>;
+    enum class kind { primitive, add, multiply };
+    struct input {
+        size_t node;
+        const indices *map = nullptr;
+    };
+    struct node {
+        kind op;
+        size_t original;
+        std::vector<input> args;
+        mask spins;
+        size_t count, start = 0;
+    };
+    const std::vector<replay_step> &source;
+    indices legs, converted;
+    std::vector<node> tape;
+    std::map<std::pair<size_t, size_t>, size_t> products;
+    std::map<std::pair<mask, mask>, indices> maps;
+    size_t root, workspace = 0;
+
+    static size_t count_states(mask spins) {
+        size_t count = 1;
+        for (; spins; spins &= spins - 1)
+            count *= 2;
+        return count;
+    }
+    static size_t project(size_t state, mask parent, mask child) {
+        size_t result = 0, bit = 1;
+        for (; parent; parent &= parent - 1, state >>= 1) {
+            if ((parent & -parent) & child) {
+                if (state & 1)
+                    result |= bit;
+                bit <<= 1;
+            }
+        }
+        return result;
+    }
+    size_t append(kind op, size_t original, const indices &args, mask spins = 0) {
+        for (size_t k : args)
+            spins |= tape[k].spins;
+        node entry{op, original, {}, spins, count_states(spins)};
+        for (size_t k : args) {
+            const mask child = tape[k].spins;
+            const indices *map = nullptr;
+            if (child && child != spins) {
+                auto [it, fresh] = maps.try_emplace({spins, child});
+                if (fresh) {
+                    it->second.reserve(entry.count);
+                    for (size_t s = 0; s < entry.count; ++s)
+                        it->second.push_back(project(s, spins, child));
+                }
+                map = &it->second;
+            }
+            entry.args.push_back({k, map});
+        }
+        tape.push_back(std::move(entry));
+        return tape.size() - 1;
+    }
+    size_t product(indices factors) {
+        if (factors.empty())
+            return append(kind::multiply, 0, {});
+        while (factors.size() > 1) {
+            size_t l = 0, r = 1;
+            auto best = std::make_pair(std::numeric_limits<size_t>::max(), true);
+            // Keep the intermediate spin tables small. Prefer a shared pair on ties.
+            for (size_t i = 0; i < factors.size(); ++i)
+                for (size_t j = i + 1; j < factors.size(); ++j) {
+                    auto score = std::make_pair(count_states(tape[factors[i]].spins | tape[factors[j]].spins),
+                                                products.count(std::minmax(factors[i], factors[j])) == 0);
+                    if (score < best) {
+                        best = score;
+                        l = i;
+                        r = j;
+                    }
+                }
+            auto [it, fresh] = products.try_emplace(std::minmax(factors[l], factors[r]));
+            if (fresh)
+                it->second = append(kind::multiply, 0, {factors[l], factors[r]});
+            factors[l] = it->second;
+            factors.erase(factors.begin() + r);
+        }
+        return factors.front();
+    }
+    size_t sum_of_products(std::vector<indices> terms, unsigned depth = 0) {
+        // Collect repeated factors before a sum brings together all external
+        // spin indices. A group shares its factor at every phase-space point.
+        if (terms.size() == 1)
+            return product(std::move(terms.front()));
+        std::map<size_t, size_t> frequency;
+        if (depth < 12)
+            for (const auto &term : terms)
+                for (auto i = term.begin(); i != term.end(); i = std::upper_bound(i, term.end(), *i))
+                    ++frequency[*i];
+        indices addends;
+        std::map<size_t, std::vector<indices>> groups;
+        for (auto &term : terms) {
+            auto common = term.end();
+            size_t most = 1;
+            for (auto it = term.begin(); it != term.end(); ++it) {
+                auto f = frequency.find(*it);
+                if (f != frequency.end() && f->second > most) {
+                    most = f->second;
+                    common = it;
+                }
+            }
+            if (common == term.end())
+                addends.push_back(product(std::move(term)));
+            else {
+                auto &group = groups[*common];
+                term.erase(common);
+                group.push_back(std::move(term));
+            }
+        }
+        for (auto &[factor, group] : groups)
+            addends.push_back(product({factor, sum_of_products(std::move(group), depth + 1)}));
+        if (addends.size() == 1)
+            return addends.front();
+        return append(kind::add, 0, addends);
+    }
+    size_t convert(size_t i) {
+        if (converted[i] != size_t(-1))
+            return converted[i];
+        const auto &op = source[i];
+        if (op.kind == replay_step::add) {
+            std::vector<indices> terms;
+            for (auto child : op.inputs) {
+                indices term;
+                if (source[child].kind == replay_step::multiply)
+                    for (auto k : source[child].inputs)
+                        term.push_back(convert(k));
+                else
+                    term.push_back(convert(child));
+                std::sort(term.begin(), term.end());
+                terms.push_back(std::move(term));
+            }
+            return converted[i] = sum_of_products(std::move(terms));
+        }
+        indices args;
+        for (auto k : op.inputs)
+            args.push_back(convert(k));
+        if (op.kind == replay_step::multiply)
+            return converted[i] = product(std::move(args));
+        mask spins = 0;
+        for (int k : op.spin_legs) {
+            if (k < 0) continue;
+            auto it = std::find(legs.begin(), legs.end(), k);
+            if (it != legs.end())
+                spins |= mask{1} << (it - legs.begin());
+        }
+        return converted[i] = append(kind::primitive, i, args, spins);
+    }
+    void allocate_workspace() {
+        std::vector<indices> expire(tape.size());
+        indices last(tape.size());
+        for (size_t i = 0; i < tape.size(); ++i)
+            for (auto child : tape[i].args)
+                last[child.node] = i;
+        for (size_t i = 0; i < tape.size(); ++i)
+            if (last[i])
+                expire[last[i]].push_back(i);
+        std::map<size_t, indices> available;
+        for (size_t i = 0; i < tape.size(); ++i) {
+            auto &entry = tape[i];
+            auto &free = available[entry.count];
+            if (!free.empty()) {
+                entry.start = free.back();
+                free.pop_back();
+            } else {
+                entry.start = workspace;
+                if (entry.count > std::numeric_limits<size_t>::max() - workspace)
+                    throw std::length_error("spin sum workspace exceeds addressable memory");
+                workspace += entry.count;
+            }
+            for (auto k : expire[i])
+                available[tape[k].count].push_back(tape[k].start);
+        }
+    }
+    size_t index(input arg, size_t state) const {
+        return tape[arg.node].start + (arg.map ? (*arg.map)[state] : tape[arg.node].count == 1 ? 0 : state);
+    }
+    template <bool Add> void arithmetic(const node &n, registers &v) const {
+        auto *out = v.data() + n.start;
+        if (n.args.empty()) {
+            *out = Add ? complex(0) : complex(1);
+            return;
+        }
+        auto first = n.args.front();
+        for (size_t s = 0; s < n.count; ++s)
+            out[s] = v[index(first, s)];
+        for (auto it = n.args.begin() + 1; it != n.args.end(); ++it) {
+            auto *in = v.data() + tape[it->node].start;
+            const auto *map = it->map;
+            const bool scalar = tape[it->node].count == 1;
+            auto combine = [&](size_t s, complex value) {
+                if constexpr (Add)
+                    out[s] += value;
+                else
+                    out[s] *= value;
+            };
+            if (scalar)
+                for (size_t s = 0; s < n.count; ++s)
+                    combine(s, in[0]);
+            else if (map)
+                for (size_t s = 0; s < n.count; ++s)
+                    combine(s, in[(*map)[s]]);
+            else
+                for (size_t s = 0; s < n.count; ++s)
+                    combine(s, in[s]);
+        }
+    }
+
+  public:
+    spin_sum_plan(const std::vector<replay_step> &steps, size_t result, const indices &requested)
+        : source(steps), legs(requested), converted(steps.size(), size_t(-1)) {
+        if (legs.size() >= std::numeric_limits<mask>::digits ||
+            std::set<size_t>(legs.begin(), legs.end()).size() != legs.size())
+            throw std::invalid_argument("spin sum requires distinct massive leg indices");
+        root = convert(result);
+        allocate_workspace();
+        products.clear();
+        indices{}.swap(converted);
+    }
+    real evaluate(const point &p, const std::vector<operation> &ops) const {
+        point chart = p;
+        for (auto t : legs)
+            if (p.masses.at(t) <= 0)
+                throw std::invalid_argument("spin sum requires massive legs");
+        registers base(ops.size()), values(workspace);
+        for (const auto &n : tape) {
+            if (n.op == kind::add)
+                arithmetic<true>(n, values);
+            else if (n.op == kind::multiply)
+                arithmetic<false>(n, values);
+            else
+                for (size_t s = 0; s < n.count; ++s) {
+                    size_t state = s;
+                    for (size_t k = 0; k < legs.size() && n.spins; ++k)
+                        if (n.spins & (mask{1} << k)) {
+                            const auto leg = legs[k];
+                            chart.angles[leg] = p.angle_basis[leg][state & 1];
+                            chart.squares[leg] = p.square_basis[leg][state & 1];
+                            state >>= 1;
+                        }
+                    for (size_t j = 0; j < n.args.size(); ++j)
+                        base[source[n.original].inputs[j]] = values[index(n.args[j], s)];
+                    values[n.start + s] = ops[n.original](chart, base);
+                }
+        }
+        const auto &n = tape[root];
+        real sum = 0;
+        for (size_t s = 0; s < n.count; ++s)
+            sum += std::norm(values[n.start + s]);
+        if (!std::isfinite(sum))
+            throw std::domain_error("nonfinite squared amplitude at validation point");
+        return sum * ((mask{1} << legs.size()) / n.count);
+    }
+};
+} // namespace
+
+std::function<real(const point &)> expression_evaluator::spin_sum(const std::vector<size_t> &legs) const {
+    auto plan = std::make_shared<spin_sum_plan>(code_->replay, code_->result, legs);
+    return [code = code_, plan](const point &p) { return plan->evaluate(p, code->ops); };
+}
+
 complex expression_evaluator::precise(const point &p) const {
     return precise(p, precision::reconstruct(p)).narrow();
 }

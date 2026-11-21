@@ -12,38 +12,42 @@ namespace {
 class pair_sewing : private hepcat::detail::radiation_kinematics {
     using Id = hepcat::Id;
 
+    const int first_negative;
+
     int reference(int i) const {
         if (physical)
             return 1;
-        // The positives use photon 7. Photons 7 and 8 reference each other.
-        return i == 7 ? 8 : 7;
+        // Positive photons use the first negative. Negatives use the next
+        // negative in cyclic label order. This assigns one gauge to each leg.
+        return i < first_negative ? first_negative
+                                  : first_negative + (i - first_negative + 1) % (9 - first_negative);
     }
-    Id norm(int i) { return physical ? tau({reference(i), i}) : chain(i >= 7, reference(i), i); }
+    Id norm(int i) { return physical ? tau({reference(i), i}) : chain(i >= first_negative, reference(i), i); }
     Id x(int i, int t) {
         int r = reference(i);
         if (physical && r == t)
             return ar.integer(0);
         if (physical)
-            return over(chain(i < 7, i, i, {{r}, {t}}), {norm(i)});
-        if (i < 7)
+            return over(chain(i < first_negative, i, i, {{r}, {t}}), {norm(i)});
+        if (i < first_negative)
             return over(chain(true, i, r, {{t}}), {norm(i)});
         return over(chain(true, r, i, {{t}}), {norm(i)});
     }
     using current = std::map<int, Id>;
     current pair(int t, int i, int j, bool sq) {
         Id fij;
-        if ((i < 7) == (j < 7))
-            fij = ar.pow(ar.mul({mass, chain(i < 7, i, j)}), 2);
+        if ((i < first_negative) == (j < first_negative))
+            fij = ar.pow(ar.mul({mass, chain(i < first_negative, i, j)}), 2);
         else
             fij = ar.pow(chain(true, std::min(i, j), std::max(i, j), {{t}}), 2);
         Id pole = tau({t, i, j});
         current c{{t, minus(ar.mul({x(i, t), x(j, t)}), over(fij, {pole}))}};
         for (auto [a, b] : {std::pair{i, j}, std::pair{j, i}}) {
-            if (sq != (a < 7))
+            if (sq != (a < first_negative))
                 continue;
             Id ta = chain(sq, t, a);
-            Id f = sq == (b < 7) ? ar.mul({mass, ar.pow(chain(sq, a, b), 2), chain(!sq, a, t)})
-                                 : ar.mul({ta, chain(!sq, b, a, {{t}}), chain(!sq, a, b)});
+            Id f = sq == (b < first_negative) ? ar.mul({mass, ar.pow(chain(sq, a, b), 2), chain(!sq, a, t)})
+                                              : ar.mul({ta, chain(!sq, b, a, {{t}}), chain(!sq, a, b)});
             c[a] = ar.add({ar.mul({ta, x(b, t)}), over(f, {pole})});
         }
         return c;
@@ -51,9 +55,9 @@ class pair_sewing : private hepcat::detail::radiation_kinematics {
     // The angle and square spinors of each polarization. Physical reference
     // spinors are momentum projections; their ket carries the reordering sign.
     Id bracket(bool sq, int i, bool pol_i, int j, bool pol_j, legs q = {}) {
-        const bool projected_i = pol_i && sq == (i >= 7);
+        const bool projected_i = pol_i && sq == (i >= first_negative);
         const bool right_square = q.empty() ? sq : !sq;
-        const bool projected_j = pol_j && right_square == (j >= 7);
+        const bool projected_j = pol_j && right_square == (j >= first_negative);
         std::vector<Id> word;
         int r = i, s = j;
         if (projected_i && !physical)
@@ -82,7 +86,8 @@ class pair_sewing : private hepcat::detail::radiation_kinematics {
     }
 
   public:
-    pair_sewing(hepcat::Algebra &a, Id m, bool physical) : radiation_kinematics(a, m, true, physical) {}
+    pair_sewing(hepcat::Algebra &a, Id m, bool physical, int negatives)
+        : radiation_kinematics(a, m, true, physical), first_negative(9 - negatives) {}
     Id join(legs L, legs R) {
         std::vector<Id> terms;
         for (size_t i = 0; i < 3; ++i)
@@ -100,6 +105,28 @@ class pair_sewing : private hepcat::detail::radiation_kinematics {
         return over(ar.add(terms), {tau({1, L[0], L[1], L[2]})});
     }
     Id amplitude(Id coupling) {
+        if (first_negative == 6) {
+            // Evaluate D after assigning the leg labels, keeping the reference
+            // table fixed throughout the sum. Each distinct triple occurs once.
+            std::vector<Id> terms;
+            for (unsigned mask = 0; mask < 64; ++mask) {
+                legs left, right;
+                unsigned minus_left = 0;
+                for (int i = 3; i <= 8; ++i) {
+                    if (mask & (1u << (i - 3))) {
+                        left.push_back(i);
+                        minus_left += i >= first_negative;
+                    } else
+                        right.push_back(i);
+                }
+                if (left.size() == 3 && (physical || minus_left <= 1))
+                    terms.push_back(join(left, right));
+            }
+            Id total = ar.add(terms);
+            if (!physical)
+                total = apply_exchanges(ar, total, {signed_exchange{{{1, 2}}, -1}});
+            return ar.mul({neg(coupling), total});
+        }
         auto A = join({3, 4, 5}, {6, 7, 8});
         auto B = join({3, 4, 7}, {5, 6, 8});
         Id seed;
@@ -113,8 +140,9 @@ class pair_sewing : private hepcat::detail::radiation_kinematics {
         return ar.mul({neg(coupling), expand_permutation_groups(ar, seed, {{3, 4, 5, 6}, {7, 8}})});
     }
 };
-Id automatic(Algebra &a, const std::filesystem::path &directory, bool physical, Id mass) {
-    const auto path = directory / (physical ? "physical" : "spurious") / "eeAAAAAA" / "++++--.expr";
+Id automatic(Algebra &a, const std::filesystem::path &directory, bool physical, Id mass, int negatives) {
+    const auto path = directory / (physical ? "physical" : "spurious") / "eeAAAAAA" /
+                      (std::string(6 - negatives, '+') + std::string(negatives, '-') + ".expr");
     std::ifstream input(path);
     std::string expression;
     if (!std::getline(input, expression))
@@ -123,7 +151,7 @@ Id automatic(Algebra &a, const std::filesystem::path &directory, bool physical, 
     masses[0] = masses[1] = a.format(mass);
     amp_expression amp(expression, masses);
     auto sum = amp.reduce().permutation_form();
-    if (!sum || sum->legs != std::vector<int>{3, 4, 5, 6} || !sum->orbit_sizes.empty())
+    if (!sum || sum->legs.size() != static_cast<std::size_t>(6 - negatives) || !sum->orbit_sizes.empty())
         throw std::runtime_error("Missing midpoint representation for " + path.string());
     std::cout << (physical ? "physical" : "spurious") << " automatic summand complexity "
               << *amp.permutation_summand_complexity() << '\n';
@@ -132,20 +160,30 @@ Id automatic(Algebra &a, const std::filesystem::path &directory, bool physical, 
 }
 } // namespace
 int main(int argc, char **argv) {
+    int negatives = 2;
+    if (argc >= 3 && std::string(argv[1]) == "--negatives") {
+        negatives = std::stoi(argv[2]);
+        if (negatives != 2 && negatives != 3)
+            return 2;
+        argc -= 2;
+        argv += 2;
+    }
     std::filesystem::path native;
     if (argc >= 3 && std::string(argv[1]) == "--construction") {
         native = argv[2];
         argc -= 2;
         argv += 2;
     }
-    return eight_point_validation::run(argc, argv, {1, 1, 1, 1, -1, -1}, [&](Algebra &a, Id m, Id e) {
+    std::vector<int> helicities(6, 1);
+    std::fill(helicities.end() - negatives, helicities.end(), -1);
+    return eight_point_validation::run(argc, argv, helicities, [&](Algebra &a, Id m, Id e) {
         const Id coupling = a.pow(a.mul({a.parse("Power[2,Rational[1,2]]"), e}), 6);
-        pair_sewing physical(a, m, true), spurious(a, m, false);
+        pair_sewing physical(a, m, true, negatives), spurious(a, m, false, negatives);
         eight_point_validation::formulas results{{"physical", physical.amplitude(coupling)},
                                                  {"spurious", spurious.amplitude(coupling)}};
         if (!native.empty()) {
-            results.emplace_back("automatic physical", automatic(a, native, true, m));
-            results.emplace_back("automatic spurious", automatic(a, native, false, m));
+            results.emplace_back("automatic physical", automatic(a, native, true, m, negatives));
+            results.emplace_back("automatic spurious", automatic(a, native, false, m, negatives));
         }
         return results;
     });

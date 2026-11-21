@@ -2,6 +2,7 @@
 #include "reduce.hpp"
 #include <array>
 #include <complex>
+#include <functional>
 #include <map>
 #include <memory>
 
@@ -52,6 +53,9 @@ class expression_evaluator {
                          const std::vector<int> &color_representations = {},
                          const wide_parameters *exact = nullptr);
     complex operator()(const point &) const;
+    // Sum |M|^2 over the two spin columns of each selected massive fermion.
+    // Compile the spin dependencies once, then reuse the callable at each momentum.
+    std::function<real(const point &)> spin_sum(const std::vector<std::size_t> &legs) const;
     // Replay the same phase-space draw and its amplitude in 160-bit GMP arithmetic.
     // Supply a shared reconstructed chart when comparing several amplitudes.
     complex precise(const point &) const;
