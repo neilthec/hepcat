@@ -191,14 +191,23 @@ void amp_expression::set_from(const Algebra& source, Id result) {
 
 // A generated row is born in a worker arena borrowing the model. Run the
 // reduction there too, then retain only the two reachable output trees.
-void amp_expression::reduce_from(Algebra& worker, Id source, std::optional<Id> original) {
+void amp_expression::reduce_from(Algebra& worker, Id source, std::optional<Id> original, bool search) {
     auto masses=import_masses(worker);
     Shells shells;
     for(const auto& [cut,mass]:kinematics_->shells)
         shells.emplace(cut,copy_tree(*arena_,worker,mass));
     std::optional<Id> rest;
     Id result;
-    if (original && *original != source) {
+    if (!search) {
+        // A complete graph current will be checked on every cut. Preserve the
+        // exact row and its off-shell continuation without searching over bases.
+        worker.setKinematics(masses, shells);
+        result = worker.simplify(source);
+        worker.setKinematics(masses, {});
+        const Id full = worker.simplify(original.value_or(source));
+        if (full != result)
+            rest = worker.add({full, worker.mul({worker.integer(-1), result})});
+    } else if (original && *original != source) {
         result = reduceInto(worker,source,masses,shells);
         Id off_cut = reduceInto(worker,*original,masses,{});
         Id difference = reduceInto(worker,worker.add({off_cut,worker.mul({worker.integer(-1),result})}),masses,{});

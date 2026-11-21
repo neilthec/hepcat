@@ -250,6 +250,33 @@ void check_balanced_occupations(const model& vertices) {
   }
 }
 
+// In a star the permutation of three identical leaves already changes the
+// ordering on the central line. In a path it pairs the orders related by
+// reversal. Check the signed sum against the unrearranged charged currents.
+void check_exchange_orderings(const model &vertices) {
+  const std::vector<std::string> legs{"e","E","e","E","e","E","e","E"};
+  Algebra a;
+  const auto m = a.parse(vertices.particle("e").mass);
+  const auto parameters = model_parameters(vertices);
+  a.setKinematics(std::vector<Id>(8,m),{});
+  std::optional<permutation_sum> form;
+  const auto elementary = fermion_current_proposal(a,vertices,legs,1728,true,&form);
+  if (!elementary || !form)
+    throw std::runtime_error("Missing the complete eight-fermion tree sum");
+  auto sizes = form->orbit_sizes;
+  std::sort(sizes.begin(),sizes.end());
+  if (sizes != std::vector<size_t>{288,288,576,576})
+    throw std::runtime_error("Incorrect ordered star and path orbit sizes");
+  const expression_evaluator full(a,*elementary,parameters);
+  const expression_evaluator projected(a,expand_permutation_groups(a,form->kernel,form->alternating_groups,true),
+                                       parameters);
+  const std::vector<real> masses(8,evaluate_scalar(a,m,parameters).real());
+  for (unsigned n=0; n<3; ++n) {
+    const auto point = sample_point(masses,837871+n);
+    agree(projected(point),full(point),"A virtual attachment order has the wrong sign or multiplicity");
+  }
+}
+
 void check(const model &vertices, const model &rules,
            const std::vector<std::string> &legs, bool physical, size_t diagrams,
            size_t exchange_first, size_t exchange_second, const std::vector<int>& symmetric_photons = {},
@@ -312,6 +339,7 @@ int main(int argc, char **argv) {
           4);
     check(vertices,rules,{"E","e","A.+","e","E","E","e"},false,252,1,6);
     check_balanced_occupations(vertices);
+    check_exchange_orderings(vertices);
     std::cout << "Signed Weyl currents, Fermi exchange and photon occupations passed.\n";
   } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';

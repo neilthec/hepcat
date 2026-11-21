@@ -107,7 +107,7 @@ private:
     void restore_prepared(const std::string& remainder);
     std::uint32_t import_into(Algebra& destination, bool remainder = false) const;
     std::vector<std::uint32_t> import_masses(Algebra& destination) const;
-    void reduce_from(Algebra& worker, std::uint32_t source, std::optional<std::uint32_t> original = {});
+    void reduce_from(Algebra& worker, std::uint32_t source, std::optional<std::uint32_t> original = {}, bool search = true);
     void set_from(const Algebra& source, std::uint32_t result);
     std::uint32_t apply_in_trial(Algebra& trial, const identity_candidate& edit) const;
     struct context;

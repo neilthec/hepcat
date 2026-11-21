@@ -642,6 +642,10 @@ const amp_expression& amplitude::complete_factorization(std::size_t workers) {
 }
 
 const amp_expression& amplitude::complete_factorization(const factorization_options& options) {
+    return complete_factorization_impl(options, false);
+}
+
+const amp_expression& amplitude::complete_factorization_impl(const factorization_options& options, bool grouped_only) {
     if(vertices_model_ && (!channels_model_ || vertices_model_->is_feynman()))
         throw std::logic_error("native factorization completion requires both constructive model roles");
     if(vertices_model_ && (!diagrams_generated_ || !channels_generated_)) {
@@ -771,6 +775,7 @@ const amp_expression& amplitude::complete_factorization(const factorization_opti
             // A singular trial does not invalidate the diagram seed or the other continuations.
         }
     }
+    if (grouped_only) throw no_grouped_current{};
     if (products_.empty() && trees.has_pole(work.seed))
         throw residue_unsupported("a pole-bearing amplitude requires physical factorization channels");
     std::exception_ptr singular_seed;

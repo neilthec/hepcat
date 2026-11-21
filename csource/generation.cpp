@@ -83,7 +83,7 @@ amplitude& amplitude::generate(std::size_t workers) {
     return generate_rows(true, channels_model_.has_value(), feynman_model_.has_value(), workers);
 }
 
-amplitude& amplitude::generate_rows(bool diagrams, bool products, bool feynman, std::size_t workers) {
+amplitude& amplitude::generate_rows(bool diagrams, bool products, bool feynman, std::size_t workers, bool search) {
     if (!vertices_model_) throw std::logic_error("supply particles and a model to generate amplitude rows");
     if (products && !channels_model_)
         throw std::logic_error("supply a factorization model to generate channels");
@@ -161,7 +161,7 @@ amplitude& amplitude::generate_rows(bool diagrams, bool products, bool feynman, 
                 if (m.is_feynman())
                     item.expression.set_from(tree, root);
                 else
-                    item.expression.reduce_from(tree, current.value_or(root), root);
+                    item.expression.reduce_from(tree, current.value_or(root), root, search);
                 item.reduced_ = true;
                 item.generated_ = true;
                 generated[i] = std::move(item);

@@ -1,4 +1,5 @@
 #include "amplitude.hpp"
+#include "generation_plan.hpp"
 
 #include <algorithm>
 #include <chrono>
@@ -63,16 +64,46 @@ const amp_expression &amplitude::construct(const construct_options &options) {
     remove_generated(staged.products_);
     staged.diagrams_generated_ = staged.channels_generated_ = false;
   }
-  run("Generate and reduce", [&] {
-    if (staged.vertices_model_)
-      staged.generate(options.workers);
-    staged.reduce(options.workers);
-  });
   auto factor = options.factorization;
   factor.try_grouped_currents = true;
   if (!factor.workers)
     factor.workers = options.workers;
-  run("Complete factorization", [&] { staged.complete_factorization(factor); });
+
+  // For a large, freshly generated color-singlet Dirac tree sum, individual
+  // diagram searches can dominate the complete calculation. Try the cheaper
+  // exact rows first. Only a certified graph sum passing every residue can win.
+  bool completed = false;
+  const auto dirac_or_vector = [&](const std::string &name) {
+    const auto &p = staged.vertices_model_->particle(name);
+    return p.color == 1 && ((p.spin2 == 1 && p.mass != "0" && p.name != p.antiname) ||
+                            (p.spin2 == 2 && p.mass == "0"));
+  };
+  if (staged.vertices_model_ && staged.channels_model_ && staged.diagrams_.empty() &&
+      staged.products_.empty() && policy != generation_references::keep &&
+      std::all_of(staged.particles_.begin(), staged.particles_.end(), dirac_or_vector) &&
+      generation::diagram_plans(*staged.vertices_model_, staged.particles_).size() >= 512) {
+    amplitude trial = staged;
+    run("Generate rows for the complete current", [&] {
+      trial.generate_rows(true, true, trial.feynman_model_.has_value(), options.workers, false);
+    });
+    try {
+      run("Check the complete current on all factorization channels", [&] {
+        trial.complete_factorization_impl(factor, true);
+      });
+      staged = std::move(trial);
+      completed = true;
+    } catch (const no_grouped_current&) {
+      // The ordinary construction below retains diagram and remainder searches.
+    }
+  }
+  if (!completed) {
+    run("Generate and reduce", [&] {
+      if (staged.vertices_model_)
+        staged.generate(options.workers);
+      staged.reduce(options.workers);
+    });
+    run("Complete factorization", [&] { staged.complete_factorization(factor); });
+  }
   auto energy = options.high_energy;
   if (!energy.workers)
     energy.workers = options.workers;

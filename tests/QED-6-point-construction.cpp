@@ -4,10 +4,9 @@
 //   tests/results/native-reduce-build/hepcat-qed --family eeAA --preference physical
 // The example above constructs all four photon helicities and runs the CalcHEP
 // and MadGraph checks at 100,000 phase-space points by default. To run the entire
-// study, including all seven-point processes, the eight-point constructions with
-// zero, one or two negative photons, and the independent formula
+// study, including all seven- and eight-point families and the independent formula
 // comparisons through eight photons, run without arguments. Use --legs 7
-// to construct just the seven-point processes.
+// or --legs 8 to select one multiplicity.
 // Use --list to see families and --help for installation paths and other options.
 // Each run prints its directory under tests/results/spinas-output. Open construction.tsv
 // for scores and, inside each pole preference and family, checks.txt for validations
@@ -102,7 +101,14 @@ const std::vector<family> notebook = {
 
     // Six photons, with an independent equal-helicity reference or a signed Feynman comparison.
     {"eeAAAAAA", {"e", "E"}, {{"++++++", 16515, 16530, reference_source::all_positive_formula, false},
-                              prediction("+++++-", 59110, 69988), prediction("++++--", 137062, 199628)}},
+                              prediction("+++++-", 59110, 69988), prediction("++++--", 137062, 199628),
+                              prediction("+++---"), prediction("++----"), prediction("+-----"),
+                              prediction("------")}},
+    {"eeeeAAAA", {"e", "E", "E", "e"},
+     {prediction("++++"), prediction("+++-"), prediction("++--"), prediction("+---"), prediction("----")}},
+    {"eeeeeeAA", {"e", "E", "e", "E", "e", "E"},
+     {prediction("++"), prediction("+-"), prediction("--")}},
+    {"eeeeeeee", {"e", "E", "e", "E", "e", "E", "e", "E"}, {prediction("")}},
 };
 
 struct settings {

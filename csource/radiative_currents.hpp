@@ -405,6 +405,20 @@ public:
     std::sort(key.begin(), key.end());
   }
 
+  // All poles between retained vertices. These distinguish the orders of
+  // exchanged photons on the same charged line after its endpoint radiation
+  // has already been summed.
+  std::vector<Id> core_poles() const {
+    std::vector<Id> poles;
+    for (size_t i = 0; i < tree.edges.size(); ++i) {
+      const auto &edge = tree.edges[i];
+      if (keep[edge.a] && keep[edge.b])
+        poles.push_back(denominators[i]);
+    }
+    std::sort(poles.begin(), poles.end());
+    return poles;
+  }
+
   Id expression(Id coefficient) {
     size_t core_vertices = 0;
     int sign = 1;

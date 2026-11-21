@@ -656,7 +656,11 @@ fermion_current_proposal(Algebra &a, const model &m,
   if (plans.empty() || plans.size() != count)
     return {};
   if (b.starts.size() > 2 && (!b.photons.empty() || b.starts.size() > 3)) {
-    std::map<std::vector<Id>, std::vector<Id>> attachments;
+    std::map<std::vector<Id>, std::vector<Id>> attachments, ordered_attachments;
+    // Relabeling an individual ordering is valid when its reference choices
+    // transform with the labels. The emitting endpoint and the only other
+    // external photon both have this property.
+    const bool ordered_gauge = physical || b.photons.size() <= 2;
     std::optional<Id> direct_coefficient;
     bool common = true;
     struct orbit {
@@ -712,8 +716,12 @@ fermion_current_proposal(Algebra &a, const model &m,
           it->second.expected != current.orders)
         return {};
       ++it->second.count;
-      if (first)
-        attachments[exchange].push_back(current.expression(g.coefficient));
+      if (first) {
+        const Id term = current.expression(g.coefficient);
+        attachments[exchange].push_back(term);
+        if (presentation && common && ordered_gauge)
+          ordered_attachments[current.core_poles()].push_back(term);
+      }
     }
     std::vector<Id> terms;
     for (const auto &entry : orbits)
@@ -730,8 +738,31 @@ fermion_current_proposal(Algebra &a, const model &m,
         grouped.emplace(std::move(key),term);
       }
     }
-    if (presentation && common && direct_coefficient)
+    if (presentation && common && direct_coefficient) {
       *presentation = tree_orbits(b,grouped,*direct_coefficient,physical);
+      // Identical branches can already supply different attachment orders
+      // under the external permutation sum. Try counting those smaller
+      // orbits directly, keeping a complete charged-current sum for algebra.
+      if (*presentation && (*presentation)->projected_terms.empty() &&
+          ordered_attachments.size() > grouped.size()) {
+        std::map<exchange_key,Id> by_order;
+        for (const auto &[poles, rows] : ordered_attachments) {
+          exchange_key key;
+          for (Id pole : poles) key.push_back(pole_side(a,pole));
+          std::sort(key.begin(), key.end());
+          by_order.emplace(std::move(key), collect_scalar_factors(a, a.factorSum(a.add(rows))));
+        }
+        auto finer = tree_orbits(b,by_order,*direct_coefficient,physical);
+        if (finer && a.cost(finer->kernel) < a.cost((*presentation)->kernel)) {
+          try {
+            if (expression_complexity(a,finer->kernel) <= expression_complexity(a,(*presentation)->kernel))
+              *presentation = std::move(finer);
+          } catch (const std::length_error &) {
+          } catch (const std::overflow_error &) {
+          }
+        }
+      }
+    }
     return a.add(terms);
   }
   std::map<group_key, group> groups;
