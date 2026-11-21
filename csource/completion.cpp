@@ -730,7 +730,9 @@ const amp_expression& amplitude::complete_factorization(const factorization_opti
         if (ordered) {
             amp_expression::signed_permutation_product presentation{{ordered->legs},ordered->alternating_groups,
                                                                    a.format(ordered->kernel),ordered->joint_exchange,
-                                                                   ordered->orbit_sizes};
+                                                                   ordered->orbit_sizes,ordered->inner_exchanges};
+            for (const auto& part : ordered->projected_terms)
+                presentation.projected_terms.push_back({a.format(part.kernel),part.exchanges});
             presentation.symmetric_groups.insert(presentation.symmetric_groups.end(),
                 ordered->other_groups.begin(),ordered->other_groups.end());
             result.ordered_formula_ = std::make_shared<amp_expression::signed_permutation_product>(std::move(presentation));

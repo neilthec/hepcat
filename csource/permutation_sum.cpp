@@ -1,5 +1,6 @@
 #include "permutation_sum.hpp"
 #include "fermion_currents.hpp"
+#include "generation_plan.hpp"
 #include "chiral_radiation.hpp"
 #include "mixed_radiation.hpp"
 #include "spinor_word.hpp"
@@ -412,7 +413,14 @@ std::optional<Id> current_scale(Algebra& a, const Polynomial& target, const Poly
     if (target.empty() || target.size() != current.size()) return {};
     auto expected = current.begin(), actual = target.begin();
     if (actual->first != expected->first) return {};
-    const auto scale = a.mul({actual->second,a.pow(expected->second,-1)});
+    // Invert scalar factors individually so an arbitrary pivot containing
+    // both a mass and a coupling cancels before checking other coefficients.
+    const auto& denominator = a.node(expected->second);
+    Terms factors{actual->second};
+    if (denominator.head == "Times") {
+        for (Id factor : denominator.args) factors.push_back(a.pow(factor,-1));
+    } else factors.push_back(a.pow(expected->second,-1));
+    const auto scale = a.mul(std::move(factors));
     for (; actual != target.end(); ++actual, ++expected)
         if (actual->first != expected->first || a.mul({scale,expected->second}) != actual->second)
             return {};
@@ -421,10 +429,11 @@ std::optional<Id> current_scale(Algebra& a, const Polynomial& target, const Poly
 
 // The two-leg photon exchange poles determine a bipartite graph. They suggest
 // the two charge classes but do not establish any permutation identity.
-std::optional<permutation_sum> recognize_exchange(Algebra& a, Id input) {
+std::optional<permutation_sum> recognize_exchange(Algebra& a, Id input, std::optional<bool> preference) {
     const auto& masses = a.masses();
     const auto zero = a.integer(0);
-    if (a.cost(input) > 100000) return {};
+    const bool three_lines = std::count(masses.begin(),masses.end(),zero)==1 && masses.size()==7;
+    if (a.cost(input) > (three_lines ? 300000 : 100000)) return {};
     std::vector<int> massive, photons, types(masses.size());
     const auto weights = external_spin_weights(a,input);
     if (!weights) return {};
@@ -466,11 +475,12 @@ std::optional<permutation_sum> recognize_exchange(Algebra& a, Id input) {
     };
     relabel canonical(a,{},{});
     scan(scan,canonical(input));
-    if (edges.size() != 4) return {};
+    const size_t pairs=massive.size()/2;
+    if (massive.empty() || edges.size()!=pairs*pairs) return {};
     std::vector<int> starts, ends;
     for (int leg : massive)
         (edges.count({massive.front(),leg}) ? ends : starts).push_back(leg);
-    if (starts.size() != 2 || ends.size() != 2) return {};
+    if (starts.size()!=pairs || ends.size()!=pairs) return {};
     for (int l : starts) for (int r : ends)
         if (!edges.count(std::minmax(l,r))) return {};
     const auto mass = masses[massive.front()-1];
@@ -478,6 +488,33 @@ std::optional<permutation_sum> recognize_exchange(Algebra& a, Id input) {
         size_t work = 1000000;
         return scalar_coefficients(a,a.add(expand(a,canonical(expr),work,18000)));
     };
+    if (three_lines) {
+        // The graph of neutral two-body poles only proposes the two charge
+        // classes. Regenerate the complete unit-coupling current and require
+        // one common, external-leg-independent coefficient on every Laurent
+        // monomial, including the signs of both Fermi permutations.
+        const auto reference = radiative_detail::unit_vector_model(a.format(mass));
+        const auto& fermion = reference.particles().at(1);
+        const auto& vector = reference.particles().at(0);
+        const auto target = polynomial(input);
+        for (unsigned orientation=0; orientation<2; ++orientation) {
+            if (orientation) starts.swap(ends);
+            std::vector<std::string> names(masses.size(),fermion.antiname);
+            for (int leg : starts) names[leg-1]=fermion.name;
+            for (int leg : photons) names[leg-1]=types[leg-1]>0 ? vector.name : vector.antiname;
+            std::optional<permutation_sum> proposed;
+            const auto count = generation::diagram_plans(reference,names).size();
+            const auto generated=fermion_current_proposal(a,reference,names,count,preference.value_or(physical),&proposed);
+            if (!generated || !proposed) continue;
+            const auto source=reduceInto(a,*generated,masses,{});
+            auto scale=current_scale(a,target,polynomial(source));
+            if (!scale) continue;
+            for (auto& term : proposed->projected_terms) term.kernel=a.mul({*scale,term.kernel});
+            proposed->kernel=a.mul({*scale,proposed->kernel});
+            return proposed;
+        }
+        return {};
+    }
     // Preserve the massless exchange pole in every Laurent word. No contact
     // term or term with a second massless propagator can pass this check.
     std::map<Id,Polynomial> allocations;
@@ -510,7 +547,7 @@ std::optional<permutation_sum> recognize_exchange(Algebra& a, Id input) {
             return true;
         };
         if (!verify_radiation_exchange(a,starts,ends,photons,types,physical,matches)) continue;
-        return radiation_exchange_sum(a,starts,ends,photons,types,mass,*scale,physical);
+        return radiation_exchange_sum(a,starts,ends,photons,types,mass,*scale,preference.value_or(physical));
     }
     return {};
 }
@@ -539,14 +576,14 @@ permutation_sum radiation_exchange_sum(Algebra& a, const std::vector<int>& fermi
 
 // Infer the candidate from external spin weights and denominator chirality.
 // Only coefficient-by-coefficient agreement authorizes the ordered identity.
-std::optional<permutation_sum> recognize_ordered_current(Algebra& a, Id input) {
+std::optional<permutation_sum> recognize_ordered_current(Algebra& a, Id input, std::optional<bool> preference) {
     const auto& masses = a.masses();
     const auto zero = a.integer(0);
     if (masses.size() < 6 || masses.size() > 8 || !a.shells().empty() || a.cost(input) < 300)
         return {};
     const auto massless = static_cast<std::size_t>(std::count(masses.begin(),masses.end(),zero));
     try {
-        if (masses.size() == 7 && massless == 3) return recognize_exchange(a,input);
+        if (masses.size() == 7 && (massless == 3 || massless == 1)) return recognize_exchange(a,input,preference);
         if (massless + 2 != masses.size() || a.cost(input) > 18000) return {};
         const auto weights = external_spin_weights(a,input);
         if (!weights) return {};
@@ -598,8 +635,10 @@ std::optional<permutation_sum> recognize_ordered_current(Algebra& a, Id input) {
                 const auto reduced = reduceInto(a,*current,masses,{});
                 const auto scale = current_scale(a,target,scalar_coefficients(a,expanded(reduced)));
                 if (!scale) continue;
-                if (paired) ordered = paired_weyl_sum(a,l,r,m,positive,negative,unit,physical);
-                else if (!physical) ordered = ordered_minority_sum(a,l,r,m,positive,negative,unit);
+                const bool output_physical = preference.value_or(physical);
+                if (paired) ordered = paired_weyl_sum(a,l,r,m,positive,negative,unit,output_physical);
+                else if (!output_physical) ordered = ordered_minority_sum(a,l,r,m,positive,negative,unit);
+                else if (!physical) physical_current_with_presentation(a,l,r,m,positive,negative,unit,&ordered);
                 if (ordered) {
                     ordered->kernel = a.mul({*scale,ordered->kernel});
                     std::sort(ordered->legs.begin(),ordered->legs.end());
@@ -640,17 +679,26 @@ Id expand_permutation_groups(Algebra& a, Id kernel, const std::vector<std::vecto
     return kernel;
 }
 
-Id expand_signed_operators(Algebra& a, const permutation_sum& sum) {
-    Id kernel = sum.kernel;
-    if (sum.joint_exchange) {
+Id apply_exchanges(Algebra& a, Id kernel, const std::vector<signed_exchange>& exchanges) {
+    for (const auto& op : exchanges) {
         std::vector<int> from, to;
-        for (const auto& [left,right] : sum.joint_exchange->swaps) {
+        for (const auto& [left,right] : op.swaps) {
             from.insert(from.end(),{left,right});
             to.insert(to.end(),{right,left});
         }
         Id image = relabel(a,from,to)(kernel);
-        kernel = a.add({kernel,a.mul({a.integer(sum.joint_exchange->sign),image})});
+        kernel = a.add({kernel,a.mul({a.integer(op.sign),image})});
     }
+    return kernel;
+}
+Id sum_projected_terms(Algebra& a, const std::vector<projected_kernel>& terms) {
+    Terms sum;
+    for (const auto& term : terms) sum.push_back(apply_exchanges(a,term.kernel,term.exchanges));
+    return a.add(std::move(sum));
+}
+Id expand_signed_operators(Algebra& a, const permutation_sum& sum) {
+    Id kernel = apply_exchanges(a,sum.kernel,sum.inner_exchanges);
+    if (sum.joint_exchange) kernel = apply_exchanges(a,kernel,{*sum.joint_exchange});
     return expand_permutation_groups(a,kernel,sum.alternating_groups,true);
 }
 
@@ -682,7 +730,7 @@ Id simplify_permutation_kernel(Algebra& a, Id input, const std::vector<int>& leg
 // involution individually to avoid enumerating a factorial product of groups.
 // A spectator multiplying a subexpression must be invariant under the swap.
 Id simplify_signed_kernel(Algebra& a, Id input, const permutation_sum& sum) {
-    if (a.cost(input) > 16000 || (sum.alternating_groups.empty() && !sum.joint_exchange)) return input;
+    if (a.cost(input) > 16000 || (sum.alternating_groups.empty() && !sum.joint_exchange && sum.inner_exchanges.empty())) return input;
     try {
         std::vector<int> conjugate(a.masses().size()+1);
         std::iota(conjugate.begin(),conjugate.end(),0);
@@ -692,15 +740,20 @@ Id simplify_signed_kernel(Algebra& a, Id input, const permutation_sum& sum) {
             if (a.cost(candidate) < a.cost(best) &&
                 expression_complexity(a,candidate) <= expression_complexity(a,best)) best = candidate;
         };
-        if (sum.joint_exchange) {
+        const signed_exchange* first = sum.inner_exchanges.empty()
+            ? (sum.joint_exchange ? &*sum.joint_exchange : nullptr) : &sum.inner_exchanges.front();
+        if (first) {
             std::vector<int> from,to;
-            for (auto [l,r] : sum.joint_exchange->swaps) {
+            for (auto [l,r] : first->swaps) {
                 if (l<=0 || r<=0 || static_cast<size_t>(std::max(l,r))>=conjugate.size() ||
                     r==l || conjugate[l]!=l || conjugate[r]!=r) return input;
                 std::swap(conjugate[l],conjugate[r]);
                 from.insert(from.end(),{l,r}); to.insert(to.end(),{r,l});
             }
-            attempt(from,to,sum.joint_exchange->sign<0);
+            attempt(from,to,first->sign<0);
+            // Only the innermost identity can always be used on the bare
+            // summand. Later projectors can mix its leg classes.
+            if (!sum.inner_exchanges.empty()) return best;
         }
         auto fold_groups = [&](const std::vector<std::vector<int>>& groups, bool subtract) {
             for (const auto& group : groups) for (size_t n=1; n<group.size(); ++n) {

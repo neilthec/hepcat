@@ -5,6 +5,11 @@
 
 namespace hepcat {
 
+struct projected_kernel {
+    Id kernel;
+    std::vector<signed_exchange> exchanges;
+};
+
 // An unnormalized sum over every permutation of legs, acting on kernel.
 // The elementary expression remains available for algebra and numerical export.
 struct permutation_sum {
@@ -14,6 +19,10 @@ struct permutation_sum {
     std::vector<std::vector<int>> other_groups{};
     std::vector<std::vector<int>> alternating_groups{};
     std::optional<signed_exchange> joint_exchange{};
+    // kernel already includes the term-local operations. These common
+    // operations act afterwards, before joint_exchange.
+    std::vector<signed_exchange> inner_exchanges{};
+    std::vector<projected_kernel> projected_terms{};
 };
 // Complete the three-photon Weyl kernel by simultaneous charge conjugation.
 // Only photons of the same helicity enter the symmetric group.
@@ -27,9 +36,12 @@ Id simplify_permutation_kernel(Algebra&, Id, const std::vector<int>& legs,
 Id simplify_signed_kernel(Algebra&, Id, const permutation_sum&);
 // Explicitly sum disjoint secondary groups for clients of the single-group API.
 Id expand_permutation_groups(Algebra&, Id, const std::vector<std::vector<int>>&, bool alternating = false);
+Id apply_exchanges(Algebra&, Id, const std::vector<signed_exchange>&);
+Id sum_projected_terms(Algebra&, const std::vector<projected_kernel>&);
 Id expand_signed_operators(Algebra&, const permutation_sum&);
 // Recognize an equivalent current from its signed coefficients and external masses.
-std::optional<permutation_sum> recognize_ordered_current(Algebra& a, Id input);
+std::optional<permutation_sum> recognize_ordered_current(Algebra& a, Id input,
+                                                        std::optional<bool> physical = {});
 std::optional<permutation_sum> compact_permutations(Algebra& a, Id expression);
 
 } // namespace hepcat

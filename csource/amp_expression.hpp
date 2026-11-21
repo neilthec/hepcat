@@ -12,6 +12,8 @@
 
 namespace hepcat {
 
+enum class generation_references { automatic, keep, physical, cyclic };
+
 class Algebra;
 class amp_expression;
 namespace validation_detail {
@@ -45,6 +47,8 @@ public:
                    const std::vector<std::string>& masses,
                    const std::vector<numerator_shell>& shells = {});
     amp_expression& reduce();
+    // Choose the pole form for a recognized, equivalent permutation summand.
+    amp_expression& reduce(generation_references preference);
     // Evaluated with external kinematics only. Adding this to the current
     // expression recovers the input away from the cut.
     std::optional<amp_expression> discarded_remainder() const;
@@ -63,11 +67,21 @@ public:
     // Each odd permutation in an alternating group contributes a minus sign.
     // Apply joint_exchange to the summand first, then sum over the groups.
     // The unsigned accessors expand the exchange and alternating groups.
+    struct projected_term {
+        std::string summand;
+        std::vector<signed_exchange> exchanges;
+    };
     struct signed_permutation_product {
         std::vector<std::vector<int>> symmetric_groups, alternating_groups;
         std::string summand;
         std::optional<signed_exchange> joint_exchange{};
         std::vector<std::size_t> orbit_sizes{};
+        // The ordinary summand above already includes all local exchanges.
+        // For its compact version apply each term's exchanges in order, add
+        // the terms, then apply these common inner exchanges in order. Apply
+        // joint_exchange and the global permutation groups to either result.
+        std::vector<signed_exchange> inner_exchanges{};
+        std::vector<projected_term> projected_terms{};
     };
     std::optional<signed_permutation_product> signed_permutation_form() const;
     // Weighted score of the displayed summand, before any permutation sums.
@@ -109,6 +123,7 @@ private:
     std::shared_ptr<Algebra> arena_;
     std::uint32_t root_;
     bool reduced_ = false;
+    std::optional<bool> summand_physical_;
     std::optional<std::uint32_t> remainder_;
 };
 

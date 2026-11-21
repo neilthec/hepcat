@@ -178,6 +178,7 @@ struct model::data {
         else
             inspect(row.expression);
     }
+    data() : feynman(false) {}
     data(const fs::path& dir, unsigned number, std::string supplied_scope) {
         auto file = [&](std::string_view stem) {
             return dir / (std::string(stem) + std::to_string(number) + ".mdl");
@@ -273,6 +274,28 @@ struct model::data {
 
 model::model(const fs::path& directory, unsigned number, std::string scope)
     : data_(std::make_shared<data>(directory, number, std::move(scope))) {}
+// Regenerate a minimal conserved current when only an elementary expression
+// and its external masses are available. A complete algebraic comparison
+// with the input is required before its current identity can be used.
+model radiative_detail::unit_vector_model(const std::string& mass) {
+    auto data = std::make_shared<model::data>();
+    data->particles = {{"vector", "v.+", "v.-", 0, 2, "0", "0"},
+                       {"fermion", "f", "F", 0, 1, mass, "0"}};
+    for (size_t i=0; i<data->particles.size(); ++i) {
+        const auto& p = data->particles[i];
+        data->by_label.emplace(p.name,i);
+        data->by_label.emplace(p.antiname,i);
+    }
+    for (bool square : {false,true}) {
+        const std::string spin = square ? "Square" : "Angle";
+        const auto factor = square ? "xTildeFactor" : "xFactor";
+        const auto expression = data->arena.parse("Times[ConstructiveDiagrams`" + std::string(factor) +
+            "[1,2],SpinorChain[Spinor[\"Spin\",\"" + spin + "\",1],Spinor[\"Spin\",\"" + spin + "\",2]]]");
+        data->vertices.push_back({{"f","F",square ? "v.-" : "v.+"},data->arena.integer(1),expression});
+    }
+    return model(std::move(data));
+}
+
 const std::vector<model_particle>& model::particles() const { return data_->particles; }
 const std::vector<model_vertex>& model::vertices() const { return data_->vertices; }
 const std::vector<model_parameter>& model::variables() const { return data_->variables; }

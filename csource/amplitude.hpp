@@ -51,7 +51,6 @@ struct high_energy_report {
     std::string route;
 };
 
-enum class generation_references { automatic, keep, physical, cyclic };
 
 struct construct_options {
     std::size_t workers = 0;

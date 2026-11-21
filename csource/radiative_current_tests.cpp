@@ -38,39 +38,51 @@ void exchange_legs(point &p, size_t x, size_t y) {
 
 // Evaluate an explicitly signed product of permutation sums without using
 // the symbolic relabeler. The momentum and massive spin state travel together.
-complex sum_photons(const expression_evaluator& kernel, const point& p, const std::vector<int>& photons) {
+template<class Evaluator>
+complex sum_group(const Evaluator& kernel, const point& p, const std::vector<int>& photons, bool alternating=false) {
   auto order = photons;
   complex result = 0;
   do {
     auto q = p;
     auto image = photons;
+    int sign = 1;
     for (std::size_t j = 0; j < photons.size(); ++j) {
       auto dest = std::find(image.begin()+j,image.end(),order[j]) - image.begin();
+      if (alternating && dest!=static_cast<std::ptrdiff_t>(j)) sign=-sign;
       exchange_legs(q,photons[j]-1,photons[dest]-1);
       std::swap(image[j], image[dest]);
     }
-    result += kernel(q);
+    result += real(sign)*kernel(q);
   } while (std::next_permutation(order.begin(),order.end()));
   return result;
 }
 
-complex sum_fermions(const expression_evaluator& seed, const point& p,
+template<class Evaluator>
+complex sum_exchanges(const Evaluator& seed, const point& p, const std::vector<signed_exchange>& exchanges) {
+  auto recurse = [&](auto& self, size_t count, const point& state)->complex {
+    if (!count) return seed(state);
+    auto image=state;
+    const auto& op=exchanges[count-1];
+    for (auto [l,r] : op.swaps) exchange_legs(image,l-1,r-1);
+    return self(self,count-1,state)+real(op.sign)*self(self,count-1,image);
+  };
+  return recurse(recurse,exchanges.size(),p);
+}
+
+template<class Evaluator>
+complex sum_fermions(const Evaluator& seed, const point& p,
                      const std::vector<int>& photons, const std::vector<std::vector<int>>& alternating,
-                     const signed_exchange& conjugate) {
-  complex total = 0;
-  for (unsigned mask = 0; mask < 4; ++mask) {
-    auto q = p;
-    int sign = 1;
-    for (size_t i = 0; i < alternating.size(); ++i) {
-      if (!(mask & (1u << i))) continue;
-      exchange_legs(q,alternating[i][0]-1,alternating[i][1]-1);
-      sign = -sign;
-    }
+                     const signed_exchange& conjugate, const std::vector<signed_exchange>& inner = {}) {
+  auto local = [&](const point& q) {
+    return sum_exchanges([&](const point& state) { return sum_group(seed,state,photons); },q,inner);
+  };
+  auto reverse = [&](const point& q) {
     auto reversed = q;
     for (auto [left,right] : conjugate.swaps) exchange_legs(reversed,left-1,right-1);
-    total += real(sign)*(sum_photons(seed,q,photons) + real(conjugate.sign)*sum_photons(seed,reversed,photons));
-  }
-  return total;
+    return local(q) + real(conjugate.sign)*local(reversed);
+  };
+  auto second = [&](const point& q) { return sum_group(reverse,q,alternating.at(1),true); };
+  return sum_group(second,p,alternating.at(0),true);
 }
 
 void check_presentation(Algebra& a, Id original, const permutation_sum& generated, const std::vector<Id>& masses,
@@ -119,7 +131,7 @@ void check_presentation(Algebra& a, Id original, const permutation_sum& generate
           reference,"Recognized charge-reversed current mismatch");
     agree(sum_fermions(constructed,p,generated.legs,generated.alternating_groups,*generated.joint_exchange),
           reference,"Generated charge-reversed current mismatch");
-    agree(sum_photons(unsigned_seed,p,photons),reference,"Unsigned API compatibility mismatch");
+    agree(sum_group(unsigned_seed,p,photons),reference,"Unsigned API compatibility mismatch");
   }
 
   // Flip just one complete exchange allocation. It retains all poles and
@@ -131,6 +143,79 @@ void check_presentation(Algebra& a, Id original, const permutation_sum& generate
   const auto wrong = incorrect.reduce().signed_permutation_form();
   if (wrong && wrong->joint_exchange)
     throw std::runtime_error("Recognized a wrong relative sign in one exchange allocation");
+}
+
+// The two pole choices can share the same elementary expression when only
+// one external photon is available. Select the requested displayed summand
+// explicitly on reload, including after a previous view has been cached.
+void check_three_pairs(Algebra& a, Id original, const permutation_sum& generated,
+                       const std::vector<Id>& masses, const parameters& inputs,
+                       const std::vector<real>& values, bool physical) {
+  std::vector<std::string> mass_text;
+  for (Id m : masses) mass_text.push_back(a.format(m));
+  amp_expression amp(a.format(original),mass_text);
+  const auto target = physical ? generation_references::physical : generation_references::cyclic;
+  const auto view = amp.reduce(target).signed_permutation_form();
+  if (!view || !view->symmetric_groups.empty() || !generated.legs.empty() ||
+      !view->joint_exchange || !generated.joint_exchange ||
+      view->joint_exchange->sign != 1 || generated.joint_exchange->sign != 1 ||
+      view->alternating_groups.size()!=2 || generated.alternating_groups.size()!=2 ||
+      view->inner_exchanges.size()!=1 || view->inner_exchanges[0].sign!=1 ||
+      generated.inner_exchanges.size()!=1 || generated.inner_exchanges[0].sign!=1)
+    throw std::runtime_error("Incorrect three-pair Fermi groups or mirror");
+  for (const auto& block : view->alternating_groups)
+    if (block.size()!=3) throw std::runtime_error("Missing identical charged legs");
+  const expression_evaluator full(a,original,inputs), seed(a,a.parse(view->summand),inputs),
+                             produced(a,generated.kernel,inputs);
+  if (view->projected_terms.size()!=2 || generated.projected_terms.size()!=2)
+    throw std::runtime_error("Missing leaf and center exchange operators");
+  const auto& leaf=view->projected_terms[0];
+  const auto& center=view->projected_terms[1];
+  if (leaf.exchanges.size()!=1 || center.exchanges.size()!=1 || leaf.exchanges[0].sign!=-1 ||
+      center.exchanges[0].sign!=1 || leaf.exchanges[0].swaps!=center.exchanges[0].swaps)
+    throw std::runtime_error("Incorrect current orientation signs");
+  const auto leaf_id=a.parse(leaf.summand), center_id=a.parse(center.summand);
+  auto weight=expression_complexity(a,leaf_id)+expression_complexity(a,center_id);
+  if (weight!=amp.permutation_summand_complexity() || weight>(physical ? 334u : 254u))
+    throw std::runtime_error("Unreduced three-line summand of weight "+std::to_string(weight));
+  const expression_evaluator leaf_value(a,leaf_id,inputs), center_value(a,center_id,inputs);
+  auto compact=[&](const point& p) {
+    return sum_exchanges(leaf_value,p,leaf.exchanges) + sum_exchanges(center_value,p,center.exchanges);
+  };
+  const auto plain=amp.plain_text(), tex=amp.latex();
+  if (plain.find("(1 - P")==std::string::npos || plain.find("(1 + P")==std::string::npos ||
+      tex.find("\\left(1-\\mathsf P_")==std::string::npos || tex.find("\\left(1+\\mathsf P_")==std::string::npos)
+    throw std::runtime_error("Missing current projectors in the displayed formula");
+  const auto unsigned_view = amp.permutation_form();
+  const auto grouped = amp.grouped_permutation_form();
+  if (!unsigned_view || !unsigned_view->legs.empty() || !grouped || !grouped->groups.empty() ||
+      grouped->summand != unsigned_view->summand)
+    throw std::runtime_error("Unsigned accessor left an unsummed charged-line permutation");
+  const expression_evaluator expanded(a,a.parse(unsigned_view->summand),inputs);
+  const auto sample=sample_point(values,81320);
+  agree(expanded(sample),full(sample),"Incorrect application order in unsigned accessor");
+  for (unsigned j=0; j<3; ++j) {
+    auto p=sample_point(values,81321+j);
+    agree(sum_fermions(compact,p,{},view->alternating_groups,*view->joint_exchange,view->inner_exchanges),full(p),
+          "Reloaded factored three-pair current mismatch");
+    agree(sum_fermions(seed,p,{},view->alternating_groups,*view->joint_exchange),full(p),
+          "Reloaded three-pair signed orbit mismatch");
+    agree(sum_fermions(produced,p,{},generated.alternating_groups,*generated.joint_exchange,generated.inner_exchanges),
+          full(p),"Generated three-pair signed orbit mismatch");
+  }
+  const auto other = amp.reduce(physical ? generation_references::cyclic : generation_references::physical)
+                        .signed_permutation_form();
+  if (!other || !other->joint_exchange) throw std::runtime_error("Lost the current on changing pole preference");
+  const auto p=sample_point(values,81521);
+  const expression_evaluator alternative(a,a.parse(other->summand),inputs);
+  agree(sum_fermions(alternative,p,{},other->alternating_groups,*other->joint_exchange),full(p),
+        "Changing the requested pole form corrupted the signed sum");
+
+  auto terms=a.node(original);
+  if (terms.head!="Plus" || terms.args.size()!=54) throw std::runtime_error("Missing three-line allocations");
+  terms.args.front()=a.mul({a.integer(-1),terms.args.front()});
+  amp_expression wrong(a.format(a.add(terms.args)),mass_text);
+  if (wrong.reduce().signed_permutation_form()) throw std::runtime_error("Accepted a wrong three-line sign");
 }
 
 // With two photons of each helicity the two Bose groups act independently.
@@ -159,7 +244,7 @@ void check_balanced_occupations(const model& vertices) {
       if (mask & 2) exchange_legs(image,1,2);
       if (mask & 4) exchange_legs(image,6,7);
       const bool odd = (mask & 3) == 1 || (mask & 3) == 2;
-      sum += real(odd ? -1 : 1)*sum_photons(seed,image,{5,6});
+      sum += real(odd ? -1 : 1)*sum_group(seed,image,{5,6});
     }
     agree(sum,full(p),"Incorrect eight-point helicity-occupation weight");
   }
@@ -187,11 +272,13 @@ void check(const model &vertices, const model &rules,
     throw std::runtime_error("Incomplete constructive topology inventory");
   std::optional<permutation_sum> presentation;
   auto current = fermion_current_proposal(a, vertices, legs, diagrams, physical, &presentation);
-  if (presentation.has_value() != !symmetric_photons.empty())
+  const bool three_pairs = diagrams == 252;
+  if (presentation.has_value() != (three_pairs || !symmetric_photons.empty()))
     throw std::runtime_error("Incorrect symmetry certificate for these particles");
   if (!current)
     throw std::runtime_error("Missing multi-line current");
-  if (presentation) check_presentation(a,*current,*presentation,m,inputs,values,symmetric_photons,maximum_weight);
+  if (three_pairs) check_three_pairs(a,*current,*presentation,m,inputs,values,physical);
+  else if (presentation) check_presentation(a,*current,*presentation,m,inputs,values,symmetric_photons,maximum_weight);
   std::vector<Id> feynman_terms;
   for (const auto &plan : generation::diagram_plans(rules, legs))
     feynman_terms.push_back(feynman_to_spinors(
@@ -223,6 +310,7 @@ int main(int argc, char **argv) {
           240, 2, 4, {2,7}, 1124);
     check(vertices, rules, {"e", "E", "e", "E", "e", "E", "A.-"}, true, 252, 0,
           4);
+    check(vertices,rules,{"E","e","A.+","e","E","E","e"},false,252,1,6);
     check_balanced_occupations(vertices);
     std::cout << "Signed Weyl currents, Fermi exchange and photon occupations passed.\n";
   } catch (const std::exception &e) {

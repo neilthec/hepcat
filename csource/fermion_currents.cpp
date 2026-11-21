@@ -1,6 +1,7 @@
 #include "fermion_currents.hpp"
 #include "generation_plan.hpp"
 #include "radiative_currents.hpp"
+#include "six_radiation.hpp"
 #include <algorithm>
 #include <array>
 #include <limits>
@@ -453,6 +454,103 @@ Id contracted_radiation(line_kinematics& b, const std::vector<int>& types,
   return joined;
 }
 
+// The set of exchanged photon poles fixes the tree of charged lines and
+// which external photons are emitted on each line. Sum all its attachment
+// orders before grouping these separately conserved exchange contributions.
+using exchange_key = std::vector<labels>;
+labels pole_side(const Algebra& a, Id den) {
+  labels side;
+  const auto& momentum = a.node(a.node(den).args[0]);
+  for (auto leg : a.node(momentum.args[0]).args) side.push_back(a.leg(leg));
+  return side;
+}
+exchange_key swapped_key(exchange_key tree, int l, int r, size_t legs) {
+  for (auto& side : tree) {
+    for (auto& i : side) { if (i==l) i=r; else if(i==r) i=l; }
+    std::sort(side.begin(),side.end());
+    if (2*side.size() == legs) {
+      labels other;
+      for (size_t i=1; i<=legs; ++i)
+        if (!std::binary_search(side.begin(),side.end(),int(i))) other.push_back(i);
+      if (other < side) side.swap(other);
+    }
+  }
+  std::sort(tree.begin(),tree.end());
+  return tree;
+}
+
+// Orbit closure needs only adjacent transpositions, even when the product
+// of the permutation groups is much larger than the set of distinct trees.
+std::optional<permutation_sum> tree_orbits(builder& b, const std::map<exchange_key,Id>& terms,
+                                            Id direct, bool physical) {
+  if (terms.empty() || direct == b.integer(0)) return {};
+  std::map<std::string,labels> signed_classes, photon_classes;
+  for (size_t i=0;i<b.external.size();++i) {
+    auto& classes = b.is_photon(i+1) ? photon_classes : signed_classes;
+    classes[b.external[i]].push_back(i+1);
+  }
+  std::vector<labels> alternating, symmetric;
+  std::vector<std::pair<int,int>> generators;
+  mpz_class order = 1;
+  auto include = [&](const auto& classes, auto& blocks) {
+    for (const auto& [name,group] : classes) if (group.size() > 1) {
+      blocks.push_back(group);
+      for (size_t i=1;i<group.size();++i) {
+        generators.emplace_back(group[i-1],group[i]);
+        order *= i+1;
+      }
+    }
+    std::sort(blocks.begin(),blocks.end());
+  };
+  include(signed_classes,alternating);
+  include(photon_classes,symmetric);
+  if (generators.empty()) return {};
+
+  std::set<exchange_key> visited;
+  std::vector<size_t> orbit_sizes;
+  std::vector<Id> representatives;
+  for (const auto& [base,initial] : terms) {
+    if (!visited.insert(base).second) continue;
+    std::vector<exchange_key> orbit{base};
+    Id best = initial;
+    for (size_t k=0; k<orbit.size(); ++k)
+      for (auto [l,r] : generators) {
+        auto next = swapped_key(orbit[k],l,r,b.external.size());
+        if (!visited.insert(next).second) continue;
+        auto found = terms.find(next);
+        if (found == terms.end()) return {};
+        orbit.push_back(std::move(next));
+        if (b.a.cost(found->second) < b.a.cost(best)) best = found->second;
+      }
+    mpq_class weight(mpz_class(orbit.size()),order);
+    weight.canonicalize();
+    representatives.push_back(b.prod({b.a.exact(weight),best}));
+    orbit_sizes.push_back(orbit.size());
+  }
+  if (b.starts.size()==3 && b.photons.size()==1 && signed_classes.size()==2 &&
+      alternating.size()==2 && alternating[0].size()==3 && alternating[1].size()==3) {
+    // Three lines form a path. The photon can be on the middle line
+    // (18 unordered pole pairs) or either leaf (36 ordered pole pairs).
+    std::sort(orbit_sizes.begin(),orbit_sizes.end());
+    if (orbit_sizes!=std::vector<size_t>{18,36}) return {};
+    auto& ends = signed_classes.at(b.m.antiparticle(b.external[b.starts[0]-1]));
+    const int h=b.photons.front();
+    const bool square=b.external[h-1]==b.m.particle(b.external[h-1]).name;
+    auto seed=six_radiation_kernel(b.a,b.starts,ends,h,b.a.masses()[b.starts.front()-1],square,physical);
+    signed_exchange reversal{{},1};
+    for (size_t i=0;i<ends.size();++i) reversal.swaps.emplace_back(b.starts[i],ends[ends.size()-1-i]);
+    const auto a = b.starts.front(), partner = ends.front();
+    std::vector<projected_kernel> pieces{
+        {b.prod({direct,seed.leaf}),{signed_exchange{{{a,partner}},-1}}},
+        {b.prod({direct,seed.center}),{signed_exchange{{{a,partner}},1}}}};
+    return permutation_sum{{},sum_projected_terms(b.a,pieces),{}, {},{b.starts,ends},reversal,
+                           {signed_exchange{{{b.starts.back(),ends.back()}},1}},std::move(pieces)};
+  }
+  auto primary = symmetric.empty() ? labels{} : symmetric.front();
+  if (!symmetric.empty()) symmetric.erase(symmetric.begin());
+  return permutation_sum{primary,b.a.add(representatives),orbit_sizes,symmetric,alternating};
+}
+
 // Radiation assigned to either side of the exchanged photon is separately
 // gauge invariant after all attachment orders on that side have been summed.
 // Consequently equivalent allocations may have chosen different references.
@@ -559,6 +657,8 @@ fermion_current_proposal(Algebra &a, const model &m,
     return {};
   if (b.starts.size() > 2 && (!b.photons.empty() || b.starts.size() > 3)) {
     std::map<std::vector<Id>, std::vector<Id>> attachments;
+    std::optional<Id> direct_coefficient;
+    bool common = true;
     struct orbit {
       size_t expected, count;
       Id coefficient;
@@ -568,6 +668,13 @@ fermion_current_proposal(Algebra &a, const model &m,
       graph g;
       if (!b.graph_of(plan, g))
         return {};
+      if (presentation && common) {
+        // The planner's sign is precisely the parity of the external Fermi
+        // matchings. All topology numerators must share one vertex product.
+        const auto coefficient = plan.terms.front().sign < 0 ? b.neg(g.coefficient) : g.coefficient;
+        if (!direct_coefficient) direct_coefficient = coefficient;
+        common = *direct_coefficient == coefficient;
+      }
       std::map<int, int> refs;
       std::vector<Id> exchange;
       for (const auto &path : g.paths) {
@@ -612,8 +719,19 @@ fermion_current_proposal(Algebra &a, const model &m,
     for (const auto &entry : orbits)
       if (entry.second.expected != entry.second.count)
         return {};
-    for (auto &[k, rows] : attachments)
-      terms.push_back(collect_scalar_factors(a, a.factorSum(a.add(rows))));
+    std::map<exchange_key,Id> grouped;
+    for (auto &[poles, rows] : attachments) {
+      const auto term = collect_scalar_factors(a, a.factorSum(a.add(rows)));
+      terms.push_back(term);
+      if (presentation && common) {
+        exchange_key key;
+        for (Id pole : poles) key.push_back(pole_side(a,pole));
+        std::sort(key.begin(),key.end());
+        grouped.emplace(std::move(key),term);
+      }
+    }
+    if (presentation && common && direct_coefficient)
+      *presentation = tree_orbits(b,grouped,*direct_coefficient,physical);
     return a.add(terms);
   }
   std::map<group_key, group> groups;
