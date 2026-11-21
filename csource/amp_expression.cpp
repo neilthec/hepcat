@@ -226,6 +226,7 @@ const amp_expression::cached_permutations& amp_expression::reduced_permutations(
         kernel = collect_scalar_factors(trial,kernel,3);
         kernel = collect_simple_fractions(trial,kernel);
         kernel = simplify_permutation_kernel(trial,kernel,ordered->legs,ordered->other_groups);
+        kernel = simplify_signed_kernel(trial,kernel,*ordered);
         const Id previous = sum ? sum->kernel : root_;
         if (trial.cost(kernel) + 16 < trial.cost(root_) && trial.cost(kernel) < trial.cost(previous) &&
             (ordered_formula_ || expression_complexity(trial,kernel) <= expression_complexity(trial,previous))) {

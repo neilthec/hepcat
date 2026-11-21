@@ -457,17 +457,24 @@ Id contracted_radiation(line_kinematics& b, const std::vector<int>& types,
 // gauge invariant after all attachment orders on that side have been summed.
 // Consequently equivalent allocations may have chosen different references.
 std::optional<permutation_sum> exchange_orbits(builder& b, const std::map<group_key, group>& groups,
-                                                const std::vector<Id>& terms, bool physical) {
+                                                const std::vector<Id>& terms, const std::vector<int>& types,
+                                                bool physical) {
   const auto n = b.photons.size();
   if (b.starts.size() != 2 || n < 3 || n >= std::numeric_limits<size_t>::digits-1 ||
       b.external[b.starts[0]-1] != b.external[b.starts[1]-1] ||
       !std::all_of(b.photons.begin(), b.photons.end(), [&](int i) {
-        return b.external[i-1] == b.external[b.photons.front()-1];
+        const auto& first = b.external[b.photons.front()-1];
+        return b.external[i-1] == first || b.external[i-1] == b.m.antiparticle(first);
       })) return {};
   // Two complete matchings and every binary assignment of photons in each.
   if (groups.size() != (size_t{2} << n) || terms.size() != groups.size()) return {};
-  std::vector<Id> representatives(n/2+1);
-  std::vector<size_t> counts(n/2+1);
+  labels positive, negative;
+  for (int i : b.photons) (types[i-1] > 0 ? positive : negative).push_back(i);
+  // The two charged lines are interchangeable. Each photon helicity has
+  // its own Bose group, so an occupation is a pair of counts on one line.
+  using occupation = std::pair<size_t,size_t>;
+  struct representative { Id term{}; size_t count{}; };
+  std::map<occupation,representative> orbits;
   std::optional<Id> direct_coefficient;
   labels antiparticles;
   size_t index = 0;
@@ -481,36 +488,38 @@ std::optional<permutation_sum> exchange_orbits(builder& b, const std::map<group_
     if (!direct_coefficient) direct_coefficient = oriented;
     if (*direct_coefficient != oriented) return {};
     if (L.size()+R.size() != n) return {};
-    const auto k = std::min(L.size(),R.size());
+    const size_t plus = std::count_if(L.begin(),L.end(),[&](int i) { return types[i-1]>0; });
+    const size_t minus = L.size()-plus;
+    const occupation left_count{plus,minus}, right_count{positive.size()-plus,negative.size()-minus};
+    auto& rep = orbits[std::min(left_count,right_count)];
     const Id term = terms[index++];
-    // With identical photons an orbit is specified by the smaller of the
-    // two occupation numbers. Keep the shortest complete contracted term.
-    if (!counts[k]++ || b.a.cost(term) < b.a.cost(representatives[k]))
-      representatives[k] = term;
+    if (!rep.count++ || b.a.cost(term)<b.a.cost(rep.term)) rep.term = term;
   }
   if (n == 3) {
-    const int a = b.starts[0], photon = b.photons.front();
-    const bool square = b.external[photon-1] == b.m.particle(b.external[photon-1]).name;
-    return chiral_exchange_sum(b.a,b.starts,antiparticles,b.photons,b.a.masses()[a-1],
-                               *direct_coefficient,square,physical);
+    return radiation_exchange_sum(b.a,b.starts,antiparticles,b.photons,types,b.a.masses()[b.starts[0]-1],
+                                  *direct_coefficient,physical);
   }
   mpz_class order = 4;  // two independent identical-fermion transpositions
-  for (size_t i = 2; i <= n; ++i) order *= i;
-  for (size_t k = 0; k < representatives.size(); ++k) {
-    if (!counts[k]) return {};
-    mpq_class inverse_stabilizer(mpz_class(counts[k]),order);
+  for (auto count : {positive.size(),negative.size()})
+    for (size_t i=2; i<=count; ++i) order *= i;
+  std::vector<Id> terms_in_sum;
+  for (const auto& [key,rep] : orbits) {
+    mpq_class inverse_stabilizer(mpz_class(rep.count),order);
     inverse_stabilizer.canonicalize();
-    representatives[k] = b.prod({representatives[k],b.a.exact(inverse_stabilizer)});
+    terms_in_sum.push_back(b.prod({rep.term,b.a.exact(inverse_stabilizer)}));
   }
-  return permutation_sum{b.photons,b.a.add(representatives),{}, {},{b.starts,antiparticles}};
+  if (positive.size()<negative.size()) positive.swap(negative);
+  permutation_sum result{positive,b.a.add(terms_in_sum),{}, {},{b.starts,antiparticles}};
+  if (negative.size()>1) result.other_groups.push_back(negative);
+  return result;
 }
 } // namespace
 
 bool verify_radiation_exchange(Algebra& a, const labels& fermions, const labels& antifermions,
-                               const labels& photons, bool square, bool physical,
+                               const labels& photons, const std::vector<int>& types, bool physical,
                                const std::function<bool(Id,Id)>& accepts) {
   if (a.masses().size() != 7 || photons.size() != 3 || fermions.size() != 2 ||
-      antifermions.size() != 2) return false;
+      antifermions.size() != 2 || types.size() != 7) return false;
   labels legs = photons;
   legs.insert(legs.end(),fermions.begin(),fermions.end());
   legs.insert(legs.end(),antifermions.begin(),antifermions.end());
@@ -518,9 +527,6 @@ bool verify_radiation_exchange(Algebra& a, const labels& fermions, const labels&
   for (std::size_t i=0; i<legs.size(); ++i)
     if (legs[i] != static_cast<int>(i+1)) return false;
   line_kinematics b(a,photons);
-  std::vector<int> types(a.masses().size(), square ? 2 : -2);
-  for (int i : fermions) types[i-1] = 1;
-  for (int i : antifermions) types[i-1] = -1;
   const auto zero = b.integer(0);
   for (unsigned swap = 0; swap < 2; ++swap) {
     const line left{fermions[0],antifermions[swap]}, right{fermions[1],antifermions[1-swap]};
@@ -711,7 +717,7 @@ fermion_current_proposal(Algebra &a, const model &m,
     total.push_back(b.prod({g.coefficient, num, b.inv(g.propagator)}));
   }
   if (presentation && b.photons.size() > 2 && !groups.empty())
-    *presentation = exchange_orbits(b,groups,total,physical);
+    *presentation = exchange_orbits(b,groups,total,types,physical);
   return a.add(total);
 }
 } // namespace hepcat

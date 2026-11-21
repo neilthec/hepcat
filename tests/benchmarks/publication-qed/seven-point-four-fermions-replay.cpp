@@ -27,9 +27,11 @@ struct image {
     int sign;
 };
 
-std::vector<image> signed_images() {
+std::vector<image> signed_images(bool equal_helicities) {
     std::vector<image> result;
     labels photons{0, 1, 2, 3, 4, 5, 6};
+    // Leg 7 is fixed when it carries the opposite helicity.
+    const auto photon_end = equal_helicities ? photons.end() : photons.end() - 1;
     do {
         for (bool electron : {false, true})
             for (bool positron : {false, true}) {
@@ -45,7 +47,7 @@ std::vector<image> signed_images() {
                 std::swap(g[3], g[2]);
                 result.push_back({g, -sign});
             }
-    } while (std::next_permutation(photons.begin() + 4, photons.end()));
+    } while (std::next_permutation(photons.begin() + 4, photon_end));
     return result;
 }
 
@@ -80,8 +82,19 @@ struct comparison {
     unsigned replays = 0, failures = 0;
 };
 
-int run(const fs::path& construction, const fs::path& paper, unsigned points, std::uint64_t first_seed) {
-    const std::vector<std::string> names{"e", "E", "E", "e", "A.+", "A.+", "A.+"};
+int run(const fs::path& construction, const fs::path& paper, unsigned points, std::uint64_t first_seed,
+        const std::string& helicities) {
+    if (helicities != "+++" && helicities != "++-")
+        throw std::invalid_argument("Expected photon helicities +++ or ++-");
+    const bool equal_helicities = helicities == "+++";
+    const std::vector<std::vector<int>> photon_group{equal_helicities ? std::vector<int>{5, 6, 7}
+                                                                     : std::vector<int>{5, 6}};
+    const auto group = signed_images(equal_helicities);
+    if (group.size() != (equal_helicities ? 48u : 16u))
+        throw std::runtime_error("Incomplete signed permutation group");
+    std::vector<std::string> names{"e", "E", "E", "e"};
+    for (const auto helicity : helicities)
+        names.push_back(std::string("A.") + helicity);
     model qed("models", 3), rules("tests/reference-models/calchep", 2);
     Algebra a(&qed.algebra()), fa(&rules.algebra());
     const auto mass = qed.particle("e").mass;
@@ -102,10 +115,10 @@ int run(const fs::path& construction, const fs::path& paper, unsigned points, st
     const std::vector<std::string> mass_rules{mass, mass, mass, mass, "0", "0", "0"};
     std::vector<comparison> cases;
     for (const std::string pref : {"physical", "spurious"}) {
-        auto input = read(construction / pref / "eeeeAAA" / "+++.expr");
+        auto input = read(construction / pref / "eeeeAAA" / (helicities + ".expr"));
         amp_expression expression(input, mass_rules);
         const auto native = expression.reduce().signed_permutation_form();
-        if (!native || native->symmetric_groups != std::vector<std::vector<int>>{{5, 6, 7}} ||
+        if (!native || native->symmetric_groups != photon_group ||
             native->alternating_groups != std::vector<std::vector<int>>{{1, 4}, {2, 3}} ||
             !native->joint_exchange || native->joint_exchange->sign != -1 ||
             native->joint_exchange->swaps != std::vector<std::pair<int, int>>{{1, 2}, {4, 3}})
@@ -119,7 +132,8 @@ int run(const fs::path& construction, const fs::path& paper, unsigned points, st
             cases.push_back({name, expression_evaluator(a, a.parse(text), parameters)});
         }
     }
-    const auto group = signed_images();
+    std::cout << helicities << ", " << group.size() << " signed images, " << trees.size()
+              << " Feynman diagrams, first seed " << first_seed << '\n';
     constexpr real tolerance = 1e-8L;
     for (unsigned i = 0; i < points; ++i) {
         const auto p = sample_point(masses, first_seed + i);
@@ -168,15 +182,16 @@ int run(const fs::path& construction, const fs::path& paper, unsigned points, st
 } // namespace
 
 int main(int argc, char** argv) {
-    if (argc < 3 || argc > 5) {
-        std::cerr << "Usage: replay-four-fermions RUN_DIR PAPER_SEED_DIR [POINTS [SEED]]\n";
+    if (argc < 3 || argc > 6) {
+        std::cerr << "Usage: replay-four-fermions RUN_DIR PAPER_SEED_DIR [POINTS [SEED [+++|++-]]]\n";
         return 2;
     }
     try {
         const unsigned points = argc > 3 ? std::stoul(argv[3]) : 100000;
         if (!points)
             throw std::invalid_argument("Positive sample count required");
-        return run(argv[1], argv[2], points, argc > 4 ? std::stoull(argv[4]) : 704733);
+        return run(argv[1], argv[2], points, argc > 4 ? std::stoull(argv[4]) : 704733,
+                   argc > 5 ? argv[5] : "+++");
     } catch (const std::exception& e) {
         std::cerr << e.what() << '\n';
         return 2;

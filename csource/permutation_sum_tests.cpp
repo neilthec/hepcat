@@ -205,6 +205,42 @@ void test_reloaded_minority(bool physical, bool conjugate, bool shuffled) {
             "accepted a current with a wrong relative sign");
 }
 
+// The signed reduction also applies to scalar expressions with no Dirac current.
+void test_signed_scalar_kernel() {
+    Algebra a;
+    a.setKinematics(std::vector<Id>(4,a.integer(0)),{});
+    const auto seed = a.parse("Plus[MomProd[1,3],MomProd[1,4],Times[-1,MomProd[2,3]],Times[-1,MomProd[2,4]]]");
+    permutation_sum form{{3,4},seed,{}, {},{{1,2}}};
+    auto project = [&](permutation_sum s) {
+        return a.simplify(expand_permutation_groups(a,expand_signed_operators(a,s),{s.legs}));
+    };
+    auto equivalent = [&](const permutation_sum& s, Id result) {
+        auto check=s;
+        check.kernel=result;
+        const auto difference=a.add({project(s),a.mul({a.integer(-1),project(check)})});
+        const expression_evaluator value(a,difference,{});
+        for (unsigned trial=1; trial<=3; ++trial) {
+            auto p=sample_point({0,0,0,0},310+trial);
+            // Use independent integer products here to avoid accidental
+            // four-body momentum-conservation identities in this algebra test.
+            for (unsigned i=0;i<4;++i) for (unsigned j=i;j<4;++j) {
+                const unsigned n=3+4*i+j;
+                p.scalar_products[4*i+j]=p.scalar_products[4*j+i]=n*n+trial*n*n*n;
+            }
+            if (value(p)!=complex{}) return false;
+        }
+        return true;
+    };
+    auto reduced=simplify_signed_kernel(a,seed,form);
+    require(a.cost(reduced)<a.cost(seed) && equivalent(form,reduced),"incorrect scalar alternating fold");
+    form.kernel=a.parse("Times[MomProd[1,3],Plus[MomProd[1,3],Times[-1,MomProd[2,3]]]]");
+    // This joint swap mixes the alternating and symmetric groups. Folding an
+    // individual Fermi transposition inside its image would change the result.
+    form.joint_exchange=signed_exchange{{{1,3}},-1};
+    require(equivalent(form,simplify_signed_kernel(a,form.kernel,form)),
+            "failed to protect the spectator or the ordered exchange operators");
+}
+
 void test_current(const model& qed, bool physical) {
     std::vector<std::string> particles{"e","E","A.+","A.+","A.+","A.+","A.+"};
     std::vector<std::string> masses;
@@ -260,6 +296,7 @@ int main(int argc, char** argv) {
     if (argc != 2) return 2;
     try {
         test_massive_scalar_legs();
+        test_signed_scalar_kernel();
         test_single_minority({1,3,4},6,false);
         test_single_minority({1,3,4,6},7,false);
         test_single_minority({1,3,4,6},7,true);

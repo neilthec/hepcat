@@ -74,7 +74,8 @@ complex sum_fermions(const expression_evaluator& seed, const point& p,
 }
 
 void check_presentation(Algebra& a, Id original, const permutation_sum& generated, const std::vector<Id>& masses,
-                        const parameters& inputs, const std::vector<real>& values) {
+                        const parameters& inputs, const std::vector<real>& values,
+                        const std::vector<int>& expected_photons, size_t maximum_weight) {
   std::vector<std::string> mass_text;
   for (Id id : masses) mass_text.push_back(a.format(id));
   amp_expression amp(a.format(original),mass_text);
@@ -86,7 +87,8 @@ void check_presentation(Algebra& a, Id original, const permutation_sum& generate
   const auto& photons = signed_sum->symmetric_groups.front();
   const auto& electrons = signed_sum->alternating_groups[0];
   const auto& positrons = signed_sum->alternating_groups[1];
-  if (photons.size()!=3 || electrons.size()!=2 || positrons.size()!=2) throw std::runtime_error("Bad leg groups");
+  if (photons!=expected_photons || generated.legs!=expected_photons || electrons.size()!=2 || positrons.size()!=2)
+    throw std::runtime_error("Bad leg groups");
   const std::vector<std::pair<int,int>> paired{{electrons[0],positrons[0]},{electrons[1],positrons[1]}};
   if (signed_sum->joint_exchange->swaps!=paired) throw std::runtime_error("Incorrect charge-reversed legs");
   const expression_evaluator full(a,original,inputs), seed(a,a.parse(signed_sum->summand),inputs);
@@ -104,7 +106,11 @@ void check_presentation(Algebra& a, Id original, const permutation_sum& generate
       tex.find("\\pi\\!\\left(1-\\mathsf P_") == std::string::npos ||
       !(conjugate < alternate && alternate < symmetrize && symmetrize != std::string::npos))
     throw std::runtime_error("Signed presentation lost an operator or changed their order");
-  if (amp.permutation_summand_complexity() != expression_complexity(a,a.parse(signed_sum->summand)))
+  const auto weight = expression_complexity(a,a.parse(signed_sum->summand));
+  if (weight > maximum_weight)
+    throw std::runtime_error("Signed summand weight " + std::to_string(weight) +
+                             " exceeds " + std::to_string(maximum_weight));
+  if (amp.permutation_summand_complexity() != weight)
     throw std::runtime_error("Reported complexity differs from the displayed summand");
   for (unsigned sample = 0; sample < 3; ++sample) {
     auto p = sample_point(values, 81321+sample);
@@ -121,13 +127,48 @@ void check_presentation(Algebra& a, Id original, const permutation_sum& generate
   auto root = a.node(original);
   if (root.head!="Plus" || root.args.size()!=16) throw std::runtime_error("Missing negative control allocations");
   root.args.front()=a.mul({a.integer(-1),root.args.front()});
-  if (recognize_ordered_current(a,a.add(root.args)))
+  amp_expression incorrect(a.format(a.add(root.args)),mass_text);
+  const auto wrong = incorrect.reduce().signed_permutation_form();
+  if (wrong && wrong->joint_exchange)
     throw std::runtime_error("Recognized a wrong relative sign in one exchange allocation");
+}
+
+// With two photons of each helicity the two Bose groups act independently.
+// In particular, the balanced (1,1)|(1,1) allocation has a larger stabilizer.
+void check_balanced_occupations(const model& vertices) {
+  const std::vector<std::string> legs{"e","E","E","e","A.+","A.+","A.-","A.-"};
+  Algebra a;
+  const auto inputs = model_parameters(vertices);
+  const auto m = a.parse(vertices.particle("e").mass), z = a.integer(0);
+  a.setKinematics({m,m,m,m,z,z,z,z},{});
+  std::optional<permutation_sum> form;
+  const auto elementary = fermion_current_proposal(a,vertices,legs,1680,true,&form);
+  if (!elementary || !form || form->joint_exchange || form->legs != std::vector<int>{5,6} ||
+      form->other_groups != std::vector<std::vector<int>>{{7,8}} ||
+      form->alternating_groups != std::vector<std::vector<int>>{{1,4},{2,3}} ||
+      a.node(form->kernel).head != "Plus" || a.node(form->kernel).args.size() != 5)
+    throw std::runtime_error("Expected five helicity occupations and two independent photon pairs");
+  const expression_evaluator full(a,*elementary,inputs), seed(a,form->kernel,inputs);
+  const auto mass = evaluate_scalar(a,m,inputs).real();
+  for (unsigned sample = 0; sample < 3; ++sample) {
+    const auto p = sample_point({mass,mass,mass,mass,0,0,0,0},704750+sample);
+    complex sum{};
+    for (unsigned mask = 0; mask < 8; ++mask) {
+      auto image = p;
+      if (mask & 1) exchange_legs(image,0,3);
+      if (mask & 2) exchange_legs(image,1,2);
+      if (mask & 4) exchange_legs(image,6,7);
+      const bool odd = (mask & 3) == 1 || (mask & 3) == 2;
+      sum += real(odd ? -1 : 1)*sum_photons(seed,image,{5,6});
+    }
+    agree(sum,full(p),"Incorrect eight-point helicity-occupation weight");
+  }
 }
 
 void check(const model &vertices, const model &rules,
            const std::vector<std::string> &legs, bool physical, size_t diagrams,
-           size_t exchange_first, size_t exchange_second, bool signed_orbits = false) {
+           size_t exchange_first, size_t exchange_second, const std::vector<int>& symmetric_photons = {},
+           size_t maximum_weight = 0) {
   Algebra a, reference(&rules.algebra());
   auto inputs = model_parameters(vertices), finputs = model_parameters(rules);
   std::vector<Id> m, fm;
@@ -146,11 +187,11 @@ void check(const model &vertices, const model &rules,
     throw std::runtime_error("Incomplete constructive topology inventory");
   std::optional<permutation_sum> presentation;
   auto current = fermion_current_proposal(a, vertices, legs, diagrams, physical, &presentation);
-  if (presentation.has_value() != signed_orbits)
+  if (presentation.has_value() != !symmetric_photons.empty())
     throw std::runtime_error("Incorrect symmetry certificate for these particles");
   if (!current)
     throw std::runtime_error("Missing multi-line current");
-  if (signed_orbits) check_presentation(a,*current,*presentation,m,inputs,values);
+  if (presentation) check_presentation(a,*current,*presentation,m,inputs,values,symmetric_photons,maximum_weight);
   std::vector<Id> feynman_terms;
   for (const auto &plan : generation::diagram_plans(rules, legs))
     feynman_terms.push_back(feynman_to_spinors(
@@ -174,16 +215,16 @@ int main(int argc, char **argv) {
     return 2;
   try {
     const model vertices(argv[1], 3), rules(argv[2], 2);
-    check(vertices, rules, {"e", "E", "E", "e", "A.+", "A.+", "A.+"}, true, 240, 1, 2, true);
-    check(vertices, rules, {"e", "E", "A.-", "e", "A.-", "E", "A.-"}, false, 240, 0, 3, true);
+    check(vertices, rules, {"e", "E", "E", "e", "A.+", "A.+", "A.+"}, true, 240, 1, 2, {5,6,7}, 388);
+    check(vertices, rules, {"e", "E", "A.-", "e", "A.-", "E", "A.-"}, false, 240, 0, 3, {3,5,7}, 360);
     check(vertices, rules, {"e", "E", "E", "e", "A.+", "A.+", "A.-"}, true, 240,
-          1, 2);
-    check(vertices, rules, {"e", "E", "E", "e", "A.-", "A.-", "A.+"}, false,
-          240, 0, 3);
+          1, 2, {5,6}, 1188);
+    check(vertices, rules, {"E", "A.-", "e", "A.+", "e", "E", "A.-"}, false,
+          240, 2, 4, {2,7}, 1124);
     check(vertices, rules, {"e", "E", "e", "E", "e", "E", "A.-"}, true, 252, 0,
           4);
-    std::cout << "Seven-point signed Weyl currents and identical-fermion "
-                 "exchanges passed.\n";
+    check_balanced_occupations(vertices);
+    std::cout << "Signed Weyl currents, Fermi exchange and photon occupations passed.\n";
   } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';
     return 1;

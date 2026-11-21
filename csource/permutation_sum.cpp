@@ -1,11 +1,13 @@
 #include "permutation_sum.hpp"
 #include "fermion_currents.hpp"
 #include "chiral_radiation.hpp"
+#include "mixed_radiation.hpp"
 #include "spinor_word.hpp"
 #include "mixed_physical_current.hpp"
 
 #include <algorithm>
 #include <limits>
+#include <numeric>
 #include <map>
 #include <set>
 #include <unordered_map>
@@ -192,6 +194,12 @@ Id factor_choices(Algebra& a, const OrbitChoices& rows, unsigned preference,
 class kernel_reducer {
     Algebra& a;
     std::vector<relabel> permutations;
+    // The signed two-image constructor marks its one nontrivial image.
+    bool subtract_second = false;
+    Id signed_image(std::size_t index, Id term) {
+        const auto x = permutations[index](term);
+        return subtract_second && index == 1 ? a.mul({a.integer(-1),x}) : x;
+    }
     std::size_t remaining = 40000;
     using Group = std::vector<std::size_t>;
     Id visit(Id id, const Group& group) {
@@ -224,7 +232,7 @@ class kernel_reducer {
             mpq_class coefficient;
             bool first = true, antisymmetric = false;
             for (auto k : group) {
-                Id word = permutations[k](term);
+                Id word = signed_image(k,term);
                 const auto& n = a.node(word);
                 mpq_class scale = 1;
                 if (n.head == "Times" && a.number(n.args.front(),scale))
@@ -240,7 +248,7 @@ class kernel_reducer {
         for (const auto& [word,coefficient] : coefficients) {
             if (coefficient == 0) continue;
             std::set<Id> alternatives;
-            for (auto k : group) alternatives.insert(a.mul({a.exact(coefficient),permutations[k](word)}));
+            for (auto k : group) alternatives.insert(a.mul({a.exact(coefficient),signed_image(k,word)}));
             choices.emplace_back(alternatives.begin(),alternatives.end());
         }
         std::size_t budget = remaining;
@@ -266,6 +274,12 @@ public:
             images=std::move(product);
         }
         for (const auto& image:images) permutations.emplace_back(a,from,image);
+    }
+    kernel_reducer(Algebra& algebra, const std::vector<int>& from,
+                   const std::vector<int>& to, bool subtract)
+        : a(algebra), subtract_second(subtract) {
+        permutations.emplace_back(a,from,from);
+        permutations.emplace_back(a,from,to);
     }
     Id run(Id id) {
         Group group(permutations.size());
@@ -411,14 +425,14 @@ std::optional<permutation_sum> recognize_exchange(Algebra& a, Id input) {
     const auto& masses = a.masses();
     const auto zero = a.integer(0);
     if (a.cost(input) > 100000) return {};
-    std::vector<int> massive, photons;
+    std::vector<int> massive, photons, types(masses.size());
     const auto weights = external_spin_weights(a,input);
     if (!weights) return {};
     for (std::size_t i = 0; i < masses.size(); ++i) {
         if (masses[i] == zero) {
-            if (std::abs((*weights)[i]) != 2 ||
-                (!photons.empty() && (*weights)[i] != (*weights)[photons.front()-1])) return {};
+            if (std::abs((*weights)[i]) != 2) return {};
             photons.push_back(i+1);
+            types[i] = -(*weights)[i];
         } else {
             if ((*weights)[i] != 1 || (!massive.empty() && masses[i] != masses[massive.front()-1])) return {};
             massive.push_back(i+1);
@@ -459,7 +473,6 @@ std::optional<permutation_sum> recognize_exchange(Algebra& a, Id input) {
     if (starts.size() != 2 || ends.size() != 2) return {};
     for (int l : starts) for (int r : ends)
         if (!edges.count(std::minmax(l,r))) return {};
-    const bool square = (*weights)[photons.front()-1] == -2;
     const auto mass = masses[massive.front()-1];
     auto polynomial = [&](Id expr) {
         size_t work = 1000000;
@@ -484,6 +497,8 @@ std::optional<permutation_sum> recognize_exchange(Algebra& a, Id input) {
     if (allocations.size() != (2u << photons.size())) return {};
     for (int orientation=0; orientation<2; ++orientation) {
         if (orientation) starts.swap(ends);
+        for (int i : starts) types[i-1] = 1;
+        for (int i : ends) types[i-1] = -1;
         std::optional<Id> scale;
         auto matches = [&](Id pole, Id current) {
             const auto found = allocations.find(pole);
@@ -494,29 +509,36 @@ std::optional<permutation_sum> recognize_exchange(Algebra& a, Id input) {
             scale = ratio;
             return true;
         };
-        if (!verify_radiation_exchange(a,starts,ends,photons,square,physical,matches)) continue;
-        return chiral_exchange_sum(a,starts,ends,photons,mass,*scale,square,physical);
+        if (!verify_radiation_exchange(a,starts,ends,photons,types,physical,matches)) continue;
+        return radiation_exchange_sum(a,starts,ends,photons,types,mass,*scale,physical);
     }
     return {};
 }
 
 } // namespace
 
-// Infer the candidate from external spin weights and denominator chirality.
-// Only coefficient-by-coefficient agreement authorizes the ordered identity.
-permutation_sum chiral_exchange_sum(Algebra& a, const std::vector<int>& fermions,
-                                    const std::vector<int>& antifermions, const std::vector<int>& photons,
-                                    Id mass, Id coefficient, bool square, bool physical) {
+permutation_sum radiation_exchange_sum(Algebra& a, const std::vector<int>& fermions,
+                                      const std::vector<int>& antifermions, const std::vector<int>& photons,
+                                      const std::vector<int>& types, Id mass, Id coefficient, bool physical) {
     const int l = fermions.at(0), r = antifermions.at(0);
     const int u = fermions.at(1), v = antifermions.at(1);
-    const Id seed = chiral_radiation_kernel(a,l,r,u,v,photons,mass,square,physical);
+    std::vector<int> positive, negative;
+    for (int i : photons) (types.at(i-1) > 0 ? positive : negative).push_back(i);
+    const bool square = positive.size() > negative.size();
+    const auto& majority = square ? positive : negative;
+    const auto& minority = square ? negative : positive;
+    const Id seed = minority.empty()
+        ? chiral_radiation_kernel(a,l,r,u,v,majority,mass,square,physical)
+        : mixed_radiation_kernel(a,l,r,u,v,majority.at(0),majority.at(1),minority.at(0),mass,square,physical);
     // Each external vector changes sign under charge conjugation. Reversing
     // both currents exchanges the two ends of the internal photon as well.
     const int charge_parity = photons.size()%2 == 0 ? 1 : -1;
     const signed_exchange conjugate{{{l,r},{u,v}},charge_parity};
-    return {photons,a.mul({coefficient,seed}),{}, {},{fermions,antifermions},conjugate};
+    return {majority,a.mul({coefficient,seed}),{}, {},{fermions,antifermions},conjugate};
 }
 
+// Infer the candidate from external spin weights and denominator chirality.
+// Only coefficient-by-coefficient agreement authorizes the ordered identity.
 std::optional<permutation_sum> recognize_ordered_current(Algebra& a, Id input) {
     const auto& masses = a.masses();
     const auto zero = a.integer(0);
@@ -654,6 +676,56 @@ Id simplify_permutation_kernel(Algebra& a, Id input, const std::vector<int>& leg
         return input;
     }
     return input;
+}
+
+// In a signed sum, K and sign(g) g(K) have identical projections. Try each
+// involution individually to avoid enumerating a factorial product of groups.
+// A spectator multiplying a subexpression must be invariant under the swap.
+Id simplify_signed_kernel(Algebra& a, Id input, const permutation_sum& sum) {
+    if (a.cost(input) > 16000 || (sum.alternating_groups.empty() && !sum.joint_exchange)) return input;
+    try {
+        std::vector<int> conjugate(a.masses().size()+1);
+        std::iota(conjugate.begin(),conjugate.end(),0);
+        Id best = input;
+        auto attempt = [&](const std::vector<int>& from, const std::vector<int>& to, bool subtract) {
+            auto candidate = kernel_reducer(a,from,to,subtract).run(best);
+            if (a.cost(candidate) < a.cost(best) &&
+                expression_complexity(a,candidate) <= expression_complexity(a,best)) best = candidate;
+        };
+        if (sum.joint_exchange) {
+            std::vector<int> from,to;
+            for (auto [l,r] : sum.joint_exchange->swaps) {
+                if (l<=0 || r<=0 || static_cast<size_t>(std::max(l,r))>=conjugate.size() ||
+                    r==l || conjugate[l]!=l || conjugate[r]!=r) return input;
+                std::swap(conjugate[l],conjugate[r]);
+                from.insert(from.end(),{l,r}); to.insert(to.end(),{r,l});
+            }
+            attempt(from,to,sum.joint_exchange->sign<0);
+        }
+        auto fold_groups = [&](const std::vector<std::vector<int>>& groups, bool subtract) {
+            for (const auto& group : groups) for (size_t n=1; n<group.size(); ++n) {
+                const auto l=group[n-1], r=group[n];
+                if (l<=0 || r<=0 || static_cast<size_t>(std::max(l,r))>=conjugate.size()) continue;
+                // H(1 +/- C)g = sign(g) H(1 +/- C) when both g and CgC
+                // are transpositions in H with the same exchange sign.
+                if (std::any_of(groups.begin(),groups.end(),[&](const auto& block) {
+                    return std::find(block.begin(),block.end(),conjugate[l])!=block.end() &&
+                           std::find(block.begin(),block.end(),conjugate[r])!=block.end();
+                })) attempt({l,r},{r,l},subtract);
+            }
+        };
+        auto symmetric=sum.other_groups;
+        symmetric.insert(symmetric.begin(),sum.legs);
+        fold_groups(symmetric,false);
+        fold_groups(sum.alternating_groups,true);
+        return best;
+    } catch (const Unsupported&) {
+        return input;
+    } catch (const std::length_error&) {
+        return input;
+    } catch (const std::overflow_error&) {
+        return input;
+    }
 }
 
 std::optional<permutation_sum> compact_permutations(Algebra& a, Id input) {

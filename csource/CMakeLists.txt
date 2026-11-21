@@ -9,7 +9,7 @@ find_library(GMP_LIBRARY gmp REQUIRED)
 
 add_library(hepcat_reduce
     model.cpp model_expression.cpp model_parameters.cpp generation_plan.cpp generation_sew.cpp generation_spin.cpp generation_null.cpp
-    color_basis.cpp color_completion.cpp generation_current.cpp generation_chiral.cpp generation_feynman.cpp generation.cpp amplitude.cpp construct.cpp line_current.cpp mixed_physical_current.cpp chiral_radiation.cpp fermion_currents.cpp spinas_export.cpp external_export.cpp completion.cpp continuations.cpp null_shift.cpp residue.cpp
+    color_basis.cpp color_completion.cpp generation_current.cpp generation_chiral.cpp generation_feynman.cpp generation.cpp amplitude.cpp construct.cpp line_current.cpp mixed_physical_current.cpp chiral_radiation.cpp mixed_radiation.cpp fermion_currents.cpp spinas_export.cpp external_export.cpp completion.cpp continuations.cpp null_shift.cpp residue.cpp
     high_energy.cpp high_energy_chart.cpp high_energy_contacts.cpp
     validation.cpp validation_checks.cpp validation_numeric.cpp validation_feynman.cpp
     validation_precision_chart.cpp validation_precision_parameters.cpp
