@@ -6,6 +6,9 @@
 // signed value with the independent off-shell Feynman diagrams at 100,000 points.
 #include "amplitude.hpp"
 #include "reduce.hpp"
+#include "generation_feynman.hpp"
+#include "validation_feynman.hpp"
+#include "validation_numeric.hpp"
 
 #include <algorithm>
 #include <filesystem>
@@ -83,6 +86,33 @@ bool check_full(const model& vertices, const model& cuts, const model& feynman,
         std::cerr << "Unexpected denominator structure for the selected pole representation\n";
     return report.passed() && compared && has_spurious == expect_spurious;
 }
+// Compare the rows as read from disk, including their model-local coefficients.
+bool check_seven(const model& cuts, const model_vertex& row, const model& rules) {
+    using namespace validation;
+    Algebra a(&cuts.algebra()), fa(&rules.algebra());
+    const auto params = model_parameters(cuts);
+    std::vector<Id> cut_masses, rule_masses, trees;
+    std::vector<real> masses;
+    for (const auto& leg : row.legs) {
+        cut_masses.push_back(a.parse(cuts.particle(leg).mass));
+        masses.push_back(evaluate_scalar(a,cut_masses.back(),params).real());
+        rule_masses.push_back(fa.parse(rules.particle(generation::feynman_external(rules,leg)).mass));
+    }
+    a.setKinematics(cut_masses,{});
+    fa.setKinematics(rule_masses,{});
+    for (const auto& plan : generation::diagram_plans(rules,row.legs))
+        trees.push_back(feynman_to_spinors(fa,generation::sew_feynman(fa,rules,row.legs,plan)));
+    if (trees.empty()) return false;
+    expression_evaluator stored(a,a.mul({row.factor,row.expression}),params);
+    expression_evaluator reference(fa,fa.add(trees),model_parameters(rules));
+    for (unsigned i=0;i<8;++i) {
+        const auto point = sample_point(masses,706181+i);
+        const auto x = stored(point), y = reference(point);
+        const auto scale = std::max(std::abs(x),std::abs(y));
+        if (!(scale > 0 && std::abs(x-y) <= 1e-8L*scale)) return false;
+    }
+    return true;
+}
 } // namespace
 
 int main(int argc, char** argv) {
@@ -100,7 +130,7 @@ int main(int argc, char** argv) {
         for (int number : {4, 5}) {
             const model catalog(root / "models", number, vertices.parameter_scope());
             for (const auto& vertex : catalog.vertices()) {
-                if (vertex.legs.size() < 4 || vertex.legs.size() > 6) continue;
+                if (vertex.legs.size() < 4 || vertex.legs.size() > 7) continue;
                 std::string family, helicities;
                 std::vector<std::string> masses;
                 for (const auto& leg : vertex.legs) {
@@ -117,6 +147,16 @@ int main(int argc, char** argv) {
                 Algebra joined(&catalog.algebra());
                 const auto value = joined.mul({vertex.factor, vertex.expression});
                 const amp_expression stored(joined.format(value), masses);
+                if (vertex.legs.size() == 7) {
+                    bool ok = check_seven(catalog,vertex,feynman);
+                    if (argc == 3)
+                        ok = check_full(vertices,catalog,feynman,vertex.legs,stored,
+                                        706181,number == 5) && ok;
+                    std::cout << (ok ? "PASS" : "FAIL") << "  model " << number << "  " << family
+                              << ' ' << helicities << "  signed Feynman diagrams" << std::endl;
+                    if (ok) ++passed;
+                    continue;
+                }
                 const amp_expression published(formulas.at(label).back(), masses);
                 identity_check_options checks;
                 checks.seed = 601787 + 41 * seen.size();
@@ -140,8 +180,17 @@ int main(int argc, char** argv) {
                 if (ok) ++passed;
             }
         }
-        std::cout << passed << '/' << formulas.size() << " QED catalog entries passed\n";
-        return passed == formulas.size() ? 0 : 1;
+        for (const auto& policy : {"physical","spurious"})
+            for (unsigned pairs : {1u,2u,3u}) {
+                const unsigned photons = 7-2*pairs;
+                const auto family = std::string(2*pairs,'e') + std::string(photons,'A');
+                for (unsigned minus=0;minus<=photons;++minus)
+                    if (!seen.count({policy,family,std::string(photons-minus,'+')+std::string(minus,'-')}))
+                        throw std::runtime_error("Missing seven-point entry in " + family);
+            }
+        const auto expected = formulas.size()+24;
+        std::cout << passed << '/' << expected << " QED catalog entries passed\n";
+        return passed == expected && seen.size() == expected ? 0 : 1;
     } catch (const std::exception& e) {
         std::cerr << e.what() << '\n';
         return 1;
