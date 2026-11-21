@@ -452,7 +452,11 @@ struct balanced_line : dirac_recursion {
             return neg(a.mul({chain(swapped, vectors[i], {reference(i)}, vectors[j]),
                               chain(swapped, vectors[i], {reference(j)}, vectors[j])}));
         }
-        if (minor[i] == minor[j]) return zero();
+        if (minor[i] == minor[j]) {
+            if (reference(i)==reference(j)) return zero();
+            return a.mul({chain(chirality(i),vectors[i],{},vectors[j]),
+                          chain(!chirality(i),reference(i),{},reference(j))});
+        }
         if (!minor[i]) std::swap(i, j);
         return a.mul({chain(!swapped, reference(i), {}, vectors[j]),
                       chain(swapped, vectors[i], {}, reference(j))});
@@ -704,6 +708,158 @@ struct balanced_line : dirac_recursion {
         return a.mul(prefactors);
     }
 };
+// Place the central fermion propagator between two three-photon subcurrents.
+// Summing over the last photon on each side leaves the already reduced,
+// symmetric two-photon currents at the external fermion and antifermion.
+permutation_sum central_fermion_sum(Algebra& a, int l, int r, Id mass, const legs& majority,
+                                    const legs& minority, bool conjugate, Id coupling, bool physical) {
+    legs photons = majority;
+    photons.insert(photons.end(), minority.begin(), minority.end());
+    const mask full = (mask{1} << photons.size()) - 1;
+    auto make_line = [&](bool square) {
+        std::vector<bool> pauli;
+        legs references;
+        for (std::size_t i = 0; i < photons.size(); ++i) {
+            const bool major = i < majority.size();
+            pauli.push_back((major != conjugate) == square);
+            references.push_back(physical ? l
+                                 : major  ? minority.front()
+                                          : minority[(i - majority.size() + 1) % minority.size()]);
+        }
+        balanced_line line({a, l, r, mass, coupling, photons, pauli, square, full}, physical);
+        line.reference_legs = std::move(references);
+        line.normalized_pairs = true;
+        return line;
+    };
+    // Pair currents already contain both polarization denominators. A full
+    // three-photon current keeps its three denominators outside the recursion.
+    auto angle = make_line(false), square = make_line(true);
+    auto full_angle = make_line(false), full_square = make_line(true);
+    full_angle.normalized_pairs = full_square.normalized_pairs = false;
+    auto project = [&](bool sq, bool left, mask set, int k, bool whole = false) {
+        auto& line = whole ? (sq ? full_square : full_angle) : (sq ? square : angle);
+        const bool projected = sq != line.chirality(k);
+        const int photon = photons[k], ref = line.reference(k);
+        std::vector<Id> terms;
+        for (const auto& [end, c] : line.extend(left, set)) {
+            Id bracket;
+            if (physical && projected)
+                bracket =
+                    left ? line.neg(line.chain(sq, end, {ref}, photon)) : line.chain(!sq, photon, {ref}, end);
+            else {
+                const int spin = projected ? ref : photon;
+                bracket = left ? line.chain(sq, end, {}, spin) : line.chain(sq, spin, {}, end);
+            }
+            terms.push_back(a.mul({c, bracket}));
+        }
+        return a.add(terms);
+    };
+    auto bridge = [&](bool sq, int k, int j, std::optional<Id> momentum) {
+        const bool right_square = sq != momentum.has_value();
+        const bool first = sq != angle.chirality(k), last = right_square != angle.chirality(j);
+        const int start = first && !physical ? angle.reference(k) : photons[k];
+        const int end = last && !physical ? angle.reference(j) : photons[j];
+        std::vector<Id> word{angle.ep(sq != (first && physical), start)};
+        if (first && physical) word.push_back(a.call("Mom", {a.integer(angle.reference(k))}));
+        if (momentum) word.push_back(*momentum);
+        if (last && physical) word.push_back(a.call("Mom", {a.integer(angle.reference(j))}));
+        word.push_back(angle.ep(right_square != (last && physical), end));
+        if (start == end && word.size() == 2) return angle.zero();
+        const Id chain = a.call("SpinorChain", std::move(word));
+        return last && physical ? angle.neg(chain) : chain;
+    };
+    // A massless reference singles out the first minority leg. Permute all
+    // minority labels only after summing the complete amplitude in this gauge.
+    std::vector<legs> blocks(1);
+    for (int i = 0; i < static_cast<int>(photons.size()); ++i) {
+        if (i >= static_cast<int>(majority.size()) && (!physical || i == static_cast<int>(majority.size())))
+            blocks.emplace_back();
+        blocks.back().push_back(i);
+    }
+    int gauges = 1;
+    if (!physical)
+        for (int i = 2; i <= static_cast<int>(minority.size()); ++i)
+            gauges *= i;
+    permutation_sum out{majority, angle.zero(), {}, {minority}};
+    if (!physical) out.joint_exchange = signed_exchange{{{l, r}}, -1};
+    std::vector<Id> terms;
+    for (mask left = 1; left < full; ++left) {
+        if (angle.length(left) != 3) continue;
+        // Within each reference-preserving block take its first nl labels
+        // on the left. The factorial weight removes equivalent permutations.
+        legs counts, opposite;
+        std::map<int, int> left_centers, right_centers;
+        int stabilizer = gauges;
+        bool representative = true;
+        for (const auto& block : blocks) {
+            auto on_left = [&](int i) { return (left & (mask{1} << i)) != 0; };
+            const auto boundary = std::find_if_not(block.begin(), block.end(), on_left);
+            if (std::any_of(boundary, block.end(), on_left)) {
+                representative = false;
+                break;
+            }
+            const int nl = static_cast<int>(boundary - block.begin());
+            const int nr = static_cast<int>(block.end() - boundary);
+            if (nl) left_centers.emplace(block.front(), nl);
+            if (nr) right_centers.emplace(*boundary, nr);
+            for (int count : {nl, nr})
+                for (int i = 2; i <= count; ++i)
+                    stabilizer *= i;
+            counts.push_back(nl);
+            opposite.push_back(nr);
+        }
+        if (!representative || (!physical && counts < opposite)) continue;
+        if (!physical && counts == opposite) stabilizer *= 2;
+        const mask right = full ^ left;
+        const Id denominator = angle.pole(l, left);
+        const Id momentum = a.node(denominator).args.front();
+        std::vector<Id> pairs;
+        for (const auto& [k, nk] : left_centers)
+            for (const auto& [j, nj] : right_centers) {
+                const mask lp = left ^ (mask{1} << k), rp = right ^ (mask{1} << j);
+                std::vector<Id> spin;
+                for (bool s : {false, true}) {
+                    const Id diagonal =
+                        a.mul({mass, bridge(!s, k, j, std::nullopt), project(s, false, rp, j)});
+                    const Id off_diagonal = a.mul({bridge(!s, k, j, momentum), project(!s, false, rp, j)});
+                    spin.push_back(a.mul({project(s, true, lp, k), a.add({diagonal, off_diagonal})}));
+                }
+                pairs.push_back(a.mul(
+                    {a.integer(nk * nj), a.add(spin), a.pow(angle.norm(k), -1), a.pow(angle.norm(j), -1)}));
+            }
+        // The same central propagator can instead be absorbed into either
+        // three-photon current. The remaining central photon then connects
+        // two Weyl projections, as in an odd-length line.
+        auto one_vertex = [&](bool whole_left) {
+            const mask whole = whole_left ? left : right;
+            const auto& centers = whole_left ? right_centers : left_centers;
+            std::vector<Id> choices;
+            for (const auto& [k, multiplicity] : centers) {
+                const mask pair = (full ^ whole) ^ (mask{1} << k);
+                std::vector<Id> spin;
+                for (bool s : {false, true}) {
+                    spin.push_back(
+                        a.mul({project(s, whole_left, whole, k, true), project(!s, !whole_left, pair, k)}));
+                }
+                choices.push_back(a.mul({a.integer(multiplicity), a.pow(angle.norm(k), -1), a.add(spin)}));
+            }
+            std::vector<Id> factors{a.add(choices)};
+            for (std::size_t i = 0; i < photons.size(); ++i)
+                if (whole & (mask{1} << i)) factors.push_back(a.pow(angle.norm(i), -1));
+            return a.mul(factors);
+        };
+        const Id central = a.mul({a.pow(denominator, -1), a.add(pairs)});
+        const auto rank = [&](Id k) { return std::make_pair(expression_complexity(a, k), a.cost(k)); };
+        Id best = reduce_projected_candidate(a, central, out);
+        for (bool whole_left : {false, true}) {
+            const Id trial = reduce_projected_candidate(a, one_vertex(whole_left), out);
+            if (rank(trial) < rank(best)) best = trial;
+        }
+        terms.push_back(a.mul({a.pow(a.integer(stabilizer), -1), best}));
+    }
+    out.kernel = a.mul({angle.neg(coupling), a.add(terms)});
+    return out;
+}
 } // namespace
 std::optional<Id> physical_current_with_presentation(Algebra& a, int l, int r, Id mass, const std::vector<int>& plus,
                                          const std::vector<int>& minus, Id coefficient, std::optional<permutation_sum>* presentation) {
@@ -723,6 +879,8 @@ std::optional<Id> physical_current_with_presentation(Algebra& a, int l, int r, I
       return d.grouped_one_minority();
     if (minor.size() == 2 && major.size() == 4)
       return d.midpoint(true);
+    if (presentation && major.size()==6 && minor.size()>=2)
+        *presentation=paired_weyl_sum(a,l,r,mass,plus,minus,coefficient,true);
     return balanced_line(std::move(d), true).run(minor.size() == 1 ? presentation : nullptr);
 }
 std::optional<Id> mixed_physical_current(Algebra& a, int l, int r, Id mass,
@@ -769,7 +927,10 @@ std::optional<permutation_sum> paired_weyl_sum(Algebra& a, int l, int r, Id mass
     const bool conjugate = plus.size() < minus.size();
     const auto& majority = conjugate ? minus : plus;
     const auto& minority = conjugate ? plus : minus;
-    if (majority.size()+minority.size() != 5 || minority.size() < 2) return {};
+    if (minority.size() < 2) return {};
+    if (majority.size()+minority.size()==6)
+        return central_fermion_sum(a,l,r,mass,majority,minority,conjugate,coupling,physical);
+    if (majority.size()+minority.size()!=5) return {};
     legs vectors = majority;
     vectors.insert(vectors.end(), minority.begin(), minority.end());
     const mask full = (mask{1} << vectors.size()) - 1;

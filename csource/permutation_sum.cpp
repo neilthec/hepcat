@@ -263,7 +263,7 @@ public:
     kernel_reducer(Algebra& algebra, const std::vector<std::vector<int>>& groups) : a(algebra) {
         std::vector<int> from;
         std::vector<std::vector<int>> images(1);
-        const auto limit = groups.size()==1 && groups.front().size()==5 ? 120u : 24u;
+        constexpr unsigned limit = 120;
         for (auto group : groups) {
             std::sort(group.begin(),group.end());
             from.insert(from.end(),group.begin(),group.end());
@@ -604,7 +604,7 @@ std::optional<permutation_sum> recognize_ordered_current(Algebra& a, Id input, s
             else return {};
         }
         const auto count = std::min(positive.size(),negative.size());
-        const bool paired = count == 2 && positive.size()+negative.size() == 5;
+        const bool paired = count >= 2 && (massless==5 || massless==6);
         if (ends.size() != 2 || masses[ends[0]-1] != masses[ends[1]-1] ||
             (count != 1 && !paired)) return {};
         relabel canonical(a,{},{},true);
@@ -631,14 +631,14 @@ std::optional<permutation_sum> recognize_ordered_current(Algebra& a, Id input, s
         // A stored expression can put either minority leg at the common
         // reference. Only an exact match of the complete coefficient map
         // licenses a new gauge or a new current representation.
-        const unsigned routings = paired && !physical ? 2 : 1;
+        const auto routings = paired && !physical ? minorities.size() : 1;
         for (unsigned routing=0; routing<routings; ++routing) {
-            if (routing) std::swap(minorities.front(),minorities.back());
+            if (routing) std::rotate(minorities.begin(),minorities.begin()+1,minorities.end());
             for (int l : ends) {
                 const int r = l == ends.front() ? ends.back() : ends.front();
                 std::optional<permutation_sum> ordered;
                 auto current = physical
-                    ? physical_current_with_presentation(a,l,r,m,positive,negative,unit,&ordered)
+                    ? physical_current_with_presentation(a,l,r,m,positive,negative,unit,paired ? nullptr : &ordered)
                     : mixed_spurious_current(a,l,r,m,positive,negative,unit);
                 if (!current || (physical && !paired && !ordered)) continue;
                 const auto reduced = reduceInto(a,*current,masses,{});

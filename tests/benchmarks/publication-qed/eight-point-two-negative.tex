@@ -1,0 +1,100 @@
+\subsection{Four positive helicities and two negative}\label{sec:eight-two-minus}
+
+Consider $\M(1_e,2_E,3^+,4^+,5^+,6^+,7^-,8^-)$. Split the charged
+line at its middle electron propagator. Write $D(ijk|lmn)$ for the
+contribution with the three photons $i,j,k$ at the electron end and
+$l,m,n$ at the positron end, summed over their orders on each side.
+There are $\binom{6}{3}=20$ such partitions, each accounting for
+$3!\,3!=36$ of the 720 diagrams. The same function $D$ gives both
+pole forms.
+
+\paragraph{Physical poles.}
+Use $p_1$ for every polarization reference. In this gauge every orbital
+factor $x_i(p_1)$ in the electron's pair current vanishes. Let
+$(a,b,c,d)$ run over all 24 permutations of $(3,4,5,6)$ and $(h,g)$
+over both orders of $(7,8)$. The number of negative photons at the
+electron end distinguishes the three terms in the result.
+\begin{equation}\label{eq:eight-two-physical}
+ \M^{\phys}_{++++--}=-(\sqrt{2}e)^6\sum_{S_4\times S_2}
+ \left[\frac{D(abc|dhg)+D(ahg|bcd)}{12}
+       +\frac{D(abh|cdg)}{4}\right].
+\end{equation}
+The three choices account for four, four and twelve partitions,
+respectively. The divisors remove repetitions within each unordered triple.
+
+\paragraph{Spurious poles.}
+Use photon $h$ as the angle reference of every positive photon. The
+two negatives serve as each other's square references. All six
+references are then external photons. Reversing the line interchanges
+the triples with a minus sign in our all-incoming convention. With
+$P_{12}$ exchanging the massive momenta and spin labels, the result is
+\begin{equation}\label{eq:eight-two-spurious}
+ \M^{\spur}_{++++--}=-(\sqrt{2}e)^6(1-P_{12})\sum_{S_4\times S_2}
+ \left[\frac{D(abc|dhg)}{12}+\frac{D(abh|cdg)}{8}\right].
+\end{equation}
+At fixed $h$ the first term generates the four partitions with three
+positives on the left. The second generates the six with $h$ on the
+left and $g$ on the right. Reversal supplies the other ten. The sum
+over $(h,g)$ averages the two gauges of the complete amplitude. This
+accounts for the additional factor of two in the divisors relative to
+summing only the positives at fixed $h$. The only spurious poles come
+from the external polarization brackets.
+
+\paragraph{The middle propagator.}
+For a photon $i$ write $\alpha_i$ and $\beta_i$ for its angle and
+square polarization spinors, and $n_i$ for the polarization denominator.
+The following choices specify every bracket in $D$.
+\[
+\begin{array}{c|ccc|ccc}
+ &\multicolumn{3}{c|}{\text{physical}}&\multicolumn{3}{c}{\text{spurious}}\\
+ &\alpha_i&\beta_i&n_i&\alpha_i&\beta_i&n_i\\ \hline
+ i^+&p_1|i]&i&\tau_{1i}&r_i&i&\langle r_i i\rangle\\
+ i^-&i&p_1|i\rangle&\tau_{1i}&i&r_i&[r_i i]
+\end{array}
+\]
+In the physical columns a projected spinor at the left of a bracket
+inserts $p_1$ with a plus sign, and one at the right inserts it with
+a minus sign. For example,
+$\langle X\alpha_i\rangle=-\langle X|p_1|i]$ and
+$\langle\alpha_i X\rangle=[i|p_1|X\rangle$ for $i^+$.
+The rule for a projected square spinor follows by exchanging brackets.
+
+Let $J_t(ij)$ be the open two-photon spinor at endpoint $t$ from
+Eq.~\eqref{eq:seven-two-pair}, using the references of the chosen
+pole form. Summing over the photon that touches the middle
+propagator gives the two left spinors
+\begin{align}
+ \langle L|&=\sum_{\rm cyc(i,j,k)}
+   \frac{[J_1(ij)\,\beta_k]}{n_k}\langle\alpha_k|,&
+ [L|&=\sum_{\rm cyc(i,j,k)}
+   \frac{\langle J_1(ij)\,\alpha_k\rangle}{n_k}[\beta_k|.\nonumber
+\end{align}
+The corresponding right spinors are
+\begin{align}
+ |R\rangle&=\sum_{\rm cyc(l,m,n)}
+  |\alpha_l\rangle\frac{[\beta_l\,J_2(mn)]}{n_l},&
+ |R]&=\sum_{\rm cyc(l,m,n)}
+  |\beta_l]\frac{\langle\alpha_l\,J_2(mn)\rangle}{n_l}.\nonumber
+\end{align}
+With $Q=p_1+p_i+p_j+p_k$ and $\tau_{1ijk}=Q^2-m^2$, sewing the two currents gives
+\begin{equation}\label{eq:eight-two-bridge}
+ D(ijk|lmn)=
+ \frac{m\big(\langle LR\rangle+[LR]\big)
+       +\langle L|Q|R]+[L|Q|R\rangle}{\tau_{1ijk}} .
+\end{equation}
+The mass connects equal chiralities and the momentum connects opposite
+chiralities. The middle propagator retains its full virtuality.
+Equivalently one can multiply its numerator into either three-photon
+current before summing the photon adjacent to it. The reducer compares
+these expressions separately for each partition in the permutation sum.
+
+\paragraph{Numerical checks.}
+Both constructions satisfy all 62 physical residues and the fixed-angle
+$E^{-4}$ bound. For the two paper formulas, the largest relative
+discrepancies from the signed sum of 720 Feynman diagrams at 100,000
+points were $8.45\times10^{-11}$ in both gauges. At a separate 100,000
+points, the squared amplitudes with the massive spins summed agreed
+with polarized MadGraph to $5.87\times10^{-12}$ and $1.12\times10^{-10}$
+in the physical and spurious forms, respectively. Both comparisons met
+their tolerances throughout in native arithmetic. The automatically
+rearranged summands also passed both samples.

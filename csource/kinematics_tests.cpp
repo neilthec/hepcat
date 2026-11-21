@@ -61,6 +61,21 @@ void testKinematics() {
     equal("Power[Mom[Multiparticle[1,2,5]],2]", "Power[Mom[Multiparticle[1,2,5]],2]");
     equal("SpinorChain[Spinor[\"Spin\",\"Angle\",1],Mom[Multiparticle[1,2,3,4]],"
           "Spinor[\"Spin\",\"Square\",2]]", "0");
+    // Adjacent massless spinors and null slashes annihilate their own term
+    // in a composite momentum without expanding the surviving sum.
+    {
+        Algebra chart;
+        const Id m = chart.atom("m"), zero = chart.integer(0);
+        chart.setKinematics({m,m,zero,zero,zero,zero,zero,zero},{});
+        auto slash = [&](const std::string& legs, bool adjacent_slash) {
+            std::string word = "SpinorChain[Spinor[\"Helicity\",\"Square\",3],";
+            if (adjacent_slash) word += "Mom[4],";
+            word += "Mom[Multiparticle[" + legs + "]],Spinor[\"Helicity\",";
+            return chart.simplify(chart.parse(word + (adjacent_slash ? "\"Square\"" : "\"Angle\"") + ",8]]"));
+        };
+        if (slash("3,4,5",false) != slash("4,5",false) || slash("4,5,6",true) != slash("5,6",true))
+            throw std::runtime_error("null neighbor inside a composite slash");
+    }
     // A determinant of two crossed sandwiches reduces on the declared cut.
     // The two reference chiralities and a reversed two-slash word use the
     // same rule. A numerator shell never propagates into an inverse power.

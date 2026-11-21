@@ -220,6 +220,29 @@ struct amp_expression::cached_permutations {
     std::optional<permutation_sum> sum;
 };
 
+namespace {
+Id reduce_kernel(Algebra& trial, Id source, const permutation_sum& projection) {
+    // A local current exchange may not commute with a global Bose group.
+    const bool direct_bose = projection.inner_exchanges.empty();
+    auto bose = [&](Id k) {
+        return direct_bose ? simplify_permutation_kernel(trial, k, projection.legs, projection.other_groups)
+                           : k;
+    };
+    Id kernel = reduceInto(trial, bose(source), trial.masses(), {});
+    kernel = collect_scalar_factors(trial, kernel, 3);
+    kernel = collect_simple_fractions(trial, kernel);
+    return simplify_signed_kernel(trial, bose(kernel), projection);
+}
+} // namespace
+
+Id reduce_projected_candidate(Algebra& a, Id source, const permutation_sum& projection) {
+    const auto initial_size = a.size();
+    Algebra trial(&a);
+    trial.setKinematics(a.masses(), {});
+    const auto kernel = reduce_kernel(trial, source, projection);
+    return retain_borrowed(a, trial, kernel, initial_size);
+}
+
 const amp_expression::cached_permutations& amp_expression::reduced_permutations() const {
     if (permutations_ && permutations_->source == root_) return *permutations_;
     Algebra trial(arena_.get());
@@ -238,23 +261,13 @@ const amp_expression::cached_permutations& amp_expression::reduced_permutations(
             ordered->projected_terms.push_back({trial.parse(term.summand),term.exchanges});
     }
     if (ordered) {
-        auto reduce_kernel = [&](Id source, const permutation_sum& projection) {
-            // A local current exchange may not commute with a global Bose group.
-            const bool direct_bose = projection.inner_exchanges.empty();
-            auto bose = [&](Id k) { return direct_bose ? simplify_permutation_kernel(
-                trial,k,projection.legs,projection.other_groups) : k; };
-            Id kernel = reduceInto(trial,bose(source),kinematics_->masses,{});
-            kernel = collect_scalar_factors(trial,kernel,3);
-            kernel = collect_simple_fractions(trial,kernel);
-            return simplify_signed_kernel(trial,bose(kernel),projection);
-        };
         Id kernel;
-        if (ordered->projected_terms.empty()) kernel=reduce_kernel(ordered->kernel,*ordered);
+        if (ordered->projected_terms.empty()) kernel=reduce_kernel(trial,ordered->kernel,*ordered);
         else {
             for (auto& term : ordered->projected_terms) {
                 permutation_sum local = *ordered;
                 local.inner_exchanges.insert(local.inner_exchanges.begin(),term.exchanges.begin(),term.exchanges.end());
-                term.kernel=reduce_kernel(term.kernel,local);
+                term.kernel=reduce_kernel(trial,term.kernel,local);
             }
             kernel=sum_projected_terms(trial,ordered->projected_terms);
         }

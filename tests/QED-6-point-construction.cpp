@@ -4,8 +4,8 @@
 //   tests/results/native-reduce-build/hepcat-qed --family eeAA --preference physical
 // The example above constructs all four photon helicities and runs the CalcHEP
 // and MadGraph checks at 100,000 phase-space points by default. To run the entire
-// study, including all seven-point processes, the eight-point equal-helicity
-// and single-negative-photon constructions, and the independent formula
+// study, including all seven-point processes, the eight-point constructions with
+// zero, one or two negative photons, and the independent formula
 // comparisons through eight photons, run without arguments. Use --legs 7
 // to construct just the seven-point processes.
 // Use --list to see families and --help for installation paths and other options.
@@ -102,7 +102,7 @@ const std::vector<family> notebook = {
 
     // Six photons, with an independent equal-helicity reference or a signed Feynman comparison.
     {"eeAAAAAA", {"e", "E"}, {{"++++++", 16515, 16530, reference_source::all_positive_formula, false},
-                              prediction("+++++-", 59110, 69988)}},
+                              prediction("+++++-", 59110, 69988), prediction("++++--", 137062, 199628)}},
 };
 
 struct settings {

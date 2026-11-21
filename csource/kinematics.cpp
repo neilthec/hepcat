@@ -1,4 +1,5 @@
 #include "reduce.hpp"
+#include "spinor_word.hpp"
 
 #include <algorithm>
 #include <iterator>
@@ -252,9 +253,27 @@ Id reduceInsertion(Algebra& algebra, Id id, bool useInternal) {
             if (rank(trial) < rank(best))
                 best = trial;
         };
+        auto null_neighbor = [&](Id adjacent) {
+            const auto endpoint = spinor_detail::endpoint(algebra, adjacent);
+            int leg = 0;
+            if (endpoint.kind == spinor_detail::Kind::Helicity) leg = endpoint.leg;
+            else if (auto next = insertion(algebra, adjacent); next && next->size() == 1) leg = next->front();
+            return external(algebra, leg) && algebra.masses()[leg-1] == algebra.integer(0) ? leg : 0;
+        };
+        const int left_null = null_neighbor(chain.args[slot-1]);
+        const int right_null = null_neighbor(chain.args[slot+1]);
         auto trial = [&](const Legs& terms, int sign) {
             Id factor = algebra.integer(sign);
             select(algebra.mul({factor, makeChain(momentum(algebra, terms))}));
+            // Keep a composite slash factored after removing the summands
+            // annihilated by a neighboring massless spinor or lightlike slash.
+            Legs surviving;
+            for (int leg : terms)
+                if (leg != left_null && leg != right_null) surviving.push_back(leg);
+            if (surviving.size() < terms.size()) {
+                if (surviving.empty()) { select(algebra.integer(0)); return; }
+                select(algebra.mul({factor, makeChain(momentum(algebra, surviving))}));
+            }
             if (terms.size() == 1)
                 return;
             std::vector<Id> expanded;

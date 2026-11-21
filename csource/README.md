@@ -139,7 +139,7 @@ The call generates and reduces the tree diagrams and factorization products, com
 
 Both C++ notebooks save each amplitude in the four expression formats above. The terminal shows short amplitudes inline. Each validation table gives the check, its outcome and the number of checks or phase-space points covered.
 
-The [C++ QED example](../tests/QED-6-point-construction.cpp) covers the notebook's helicity families through six external legs, all three seven-point tree families of electron-photon QED, the eight-point constructions with six positive photons or five positive photons and one negative photon, and the separate all-positive formula study. From the HEPCAT repository root, run one complete family with
+The [C++ QED example](../tests/QED-6-point-construction.cpp) covers the notebook's helicity families through six external legs, all three seven-point tree families of electron-photon QED, the eight-point constructions with zero, one or two negative-helicity photons, and the separate all-positive formula study. From the HEPCAT repository root, run one complete family with
 
 ```sh
 tests/results/native-reduce-build/hepcat-qed --family eeAA --preference physical --skip-formulas \
@@ -158,7 +158,7 @@ tests/results/native-reduce-build/hepcat-qed --legs 7
 
 Use `--legs 7 --list` to see the three families and their 12 representatives. For a single construction, try `--family eeeeAAA --helicity ++- --construct-only`. The [seven-point measurements](../tests/benchmarks/qed-seven-point.tsv) give the weighted complexity, the automatic and shortest validated leaf counts, diagram and channel counts, and signed Feynman comparisons for each pole preference. Each run writes the formulas in plain text, LaTeX, Mathematica and native form. The size targets in the example are regression checks. Construction uses the cubic vertices and lower-point products. Select `--publication` to compare the earlier published cases against their signed formulas.
 
-For six photons with one negative helicity, select `--family eeAAAAAA --helicity '+++++-'`. The [eight-point formulas and validation results](../tests/benchmarks/publication-qed/eight-point-one-negative.md) include two spurious-pole representations and compare their numerical conditioning.
+For six photons with one negative helicity, select `--family eeAAAAAA --helicity '+++++-'`. The [eight-point formulas and validation results](../tests/benchmarks/publication-qed/eight-point-one-negative.md) include two spurious-pole representations and compare their numerical conditioning. For two negative photons, use `--family eeAAAAAA --helicity '++++--'`. The [midpoint formulas and validation results](../tests/benchmarks/publication-qed/eight-point-two-negative.md) show how three-photon currents at opposite ends of the electron line cover all 720 diagrams.
 
 The five-photon line also admits a check against the independent [one-negative-photon formula](../tests/benchmarks/one-minus/README.md). Its spurious-pole form and the parity-conjugate construction each agreed on 32 exact external-kinematic samples. The [two-pair all-positive formula](../tests/benchmarks/four-fermion-all-plus/README.md) gives a separate 32-sample signed check for four fermions and three positive photons. The expressions can be shorter when written in terms of recursively defined currents. The table measures the full HEPCAT expression returned by the constructor.
 

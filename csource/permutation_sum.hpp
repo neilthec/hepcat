@@ -32,6 +32,8 @@ permutation_sum radiation_exchange_sum(Algebra&, const std::vector<int>& fermion
 // Preserves the sum over all permutations of legs. Individual summands can change.
 Id simplify_permutation_kernel(Algebra&, Id, const std::vector<int>& legs,
                                const std::vector<std::vector<int>>& other_groups = {});
+// Reduce one independently projected candidate in a bounded-lifetime algebra arena.
+Id reduce_projected_candidate(Algebra&, Id, const permutation_sum&);
 // Reduce a summand modulo its certified signed exchange symmetries.
 Id simplify_signed_kernel(Algebra&, Id, const permutation_sum&);
 // Explicitly sum disjoint secondary groups for clients of the single-group API.

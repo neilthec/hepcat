@@ -102,21 +102,23 @@ void test_single_minority(std::vector<int> majority, int minority, bool conjugat
     }
 }
 
-void test_paired_weyl(bool physical, bool conjugate, bool shuffled) {
+void test_paired_weyl(bool physical, bool conjugate, bool shuffled, bool eight=false) {
     Algebra a;
     const int left = shuffled ? 5 : 1, right = 2;
     const auto mass = a.atom("m"), zero = a.integer(0);
-    std::vector<Id> shell(7,zero);
-    std::vector<std::string> masses(7,"0");
-    std::vector<real> numeric(7);
+    const unsigned size=eight?8:7;
+    std::vector<Id> shell(size,zero);
+    std::vector<std::string> masses(size,"0");
+    std::vector<real> numeric(size);
     for (int leg : {left,right}) {
         shell[leg-1] = mass;
         masses[leg-1] = "m";
         numeric[leg-1] = 1;
     }
     a.setKinematics(shell,{});
-    const std::vector<int> major = shuffled ? std::vector<int>{6,1,3} : std::vector<int>{3,4,5};
+    std::vector<int> major = shuffled ? std::vector<int>{6,1,3} : std::vector<int>{3,4,5};
     const std::vector<int> minor = shuffled ? std::vector<int>{7,4} : std::vector<int>{6,7};
+    if(eight)major.push_back(8);
     const auto build = physical ? mixed_physical_current : mixed_spurious_current;
     const auto scalar = a.mul({a.exact(mpq_class(-5,7)),a.pow(a.atom("g"),5)});
     const auto original = build(a,left,right,mass,conjugate ? minor : major,
@@ -126,6 +128,13 @@ void test_paired_weyl(bool physical, bool conjugate, bool shuffled) {
     auto expected = std::vector<std::vector<int>>{major,minor};
     for (auto& group : expected) std::sort(group.begin(),group.end());
     require(grouped && grouped->groups == expected,"lost independent Weyl-current permutations");
+    if(eight) {
+        const auto signed_form=input.signed_permutation_form();
+        require(signed_form && (physical || (signed_form->joint_exchange &&
+                signed_form->joint_exchange->sign==-1)), "missing central fermion reversal");
+        require(input.permutation_summand_complexity().value()<(physical ? 6500u : 8000u),
+                "three-photon midpoint failed to compress the signed current");
+    }
     const auto single = input.permutation_form();
     require(single && single->legs == expected[0],"single-group view changed its summation convention");
     require(input.latex().find("\\times S_")!=std::string::npos &&
@@ -150,6 +159,31 @@ void test_paired_weyl(bool physical, bool conjugate, bool shuffled) {
     }
     const auto changed = a.mul({original,a.call("MomProd",{a.integer(major[0]),a.integer(major[1])})});
     require(!recognize_ordered_current(a,changed),"stripped a momentum-dependent coefficient");
+}
+
+void test_equal_helicity_groups() {
+    // Equal group sizes admit no unique majority. The construction may choose
+    // either group first, including when the spurious gauge singles out a leg.
+    for (bool physical : {true, false}) {
+        Algebra a;
+        const Id mass = a.atom("m"), one = a.integer(1);
+        std::vector<Id> shell(8,a.integer(0));
+        shell[0] = shell[1] = mass;
+        a.setKinematics(shell,{});
+        const std::vector<int> plus{3,4,5}, minus{6,7,8};
+        auto sum = paired_weyl_sum(a,1,2,mass,plus,minus,one,physical).value();
+        Id kernel = sum.kernel;
+        if (sum.joint_exchange) kernel = apply_exchanges(a,kernel,{*sum.joint_exchange});
+        const auto expanded = expand_permutation_groups(a,kernel,{plus,minus});
+        const auto original = mixed_physical_current(a,1,2,mass,plus,minus,one).value();
+        expression_evaluator candidate(a,expanded,{{"m",1}}), reference(a,original,{{"m",1}});
+        for (unsigned sample=0; sample<4; ++sample) {
+            const auto point=sample_point({1,1,0,0,0,0,0,0},39181+sample);
+            const auto value=reference(point);
+            require(std::abs(candidate(point)-value) <= 1e-8L*std::abs(value),
+                    "midpoint changed sign or multiplicity for equal helicity groups");
+        }
+    }
 }
 
 void test_reloaded_minority(bool physical, bool conjugate, bool shuffled, bool five = false) {
@@ -339,6 +373,9 @@ int main(int argc, char** argv) {
         test_paired_weyl(false,false,false);
         test_paired_weyl(true,true,true);
         test_paired_weyl(false,true,true);
+        test_paired_weyl(true,false,false,true);
+        test_paired_weyl(false,true,true,true);
+        test_equal_helicity_groups();
         model qed(argv[1],3);
         test_current(qed,true);
         test_current(qed,false);

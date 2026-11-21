@@ -1,23 +1,10 @@
 // Independent transcription of the three eight-point one-negative-photon formulas.
 // Build and run instructions are in eight-point-one-negative.md.
 #include "radiation_kinematics.hpp"
-#include "generation_feynman.hpp"
-#include "continuations.hpp"
 #include "permutation_sum.hpp"
-#include "validation_feynman.hpp"
-#include "validation_numeric.hpp"
-#include "validation_precision.hpp"
-#include "madgraph-runtime.hpp"
-
-#include <algorithm>
-#include <cmath>
-#include <iostream>
-#include <map>
-#include <optional>
-#include <stdexcept>
+#include "eight-point-validation.hpp"
 
 using namespace hepcat;
-using namespace hepcat::validation;
 
 namespace {
 class paper_formula : private detail::radiation_kinematics {
@@ -192,168 +179,16 @@ class paper_formula : private detail::radiation_kinematics {
 };
 } // namespace
 
-int main(int argc, char **argv) {
-    try {
-        if (argc != 3 && argc != 4)
-            throw std::invalid_argument("usage: eight-point-one-negative POINTS SEED [MG_LIBRARY]");
-        const auto points = std::stoul(argv[1]);
-        const auto seed = std::stoull(argv[2]);
-        if (!points)
-            throw std::invalid_argument("positive sample count required");
-        const bool mg = argc == 4;
-        model qed("models", 3), rules("tests/reference-models/calchep", 2);
-        Algebra a(&qed.algebra()), fa(&rules.algebra());
-        const auto parameters =
-            mg ? model_parameters(qed, {{"Me", 1}, {"EE", 1.L / 3}}) : model_parameters(qed);
-        const std::vector<std::string> names{"e", "E", "A.+", "A.+", "A.+", "A.+", "A.+", "A.-"};
-        std::vector<Id> masses, fm;
-        std::vector<real> numeric;
-        for (const auto &tag : names) {
-            masses.push_back(a.parse(qed.particle(tag).mass));
-            fm.push_back(fa.parse(rules.particle(generation::feynman_external(rules, tag)).mass));
-            numeric.push_back(evaluate_scalar(a, masses.back(), parameters).real());
-        }
-        a.setKinematics(masses, {});
-        fa.setKinematics(fm, {});
-        const auto e = std::find_if(qed.variables().begin(), qed.variables().end(),
-                                    [](const auto &v) { return v.name == "EE"; });
-        if (e == qed.variables().end())
-            throw std::runtime_error("missing QED charge");
-        paper_formula paper(a, masses.front(), e->symbol);
-        struct test {
-            const char *name;
-            expression_evaluator evaluator;
-            real maximum = 0, replay_max = 0;
-            unsigned replays = 0, failures = 0;
-        };
-        std::vector<test> comparisons;
-        for (auto [name, kernel] : {std::pair{"physical", paper.physical()},
-                                    std::pair{"spurious", paper.spurious()}, std::pair{"ward", paper.ward()}}) {
+int main(int argc, char** argv) {
+    return eight_point_validation::run(argc, argv, {1, 1, 1, 1, 1, -1}, [](Algebra& a, Id m, Id e) {
+        paper_formula paper(a, m, e);
+        eight_point_validation::formulas results;
+        for (auto [name, kernel] :
+             {std::pair{"physical", paper.physical()}, std::pair{"spurious", paper.spurious()},
+              std::pair{"ward", paper.ward()}}) {
             std::cout << name << " summand complexity " << expression_complexity(a, kernel) << '\n';
-            const Id sum = expand_permutation_groups(a, kernel, {{3, 4, 5, 6, 7}});
-            comparisons.push_back({name, expression_evaluator(a, sum, parameters)});
+            results.emplace_back(name, expand_permutation_groups(a, kernel, {{3, 4, 5, 6, 7}}));
         }
-        std::optional<expression_evaluator> feynman, replay_feynman;
-        std::optional<hepcat_spinas::madgraph_detail::Reference> external;
-        if (mg)
-            external.emplace(argv[3]);
-        else {
-            std::vector<Id> trees;
-            for (const auto &tree : generation::diagram_plans(rules, names))
-                trees.push_back(feynman_to_spinors(fa, generation::sew_feynman(fa, rules, names, tree)));
-            if (trees.size() != 720)
-                throw std::runtime_error("expected 720 Feynman diagrams");
-            const auto tree_sum = fa.add(trees);
-            feynman.emplace(fa, tree_sum, model_parameters(rules));
-            // The native test uses independent Xi spinors. In the 160-bit
-            // replay, the same six polarizations can use a common chiral
-            // reference. Vanishing brackets then drop out of the same 720 trees.
-            std::map<Id, reference_choice> refs;
-            for (int i = 3; i <= 8; ++i) {
-                auto xi = fa.call(
-                    "Spinor", {fa.atom("\"Xi\""), fa.atom(i == 8 ? "\"Square\"" : "\"Angle\""), fa.integer(i)});
-                refs.emplace(xi, reference_choice{i, i == 8 ? 4 : 8, false});
-            }
-            replay_feynman.emplace(fa, fa.simplify(replace_external_references(fa, tree_sum, refs)),
-                                   model_parameters(rules));
-        }
-        std::cout << (mg ? "Polarized MadGraph" : "Signed Feynman diagrams") << ", " << points
-                  << " points, seed " << seed << std::endl;
-        for (unsigned long n = 0; n < points; ++n) {
-            if (n && n % 10000 == 0)
-                std::cout << n << " points checked" << std::endl;
-            auto p = sample_point(numeric, seed + n);
-            if (mg) {
-                std::vector<double> momenta;
-                for (unsigned i = 0; i < names.size(); ++i)
-                    for (auto x : p.momenta[i])
-                        momenta.push_back(i < 2 ? x : -x);
-                std::vector<int> helicities(names.size(), 1);
-                helicities.back() = -1;
-                real expected = 0;
-                std::vector<real> rates(comparisons.size(), 0);
-                for (int i : {0, 1})
-                    for (int j : {0, 1}) {
-                        helicities[0] = 2 * i - 1;
-                        helicities[1] = 2 * j - 1;
-                        const auto weight = external->evaluate(momenta, helicities);
-                        if (!(std::isfinite(weight) && weight >= 0))
-                            throw std::runtime_error("invalid MadGraph weight");
-                        expected += weight;
-                        for (unsigned t : {0u, 1u}) {
-                            const int s = t == 0 ? i : j;
-                            p.angles[t] = p.angle_basis[t][s];
-                            p.squares[t] = p.square_basis[t][s];
-                        }
-                        for (unsigned k = 0; k < rates.size(); ++k)
-                            rates[k] += std::norm(comparisons[k].evaluator(p));
-                    }
-                for (unsigned k = 0; k < rates.size(); ++k) {
-                    auto &t = comparisons[k];
-                    const auto scale = std::max(rates[k], expected);
-                    const auto diff = scale ? std::abs(rates[k] - expected) / scale : 0;
-                    t.maximum = std::max(t.maximum, diff);
-                    if (std::isfinite(rates[k]) && diff <= 1e-7L)
-                        continue;
-                    ++t.replays;
-                    auto chart = precision::reconstruct(p);
-                    precision::scalar total(0, precision::bits);
-                    for (int i : {0, 1})
-                        for (int j : {0, 1}) {
-                            for (unsigned leg : {0u, 1u}) {
-                                const int state = leg == 0 ? i : j;
-                                chart.angles[leg] = chart.angle_basis[leg][state];
-                                chart.squares[leg] = chart.square_basis[leg][state];
-                            }
-                            const auto z = t.evaluator.precise(p, chart);
-                            total += z.x * z.x + z.y * z.y;
-                        }
-                    const auto corrected = precision::narrow_real(total);
-                    const auto high_scale = std::max(corrected, expected);
-                    const auto replay = high_scale ? std::abs(corrected - expected) / high_scale : 0;
-                    t.replay_max = std::max(t.replay_max, replay);
-                    if (!(std::isfinite(corrected) && replay <= 1e-7L))
-                        ++t.failures;
-                }
-            } else {
-                const auto expected = (*feynman)(p);
-                std::optional<precision::phase_point> chart;
-                std::optional<precision::number> high_reference;
-                for (auto &t : comparisons) {
-                    const auto value = t.evaluator(p);
-                    const auto scale = std::max(std::abs(value), std::abs(expected));
-                    const auto diff = scale ? std::abs(value - expected) / scale : 0;
-                    t.maximum = std::max(t.maximum, diff);
-                    if (std::isfinite(std::abs(value)) && std::isfinite(std::abs(expected)) && diff <= 1e-8L)
-                        continue;
-                    ++t.replays;
-                    if (!chart) {
-                        chart = precision::reconstruct(p);
-                        high_reference = replay_feynman->precise(p, *chart);
-                    }
-                    const auto x = t.evaluator.precise(p, *chart);
-                    const auto &y = *high_reference;
-                    const auto norm = std::max(x.magnitude(), y.magnitude());
-                    const real replay = norm == 0 ? 0. : precision::scalar((x - y).magnitude() / norm).get_d();
-                    t.replay_max = std::max(t.replay_max, replay);
-                    if (!(replay <= 1e-8L)) {
-                        if (t.failures < 2)
-                            std::cerr << t.name << " failed at seed " << seed + n << " ratio "
-                                      << value / expected << '\n';
-                        ++t.failures;
-                    }
-                }
-            }
-        }
-        bool passed = true;
-        for (const auto &t : comparisons) {
-            std::cout << t.name << " maximum " << t.maximum << ", replays " << t.replays << ", replay maximum "
-                      << t.replay_max << ", failures " << t.failures << std::endl;
-            passed &= t.failures == 0;
-        }
-        return passed ? 0 : 1;
-    } catch (const std::exception &error) {
-        std::cerr << error.what() << '\n';
-        return 1;
-    }
+        return results;
+    });
 }

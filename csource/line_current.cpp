@@ -413,8 +413,11 @@ std::optional<Id> dirac_line_proposal(Algebra &a, const model &vertices,
                                   negative, current.coefficient,presentation);
   }
   if (auto joined = mixed_spurious_current(a,left,right,current.mass,positive,negative,current.coefficient)) {
-    if (presentation)
+    if (presentation) {
       *presentation = ordered_minority_sum(a,left,right,current.mass,positive,negative,current.coefficient);
+      if (!*presentation && photons.size()==6)
+        *presentation = paired_weyl_sum(a,left,right,current.mass,positive,negative,current.coefficient,false);
+    }
     return joined;
   }
   {
