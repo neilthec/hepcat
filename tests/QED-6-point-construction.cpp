@@ -99,16 +99,18 @@ const std::vector<family> notebook = {
     {"eeeeeeA", {"e", "E", "e", "E", "e", "E"},
      {prediction("+", 85248, 85248), prediction("-", 85248, 85248)}},
 
-    // Six photons, with an independent equal-helicity reference or a signed Feynman comparison.
+    // Eight external particles. Measured targets guard the expanded expressions.
+    // The validation report scores the shorter permutation summands separately.
     {"eeAAAAAA", {"e", "E"}, {{"++++++", 16515, 16530, reference_source::all_positive_formula, false},
                               prediction("+++++-", 59110, 69988), prediction("++++--", 137062, 199628),
-                              prediction("+++---"), prediction("++----"), prediction("+-----"),
-                              prediction("------")}},
+                              prediction("+++---", 266940, 368928), prediction("++----"),
+                              prediction("+-----"), prediction("------")}},
     {"eeeeAAAA", {"e", "E", "E", "e"},
-     {prediction("++++"), prediction("+++-"), prediction("++--"), prediction("+---"), prediction("----")}},
+     {prediction("++++", 1006800, 664368), prediction("+++-", 1032384, 589056),
+      prediction("++--", 1062768, 598704), prediction("+---"), prediction("----")}},
     {"eeeeeeAA", {"e", "E", "e", "E", "e", "E"},
-     {prediction("++"), prediction("+-"), prediction("--")}},
-    {"eeeeeeee", {"e", "E", "e", "E", "e", "E", "e", "E"}, {prediction("")}},
+     {prediction("++", 2020032, 2009376), prediction("+-", 2233728, 1908576), prediction("--")}},
+    {"eeeeeeee", {"e", "E", "e", "E", "e", "E", "e", "E"}, {prediction("", 2433024, 2433024)}},
 };
 
 struct settings {
