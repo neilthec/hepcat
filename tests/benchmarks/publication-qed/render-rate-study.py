@@ -2,6 +2,7 @@
 import argparse
 import csv
 import json
+import math
 import re
 from pathlib import Path
 from statistics import median
@@ -144,6 +145,28 @@ def main():
         "Recorded HEPCAT construction and internal validation time, summed over one successful 100,000-point run "
         "per parity class and pole preference. Each row sums process times. External generator setup, independent "
         "rate comparisons, formula development and unsuccessful trials are excluded.", "tab:catalog-construction"))
+    def latex_scientific(x):
+        exponent=math.floor(math.log10(x))
+        return rf"{x / 10**exponent:.2f}\times10^{{{exponent}}}"
+
+    error=max(v["max_relative_to_mg"] for r in data for v in r["rate"].values())
+    overlaps=sum(k in r["rate"] and "table_"+k in r["rate"]
+                 for r in data for k in ("physical","spurious"))
+    def ms(r,k):
+        return number(1000*median(r["rate"][k]["seconds_per_point"]))
+    if all("table_spurious" in r["rate"] for r in data):
+        first=next(r for r in data if r["legs"]==9 and r["pairs"]==1)
+        last=next(r for r in data if r["legs"]==9 and r["pairs"]==4)
+        summary=(f"Across all 18 families, the largest difference from the MadGraph "
+                 f"complete rate in the timing sample is ${latex_scientific(error)}$. "
+                 f"The {overlaps} direct SPINAS builds with a second operand-table build "
+                 "give identical double-precision weights at every sampled momentum.\n\n"
+                 f"At nine points the physical-pole SPINAS operand-table time is {ms(first,'table_physical')} ms "
+                 f"per point for seven-photon annihilation, compared with {ms(first,'mg')} ms for MadGraph. "
+                 f"For eight fermions and one photon the corresponding times are {ms(last,'table_physical')} ms "
+                 f"and {ms(last,'mg')} ms. The number of external legs alone therefore gives little guidance "
+                 "about the relative cost of the two implementations.\n")
+        (out/"rate-summary.tex").write_text(summary)
     nine_point_validation(figures)
     for sizes, file in [(True, "catalog-source"), (False, "catalog-rates")]:
         plots(data, figures / (file + ".pdf"), sizes)

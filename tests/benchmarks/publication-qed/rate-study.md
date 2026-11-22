@@ -35,6 +35,10 @@ python3 "$study/build-rate-plan.py" "$out/eeAAAAA-physical" "$out/eeAAAAA-plan" 
   "$SPINAS_INCLUDE" "$SPINAS_DOUBLE_LIBRARY"
 ```
 
+## Measurement environment
+
+The runs used an Apple M3 with 16 GiB of memory under macOS 26.6.2. The SPINAS survey used Apple Clang 21.0.0 at `-O2` and native double precision. MadGraph 3.8.1 standalone libraries used GNU Fortran 16.1.0. The per-family optimization settings are recorded in the data. CalcHEP 3.9.2 uses its native generated C modules. The seven-point archived multifermion libraries were compiled at `-O1`. New CalcHEP builds use `-O2`. The final complete-rate sweeps run one library at a time and record both wall time and process CPU time. The plots report median wall time.
+
 ## Run a matched rate comparison
 
 Generate the MadGraph standalone process with HEPCAT's MadGraph runtime, the `sm-full` model restricted to PDGs 11 and 22, mass 1, charge 1/3 and all widths zero. The timer loads the parameter card adjacent to the chosen library, so a relocated reference uses its own inputs. Use the native CalcHEP squared-matrix-element library with the QED model in `tests/reference-models/calchep` (model 2). The rate driver sets its parameters and matches the returned external PDGs to the common leg order. The standalone CalcHEP numerical helper without the optional micrOMEGAs interface was used for the archived seven-point four-fermion process.
