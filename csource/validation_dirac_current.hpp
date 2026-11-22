@@ -41,7 +41,7 @@ inline complex inner(spinor x, spinor y) { return x[0] * y[0] + x[1] * y[1]; }
 enum class gauge { independent, physical, spurious };
 
 inline vector polarization(const point &p, int i, int helicity, int ref,
-                           gauge policy, int electron) {
+                           gauge policy, int electron, int partner = -1) {
   const bool plus = helicity > 0;
   auto xi = ref < 0 ? p.reference(i + 1, plus)
                     : (plus ? p.angles : p.squares).at(ref);
@@ -60,10 +60,12 @@ inline vector polarization(const point &p, int i, int helicity, int ref,
                                           : inner(xi, raise(p.squares[i])));
   for (auto &x : out)
     x /= -den;
-  if (policy == gauge::physical) {
+  if (policy == gauge::physical || partner >= 0) {
     vector parent{}, photon{};
     for (int j = 0; j < 4; ++j) {
       parent[j] = p.momenta[electron][j];
+      if (partner >= 0)
+        parent[j] += p.momenta[partner][j];
       photon[j] = p.momenta[i][j];
     }
     const complex shift = dot(parent, out) / dot(parent, photon);
@@ -89,7 +91,7 @@ class recursion {
     mask left, right;
     real sign;
   };
-  int n, root, direct;
+  int n, root, direct, paired_reference;
   mask charged = 0;
   std::vector<int> species, excess, reference;
   std::vector<std::vector<term>> cuts;
@@ -114,6 +116,8 @@ public:
     }
     if (kets.size() != bars.size())
       throw std::invalid_argument("Unbalanced external charges");
+    // With only one photon, its spurious gauge uses a charged pair momentum.
+    paired_reference = species[first(charged)] < 0 ? kets.front() : bars.front();
     const mask full = (1u << n) - 1, top = full ^ (1u << root);
     direct = bars.size() % 2 ? -1 : 1;
     mask prefix = 0;
@@ -182,7 +186,7 @@ public:
           const bool fallback = policy == gauge::spurious && reference[i] < 0;
           waves[s] = polarization(
               p, i, species[i], policy == gauge::spurious ? reference[i] : -1,
-              fallback ? gauge::physical : policy, first(charged));
+              policy, first(charged), fallback ? paired_reference : -1);
         }
         continue;
       }
