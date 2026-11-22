@@ -95,6 +95,31 @@ int main() {
     if (collect_scalar_factors(a,related,3)!=a.mul({a.add({leg_a,leg_b}),shared}))
         throw std::runtime_error("Newly exposed common subcurrent was missed");
 
+    // Distribution would generate over 500^4 monomials. Factoring the
+    // shared polynomial must recover the exact product without expanding it.
+    std::vector<Id> polynomials;
+    for (int k = 0; k < 4; ++k) {
+        std::vector<Id> terms;
+        for (int j = 0; j < 520; ++j)
+            terms.push_back(a.atom("variable" + std::to_string(520*k+j)));
+        polynomials.push_back(a.add(terms));
+    }
+    auto product = a.mul(polynomials);
+    auto separated = a.add({a.mul({x,product}),a.mul({y,product})});
+    if (collect_scalar_factors(a,separated) != a.mul({a.add({x,y}),product}))
+        throw std::runtime_error("Common Laurent factor lost at the expansion budget");
+
+    // A compound reciprocal can cancel after factoring its numerator.
+    // Committing that local cancellation could increase the expanded score
+    // once a second term at the original pole has been combined.
+    Id padding = a.call("OpaqueCoefficient", std::vector<Id>(4100, x));
+    Id rational_pole = a.pow(a.add({u,v}),-1);
+    Id local = a.mul({rational_pole,a.add({a.mul({u,padding}),a.mul({v,padding})})});
+    Id rational_sum = a.add({local,a.mul({a.integer(-1),u,padding,rational_pole})});
+    if (expression_complexity(a,collect_scalar_factors(a,rational_sum)) >
+        expression_complexity(a,rational_sum))
+        throw std::runtime_error("Factored a composite reciprocal into a more complex sum");
+
     // Clear one existing simple pole across a nested sum. One regular
     // term acquires d in its numerator and remains present away from the cut.
     Id d = a.parse("PropDen[Mom[Multiparticle[1,2]],m]");

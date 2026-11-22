@@ -636,12 +636,40 @@ Id collect_scalar_factors(Algebra &a, Id input, unsigned max_passes) {
   // Factoring at a parent can expose another common factor inside the
   // newly created sum. Each accepted pass lowers the leaf count and keeps or
   // improves the weighted score. All passes share the same traversal budget.
+  // Distribution and literal common-factor extraction preserve every
+  // coefficient in a Laurent polynomial. Its fully expanded weighted score
+  // is therefore identical before and after factoring. The score evaluator
+  // treats powers of composite polynomials differently, so retain the exact
+  // comparison if either expression contains such a power.
+  std::unordered_map<Id, bool> laurent_cache;
+  auto laurent = [&](auto &self, Id id) -> bool {
+    if (auto it = laurent_cache.find(id); it != laurent_cache.end())
+      return it->second;
+    const auto &n = a.node(id);
+    bool value = true;
+    if (n.head == "Plus" || n.head == "Times") {
+      value = std::all_of(n.args.begin(), n.args.end(), [&](Id f) { return self(self, f); });
+    } else if (n.head == "Power" && n.args.size() == 2) {
+      const auto &base = a.node(n.args[0]);
+      value = base.head != "Plus" && base.head != "Times";
+      if (base.head == "Power") {
+        mpq_class radicand, exponent;
+        value = base.args.size() == 2 && a.number(base.args[0], radicand) &&
+                radicand > 0 && a.number(base.args[1], exponent) && exponent.get_den() != 1;
+      }
+    }
+    return laurent_cache.emplace(id, value).first->second;
+  };
   Id best = input;
   std::optional<std::size_t> weight;
   for (unsigned pass = 0; pass < max_passes && (!budget || remaining); ++pass) {
     cache.clear();
     const auto candidate = visit(visit, best);
     if (a.cost(candidate) >= a.cost(best)) break;
+    if (a.cost(best) >= maxTerms && laurent(laurent, best) && laurent(laurent, candidate)) {
+      best = candidate;
+      continue;
+    }
     try {
       if (!weight) weight = expression_complexity(a, best);
       auto candidate_weight = expression_complexity(a, candidate);
