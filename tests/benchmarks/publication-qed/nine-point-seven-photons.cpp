@@ -22,7 +22,12 @@ class paper_formulas : private detail::radiation_kinematics {
     return ar.add(terms);
   }
   Id Y(int i, legs labels) {
-    return over(chain(false, 3, i, {labels}), {chain(false, 3, i)});
+    std::vector<Id> terms;
+    for (int j : labels) {
+      terms.push_back(j <= 2 ? chain(false, 3, i, {{j}})
+                             : ar.mul({chain(false, 3, j), chain(true, j, i)}));
+    }
+    return ar.add(terms);
   }
   Id pair(int i, int j) { return ar.pow(chain(true, i, j), 2); }
   Id num(int n) { return ar.integer(n); }
@@ -77,11 +82,13 @@ public:
                                {tau({2, 3, 4, 7})}));
     return over(
         ar.mul({neg(C), chain(true, 3, 4),
-                minus(ar.mul({y(5), y(6), y(7), y(8), y(9)}),
+                minus(over(ar.mul({y(5), y(6), y(7), y(8), y(9)}),
+                           {chain(false, 3, 5), chain(false, 3, 6)}),
                       over(ar.mul({num(10), ar.pow(mass, 2), pair(5, 6), z789}),
                            {tau({2, 3, 4})}))}),
         {num(120), chain(false, 3, 4), tau({2, 3}), tau({1, 5}), tau({1, 6}),
-         tau({1, 7}), tau({1, 8}), tau({1, 9})});
+         tau({1, 7}), tau({1, 8}), tau({1, 9}),
+         chain(false, 3, 7), chain(false, 3, 8), chain(false, 3, 9)});
   }
   Id one_negative_gaps() {
     const int h = 9, ref = 5;
