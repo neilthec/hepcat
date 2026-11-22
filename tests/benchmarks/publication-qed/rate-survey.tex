@@ -47,6 +47,14 @@ the 100,000-point timing study above. Because the larger MadGraph matrix
 routines used different compiler optimization levels, the curves describe
 the specific builds used here.
 
+For six-photon annihilation we linked the generated CalcHEP subprocess to
+its standalone numerical helper. The optional micrOMEGAs helper distributed
+with version 3.9.2 indexes a 40-element width array by propagator number.
+This subprocess uses indices 1 through 62. At the momentum with the largest
+difference in the initial comparison, relinking the same matrix elements to
+the standalone helper reduced the relative discrepancy with MadGraph from
+0.860 to $6.77\times10^{-13}$. The comparison uses zero physical widths throughout.
+
 \input{rate-table}
 \input{rate-summary}
 \begin{figure}[p]\centering

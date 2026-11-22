@@ -59,6 +59,14 @@ int main(int argc,char** argv) try {
     } else if (backend=="CalcHEP") {
         const std::string suffix=dlsym(library,"va_ext") ? "_ext" : "_hepcat_validation_u";
         auto ch=[&](const std::string& key){ return (key+suffix); };
+        // In CalcHEP 3.9.2 the optional micrOMEGAs helper indexes omgWidth[40]
+        // by the one-based denominator number, including for zero-width models.
+        if (dlsym(library, "omgWidth")) {
+            auto denominator = symbol<char*(*)(int,int,int*,int*,int*)>(library,ch("den_info").c_str());
+            int mass = 0, width = 0;
+            if (denominator(1, 40, &mass, &width, nullptr))
+                throw std::runtime_error("Link the standalone CalcHEP sqme_aux helper: this subprocess exceeds the optional 40-element width array.");
+        }
         auto pinf=symbol<char*(*)(int,int,double*,int*)>(library,ch("pinf").c_str());
         std::vector<int> types{11,-11}, order;
         for (int i=1;i<pairs;++i) {

@@ -41,7 +41,17 @@ The runs used an Apple M3 with 16 GiB of memory under macOS 26.6.2. The SPINAS s
 
 ## Run a matched rate comparison
 
-Generate the MadGraph standalone process with HEPCAT's MadGraph runtime, the `sm-full` model restricted to PDGs 11 and 22, mass 1, charge 1/3 and all widths zero. The timer loads the parameter card adjacent to the chosen library, so a relocated reference uses its own inputs. Use the native CalcHEP squared-matrix-element library with the QED model in `tests/reference-models/calchep` (model 2). The rate driver sets its parameters and matches the returned external PDGs to the common leg order. The standalone CalcHEP numerical helper without the optional micrOMEGAs interface was used for the archived seven-point four-fermion process.
+Generate the MadGraph standalone process with HEPCAT's MadGraph runtime, the `sm-full` model restricted to PDGs 11 and 22, mass 1, charge 1/3 and all widths zero. The timer loads the parameter card adjacent to the chosen library, so a relocated reference uses its own inputs. Use the native CalcHEP squared-matrix-element library with the QED model in `tests/reference-models/calchep` (model 2). The rate driver sets its parameters and matches the returned external PDGs to the common leg order. Use the standalone numerical helper for large subprocesses. The archived seven-point four-fermion comparison and the six-photon comparison both use it. In CalcHEP 3.9.2 the optional micrOMEGAs build of `sqme_aux.c` adds `omgWidth[i]` for each one-based denominator index. Its array contains 40 elements. Six-photon annihilation uses indices 1 through 62. The survey driver detects this incompatible combination before evaluating the rate. The same generated six-photon process, relinked to the standalone helper, changed the relative discrepancy at the worst original momentum from 0.860 to about `6.77e-13`. The original 24 weights are preserved in `six-photon-calchep-helper.json`.
+
+To build the standalone helper from the numerical source shipped with CalcHEP on macOS, set `CALCHEP` to its installation root and run
+
+```sh
+cc -O2 -fPIC -dynamiclib -I"$CALCHEP/include" \
+  "$CALCHEP/c_source/num/sqme_aux.c" "$CALCHEP/c_source/num/ferror.c" \
+  -Wl,-install_name,@loader_path/standalone_aux.so -o "$out/standalone_aux.so"
+```
+
+Link the generated subprocess objects to this helper and keep it alongside the resulting library.
 
 Pass a JSON object keyed by family. Each inner object maps `mg`, `ch`, `physical`, `spurious`, `table_physical` and `table_spurious` to compiled library paths. Omit a library that has not been built. The MadGraph reference is required for each row. For example,
 
