@@ -1041,6 +1041,31 @@ fermion_current_proposal(Algebra &a, const model &m,
     total.push_back(
         b.prod({a.add(terms), b.inv(den.first), b.inv(den.second)}));
   }
+  // A full photon allocation on each of two charged lines is separately
+  // gauge invariant. For large inventories choose its best reference once
+  // per orbit, then carry the numerator and its reference labels together.
+  // The individual matching sign and exchanged propagator stay with each row.
+  using allocation_shape = std::pair<std::size_t, std::vector<std::string>>;
+  std::map<allocation_shape, std::pair<labels, Id>> current_cache;
+  auto joined_current = [&](line left, line right, labels first, labels second) {
+    if (groups.size() <= 32)
+      return contracted_radiation(b, types, left, right, first, second, physical);
+    auto by_species = [&](int i, int j) { return std::tie(names[i - 1], i) < std::tie(names[j - 1], j); };
+    std::sort(first.begin(), first.end(), by_species);
+    std::sort(second.begin(), second.end(), by_species);
+    labels roles{left[0], left[1], right[0], right[1]};
+    roles.insert(roles.end(), first.begin(), first.end());
+    roles.insert(roles.end(), second.begin(), second.end());
+    allocation_shape shape{first.size(), {}};
+    for (int i : roles)
+      shape.second.push_back(names[i - 1]);
+    if (auto it = current_cache.find(shape); it != current_cache.end())
+      if (auto image = permute_current(a, it->second.second, it->second.first, roles))
+        return *image;
+    auto value = contracted_radiation(b, types, left, right, first, second, physical);
+    current_cache.emplace(std::move(shape), std::make_pair(std::move(roles), value));
+    return value;
+  };
   for (auto &[key, g] : groups) {
     auto &[l, r, L, R] = key;
     auto ways = [](size_t n) {
@@ -1052,7 +1077,7 @@ fermion_current_proposal(Algebra &a, const model &m,
     if (g.orders.size() != ways(L.size()) * ways(R.size()))
       return {};
     if (b.photons.size() > 2) {
-      Id joined = contracted_radiation(b,types,l,r,L,R,physical);
+      Id joined = joined_current(l, r, L, R);
       total.push_back(b.prod({g.coefficient, joined, b.inv(g.propagator)}));
       continue;
     }

@@ -794,6 +794,24 @@ std::optional<permutation_sum> recognize_ordered_current(Algebra& a, Id input, s
     return {};
 }
 
+std::optional<Id> permute_current(Algebra &a, Id input, const std::vector<int> &from,
+                                  const std::vector<int> &to) {
+    auto domain = from, range = to;
+    std::sort(domain.begin(), domain.end());
+    std::sort(range.begin(), range.end());
+    if (domain != range || std::adjacent_find(domain.begin(), domain.end()) != domain.end() ||
+        (!domain.empty() && (domain.front() < 1 || static_cast<size_t>(domain.back()) > a.masses().size())))
+        return {};
+    for (std::size_t i = 0; i < from.size(); ++i)
+        if (a.masses()[from[i] - 1] != a.masses()[to[i] - 1])
+            return {};
+    try {
+        return relabel(a, from, to, true)(input);
+    } catch (const Unsupported &) {
+        return {};
+    }
+}
+
 Id expand_permutation_groups(Algebra& a, Id kernel, const std::vector<std::vector<int>>& groups, bool alternating) {
     for (auto legs : groups) {
         std::sort(legs.begin(),legs.end());

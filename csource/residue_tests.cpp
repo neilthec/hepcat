@@ -67,6 +67,18 @@ int main() {
         auto row=regular(a,{{1,3},"m"},{a.mul({hidden_d,a.pow(d,-2)}),a.mul({momentum_d,a.pow(d,-2)}),a.pow(d,-1)},i);
         require(row[0]==1 && row[1]==row[2], "normalized double-pole derivative");
     }
+    // A large regular background cannot alter a simple residue, or suppress
+    // the derivative required when two descriptions of a double pole cancel.
+    std::vector<Id> background;
+    Id numerator = chain({l, mom(3), r});
+    for (int i = 1; i <= 512; ++i)
+        background.push_back(a.mul({numerator, a.add({m, a.integer(i)})}));
+    Id regular_background = a.add(background);
+    require(a.cost(regular_background) > 4096, "large-residue fixture size");
+    auto mixed = a.add({regular_background, pole(a.integer(7), d)});
+    auto derivative = a.add({regular_background, a.mul({hidden_d, a.pow(d, -2)})});
+    auto large_row = regular(a, {{1, 3}, "m"}, {mixed, derivative}, 0);
+    require(large_row[0] == 7 && large_row[1] == 1, "large sum Laurent coefficients");
     a.setKinematics({zero, zero, zero, zero}, {});
     Id angle = chain({spin(1, true, false), spin(2, true, false)});
     Id square = chain({spin(1, false, false), spin(2, false, false)});

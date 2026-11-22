@@ -58,15 +58,22 @@ int main(int argc, char **argv) {
   } else if (!gauge_only && !paper)
     mg.emplace(argv[6]);
   real peak[3]{};
+  unsigned point_seed = seed;
+  const char* gauge_names[] = {"physical", "spurious", "independent"};
   auto check = [&](int index, complex x, complex y) {
     const auto scale = std::max(std::abs(x), std::abs(y));
     const auto delta = scale ? std::abs(x - y) / scale : 0;
     if (!std::isfinite(delta))
       throw std::runtime_error("Nonfinite comparison");
+    if (delta > 1e-7L)
+      std::cerr << std::setprecision(17) << "seed=" << point_seed
+                << " gauge=" << gauge_names[index] << " reference=" << x
+                << " evaluated=" << y << " relative=" << delta << '\n';
     peak[index] = std::max(peak[index], delta);
   };
   for (unsigned n = 0; n < points; ++n) {
-    auto p = sample_point(masses, seed + n);
+    point_seed = seed + n;
+    auto p = sample_point(masses, point_seed);
     if (mg) {
       std::vector<double> mom;
       for (unsigned i = 0; i < types.size(); ++i)

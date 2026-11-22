@@ -171,6 +171,8 @@ class Evaluator {
     const Chart& c;
     Id cutMass;
     std::unordered_map<Id, PoleValue> values;
+    std::unordered_map<Id, int> orders;
+    bool prune_regular_terms = false;
     std::unordered_map<Id, Matrix> momenta;
     std::unordered_map<Id, Vector> spinors;
     std::unordered_map<Id, long> weights;
@@ -361,6 +363,14 @@ class Evaluator {
             return get(n.args[2]);
         }
         if (n.head == "Plus") {
+            if (prune_regular_terms) {
+                const int leading = order(id);
+                Scalar coefficient;
+                for (Id child : n.args)
+                    if (order(child) == leading)
+                        coefficient = coefficient + get(child).coefficient;
+                return {leading, coefficient};
+            }
             PoleValue best;
             bool any = false;
             for (Id child : n.args) {
@@ -446,6 +456,32 @@ class Evaluator {
   public:
     Evaluator(const Algebra& arena, Parameters& par, const Chart& chart, Id mass)
         : a(arena), parameters(par), c(chart), cutMass(mass) {}
+    void prune_large_sums(bool enabled) { prune_regular_terms = enabled; }
+    // The existing Laurent rules choose the lowest structural order even
+    // when its coefficient vanishes. Determine that same order without
+    // multiplying every regular subtree on a large physical cut. Reciprocals
+    // and primitives still evaluate on the chart, preserving singular retries
+    // and errors for unsupported factors.
+    int order(Id id) {
+        if (auto it = values.find(id); it != values.end())
+            return it->second.order;
+        if (auto it = orders.find(id); it != orders.end())
+            return it->second;
+        const auto &n = a.node(id);
+        if (n.head != "Times" && n.head != "Plus")
+            return get(id).order;
+        int result = 0;
+        if (n.head == "Times") {
+            for (Id f : n.args)
+                result = static_cast<int>(addOrders(result, order(f)));
+        } else if (!n.args.empty()) {
+            result = order(n.args.front());
+            for (Id f : n.args)
+                result = std::min(result, order(f));
+        }
+        orders.emplace(id, result);
+        return result;
+    }
     long internalWeight(Id id) {
         if (auto it = weights.find(id); it != weights.end()) return it->second;
         const auto& n = a.node(id);
@@ -665,6 +701,7 @@ auto sample_cut(const Algebra& algebra, const numerator_shell& channel, const st
     for (Id id : expressions) {
         if (evaluator.internalWeight(id) != 0)
             throw residue_unsupported("unbalanced sewn internal helicity weight");
+        evaluator.prune_large_sums(algebra.cost(id) > 4096);
         auto p = evaluator.get(id);
         if (p.order < -1) {
             if (p.order < -2 || !p.coefficient.zero())

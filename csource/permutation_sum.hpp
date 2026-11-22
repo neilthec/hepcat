@@ -36,6 +36,9 @@ Id simplify_permutation_kernel(Algebra&, Id, const std::vector<int>& legs,
 Id reduce_projected_candidate(Algebra&, Id, const permutation_sum&);
 // Reduce a summand modulo its certified signed exchange symmetries.
 Id simplify_signed_kernel(Algebra&, Id, const permutation_sum&);
+// Relabel external momenta and spinors in a certified current. The source
+// and destination give the same complete or partial permutation domain.
+std::optional<Id> permute_current(Algebra &, Id, const std::vector<int> &from, const std::vector<int> &to);
 // Explicitly sum disjoint secondary groups for clients of the single-group API.
 Id expand_permutation_groups(Algebra&, Id, const std::vector<std::vector<int>>&, bool alternating = false);
 Id apply_exchanges(Algebra&, Id, const std::vector<signed_exchange>&);
