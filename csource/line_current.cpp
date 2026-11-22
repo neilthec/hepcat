@@ -2,6 +2,7 @@
 #include "generation_plan.hpp"
 #include "mixed_physical_current.hpp"
 #include <algorithm>
+#include <limits>
 #include <map>
 #include <set>
 #include <tuple>
@@ -19,6 +20,7 @@ public:
   mask full;
   bool primary; // true selects square spinors
   std::map<std::tuple<int, mask, mask>, Id> weights;
+  bool symmetric_kernel = false;
 
   Id spin(bool sq, int leg) {
     return a.call(
@@ -65,6 +67,22 @@ public:
             values.push_back(f((1u << i) | (1u << j), photons[i], photons[j]));
     return values;
   }
+  // Within an outer unnormalized Bose sum, choose one representative
+  // of a symmetric subset and carry the number of equivalent choices.
+  // Products of labeled denominators must still visit every member.
+  template <class F> std::vector<Id> sum_members(mask set, F term) {
+    if (!symmetric_kernel || !set)
+      return each(set, term);
+    const unsigned i = __builtin_ctz(set);
+    return {a.mul({a.integer(bit_count(set)), term(1u << i, photons[i])})};
+  }
+  template <class F> std::vector<Id> sum_pairs(mask set, F term) {
+    const auto n = bit_count(set);
+    if (!symmetric_kernel || n < 2)
+      return pairs(set, term);
+    const unsigned i = __builtin_ctz(set), j = __builtin_ctz(set & (set - 1));
+    return {a.mul({a.integer(n * (n - 1) / 2), term((1u << i) | (1u << j), photons[i], photons[j])})};
+  }
   Id endpoint(int i) { return chain(!primary, i, {left, right}, i); }
   Id pair_square(int i, int j) { return a.pow(chain(!primary, i, {}, j), 2); }
   Id emission(int i, mask earlier) {
@@ -90,7 +108,7 @@ public:
         return emission(leg, full ^ set);
       return a.add({endpoint(leg), minus(emission(leg, set ^ i))});
     };
-    auto terms = pairs(set, [&](mask ij, int i, int j) {
+    auto terms = sum_pairs(set, [&](mask ij, int i, int j) {
       mask rest = set ^ ij;
       Id tail = a.mul(each(rest, [&](mask, int k) { return endpoint(k); }));
       if (rest && !(rest & (rest - 1))) {
@@ -103,11 +121,11 @@ public:
       return a.mul({pair_numerator(ij, i, j), tail});
     });
     if (bit_count(set) >= 4) {
-      auto singles = each(set, [&](mask i, int leg) {
+      auto singles = sum_members(set, [&](mask i, int leg) {
         return a.mul(
             {projected(i, leg), pole(right, i), physical_correction(set ^ i)});
       });
-      auto pairs_correction = pairs(set, [&](mask ij, int i, int j) {
+      auto pairs_correction = sum_pairs(set, [&](mask ij, int i, int j) {
         return minus(
             a.mul({a.pow(mass, 2), pair_square(i, j),
                    a.mul(each(ij, [&](mask k, int) { return pole(right, k); })),
@@ -147,7 +165,7 @@ public:
     auto key = std::make_tuple(ref, set, pair);
     if (auto it = weights.find(key); it != weights.end())
       return it->second;
-    auto terms = each(set ^ pair, [&](mask i, int leg) {
+    auto terms = sum_members(set ^ pair, [&](mask i, int leg) {
       auto direct =
           each(set ^ i, [&](mask, int p) { return ratio(ref, leg, p); });
       direct.push_back(ratio(ref, leg, left));
@@ -165,20 +183,51 @@ public:
         .first->second;
   }
   Id spurious_current(int ref, mask set) {
-    auto correction = a.add(pairs(set, [&](mask ij, int i, int j) {
-      return a.mul({pair_square(i, j), spurious_weight(ref, set, ij)});
-    }));
+    auto correction = a.add(sum_pairs(
+        set, [&](mask ij, int i, int j) { return a.mul({pair_square(i, j), spurious_weight(ref, set, ij)}); }));
     return a.mul(
         {a.add({spurious_leading(ref, set),
                 minus(a.mul({a.pow(mass, 2), correction}))}),
          a.mul(each(set, [&](mask i, int) { return inv(pole(left, i)); }))});
   }
+  // In a common photon gauge the scalar emission vertices contain a
+  // single sandwich. An ordered pair anchors the end of the charged line;
+  // the remaining photons occur in their order under the full Bose sum.
+  Id ordered_equal_spurious() {
+    const auto count = photons.size();
+    const int ref = photons[count - 2], partner = photons.back();
+    const mask ref_bit = 1u << (count - 2);
+    std::vector<Id> factors{coefficient,
+                            mass,
+                            chain(primary, left, {}, right),
+                            chain(!primary, ref, {}, partner),
+                            inv(chain(primary, ref, {}, partner)),
+                            inv(pole(right, ref_bit))};
+    mask prefix = 0;
+    for (size_t i = 0; i < count - 2; ++i) {
+      const mask bit = 1u << i;
+      const mask opposite = full ^ (prefix | bit | ref_bit);
+      const bool use_right = bit_count(opposite) < bit_count(prefix);
+      auto labels = each(use_right ? opposite : prefix, [&](mask, int leg) { return a.integer(leg); });
+      labels.insert(labels.begin(), a.integer(use_right ? right : left));
+      const Id momentum =
+          a.call("Mom", {labels.size() == 1 ? labels.front() : a.call("Multiparticle", labels)});
+      Id vertex = a.call("SpinorChain", {spin(primary, ref), momentum, spin(!primary, photons[i])});
+      factors.push_back(use_right ? minus(vertex) : vertex);
+      factors.push_back(inv(chain(primary, ref, {}, photons[i])));
+      prefix |= bit;
+      factors.push_back(
+          inv(bit_count(prefix) <= bit_count(full ^ prefix) ? pole(left, prefix) : pole(right, full ^ prefix)));
+    }
+    return a.mul(factors);
+  }
+
   Id equal(bool physical) {
-    auto terms = pairs(full, [&](mask ij, int i, int j) {
+    auto terms = sum_pairs(full, [&](mask ij, int i, int j) {
       if (physical)
         return a.mul({pair_square(i, j), physical_current(full ^ ij)});
       return a.mul({chain(!primary, i, {}, j), inv(chain(primary, i, {}, j)),
-                    a.add(each(ij, [&](mask k, int leg) {
+                    a.add(sum_members(ij, [&](mask k, int leg) {
                       return a.mul({spurious_current(leg, full ^ ij),
                                     inv(pole(right, k))});
                     }))});
@@ -390,36 +439,92 @@ std::optional<Id> dirac_line_proposal(Algebra &a, const model &vertices,
     square.push_back(factors.at(leg).first);
     vertex_factors.push_back(factors.at(leg).second);
   }
+  return minimal_dirac_line(a, left, right, photons, square, a.mul(vertex_factors), physical, presentation);
+}
+
+// This expression is also a candidate for recognizing a saved amplitude.
+// The caller must certify its topology or check exact algebraic equality.
+std::optional<Id> minimal_dirac_line(Algebra& a, int left, int right, const std::vector<int>& photons,
+                                     const std::vector<bool>& square, Id vertex_product, bool physical,
+                                     std::optional<permutation_sum>* presentation) {
+  if (photons.size() < 2 || photons.size() > 7 || square.size() != photons.size())
+    return {};
+  if (presentation)
+    presentation->reset();
   line current{a,
                left,
                right,
                photons,
                square,
                a.masses()[left - 1],
-               a.mul(vertex_factors),
+               vertex_product,
                (1u << photons.size()) - 1,
                square.front(),
                {}};
-  if (std::all_of(square.begin(), square.end(),
-                  [&](bool sq) { return sq == square.front(); }))
+  if (std::all_of(square.begin(), square.end(), [&](bool sq) { return sq == square.front(); })) {
+    if (presentation && photons.size() > 6) {
+      unsigned orders = 1;
+      for (unsigned i = 2; i <= photons.size(); ++i)
+        orders *= i;
+      auto folded = current;
+      folded.symmetric_kernel = true;
+      *presentation =
+          permutation_sum{photons, a.mul({a.pow(a.integer(orders), -1), folded.equal(physical)}), {}};
+      if (!physical) {
+        const auto ordered = current.ordered_equal_spurious();
+        if (expression_complexity(a, ordered) < expression_complexity(a, (*presentation)->kernel))
+          (*presentation)->kernel = ordered;
+      }
+    }
     return current.equal(physical || photons.size() == 2);
+  }
   if (photons.size() == 2)
     return current.mixed_pair();
   std::vector<int> positive, negative;
   for (std::size_t i = 0; i < photons.size(); ++i)
     (square[i] ? negative : positive).push_back(photons[i]);
-  if (physical) {
-    return physical_current_with_presentation(a, left, right, current.mass, positive,
-                                  negative, current.coefficient,presentation);
-  }
-  if (auto joined = mixed_spurious_current(a,left,right,current.mass,positive,negative,current.coefficient)) {
-    if (presentation) {
-      *presentation = ordered_minority_sum(a,left,right,current.mass,positive,negative,current.coefficient);
+  const auto coefficient = current.coefficient;
+  auto joined =
+      physical ? physical_current_with_presentation(a, left, right, current.mass, positive, negative,
+                                                    coefficient, presentation)
+               : spurious_current_with_presentation(a, left, right, current.mass, positive, negative,
+                                                    coefficient, photons.size() > 6 ? presentation : nullptr);
+  if (joined) {
+    if (presentation && !physical && !*presentation) {
+      *presentation = ordered_minority_sum(a, left, right, current.mass, positive, negative, coefficient);
       if (!*presentation && photons.size()==6)
-        *presentation = paired_weyl_sum(a,left,right,current.mass,positive,negative,current.coefficient,false);
+        *presentation = paired_weyl_sum(a, left, right, current.mass, positive, negative, coefficient, false);
+    }
+    if (presentation && photons.size() > 6) {
+      // Compare exact projected forms on the same footing. The Ward
+      // insertion applies to a single opposite helicity. With more than
+      // one, the central Dirac vertex is an alternative to the Pauli split.
+      const bool single = std::min(positive.size(), negative.size()) == 1;
+      std::optional<permutation_sum> candidate;
+      if (!single)
+        candidate = paired_weyl_sum(a, left, right, current.mass, positive, negative, coefficient, physical);
+      else if (!physical)
+        candidate = ordered_minority_sum(a, left, right, current.mass, positive, negative, coefficient);
+      if (candidate) {
+        auto score = [&](permutation_sum& form) {
+          form.kernel = reduce_projected_candidate(a, form.kernel, form);
+          try {
+            return expression_complexity(a, form.kernel);
+          } catch (const std::length_error&) {
+            return std::numeric_limits<std::size_t>::max();
+          } catch (const std::overflow_error&) {
+            return std::numeric_limits<std::size_t>::max();
+          }
+        };
+        const auto weight = score(*candidate);
+        if (!*presentation || weight < score(**presentation))
+          *presentation = std::move(candidate);
+      }
     }
     return joined;
   }
+  if (physical)
+    return {};
   {
     mask angles = 0;
     for (unsigned i = 0; i < square.size(); ++i)

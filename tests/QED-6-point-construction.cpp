@@ -4,9 +4,9 @@
 //   tests/results/native-reduce-build/hepcat-qed --family eeAA --preference physical
 // The example above constructs all four photon helicities and runs the CalcHEP
 // and MadGraph checks at 100,000 phase-space points by default. To run the entire
-// study, including all seven- and eight-point families and the independent formula
+// study, including all seven-, eight- and nine-point families and the independent formula
 // comparisons through eight photons, run without arguments. Use --legs 7
-// or --legs 8 to select one multiplicity.
+// through --legs 9 to select one multiplicity.
 // Use --list to see families and --help for installation paths and other options.
 // Each run prints its directory under tests/results/spinas-output. Open construction.tsv
 // for scores and, inside each pole preference and family, checks.txt for validations
@@ -111,6 +111,17 @@ const std::vector<family> notebook = {
     {"eeeeeeAA", {"e", "E", "e", "E", "e", "E"},
      {prediction("++", 2020032, 2009376), prediction("+-", 2233728, 1908576), prediction("--")}},
     {"eeeeeeee", {"e", "E", "e", "E", "e", "E", "e", "E"}, {prediction("", 2433024, 2433024)}},
+
+    // Nine external particles, one ordered representative per helicity count.
+    {"eeAAAAAAA", {"e", "E"},
+     {prediction("+++++++"), prediction("++++++-"), prediction("+++++--"), prediction("++++---"),
+      prediction("+++----"), prediction("++-----"), prediction("+------"), prediction("-------")}},
+    {"eeeeAAAAA", {"e", "E", "E", "e"},
+     {prediction("+++++"), prediction("++++-"), prediction("+++--"), prediction("++---"),
+      prediction("+----"), prediction("-----")}},
+    {"eeeeeeAAA", {"e", "E", "e", "E", "e", "E"},
+     {prediction("+++"), prediction("++-"), prediction("+--"), prediction("---")}},
+    {"eeeeeeeeA", {"e", "E", "e", "E", "e", "E", "e", "E"}, {prediction("+"), prediction("-")}},
 };
 
 struct settings {
@@ -720,7 +731,7 @@ Usage
 
 Process selection
   --list                     Show the available families, helicities, and score targets.
-  --legs N                   Select processes with N external particles (4 through 8).
+  --legs N                   Select processes with N external particles (4 through 9).
   --family NAME              Run one family from the list.
   --helicity SIGNS           Select one entry with --family. Its external test uses polarized MadGraph.
   --preference MODE          physical, spurious, or both (default).
@@ -816,7 +827,7 @@ settings options(int argc, char** argv) {
             s.workers = integer_option(v);
         else if (key == "--legs") {
             auto n = integer_option(v);
-            if (n < 4 || n > 8) throw std::invalid_argument("--legs must be 4 through 8");
+            if (n < 4 || n > 9) throw std::invalid_argument("--legs must be 4 through 9");
             s.legs = static_cast<unsigned>(n);
         }
         else if (key == "--points") {

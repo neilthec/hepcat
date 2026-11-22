@@ -353,6 +353,27 @@ void test_current(const model& qed, bool physical, unsigned photons = 5) {
     amp_expression on_cut(amp.str(),masses,{{{1,3},masses.front()}});
     require(!on_cut.reduce().permutation_form(),"permuted a diagram-local shell");
 }
+// A file round trip changes node ordering and can move minus signs inside
+// factored sums. The compact current requires equality of the entire input.
+void test_saved_seven_photons(bool physical) {
+    Algebra a;
+    const Id mass = a.atom("m"), zero = a.integer(0);
+    a.setKinematics({mass, mass, zero, zero, zero, zero, zero, zero, zero}, {});
+    const std::vector<int> photons{3, 4, 5, 6, 7, 8, 9};
+    const auto raw =
+        minimal_dirac_line(a, 1, 2, photons, std::vector<bool>(7, false), a.atom("g"), physical, nullptr);
+    require(raw.has_value(), "missing seven-photon current");
+    std::vector<std::string> masses{"m", "m", "0", "0", "0", "0", "0", "0", "0"};
+    amp_expression source(a.format(*raw), masses);
+    amp_expression saved(source.reduce().str(), masses);
+    const auto score = saved.reduce().permutation_summand_complexity();
+    require(score && *score <= 600, "saved seven-photon expression lost its Bose sum");
+    const Id tagged =
+        a.mul({*raw, a.call("PropDen",
+                            {a.call("Mom", {a.call("Multiparticle", {a.integer(1), a.integer(3)})}), mass})});
+    require(!recognize_ordered_current(a, tagged, physical),
+            "a momentum-dependent prefactor passed as a coupling");
+}
 } // namespace
 
 int main(int argc, char** argv) {
@@ -381,7 +402,9 @@ int main(int argc, char** argv) {
         test_current(qed,false);
         test_current(qed,true,6);
         test_current(qed,false,6);
-        std::cout << "Seven- and eight-point kernels reconstruct the signed amplitudes.\n";
+        test_saved_seven_photons(true);
+        test_saved_seven_photons(false);
+        std::cout << "Permutation kernels reconstruct the signed amplitudes.\n";
     } catch (const std::exception& e) {
         std::cerr << e.what() << '\n';
         return 1;

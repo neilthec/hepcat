@@ -1,5 +1,6 @@
 #include "mixed_physical_current.hpp"
 #include <algorithm>
+#include <set>
 #include <map>
 #include <bitset>
 
@@ -647,22 +648,36 @@ struct balanced_line : dirac_recursion {
         const bool marked = !physical && length(minority) == 1;
         std::vector<Id> terms;
         std::vector<Id> ordered;
+        // Fixed photon references are external labels of the kernel. Permute
+        // the remaining labels independently within each helicity class.
+        std::vector<legs> groups(2);
+        if (presentation) {
+            std::set<int> anchors;
+            if (!physical)
+                for (size_t i = 0; i < vectors.size(); ++i)
+                    anchors.insert(reference(i));
+            for (size_t i = 0; i < vectors.size(); ++i)
+                if (!anchors.count(vectors[i]))
+                    groups[minor[i]].push_back(i);
+        }
         auto add_split = [&](Id value, mask start, mask center) {
             terms.push_back(value);
             if (!presentation || value == zero()) return;
             // Choose one allocation of the like-helicity legs to the left
             // current, central vertex and right current. Each current has
             // already summed all internal orderings in its own block.
-            int previous = -1;
-            unsigned counts[3]{};
             long repetitions = 1;
-            for (std::size_t i = 0; i < vectors.size(); ++i) {
-                if (minor[i]) continue;
-                const mask bit = 1u << i;
-                const int block = (start & bit) ? 0 : (center & bit) ? 1 : 2;
-                if (block < previous) return;
-                previous = block;
-                repetitions *= ++counts[block];
+            for (const auto& group : groups) {
+                int previous = -1;
+                unsigned counts[3]{};
+                for (int i : group) {
+                    const mask bit = 1u << i;
+                    const int block = (start & bit) ? 0 : (center & bit) ? 1 : 2;
+                    if (block < previous)
+                        return;
+                    previous = block;
+                    repetitions *= ++counts[block];
+                }
             }
             ordered.push_back(a.mul({a.pow(a.integer(repetitions),-1),value}));
         };
@@ -700,10 +715,20 @@ struct balanced_line : dirac_recursion {
         if (presentation && !ordered.empty()) {
             auto seed = prefactors;
             seed[2] = a.add(ordered);
-            legs permuted;
-            for (std::size_t i = 0; i < vectors.size(); ++i)
-                if (!minor[i]) permuted.push_back(vectors[i]);
-            *presentation = permutation_sum{permuted,a.mul(seed),{}};
+            permutation_sum result{{}, a.mul(seed), {}};
+            for (const auto& group : groups) {
+                if (group.size() < 2)
+                    continue;
+                legs permuted;
+                for (int i : group)
+                    permuted.push_back(vectors[i]);
+                if (result.legs.empty())
+                    result.legs = std::move(permuted);
+                else
+                    result.other_groups.push_back(std::move(permuted));
+            }
+            if (!result.legs.empty())
+                *presentation = std::move(result);
         }
         return a.mul(prefactors);
     }
@@ -863,7 +888,7 @@ permutation_sum central_fermion_sum(Algebra& a, int l, int r, Id mass, const leg
 } // namespace
 std::optional<Id> physical_current_with_presentation(Algebra& a, int l, int r, Id mass, const std::vector<int>& plus,
                                          const std::vector<int>& minus, Id coefficient, std::optional<permutation_sum>* presentation) {
-    if (plus.empty() || minus.empty() || plus.size() + minus.size() < 3 || plus.size() + minus.size() > 6)
+    if (plus.empty() || minus.empty() || plus.size() + minus.size() < 3 || plus.size() + minus.size() > 7)
         return {};
     bool swapped = minus.size() > plus.size();
     legs major = swapped ? minus : plus, minor = swapped ? plus : minus;
@@ -881,28 +906,34 @@ std::optional<Id> physical_current_with_presentation(Algebra& a, int l, int r, I
       return d.midpoint(true);
     if (presentation && major.size()==6 && minor.size()>=2)
         *presentation=paired_weyl_sum(a,l,r,mass,plus,minus,coefficient,true);
-    return balanced_line(std::move(d), true).run(minor.size() == 1 ? presentation : nullptr);
+    return balanced_line(std::move(d), true)
+        .run(minor.size() == 1 || major.size() > 6 ? presentation : nullptr);
 }
 std::optional<Id> mixed_physical_current(Algebra& a, int l, int r, Id mass,
         const legs& plus, const legs& minus, Id coefficient) {
     return physical_current_with_presentation(a,l,r,mass,plus,minus,coefficient,nullptr);
 }
 
-std::optional<Id> mixed_spurious_current(Algebra& a, int l, int r, Id mass, const std::vector<int>& plus,
-                                         const std::vector<int>& minus, Id coefficient) {
-  if (plus.empty() || minus.empty() || plus.size() + minus.size() < 3 ||
-      plus.size() + minus.size() > 6)
-    return {};
-  bool swapped = minus.size() > plus.size();
-  legs vectors = swapped ? minus : plus, other = swapped ? plus : minus;
-  std::vector<bool> minor(vectors.size(), false);
-  vectors.insert(vectors.end(), other.begin(), other.end());
-  minor.resize(vectors.size(), true);
-  dirac_recursion d{a,     l,           r,
-                    mass,  coefficient, vectors,
-                    minor, swapped,     (1u << vectors.size()) - 1};
-  if (vectors.size() > 4) return balanced_line(std::move(d), false).run();
-  return other.size() == 1 ? d.connected_emissions(false) : d.midpoint(false);
+std::optional<Id> spurious_current_with_presentation(Algebra& a, int l, int r, Id mass,
+                                                     const std::vector<int>& plus,
+                                                     const std::vector<int>& minus, Id coefficient,
+                                                     std::optional<permutation_sum>* presentation) {
+    if (plus.empty() || minus.empty() || plus.size() + minus.size() < 3 || plus.size() + minus.size() > 7)
+        return {};
+    bool swapped = minus.size() > plus.size();
+    legs vectors = swapped ? minus : plus, other = swapped ? plus : minus;
+    std::vector<bool> minor(vectors.size(), false);
+    vectors.insert(vectors.end(), other.begin(), other.end());
+    minor.resize(vectors.size(), true);
+    dirac_recursion d{a, l, r, mass, coefficient, vectors, minor, swapped, (1u << vectors.size()) - 1};
+    if (vectors.size() > 4)
+        return balanced_line(std::move(d), false).run(presentation);
+    return other.size() == 1 ? d.connected_emissions(false) : d.midpoint(false);
+}
+
+std::optional<Id> mixed_spurious_current(Algebra& a, int l, int r, Id mass, const legs& plus, const legs& minus,
+                                         Id coefficient) {
+    return spurious_current_with_presentation(a, l, r, mass, plus, minus, coefficient, nullptr);
 }
 
 std::optional<permutation_sum> ordered_minority_sum(Algebra& a, int l, int r, Id mass,
@@ -927,110 +958,162 @@ std::optional<permutation_sum> paired_weyl_sum(Algebra& a, int l, int r, Id mass
     const bool conjugate = plus.size() < minus.size();
     const auto& majority = conjugate ? minus : plus;
     const auto& minority = conjugate ? plus : minus;
-    if (minority.size() < 2) return {};
-    if (majority.size()+minority.size()==6)
+    const auto count = majority.size() + minority.size();
+    if (minority.empty() || (minority.size() == 1 && (!physical || count != 7)))
+        return {};
+    if (count == 6)
         return central_fermion_sum(a,l,r,mass,majority,minority,conjugate,coupling,physical);
-    if (majority.size()+minority.size()!=5) return {};
+    if (count != 5 && count != 7)
+        return {};
     legs vectors = majority;
     vectors.insert(vectors.end(), minority.begin(), minority.end());
     const mask full = (mask{1} << vectors.size()) - 1;
-    auto make_line = [&](bool square) {
-        std::vector<bool> pauli;
-        legs refs;
-        for (std::size_t i = 0; i < vectors.size(); ++i) {
-            const bool major = i < majority.size();
-            const bool positive = major != conjugate;
-            pauli.push_back(positive == square);
-            const auto& group = major ? majority : minority;
-            const auto position = major ? i : i-majority.size();
-            refs.push_back(physical ? l : group[(position+1)%group.size()]);
-        }
-        balanced_line line({a,l,r,mass,coupling,vectors,pauli,square,full},physical);
-        line.reference_legs = std::move(refs);
-        line.normalized_pairs = !physical;
-        return line;
-    };
-    auto angle = make_line(false), square = make_line(true);
-    auto projection = [&](balanced_line& line, bool left, mask pair, std::size_t center) {
-        const bool hand = line.swapped;
-        const bool projected = hand != line.chirality(center);
-        const int leg = vectors[center], ref = line.reference(center);
-        std::vector<Id> terms;
-        for (const auto& [end, value] : line.extend(left,pair)) {
-            Id bracket;
-            if (projected && physical) {
-                // Reversing a projected reference from bra to ket reverses
-                // its sign in HEPCAT's incoming spinor convention.
-                bracket = left ? line.neg(line.chain(hand,end,{ref},leg))
-                               : line.chain(!hand,leg,{ref},end);
-            } else {
-                const int endpoint = projected ? ref : leg;
-                bracket = left ? line.chain(hand,end,{},endpoint) : line.chain(hand,endpoint,{},end);
+    auto sew = [&](unsigned gauge) {
+        auto make_line = [&](bool square) {
+            std::vector<bool> pauli;
+            legs refs;
+            for (std::size_t i = 0; i < vectors.size(); ++i) {
+                const bool major = i < majority.size();
+                const bool positive = major != conjugate;
+                pauli.push_back(positive == square);
+                const auto& group = major ? majority : minority;
+                const auto position = major ? i : i - majority.size();
+                const int cyclic = group[(position + 1) % group.size()];
+                const int crossed = (major ? minority : majority).front();
+                if (physical)
+                    refs.push_back(gauge && (major == (gauge == 2)) ? r : l);
+                else
+                    refs.push_back(gauge == 1 || (gauge == 2 && major) ? crossed : cyclic);
             }
-            terms.push_back(a.mul({value,bracket}));
-        }
-        return a.add(terms);
-    };
-    // Orbits of (left unordered pair, center, right unordered pair). A
-    // cyclic photon reference commutes with rotations of its own group.
-    // Include each orbit once, divided by its stabilizer.
-    std::vector<legs> images(1);
-    unsigned symmetric_orders = 1;
-    unsigned first = 0;
-    for (const auto& group : {majority, minority}) {
-        legs order;
-        for (unsigned i=0; i<group.size(); ++i) {
-            order.push_back(first+i);
-            symmetric_orders *= i+1;
-        }
-        std::vector<legs> product;
-        do {
-            bool cyclic = true;
-            for (std::size_t i=1; i<order.size(); ++i)
-                cyclic = cyclic && order[i] == static_cast<int>(first+(order[i-1]-first+1)%group.size());
-            if (physical || cyclic) {
+            balanced_line line({a, l, r, mass, coupling, vectors, pauli, square, full}, physical);
+            line.reference_legs = std::move(refs);
+            line.normalized_pairs = !physical && count == 5;
+            return line;
+        };
+        auto angle = make_line(false), square = make_line(true);
+        auto projection = [&](balanced_line& line, bool left, mask pair, std::size_t center) {
+            const bool hand = line.swapped;
+            const bool projected = hand != line.chirality(center);
+            const int leg = vectors[center], ref = line.reference(center);
+            std::vector<Id> terms;
+            for (const auto& [end, value] : line.extend(left, pair)) {
+                Id bracket;
+                if (projected && physical) {
+                    // Reversing a projected reference from bra to ket reverses
+                    // its sign in HEPCAT's incoming spinor convention.
+                    bracket =
+                        left ? line.neg(line.chain(hand, end, {ref}, leg)) : line.chain(!hand, leg, {ref}, end);
+                } else {
+                    const int endpoint = projected ? ref : leg;
+                    bracket = left ? line.chain(hand, end, {}, endpoint) : line.chain(hand, endpoint, {}, end);
+                }
+                terms.push_back(a.mul({value, bracket}));
+            }
+            return a.add(terms);
+        };
+        // Orbits of (left unordered pair, center, right unordered pair). A
+        // cyclic photon reference commutes with rotations of its own group.
+        // Include each orbit once, divided by its stabilizer.
+        std::vector<legs> images(1);
+        unsigned symmetric_orders = 1;
+        unsigned first = 0;
+        for (const auto& group : {majority, minority}) {
+            legs order;
+            for (unsigned i = 0; i < group.size(); ++i) {
+                order.push_back(first + i);
+                symmetric_orders *= i + 1;
+            }
+            std::vector<legs> product;
+            do {
                 for (auto prefix : images) {
-                    prefix.insert(prefix.end(),order.begin(),order.end());
+                    prefix.insert(prefix.end(), order.begin(), order.end());
                     product.push_back(std::move(prefix));
                 }
+            } while (std::next_permutation(order.begin(), order.end()));
+            images = std::move(product);
+            first += group.size();
+        }
+        if (!physical) {
+            // A relabeling preserves this gauge if it carries the reference of
+            // every photon to the reference of the image photon.
+            images.erase(
+                std::remove_if(images.begin(), images.end(),
+                               [&](const legs& image) {
+                                   for (size_t i = 0; i < vectors.size(); ++i) {
+                                       auto ref = std::find(vectors.begin(), vectors.end(), angle.reference(i));
+                                       if (ref == vectors.end() ||
+                                           vectors[image[ref - vectors.begin()]] != angle.reference(image[i]))
+                                           return true;
+                                   }
+                                   return false;
+                               }),
+                images.end());
+        }
+        std::vector<Id> terms;
+        for (mask left = 1; left < full; ++left) {
+            if (balanced_line::length(left) != count / 2)
+                continue;
+            for (std::size_t i = 0; i < vectors.size(); ++i) {
+                if (left & (mask{1} << i))
+                    continue;
+                const auto key = std::make_pair(left, static_cast<int>(i));
+                unsigned stabilizer = 0;
+                bool representative = true;
+                for (const auto& image : images) {
+                    mask transformed = 0;
+                    for (std::size_t j = 0; j < vectors.size(); ++j)
+                        if (left & (mask{1} << j))
+                            transformed |= mask{1} << image[j];
+                    const auto mapped = std::make_pair(transformed, image[i]);
+                    if (mapped < key) {
+                        representative = false;
+                        break;
+                    }
+                    if (mapped == key)
+                        ++stabilizer;
+                }
+                if (!representative)
+                    continue;
+                const mask right = full ^ left ^ (mask{1} << i);
+                const auto plus_term =
+                    a.mul({projection(angle, true, left, i), projection(square, false, right, i)});
+                const auto minus_term =
+                    a.mul({projection(square, true, left, i), projection(angle, false, right, i)});
+                Id weight = a.pow(a.integer(stabilizer), -1);
+                if (angle.normalized_pairs)
+                    weight = a.mul({weight, a.pow(angle.norm(i), -1)});
+                terms.push_back(a.mul({weight, plus_term}));
+                terms.push_back(a.mul({weight, minus_term}));
             }
-        } while (std::next_permutation(order.begin(),order.end()));
-        images = std::move(product);
-        first += group.size();
-    }
-    std::vector<Id> terms;
-    for (mask left=1; left<full; ++left) {
-        if (balanced_line::length(left)!=2) continue;
-        for (std::size_t i=0; i<vectors.size(); ++i) {
-            if (left & (mask{1}<<i)) continue;
-            const auto key=std::make_pair(left,static_cast<int>(i));
-            unsigned stabilizer=0;
-            bool representative=true;
-            for (const auto& image:images) {
-                mask transformed=0;
-                for (std::size_t j=0; j<vectors.size(); ++j)
-                    if (left & (mask{1}<<j)) transformed |= mask{1}<<image[j];
-                const auto mapped=std::make_pair(transformed,image[i]);
-                if (mapped<key) { representative=false; break; }
-                if (mapped==key) ++stabilizer;
+        }
+        std::vector<Id> factors{angle.neg(coupling), a.add(terms)};
+        if (!angle.normalized_pairs)
+            for (std::size_t i = 0; i < vectors.size(); ++i)
+                factors.push_back(a.pow(angle.norm(i), -1));
+        // Average the complete amplitude over the cosets of the subgroup
+        // that preserves the reference assignment.
+        if (images.size() < symmetric_orders)
+            factors.push_back(a.pow(a.integer(symmetric_orders / images.size()), -1));
+        return permutation_sum{majority, a.mul(factors), {}, {minority}};
+    };
+    auto best = sew(0);
+    if (count > 6) {
+        auto rank = [&](Id kernel) {
+            try { return std::make_pair(false, expression_complexity(a, kernel)); }
+            catch (const std::length_error&) {}
+            catch (const std::overflow_error&) {}
+            return std::make_pair(true, static_cast<std::size_t>(a.cost(kernel)));
+        };
+        auto best_rank = rank(best.kernel);
+        for (unsigned ref : {1u, 2u}) {
+            auto alternative = sew(ref);
+            const auto weight = rank(alternative.kernel);
+            if (weight < best_rank) {
+                best = std::move(alternative);
+                best_rank = weight;
             }
-            if (!representative) continue;
-            const mask right=full^left^(mask{1}<<i);
-            const auto plus_term=a.mul({projection(angle,true,left,i),projection(square,false,right,i)});
-            const auto minus_term=a.mul({projection(square,true,left,i),projection(angle,false,right,i)});
-            Id weight = a.pow(a.integer(stabilizer),-1);
-            if (angle.normalized_pairs) weight = a.mul({weight,a.pow(angle.norm(i),-1)});
-            terms.push_back(a.mul({weight,plus_term}));
-            terms.push_back(a.mul({weight,minus_term}));
         }
     }
-    std::vector<Id> factors{angle.neg(coupling),a.add(terms)};
-    if (!angle.normalized_pairs)
-        for (std::size_t i=0;i<vectors.size();++i) factors.push_back(a.pow(angle.norm(i),-1));
-    // Averaging the complete cyclic-gauge amplitude with its reverse is a
-    // Bose relabeling of the complete amplitude. This promotes C3 to S3.
-    if (images.size() < symmetric_orders)
-        factors.push_back(a.pow(a.integer(symmetric_orders / images.size()), -1));
-    return permutation_sum{majority,a.mul(factors),{},{minority}};
+    return best;
 }
 } // namespace hepcat

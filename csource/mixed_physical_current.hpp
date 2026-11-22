@@ -14,6 +14,10 @@ std::optional<Id> physical_current_with_presentation(Algebra&, int left, int rig
 std::optional<Id> mixed_spurious_current(Algebra&, int left, int right, Id mass,
                                          const std::vector<int>& positive, const std::vector<int>& negative,
                                          Id vertex_product);
+std::optional<Id> spurious_current_with_presentation(Algebra&, int left, int right, Id mass,
+                                                     const std::vector<int>& positive,
+                                                     const std::vector<int>& negative, Id vertex_product,
+                                                     std::optional<permutation_sum>* presentation);
 // Signed ordered-emission kernel, summed over all like-helicity legs.
 std::optional<permutation_sum> ordered_minority_sum(Algebra&, int left, int right, Id mass,
     const std::vector<int>& positive, const std::vector<int>& negative, Id vertex_product);

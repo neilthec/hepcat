@@ -1,6 +1,7 @@
 #include "permutation_sum.hpp"
 #include "fermion_currents.hpp"
 #include "generation_plan.hpp"
+#include "line_current.hpp"
 #include "chiral_radiation.hpp"
 #include "mixed_radiation.hpp"
 #include "spinor_word.hpp"
@@ -583,13 +584,140 @@ permutation_sum radiation_exchange_sum(Algebra& a, const std::vector<int>& fermi
 
 // Infer the candidate from external spin weights and denominator chirality.
 // Only coefficient-by-coefficient agreement authorizes the ordered identity.
+// A large saved current can have a short factored DAG even when its
+// Laurent expansion is enormous. Match that DAG exactly up to an overall
+// leg-independent coefficient before constructing its permutation summand.
+// Hide subexpressions shared by both sides before distributing products.
+// This is an exact formal comparison. Exhausting the monomial budget
+// declines the rewrite and leaves the original amplitude available.
+static bool same_factored_body(Algebra& a, Id x, Id y) {
+    if (x == y)
+        return true;
+    std::set<Id> source, shared;
+    auto gather = [&](auto&& self, Id id, std::set<Id>& seen) -> void {
+        if (!seen.insert(id).second)
+            return;
+        for (Id child : a.node(id).args)
+            self(self, child, seen);
+    };
+    gather(gather, x, source);
+    gather(gather, y, shared);
+    std::map<Id, Id> memo;
+    auto terms = [&](auto&& self, Id id) -> Id {
+        if (auto it = memo.find(id); it != memo.end())
+            return it->second;
+        const auto& n = a.node(id);
+        // An inert wrapper is removed with the scratch arena. Its argument
+        // is the actual subtree, so distinct expressions cannot collide.
+        Id result = id;
+        if (source.count(id) && shared.count(id) && n.head == "Plus")
+            result = a.call("Internal`SharedFactor", {id});
+        else if (n.head == "Plus" || n.head == "Times") {
+            Terms children;
+            for (Id f : n.args)
+                children.push_back(self(self, f));
+            result = a.call(n.head, std::move(children));
+        }
+        memo.emplace(id, result);
+        return result;
+    };
+    std::size_t work = 500000;
+    try {
+        auto diff = a.add({terms(terms, x), a.mul({a.integer(-1), terms(terms, y)})});
+        diff = a.add(expand(a, diff, work, 16384));
+        if (diff == a.integer(0))
+            return true;
+        std::map<Id, Id> restored;
+        auto unwrap = [&](auto&& self, Id id) -> Id {
+            if (auto it = restored.find(id); it != restored.end())
+                return it->second;
+            const auto& n = a.node(id);
+            Id answer = id;
+            if (n.head == "Internal`SharedFactor")
+                answer = n.args.front();
+            else if (n.head == "Times" || n.head == "Plus" || n.head == "Power") {
+                Terms args;
+                for (Id f : n.args)
+                    args.push_back(self(self, f));
+                answer = a.call(n.head, std::move(args));
+            }
+            return restored.emplace(id, answer).first->second;
+        };
+        diff = unwrap(unwrap, diff);
+        return a.add(expand(a, diff, work, 16384)) == a.integer(0);
+    } catch (const Unsupported&) {
+        return false;
+    }
+}
+static std::optional<permutation_sum> recognize_factored_line(Algebra& a, Id input,
+                                                              std::optional<bool> preference) {
+    const auto spins = external_spin_weights(a, input);
+    if (!spins)
+        return {};
+    std::vector<int> ends, photons;
+    std::vector<bool> square;
+    for (size_t i = 0; i < spins->size(); ++i) {
+        if (a.masses()[i] != a.integer(0) && (*spins)[i] == 1)
+            ends.push_back(i + 1);
+        else if (a.masses()[i] == a.integer(0) && std::abs((*spins)[i]) == 2) {
+            photons.push_back(i + 1);
+            square.push_back((*spins)[i] == 2);
+        } else
+            return {};
+    }
+    if (ends.size() != 2 || a.masses()[ends[0] - 1] != a.masses()[ends[1] - 1])
+        return {};
+    auto split = [&](Id expr) {
+        Terms scalar, body;
+        const auto& n = a.node(expr);
+        for (Id f : n.head == "Times" ? n.args : Terms{expr})
+            (leg_independent_scalar(a, f) ? scalar : body).push_back(f);
+        return std::make_pair(a.mul(scalar), a.mul(body));
+    };
+    relabel normalize(a, {}, {}, true);
+    const auto [scale, body] = split(normalize(input));
+    std::set<Id> visited;
+    auto has_spurious = [&](auto&& self, Id id) -> bool {
+        if (!visited.insert(id).second)
+            return false;
+        const auto& n = a.node(id);
+        if (n.head == "Power" && n.args.size() == 2 && a.node(n.args[0]).head == "SpinorChain") {
+            mpq_class exponent;
+            if (a.number(n.args[1], exponent) && exponent < 0)
+                return true;
+        }
+        return std::any_of(n.args.begin(), n.args.end(), [&](Id k) { return self(self, k); });
+    };
+    const bool physical = !has_spurious(has_spurious, input);
+    for (int left : ends) {
+        const int right = ends.front() + ends.back() - left;
+        const auto raw = minimal_dirac_line(a, left, right, photons, square, a.integer(1), physical, nullptr);
+        if (!raw)
+            continue;
+        const auto canonical =
+            collect_simple_fractions(a, collect_scalar_factors(a, reduceInto(a, *raw, a.masses(), {}), 3));
+        const auto [unit, kinematic] = split(normalize(canonical));
+        if (unit == a.integer(0) || !same_factored_body(a, kinematic, body))
+            continue;
+        std::optional<permutation_sum> proposal;
+        const auto ratio = a.mul({scale, a.pow(unit, -1)});
+        minimal_dirac_line(a, left, right, photons, square, ratio, preference.value_or(physical), &proposal);
+        return proposal;
+    }
+    return {};
+}
 std::optional<permutation_sum> recognize_ordered_current(Algebra& a, Id input, std::optional<bool> preference) {
     const auto& masses = a.masses();
     const auto zero = a.integer(0);
-    if (masses.size() < 6 || masses.size() > 8 || !a.shells().empty() || a.cost(input) < 300)
+    if (masses.size() < 6 || masses.size() > 9 || !a.shells().empty() || a.cost(input) < 300)
         return {};
     const auto massless = static_cast<std::size_t>(std::count(masses.begin(),masses.end(),zero));
     try {
+        if (masses.size() > 8) {
+            if (massless + 2 != masses.size() || a.node(input).head != "Times")
+                return {};
+            return recognize_factored_line(a, input, preference);
+        }
         if (masses.size() == 7 && (massless == 3 || massless == 1)) return recognize_exchange(a,input,preference);
         const bool wide = massless >= 6;
         if (massless + 2 != masses.size() || a.cost(input) > (wide ? 120000u : 18000u)) return {};
