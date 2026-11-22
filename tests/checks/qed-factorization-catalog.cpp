@@ -87,7 +87,7 @@ bool check_full(const model& vertices, const model& cuts, const model& feynman,
     return report.passed() && compared && has_spurious == expect_spurious;
 }
 // Compare the rows as read from disk, including their model-local coefficients.
-bool check_seven(const model& cuts, const model_vertex& row, const model& rules) {
+bool check_higher_point(const model& cuts, const model_vertex& row, const model& rules) {
     using namespace validation;
     Algebra a(&cuts.algebra()), fa(&rules.algebra());
     const auto params = model_parameters(cuts);
@@ -130,7 +130,7 @@ int main(int argc, char** argv) {
         for (int number : {4, 5}) {
             const model catalog(root / "models", number, vertices.parameter_scope());
             for (const auto& vertex : catalog.vertices()) {
-                if (vertex.legs.size() < 4 || vertex.legs.size() > 7) continue;
+                if (vertex.legs.size() < 4 || vertex.legs.size() > 8) continue;
                 std::string family, helicities;
                 std::vector<std::string> masses;
                 for (const auto& leg : vertex.legs) {
@@ -146,17 +146,17 @@ int main(int argc, char** argv) {
                 if (!seen.insert(label).second) throw std::runtime_error("Duplicate QED model row");
                 Algebra joined(&catalog.algebra());
                 const auto value = joined.mul({vertex.factor, vertex.expression});
-                const amp_expression stored(joined.format(value), masses);
-                if (vertex.legs.size() == 7) {
-                    bool ok = check_seven(catalog,vertex,feynman);
+                if (vertex.legs.size() >= 7) {
+                    bool ok = check_higher_point(catalog,vertex,feynman);
                     if (argc == 3)
-                        ok = check_full(vertices,catalog,feynman,vertex.legs,stored,
-                                        706181,number == 5) && ok;
+                        ok = check_full(vertices,catalog,feynman,vertex.legs,amp_expression(joined.format(value), masses),
+                                        706181,number == 5 && family.find('A') != std::string::npos) && ok;
                     std::cout << (ok ? "PASS" : "FAIL") << "  model " << number << "  " << family
                               << ' ' << helicities << "  signed Feynman diagrams" << std::endl;
                     if (ok) ++passed;
                     continue;
                 }
+                const amp_expression stored(joined.format(value), masses);
                 const amp_expression published(formulas.at(label).back(), masses);
                 identity_check_options checks;
                 checks.seed = 601787 + 41 * seen.size();
@@ -181,14 +181,17 @@ int main(int argc, char** argv) {
             }
         }
         for (const auto& policy : {"physical","spurious"})
-            for (unsigned pairs : {1u,2u,3u}) {
-                const unsigned photons = 7-2*pairs;
-                const auto family = std::string(2*pairs,'e') + std::string(photons,'A');
-                for (unsigned minus=0;minus<=photons;++minus)
-                    if (!seen.count({policy,family,std::string(photons-minus,'+')+std::string(minus,'-')}))
-                        throw std::runtime_error("Missing seven-point entry in " + family);
-            }
-        const auto expected = formulas.size()+24;
+            for (unsigned legs : {7u, 8u})
+                for (unsigned pairs = 1; 2*pairs <= legs; ++pairs) {
+                    const auto photons = legs - 2*pairs;
+                    const auto family = std::string(2*pairs,'e') + std::string(photons,'A');
+                    for (unsigned minus = 0; minus <= photons; ++minus) {
+                        const auto h = photons ? std::string(photons-minus,'+') + std::string(minus,'-') : "massive";
+                        if (!seen.count({policy,family,h}))
+                            throw std::runtime_error("Missing QED catalog entry in " + family + " " + h);
+                    }
+                }
+        const auto expected = formulas.size()+24+32;
         std::cout << passed << '/' << expected << " QED catalog entries passed\n";
         return passed == expected && seen.size() == expected ? 0 : 1;
     } catch (const std::exception& e) {

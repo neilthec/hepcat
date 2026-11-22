@@ -712,7 +712,7 @@ models and compares all 38 complete four- to six-point entries with the
 publication formulas. It checks the sign on exact, conserved external
 kinematics and compares the momentum-weighted complexity of each helicity
 representative with the best recorded value. For equal scores it also checks
-the leaf count. For the 24 seven-point entries it checks coverage of every photon helicity multiset and compares each stored signed amplitude with the off-shell Feynman diagrams at eight common kinematic points. Run `hepcat-check-qed-catalog . --full` from the
+the leaf count. For the 24 seven-point and 32 eight-point entries it checks coverage of every photon helicity multiset and compares each stored signed amplitude with the off-shell Feynman diagrams at eight common kinematic points. Run `hepcat-check-qed-catalog . --full` from the
 repository root to test the physical residues, pole preference, high-energy
 growth, reference independence and 100,000 signed Feynman comparisons per
 entry. The repository-root argument can also be an absolute path.
