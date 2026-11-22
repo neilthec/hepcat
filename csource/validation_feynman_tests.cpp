@@ -1,5 +1,6 @@
 #include "generation_feynman.hpp"
 #include "validation_feynman.hpp"
+#include "validation_dirac_current.hpp"
 
 #include <filesystem>
 #include <iostream>
@@ -88,6 +89,35 @@ void process_test(const model& m, const std::vector<std::string>& process, size_
     }
 }
 
+void current_test(const model& rules, std::vector<int> types) {
+    using namespace validation;
+    std::vector<std::string> names;
+    std::vector<Id> masses, terms;
+    std::vector<real> numeric;
+    Algebra a(&rules.algebra());
+    for (int t : types) {
+        names.push_back(t == 1 ? "e" : t == -1 ? "E" : t == 2 ? "A.+" : "A.-");
+        masses.push_back(a.parse(rules.particle(generation::feynman_external(rules,names.back())).mass));
+        numeric.push_back(std::abs(t) == 1 ? 1 : 0);
+    }
+    a.setKinematics(masses,{});
+    for (const auto& tree : generation::diagram_plans(rules,names))
+        terms.push_back(feynman_to_spinors(a,generation::sew_feynman(a,rules,names,tree)));
+    const real e = 1.L/3;
+    expression_evaluator direct(a,a.add(terms),model_parameters(rules,{{"Me",1},{"EE",e}}));
+    const dirac_current::recursion replay(types);
+    for (unsigned i = 0;i<4;++i) {
+        auto p=sample_point(numeric,651123+i);
+        const auto expected=direct(p);
+        for (auto gauge:{dirac_current::gauge::independent,dirac_current::gauge::physical,
+                         dirac_current::gauge::spurious}) {
+            const auto value=replay(p,e,gauge);
+            require(std::abs(value-expected)<=1e-9L*std::abs(expected),
+                    "Signed subset currents disagree with explicit Feynman tensors");
+        }
+    }
+}
+
 } // namespace
 
 int main(int argc, char** argv) {
@@ -109,6 +139,11 @@ int main(int argc, char** argv) {
         process_test(sm, {"h", "h", "h", "h"}, 4, emit_oracle);
         process_test(sm, {"W+", "W-", "h", "h"}, 4, emit_oracle);
         process_test(sm, {"u", "U", "C", "c"}, 4, emit_oracle);
+        if (!emit_oracle) {
+            current_test(qed, {2,-1,1,-2,2});
+            current_test(qed, {-1,1,-1,1,2});
+            current_test(qed, {1,-1,1,-1,1,-1});
+        }
         if (!emit_oracle)
             std::cout << "Native Feynman tensor and spinor contractions passed.\n";
     } catch (const std::exception& e) {

@@ -3,6 +3,7 @@
 #include "generation_feynman.hpp"
 #include "native_fit.hpp"
 #include "validation_feynman.hpp"
+#include "validation_dirac_current.hpp"
 #include "validation_numeric.hpp"
 #include "validation_precision_parameters.hpp"
 
@@ -96,6 +97,39 @@ real mass_value(const Algebra& a, Id mass, const parameters& values) {
     if (val.imag() != 0 || !std::isfinite(val.real()) || val.real() < 0)
         throw std::invalid_argument("expected a finite nonnegative external mass for " + a.format(mass));
     return val.real();
+}
+
+// For large tree sums with a single minimal vector vertex, the same
+// Feynman diagrams can be accumulated as currents on disjoint leg sets.
+// The ordinary diagram evaluator remains the independent precision oracle.
+using dirac_reference = std::pair<validation::dirac_current::recursion, real>;
+std::optional<dirac_reference> compile_dirac_reference(const model& rules,
+        const std::vector<std::string>& legs, const parameters& values) {
+    if (legs.size() > 12 || rules.vertices().size() != 1) return {};
+    const auto& vertex = rules.vertices().front();
+    if (vertex.legs.size() != 3) return {};
+    const auto& f = rules.particle(vertex.legs[0]);
+    const auto& v = rules.particle(vertex.legs[2]);
+    if (f.spin2 != 1 || f.name == f.antiname || vertex.legs[0] != f.antiname ||
+        vertex.legs[1] != f.name || f.color != 1 || f.mass == "0" || f.width != "0" ||
+        v.spin2 != 2 || v.name != v.antiname || v.color != 1 || v.mass != "0" || v.width != "0")
+        return {};
+    const auto& algebra = rules.algebra();
+    if (algebra.format(vertex.expression) !=
+        "ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]]]")
+        return {};
+    const auto coupling = -validation::evaluate_scalar(algebra, vertex.factor, values);
+    if (coupling.imag() != 0 || !std::isfinite(coupling.real())) return {};
+    std::vector<int> species;
+    for (const auto& leg : legs) {
+        const auto name = generation::feynman_external(rules, leg);
+        if (name == f.name) species.push_back(1);
+        else if (name == f.antiname) species.push_back(-1);
+        else if (leg == v.name + ".+" || leg == v.name + ".-")
+            species.push_back(leg.back() == '+' ? 2 : -2);
+        else return {};
+    }
+    return dirac_reference{validation::dirac_current::recursion(species),coupling.real()};
 }
 
 enum class comparison { finite, reduction, reference, feynman, reference_amplitude };
@@ -238,6 +272,7 @@ validation_report amplitude::validate_impl(amp_expression candidate, const amp_e
         if (contains_reference(tree, root))
             probes.push_back({comparison::reference, "Reference", {}});
         Algebra feynman_tree;
+        std::optional<dirac_reference> fast_reference;
         std::vector<expression_evaluator> zero_comparison_terms;
         if (feynman_model_) {
             try {
@@ -273,6 +308,19 @@ validation_report amplitude::validate_impl(amp_expression candidate, const amp_e
                 auto sum = feynman_tree.add(std::move(terms));
                 probes.push_back({comparison::feynman, "Feynman",
                                   expression_evaluator(feynman_tree, sum, fvalues, colors, &exact_fvalues)});
+                if (feynman_rows_.size() >= 4096 && root != tree.integer(0)) {
+                    fast_reference = compile_dirac_reference(rules,particles_,fvalues);
+                    // Check conventions against the actual stored diagrams before
+                    // using the shared subcurrents on the remaining points.
+                    for (unsigned j = 0; fast_reference && j < 4; ++j) {
+                        auto p = validation::sample_point(numeric_masses, chart_detail::mix(seed+j));
+                        auto x = fast_reference->first(p,fast_reference->second,
+                                                       validation::dirac_current::gauge::independent);
+                        auto y = (*probes.back().other)(p);
+                        if (!(std::abs(x-y) <= 1e-8L * std::max(std::abs(x),std::abs(y))))
+                            fast_reference.reset();
+                    }
+                }
             } catch (const std::exception& e) {
                 numerical_check failed{"Feynman"};
                 failed.detail = e.what();
@@ -309,7 +357,11 @@ validation_report amplitude::validate_impl(amp_expression candidate, const amp_e
                             }
                             const auto& target_point = alternate ? *alternate : pt;
                             const auto& evaluator = p.other ? *p.other : current;
-                            complex target = p.type == comparison::finite ? value : evaluator(target_point);
+                            complex target;
+                            if (p.type == comparison::feynman && fast_reference)
+                                target = fast_reference->first(target_point,fast_reference->second,
+                                                        validation::dirac_current::gauge::independent);
+                            else target = p.type == comparison::finite ? value : evaluator(target_point);
                             compare(local[i], value, target, point_seed, options, [&]() {
                                 if (!replay_mass_error.empty())
                                     throw std::domain_error(replay_mass_error);
