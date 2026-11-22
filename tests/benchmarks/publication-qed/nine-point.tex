@@ -208,13 +208,30 @@ gives reference denominators proportional to $2p_e\cdot p_i$, a
 physical electron virtuality. For a representation with spurious poles,
 take a photon of opposite helicity when possible, and otherwise use
 the next photon cyclically. Apply the reference prescription to the
-assigned labels. For one real photon $k$ on the line $(a,b)$, the spurious prescription
+assigned labels. When the process has only one real photon $k$, emitted by line $(a,b)$, the spurious prescription
 uses $Q=p_a+p_b$. Take $Q|k]$ as the angle reference, or its parity
 conjugate for negative helicity. The new divisor is
 $2k\cdot Q=s_{abk}-s_{ab}$. At finite propagator virtualities the
 residue on this divisor vanishes by the Ward identity for that line. Each line sums all orders
 of its attachments; the Ward identity follows by telescoping adjacent
 fermion propagators and using the endpoint Dirac equations.
+
+A terminal line emitting one real photon admits a shorter tensor. Write
+$G=\gamma^\mu$ for its exchanged attachment and $D=\not k\not\epsilon$
+for the real photon. Anticommuting the endpoint momenta through the
+emission vertex in the two orders gives
+\begin{align}
+ T_{ab}^{\mu}(k)={}&
+ \left(\frac{2p_a\cdot\epsilon}{\tau_{ak}}
+       -\frac{2p_b\cdot\epsilon}{\tau_{bk}}\right)\bar v_b G u_a
+ +\bar v_b\left(\frac{GD}{\tau_{ak}}+\frac{DG}{\tau_{bk}}\right)u_a .
+ \label{eq:nine-leaf}
+\end{align}
+Both terms vanish separately for $\epsilon=k$. In the physical gauge
+$p_a\cdot\epsilon=0$. In the single-photon spurious gauge
+$p_b\cdot\epsilon=-p_a\cdot\epsilon$. Thus both gauges remove one
+independent orbital contraction. An unmarked leaf contributes just
+$\bar v_b\gamma^\mu u_a$.
 
 For one through four pairs the numbers of distinct physical channels
 are 126, 188, 186 and 172. The ordered diagram counts are 5,040, 13,440,
@@ -227,7 +244,7 @@ agree with the independently generated diagram lists. In addition, for
 each of the 20 helicity counts, the two printed tensor prescriptions
 agreed with an independent-gauge current at 32 coherent-spin points.
 The maximum relative discrepancies in the signed amplitudes were
-$7.64\times10^{-13}$ and $3.60\times10^{-12}$, respectively. At four
+$7.64\times10^{-13}$ and $2.83\times10^{-12}$, respectively. At four
 separate points per helicity count the corresponding polarized rates, summed
-over every massive spin, agreed with MadGraph within $1.42\times10^{-13}$
-and $4.31\times10^{-12}$. These samples used $m=1$ and $e=1/3$.
+over every massive spin, agreed with MadGraph within $1.41\times10^{-13}$
+and $1.11\times10^{-12}$. These samples used $m=1$ and $e=1/3$.

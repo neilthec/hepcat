@@ -52,6 +52,28 @@ class tensors {
     a = p.angles[kets[v]];
     b = raise(p.squares[kets[v]]);
     const vector ket{a[0], a[1], -b[0], -b[1]};
+    // Anticommute the endpoint momentum onto its external spinor when
+    // a leaf carries one external and one exchanged photon (Eq. nine-leaf).
+    if (ports.size() == 2) {
+      for (int i = 0; i < 2; ++i) {
+        mask k = ports[i].momentum;
+        if (count(k) != 1 || std::abs(species[first(k)]) != 2)
+          continue;
+        const auto &eps = ports[i].polarization, &g = ports[1 - i].polarization;
+        const auto a = kets[v], b = bars[v];
+        const auto ta = 2 * p.scalar_products[a * species.size() + first(k)];
+        const auto tb = 2 * p.scalar_products[b * species.size() + first(k)];
+        auto field = [&](const vector &x) {
+          return slash(momenta[k], slash(eps, x));
+        };
+        const auto gket = slash(g, ket);
+        const auto orbital = 2.L * dot(momenta[1u << a], eps) / ta -
+                             2.L * dot(momenta[1u << b], eps) / tb;
+        return orbital * contract(bra, gket) +
+               contract(bra, slash(g, field(ket))) / ta +
+               contract(bra, field(gket)) / tb;
+      }
+    }
     const mask full = (1u << ports.size()) - 1;
     std::vector<vector> row(full + 1);
     std::vector<mask> side(full + 1, 1u << bars[v]);
