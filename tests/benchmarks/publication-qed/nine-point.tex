@@ -260,7 +260,11 @@ Both terms vanish separately for $\epsilon=k$. In the physical gauge
 $p_a\cdot\epsilon=0$. In the single-photon spurious gauge
 $p_b\cdot\epsilon=-p_a\cdot\epsilon$. Thus both gauges remove one
 independent orbital contraction. An unmarked leaf contributes just
-$\bar v_b\gamma^\mu u_a$.
+$\bar v_b\gamma^\mu u_a$. For eight fermions and one photon, the automatic scalar
+construction chose physical denominators in both pole preferences.
+The spurious representation reported here uses the emitting pair momentum
+as the reference in Eq.~\eqref{eq:nine-leaf} and in the corresponding
+interior-line emissions. It is included in the direct tensor checks below.
 
 For one through four pairs the numbers of distinct physical channels
 are 126, 188, 186 and 172. The ordered diagram counts are 5,040, 13,440,
@@ -282,3 +286,40 @@ of $3.81\times10^{-13}$ and $5.13\times10^{-12}$. Repeating the labeled
 comparison on fresh points with the endpoint projectors gave maxima
 of $7.63\times10^{-13}$ and $2.76\times10^{-12}$. These samples used
 $m=1$ and $e=1/3$.
+
+For each parity representative we also sampled 100,000 phase-space points.
+The first two numerical columns of Table~\ref{tab:nine-large-samples}
+compare complex amplitudes at the model parameters and retain the raw
+floating-point residuals. In 115 of the two million signed comparisons
+the precision check was triggered. Replaying those points at 160 bits
+gave a maximum relative discrepancy of $6.17\times10^{-46}$. The last two columns compare the
+polarized rates at $m=1$, $e=1/3$ with standalone MadGraph, summing all
+massive spins at each point. For these larger rate samples we evaluated
+the two gauges by subset recursion. The direct evaluations of the
+printed permutation sums are reported above.
+\begin{table}[htbp]
+\centering\small
+\begin{tabular}{@{}clcccc@{}}
+\toprule
+& & \multicolumn{2}{c}{Signed Feynman} & \multicolumn{2}{c}{MadGraph rate}\\
+\cmidrule(lr){3-4}\cmidrule(l){5-6}
+Pairs & Photons & Physical & Spurious & Physical & Spurious\\
+\midrule
+1 & $+++++++$ & $6.15\times10^{-9}$ & $6.15\times10^{-9}$ & $1.84\times10^{-11}$ & $7.15\times10^{-11}$ \\
+1 & $++++++-$ & $4.03\times10^{-9}$ & $8.38\times10^{-7}$ & $1.93\times10^{-11}$ & $1.07\times10^{-10}$ \\
+1 & $+++++--$ & $3.05\times10^{-8}$ & $8.34\times10^{-7}$ & $1.56\times10^{-11}$ & $5.51\times10^{-11}$ \\
+1 & $++++---$ & $6.26\times10^{-9}$ & $1.14\times10^{-7}$ & $1.20\times10^{-11}$ & $2.31\times10^{-9}$ \\
+2 & $+++++$ & $2.29\times10^{-9}$ & $2.29\times10^{-9}$ & $1.21\times10^{-11}$ & $1.81\times10^{-10}$ \\
+2 & $++++-$ & $2.37\times10^{-9}$ & $2.37\times10^{-9}$ & $9.89\times10^{-12}$ & $1.46\times10^{-10}$ \\
+2 & $+++--$ & $2.32\times10^{-9}$ & $2.32\times10^{-9}$ & $1.06\times10^{-11}$ & $1.03\times10^{-9}$ \\
+3 & $+++$ & $3.98\times10^{-10}$ & $3.98\times10^{-10}$ & $3.87\times10^{-11}$ & $4.07\times10^{-11}$ \\
+3 & $++-$ & $3.98\times10^{-10}$ & $4.96\times10^{-10}$ & $3.44\times10^{-11}$ & $2.10\times10^{-10}$ \\
+4 & $+$ & $1.78\times10^{-10}$ & $1.78\times10^{-10}$ & $3.41\times10^{-11}$ & $3.39\times10^{-11}$ \\
+
+\bottomrule
+\end{tabular}
+\caption{Maximum relative discrepancies at nine points. Each row represents
+100,000 points for each signed comparison and an independent set of 100,000
+points shared by both MadGraph comparisons.}
+\label{tab:nine-large-samples}
+\end{table}

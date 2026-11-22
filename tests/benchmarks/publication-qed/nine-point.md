@@ -65,3 +65,26 @@ For the single charged pair, order the two triples by their negative-helicity co
 For an odd photon count with photon-only references the C++ Weyl-current reducer can also apply endpoint reversal to its scalar output. Both Weyl blocks share the photon reference labels. The reducer keeps the smaller block if its projected kernel improves the score. For seven photons with two or three negatives the selected spurious summands went from 324,706 to 162,353 and from 832,942 to 416,471. The `--reload` replay recovers and prints the two reduced expressions after a text round trip, then sums all signed photon permutations against the full amplitudes. The `--central` replay additionally tests the unreduced central candidates by expanding their signed operators and photon permutations; its largest relative errors in these two sectors were 2.39e-13 and 3.71e-13.
 
 For four fermions and five photons, the full occupation kernel exceeds the scalar expansion budget. The reducer can still compare the leaf counts of algebraically certified candidates. Keeping one chirality on each charged line yields finite, measurable weights for the sum of the individually projected kernels. In order of zero, one and two negative photons these weights are 1,096,644, 1,354,800 and 1,578,424 for physical poles, and 851,880, 791,616 and 787,009 for spurious poles. The extended radiative-current replay applies both fermion antisymmetrizations and the photon permutations, and compares the resulting signed amplitude against the independent-gauge recurrence at eight coherent-spin points per case. The maximum relative difference across these six cases was 2.95e-13.
+
+## High-statistics validation
+
+Each signed comparison uses 100,000 coherent-spin points at the model parameters. The two MadGraph columns each use the same 100,000 additional points per row at mass 1 and charge 1/3. Every massive spin assignment is included at every MadGraph point. The table gives maximum relative discrepancies. The native columns retain the ordinary-precision residual before a possible 160-bit replay. The MadGraph columns use the subset evaluator. The smaller direct comparisons of the printed expressions are described above.
+
+| Charged pairs | Photon helicities | Signed Feynman, physical | Signed Feynman, spurious | MadGraph, physical | MadGraph, spurious |
+|---:|:---|---:|---:|---:|---:|
+| 1 | +++++++ | 6.15e-09 | 6.15e-09 | 1.84e-11 | 7.15e-11 |
+| 1 | ++++++- | 4.03e-09 | 8.38e-07 | 1.93e-11 | 1.07e-10 |
+| 1 | +++++-- | 3.05e-08 | 8.34e-07 | 1.56e-11 | 5.51e-11 |
+| 1 | ++++--- | 6.26e-09 | 1.14e-07 | 1.2e-11 | 2.31e-09 |
+| 2 | +++++ | 2.29e-09 | 2.29e-09 | 1.21e-11 | 1.81e-10 |
+| 2 | ++++- | 2.37e-09 | 2.37e-09 | 9.89e-12 | 1.46e-10 |
+| 2 | +++-- | 2.32e-09 | 2.32e-09 | 1.06e-11 | 1.03e-09 |
+| 3 | +++ | 3.98e-10 | 3.98e-10 | 3.87e-11 | 4.07e-11 |
+| 3 | ++- | 3.98e-10 | 4.96e-10 | 3.44e-11 | 2.1e-10 |
+| 4 | + | 1.78e-10 | 1.78e-10 | 3.41e-11 | 3.39e-11 |
+
+For the native checks use seed `950000 + 100*p + h`, with `907111` for seven positive photons. Here `p` counts charged pairs and `h` counts negative photons. For the MadGraph replay use twenty blocks of 5,000 consecutive seeds per row. The initial seed of block `j` is `110000000 + 4000000*p + 200000*h + 5000*j` for `j = 0,...,19`.
+
+Across both preferences all 20 native runs passed the physical residues (77,376 chart samples), fixed-angle high-energy growth, reference-spinor and spurious-pole checks. For the single-photon, four-pair family the automatic scalar forms in both preferences had only physical propagating poles. The paper gives the separate pair-momentum spurious representation and checks it directly.
+
+The two million signed Feynman comparisons triggered 115 precision replays. Their largest raw relative discrepancy was 8.38e-7 and their largest 160-bit replay discrepancy was 6.17e-46. The separate two million final-reduction comparisons triggered 111 replays, with maxima of 1.41e-6 and 6.10e-49 respectively. All comparisons passed.
