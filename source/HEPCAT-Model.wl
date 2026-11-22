@@ -190,26 +190,27 @@ amplitudeList,tag]
 (* Each Shared row lists its leaves and arithmetic operations in dependency order.
    An operand is the one-based position of an earlier record in the same row. *)
 ConstructiveDiagrams`Private`readSharedAmplitude[text_String, readLeaf_] := Module[
-  {records, values, record, indices, op, tag = Unique["sharedAmplitude"], fail},
+  {records, values, value, i = 0, indices, op, tag = Unique["sharedAmplitude"], fail},
   fail[i_] := Throw[Failure["InvalidSharedAmplitude", <|"Record" -> i|>], tag];
   If[!StringEndsQ[text, "]"], Return[Failure["InvalidSharedAmplitude", <||>]]];
   records = StringSplit[StringDrop[StringDrop[text, 7], -1], ";", All];
-  values = ConstantArray[Null, Length[records]];
+  values = CreateDataStructure["DynamicArray"];
   Catch[
     If[records === {}, fail[1]];
-    Do[record = records[[i]];
-      values[[i]] = If[StringLength[record] >= 2 && StringTake[record, {2}] === ":",
+    Do[++i;
+      value = If[StringLength[record] >= 2 && StringTake[record, {2}] === ":",
         op = Lookup[<|"+" -> Plus, "*" -> Times, "^" -> Power|>, StringTake[record, 1], Missing[]];
         If[MissingQ[op] || !StringMatchQ[StringDrop[record, 2],
           RegularExpression["[0-9]+(,[0-9]+)+"]], fail[i]];
         indices = FromDigits /@ StringSplit[StringDrop[record, 2], ","];
         If[Min[indices] < 1 || Max[indices] >= i || (op === Power && Length[indices] =!= 2), fail[i]];
-        op @@ values[[indices]],
+        op @@ (values["Part", #] & /@ indices),
         readLeaf[record]];
-      If[FailureQ[values[[i]]], Throw[values[[i]], tag]],
-      {i, Length[records]}];
-    If[!FreeQ[Last[values], Indeterminate | ComplexInfinity | _DirectedInfinity], fail[Length[records]]];
-    Last[values], tag]
+      If[FailureQ[value], Throw[value, tag]];
+      values["Append", value],
+      {record, records}];
+    If[!FreeQ[value, Indeterminate | ComplexInfinity | _DirectedInfinity], fail[i]];
+    value, tag]
 ];
 
 ConvertAmplitude[line_,particleList_,scope_:Automatic]:=Module[
