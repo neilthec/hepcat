@@ -1,0 +1,71 @@
+\subsection{Generated code and complete rates through nine points}
+\label{sec:rate-survey}
+
+A process library for an unpolarized rate must cover every external helicity.
+We exported all 18 charged-particle families in both pole prescriptions with the
+native C++ HEPCAT writer. Through eight points the input is the factorization model for the chosen pole form. At nine points we use the saved scalar construction results and generate parity partners for the rate. The printed current and permutation formulas are independently validated. We count the bytes in the generated process header and
+implementation for SPINAS, the process-specific \texttt{.c} files for CalcHEP,
+and the \texttt{matrix*.f} files for the MadGraph subprocess. The reference
+libraries, HELAS routines, integration machinery, validation programs, object
+files and executables are outside these counts. Keeping reusable code in a
+library changes how much source a generator needs to write per process.
+For the largest C++ translation units we also compile an operand-table version
+of the emitted program. Each distinct right-hand-side C++ expression is compiled
+once. A table supplies its subscript values in the original assignment order.
+The build retains the original SPINAS spinors, momentum setup, helicity dispatch,
+precision selection and spin-sum loops. Its size includes both its C++ source and
+the four-byte integer operand stream. The direct-build column uses the ordinary
+emitted straight-line C++. Table~\ref{tab:source-bytes} and Fig.~\ref{fig:source-size} therefore measure
+the volume of generated process algebra in each implementation.
+
+\input{size-table}
+\begin{figure}[!htbp]\centering
+\includegraphics[width=\linewidth]{figures/catalog-source.pdf}
+\caption{Directly generated process source for one complete family. Each panel holds the number
+of charged pairs fixed. The vertical axis is logarithmic.}
+\label{fig:source-size}
+\end{figure}
+
+For example, the nine-point six-fermion, three-photon family has only eight
+labeled photon helicities, yet the spurious-pole SPINAS source occupies about
+207 MB. Its MadGraph matrix source occupies 2.28 MB. The compact permutation
+sum in the manuscript and the expanded operations emitted for numerical evaluation
+are two representations of the same calculation. Their sizes answer different questions.
+
+The complete-rate survey in Table~\ref{tab:rate-survey} uses the same 24
+momenta per family in all available implementations, with $m=1$, $e=1/3$
+and zero widths. At each point we sum all spins and helicities, average the
+two incident spins, and include the identical-final-state factor
+$1/[N_\gamma!(p-1)!^2]$ for $p$ charged pairs.
+Timing includes the momentum update and evaluation. Phase-space generation,
+initialization and compilation precede the timed calls. We report the median
+of three sweeps, repeating the 24 points within each sweep for fast processes.
+We retain every point weight and sweep in the accompanying data. This survey
+uses a different source writer, beam-energy distribution and sample size from
+the 100,000-point timing study above. Because the larger MadGraph matrix
+routines used different compiler optimization levels, the curves describe
+the specific builds used here.
+
+\input{rate-table}
+\begin{figure}[!htbp]\centering
+\includegraphics[width=\linewidth]{figures/catalog-rates.pdf}
+\caption{Median time per complete spin- and helicity-summed rate for the current
+exports. The SPINAS curves use operand tables throughout. The four panels hold the number of charged pairs fixed and use the same logarithmic time scale. Only measured values are plotted.}
+\label{fig:rate-survey}
+\end{figure}
+
+\begin{figure}[!htbp]\centering
+\includegraphics[width=\linewidth]{figures/catalog-growth.pdf}
+\caption{Growth of the complete-rate evaluation time. Within each charged family,
+every implementation is divided by its own median at the smallest multiplicity
+shown. For one charged pair, two photons define the baseline. SPINAS uses the
+same operand-table build at every multiplicity.}
+\label{fig:rate-growth}
+\end{figure}
+
+The installed CalcHEP 3.9.2 symbolic generator rejected all four nine-point
+processes with its external-particle limit. At eight points, processes accepted
+by the parser can still require substantial symbolic generation before a
+complete C implementation becomes available. CalcHEP enumerated 398 squared-diagram contributions for six-photon annihilation. The families with two, three and four charged pairs required 59,150, 255,024 and 41,856 contributions, respectively. We report a source size only
+when the full subprocess was emitted. Timings require a working library and
+a numerical check on the shared points.

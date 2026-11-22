@@ -1,0 +1,176 @@
+--- a/drafts/QED-paper/main.tex
++++ b/drafts/QED-paper/main.tex
+@@ -1,10 +1,11 @@
+ \documentclass[11pt,letterpaper]{article}
+ \usepackage[margin=0.88in,headheight=15pt]{geometry}
+ \usepackage[T1]{fontenc}
++\usepackage{placeins}
+ \usepackage{lmodern,microtype,amsmath,amssymb,mathtools,bm}
+ \usepackage{booktabs,longtable,tabularx,array,graphicx,enumitem,xcolor,fancyhdr}
+ \usepackage[colorlinks=true,linkcolor=blue!45!black,citecolor=blue!45!black,urlcolor=blue!45!black]{hyperref}
+-\hypersetup{pdftitle={All amplitudes up to 6-point in Constructive QED},pdfauthor={Neil Christensen and Nicholas Majestic}}
++\hypersetup{pdftitle={Tree amplitudes through nine points in constructive QED},pdfauthor={Neil Christensen and Nicholas Majestic}}
+ \setlength{\parindent}{1em}\setlength{\parskip}{3pt}
+ \setlength{\emergencystretch}{2em}\renewcommand{\arraystretch}{1.12}
+ \setlist{itemsep=2pt,topsep=4pt}\allowdisplaybreaks
+@@ -14,11 +15,11 @@
+ \newcommand{\ang}[1]{\langle #1\rangle}\newcommand{\M}{\mathcal M}
+ \newcommand{\phot}{\gamma}\newcommand{\phys}{\mathrm{phys}}\newcommand{\spur}{\mathrm{spur}}
+ \newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+-\title{All amplitudes up to 6-point\\in Constructive QED}
++\title{Tree amplitudes through nine points\\in constructive QED}
+ \author{Neil Christensen and Nicholas Majestic\\[4pt]
+ \small Department of Physics, Illinois State University\\
+ \small Normal, IL 61790, USA}
+-\date{19 November 2026}
++\date{22 November 2026}
+ \renewcommand{\topfraction}{0.9}
+ \renewcommand{\bottomfraction}{0.9}
+ \renewcommand{\textfraction}{0.07}
+@@ -51,17 +52,16 @@
+ group emissions around the middle photon. With several charged pairs we
+ sum over the photon attachments on each line and antisymmetrize the external fermions.
+ We compare the amplitudes through six points with signed Feynman sums, CalcHEP and MadGraph
+-at 100,000 or more phase-space points per numerical sample. Across the
+-catalog, all 1.4 million comparisons of complete spin and helicity sums
++at 100,000 or more phase-space points per numerical sample. Across those seven processes, all 1.4 million comparisons of complete spin and helicity sums
+ with CalcHEP agree within a relative tolerance of $10^{-7}$. At fixed
+ photon helicity, 50 of 7.2 million comparisons with MadGraph exceed
+ this tolerance in double precision. All 50 occur at 25 momenta in the
+ four-photon spurious-pole form with one opposite helicity. We retest
+ these amplitudes at higher precision and examine their sensitivity to
+ rounding of the external momenta.
+-We measure how the time to evaluate the complete spin and helicity sum
++At seven points all 42 labeled photon helicity assignments pass independent MadGraph checks in both forms. At eight and nine points we compare all independent helicity representatives with polarized MadGraph rates. We measure how the time to evaluate the complete spin and helicity sum
+ at a phase-space point grows with the number of photons, and compare
+-both pole forms with CalcHEP and MadGraph. For the catalog through six
++both pole forms with the available CalcHEP and MadGraph processes. We also compare the generated process source sizes and distinguish the cost of construction from the cost of evaluating a complete rate. For the catalog through six
+ points we use version 0.1.0 of the
+ publicly available \href{https://github.com/neilthec/hepcat/tree/aa676a9c198f9b50a682adc2bc98be590b4adb0e}{HEPCAT}
+ package. A paper describing its construction method is in preparation.
+@@ -153,7 +153,7 @@
+ with only physical poles. The
+ four-fermion, one-photon expression matches Ema and collaborators
+ \cite{ALTQED}. Building on these known results, we assemble an explicit
+-catalog through six external particles in common conventions, retaining
++catalog through nine external particles in common conventions, retaining
+ all massive-spin components and specifying the permutation, parity and
+ crossing maps. We derive compact physical-pole rearrangements of the
+ one-pair amplitudes and compact reorganizations of six-point expressions
+@@ -372,10 +372,10 @@
+ spinor.
+
+
+-\subsection{Completeness through six external particles}
++\subsection{Completeness through nine external particles}
+ Charge conservation requires equal numbers of electrons and positrons, and
+ pure-photon tree amplitudes vanish. The allowed families therefore contain
+-one, two or three fermion pairs. Table~\ref{tab:catalog} counts their
++one to four fermion pairs through nine points. Table~\ref{tab:catalog} counts their
+ diagrams, factorization channels and helicity assignments. A channel
+ is specified by the sets of external labels on the two sides of a cut.
+ Permuting the labels within either set or exchanging the two sides
+@@ -383,31 +383,10 @@
+ describe the same four-point cut, while $\tau_{13}$ and $\tau_{14}$
+ describe distinct cuts.
+
+-\begin{table}[!htb]
+-\centering\small
+-\setlength{\tabcolsep}{4pt}
+-\begin{tabular}{@{}clcccc@{}}
+-\toprule
+-$n$ & External family & Labeled photon & Bose & Diagrams & Factorization\\
+- & & assignments & classes & & channels\\
+-\midrule
+-4 & $e,E,\phot,\phot$ & 4 & 3 & 2 & 2\\
+-4 & $e,E,E,e$ & 1 & 1 & 2 & 2\\
+-5 & $e,E,\phot,\phot,\phot$ & 8 & 4 & 6 & 6\\
+-5 & $e,E,E,e,\phot$ & 2 & 2 & 8 & 8\\
+-6 & $e,E,\phot,\phot,\phot,\phot$ & 16 & 5 & 24 & 14\\
+-6 & $e,E,E,e,\phot,\phot$ & 4 & 3 & 40 & 20\\
+-6 & $e,E,e,E,e,E$ & 1 & 1 & 36 & 18\\
+-\bottomrule
+-\end{tabular}
+-\caption{Catalog coverage for a single massive fermion species. Entries without
+-photons still retain the full fermion spin tensor. Each factorization channel is counted once, summing over its allowed
+-internal helicities in the residue.}
+-\label{tab:catalog}
+-\end{table}
+-There are 36 fully labeled amplitudes in each pole form. Bose symmetry
+-reduces this to 19 helicity sectors, and parity reduces the number of
+-independent starting expressions to 12. At six points the catalog includes the $++--$ four-photon amplitude,
++\input{coverage-table}
++In each pole form the 18 families contain 333 labeled photon helicity
++assignments. Photon permutations reduce the count to 67 sectors, and parity
++leaves 38 independent representatives. At six points the catalog includes the $++--$ four-photon amplitude,
+ two fermion pairs with opposite photon helicities, and the six-fermion
+ amplitude.
+
+@@ -1033,6 +1012,9 @@
+ inputs. We study the two effects separately.
+
+ \input{precision-catalog}
++\FloatBarrier
++\input{catalog-study}
++\FloatBarrier
+
+ \section{Matrix-element evaluation cost}\label{sec:timing}
+ \subsection{A common timing protocol}
+@@ -1167,9 +1149,13 @@
+ The absolute times give the cost of computing the same matrix element across
+ implementations on this machine.
+
++\FloatBarrier
++\input{rate-survey}
++\FloatBarrier
++
+ \section{Discussion and conclusions}\label{sec:conclusion}
+ We have presented a complete set of tree-level QED amplitudes through
+-six external particles for one massive charged fermion species.
++nine external particles for one massive charged fermion species.
+ The expressions retain all massive-spin components and are accompanied
+ by the particle and helicity maps needed to obtain every amplitude.
+ For each family, we have considered forms with only physical propagator poles
+@@ -1225,7 +1211,7 @@
+ The numerical studies show why expression length alone is an incomplete
+ measure of usefulness. Spurious poles can produce large terms whose
+ cancellation in the final amplitude reduces the number of accurate
+-digits. Across the complete catalog, double precision gives much
++digits. In the four- through six-point precision study, double precision gives much
+ smaller discrepancies than single precision, although large
+ single-precision errors can also occur near physical poles.
+ In the four-photon sector with one opposite helicity, a complete spin
+@@ -1235,8 +1221,13 @@
+ mass shells and momentum conservation at extended precision brings the
+ two forms into agreement within $2.71\times10^{-9}$ for every
+ four-photon helicity assignment in the sample.
+-The timings show how reuse of spinor products and organization of the
+-complete helicity sum affect the cost of evaluating a compact formula.
++At nine points the relative evaluation cost also depends on the charged
++family. The physical-pole SPINAS operand-table build is faster than the
++MadGraph standalone matrix for seven-photon annihilation. For three or four
++charged pairs the ordering reverses. The source inventory makes a second
++distinction visible. For six fermions and three photons, the direct
++spurious-pole SPINAS export occupies 207 MB, while the MadGraph process
++matrix occupies 2.28 MB (Table~\ref{tab:source-bytes}).
+
+ HEPCAT provides the algebraic and constructive tools used in these
+ calculations, and SPINAS supplies the numerical spinor evaluation.
+@@ -1253,7 +1244,7 @@
+ \input{five-point-equality}
+
+ \section{Reproducing the numerical comparisons}\label{app:numerics}\label{app:software}
+-The catalog comparisons use seven scattering processes with 100,000
++The four- through six-point comparisons use seven scattering processes with 100,000
+ phase-space points per process. At each point the two pole forms,
+ the Feynman sums and the independent rate calculations use the same
+ external momenta, masses and charge. For a signed comparison we match
+@@ -1262,7 +1253,7 @@
+ nonzero squared weights $W$ and $W'$, the relative difference is
+ $|W-W'|/\max(|W|,|W'|)$.
+
+-The timing study uses 100,000 points for each of three photon counts
++The original timing study uses 100,000 points for each of three photon counts
+ with one fermion pair and three photon counts with two pairs. The
+ precision study uses these six samples and 100,000 six-fermion points
+ at the same center-of-mass energy. A further 100,000 six-fermion points

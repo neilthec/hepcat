@@ -1,0 +1,51 @@
+\subsection{Coverage of the independent checks through nine points}
+\label{sec:extended-validation}
+The number of tests depends on which quantity is compared. A signed Feynman
+test can detect an incorrect relative phase between amplitudes at fixed external
+spins. CalcHEP supplies the complete spin-summed rate. MadGraph can also fix
+the photon helicities and sum only over massive spins. We count draws once
+per comparison and distinguish a new momentum from a second calculation at the
+same momentum.
+
+\begin{table}[!htbp]\centering\small
+\begin{tabularx}{\linewidth}{@{}rYY@{}}
+\toprule
+Legs & Independent rate comparisons & Coverage of the helicities and pole forms\\
+\midrule
+4--6 & 1.4 million CalcHEP complete rates and 7.2 million MadGraph fixed-helicity rates. &
+All 36 labeled assignments per form. The 50 double-precision outliers are documented in the precision study.\\
+7 & 600,000 CalcHEP complete rates, 600,000 MadGraph complete rates and 8.4 million MadGraph fixed-helicity rates. &
+All 42 labeled assignments in both forms. Every external comparison passed the recorded tolerance.\\
+8 & Polarized MadGraph rates and signed Feynman amplitudes at 100,000 points per independent representative. &
+Ten parity representatives spanning four charged families. The formula-specific tables give the precision replays.\\
+9 & One million distinct MadGraph draws across the ten representatives. Both pole choices were compared at each draw. &
+The independently coded tensor formulas were also evaluated directly at two new MadGraph points for each of the 170 labeled assignments in each form.\\
+\bottomrule
+\end{tabularx}
+\caption{Independent validations for the single-flavor catalog. A polarized rate
+sums all massive spins at the specified photon helicities. Permutations and
+parity relate the remaining helicities wherever representatives are used.}
+\label{tab:extended-coverage}
+\end{table}
+
+At nine points the 20 native constructions additionally passed 77,376 sampled
+physical-residue tests. Of two million signed Feynman comparisons, 115 triggered
+a 160-bit replay. The largest discrepancy before replay was $8.38\times10^{-7}$
+and the largest among the replays was $6.17\times10^{-46}$. The separate final-reduction
+test triggered 111 replays in two million comparisons. For the direct MadGraph check
+of all labeled manuscript formulas, the largest discrepancies were $3.81\times10^{-13}$
+(physical) and $5.13\times10^{-12}$ (spurious). The million-draw test used the
+subset-current evaluator. The direct test independently exercises the printed
+permutation sums.
+
+\begin{figure}[!htbp]\centering
+\includegraphics[width=\linewidth]{figures/catalog-validation.pdf}
+\caption{Maximum relative discrepancy in 100,000 comparisons per nine-point
+representative. Each column identifies the number of charged pairs and the
+number of negative photons. The upper panel retains the native signed-amplitude
+discrepancy before any precision replay. The lower panel tests the squared
+amplitude at fixed photon helicities, summing all massive spins.}
+\label{fig:catalog-validation}
+\end{figure}
+
+\input{construction-table}

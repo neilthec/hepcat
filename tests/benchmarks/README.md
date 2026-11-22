@@ -20,6 +20,8 @@ numerical run tests the amplitudes at freshly generated points. A notebook
 construction tests the symbolic construction procedure. Each has its own
 purpose; none is labeled as another kind of test.
 
+The [four- through nine-point QED survey](publication-qed/rate-study.md) compares generated process-source sizes, complete spin-summed evaluation times and independent checks for all 18 charged families. Its machine-readable records distinguish direct SPINAS builds from operand-table builds.
+
 ## Seven-point QED validation
 
 The [construction table](qed-seven-point.tsv) covers all 12 helicity representatives
