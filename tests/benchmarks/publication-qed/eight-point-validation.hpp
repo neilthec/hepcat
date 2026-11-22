@@ -72,7 +72,7 @@ int run(int argc, char **argv, const std::vector<int> &photons, Build build,
         else {
             std::vector<Id> trees;
             for (const auto &tree : generation::diagram_plans(rules, names))
-                trees.push_back(feynman_to_spinors(fa, generation::sew_feynman(fa, rules, names, tree)));
+                trees.push_back(fa.factorSum(feynman_to_spinors(fa, generation::sew_feynman(fa, rules, names, tree))));
             if (trees.size() != expected_trees)
                 throw std::runtime_error("unexpected Feynman graph count " + std::to_string(trees.size()));
             const auto tree_sum = fa.add(trees);
@@ -149,6 +149,8 @@ int run(int argc, char **argv, const std::vector<int> &photons, Build build,
                     const auto high_scale = std::max(corrected, expected);
                     const auto replay = high_scale ? std::abs(corrected - expected) / high_scale : 0;
                     t.replay_max = std::max(t.replay_max, replay);
+                    std::cout << t.name << " precision replay, seed " << seed + n
+                              << ", native " << diff << ", 160-bit " << replay << '\n';
                     if (!(std::isfinite(corrected) && replay <= 1e-7L))
                         ++t.failures;
                 }
@@ -174,6 +176,8 @@ int run(int argc, char **argv, const std::vector<int> &photons, Build build,
                     const real replay =
                         norm == 0 ? 0. : precision::scalar((x - y).magnitude() / norm).get_d();
                     t.replay_max = std::max(t.replay_max, replay);
+                    std::cout << t.name << " precision replay, seed " << seed + n
+                              << ", native " << diff << ", 160-bit " << replay << '\n';
                     if (!(replay <= 1e-8L)) {
                         if (t.failures < 2)
                             std::cerr << t.name << " failed at seed " << seed + n << " ratio "

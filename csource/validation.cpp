@@ -257,10 +257,15 @@ validation_report amplitude::validate_impl(amp_expression candidate, const amp_e
                                                     particles_[i]);
                 }
                 feynman_tree.setKinematics(fm, {});
+                // Pull common scalar factors out of each signed diagram before
+                // compiling the independently generated Feynman sum. Keep
+                // color networks intact across contractions of dummy indices.
+                const bool singlets = std::all_of(colors.begin(), colors.end(), [](int rep) { return rep == 1; });
                 std::vector<Id> terms;
                 for (const auto& row : feynman_rows_) {
                     auto raw = row.expression.import_into(feynman_tree);
-                    terms.push_back(feynman_to_spinors(feynman_tree, raw));
+                    const auto diagram = feynman_to_spinors(feynman_tree, raw);
+                    terms.push_back(singlets ? feynman_tree.factorSum(diagram) : diagram);
                 }
                 if (root == tree.integer(0) && terms.size() > 1)
                     for (Id term : terms)
