@@ -15,6 +15,7 @@ class tensors {
   const point &p;
   std::vector<int> species, bars, kets, photons, refs;
   gauge choice;
+  bool project_ends;
   real mass, charge;
   std::vector<vector> momenta;
   std::vector<real> invariant;
@@ -46,21 +47,22 @@ class tensors {
   }
   // Contract one line with all photons on it. For an open virtual photon
   // insert its test four-vector successively along the four coordinate axes.
-  complex line(int v, const std::vector<port> &ports) const {
-    auto a = raise(p.angles[bars[v]]), b = p.squares[bars[v]];
+  complex line_word(int bar_leg, int ket_leg, const std::vector<port> &ports,
+                    int anchor, int next) const {
+    auto a = raise(p.angles[bar_leg]), b = p.squares[bar_leg];
     const vector bra{-a[0], -a[1], b[0], b[1]};
-    a = p.angles[kets[v]];
-    b = raise(p.squares[kets[v]]);
+    a = p.angles[ket_leg];
+    b = raise(p.squares[ket_leg]);
     const vector ket{a[0], a[1], -b[0], -b[1]};
     // Anticommute the endpoint momentum onto its external spinor when
     // a leaf carries one external and one exchanged photon (Eq. nine-leaf).
-    if (ports.size() == 2) {
+    if (anchor < 0 && ports.size() == 2) {
       for (int i = 0; i < 2; ++i) {
         mask k = ports[i].momentum;
         if (count(k) != 1 || std::abs(species[first(k)]) != 2)
           continue;
         const auto &eps = ports[i].polarization, &g = ports[1 - i].polarization;
-        const auto a = kets[v], b = bars[v];
+        const auto a = ket_leg, b = bar_leg;
         const auto ta = 2 * p.scalar_products[a * species.size() + first(k)];
         const auto tb = 2 * p.scalar_products[b * species.size() + first(k)];
         auto field = [&](const vector &x) {
@@ -76,13 +78,21 @@ class tensors {
     }
     const mask full = (1u << ports.size()) - 1;
     std::vector<vector> row(full + 1);
-    std::vector<mask> side(full + 1, 1u << bars[v]);
+    std::vector<mask> side(full + 1, 1u << bar_leg);
     row[0] = bra;
     for (mask s = 1; s <= full; ++s) {
       side[s] = side[s & (s - 1)] | ports[first(s)].momentum;
       for (mask bits = s; bits; bits &= bits - 1) {
-        const unsigned k = first(bits);
-        const auto x = slash(ports[k].polarization, row[s ^ (1u << k)], true);
+        const int k = first(bits);
+        const mask before = s ^ (1u << k);
+        if (k == next && !(before & (1u << anchor)))
+          continue;
+        auto previous = row[before];
+        if (k == anchor && next < 0) {
+          previous[2] = 0;
+          previous[3] = 0;
+        }
+        const auto x = slash(ports[k].polarization, previous, true);
         for (int j = 0; j < 4; ++j)
           row[s][j] += x[j];
       }
@@ -94,6 +104,26 @@ class tensors {
       }
     }
     return contract(row[full], ket);
+  }
+  complex line(int v, const std::vector<port> &ports) const {
+    int anchor = -1, next = -1;
+    if (project_ends) {
+      for (size_t i = 0; i < ports.size(); ++i) {
+        if (count(ports[i].momentum) == 1)
+          continue;
+        if (anchor >= 0) {
+          next = static_cast<int>(i);
+          break;
+        }
+        anchor = static_cast<int>(i);
+      }
+    }
+    auto value = line_word(bars[v], kets[v], ports, anchor, next);
+    if (anchor >= 0) {
+      const int sign = ports.size() % 2 ? 1 : -1;
+      value += real(sign) * line_word(kets[v], bars[v], ports, anchor, next);
+    }
+    return value;
   }
   vector exchange(int v, int parent, mask parent_momentum) const {
     std::vector<port> ports;
@@ -135,8 +165,8 @@ class tensors {
   }
 
 public:
-  tensors(const point &chart, std::vector<int> types, real e, gauge g)
-      : p(chart), species(std::move(types)), choice(g), charge(e) {
+  tensors(const point &chart, std::vector<int> types, real e, gauge g, bool project = false)
+      : p(chart), species(std::move(types)), choice(g), project_ends(project), charge(e) {
     for (unsigned i = 0; i < species.size(); ++i) {
       if (species[i] == -1)
         bars.push_back(i);

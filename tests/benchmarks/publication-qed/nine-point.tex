@@ -216,6 +216,30 @@ residue on this divisor vanishes by the Ward identity for that line. Each line s
 of its attachments; the Ward identity follows by telescoping adjacent
 fermion propagators and using the endpoint Dirac equations.
 
+The tensors on all charged lines can be shortened together. On line
+$(a,b)$ let $n$ count all real and exchanged photon vertices. If the
+line ends in a single exchange, keep the angle component immediately
+before that vertex, reading from the positron bra. On a line with two
+or more exchanges, choose two of them and keep only words in which the
+first precedes the second. Sum all placements of the real photons in
+the retained words. Call the resulting tensor $T^{(0)}$. Then
+\begin{equation}
+ T_{ab}=\big[1+(-1)^{n-1}P_{ab}\big]T^{(0)}_{ab}.
+ \label{eq:nine-line-reversal}
+\end{equation}
+Here $P_{ab}$ exchanges the endpoint momenta and spinors while keeping
+all incident polarizations fixed, including the chosen real-photon
+references. Charge conjugation reverses the order of the vector
+vertices and the routing of the intermediate fermion momenta. It
+interchanges the two chiralities at a single exchange. With the
+one-vertex current symmetric under endpoint exchange, each additional
+vector vertex changes the reversal sign. The two partners therefore
+reconstruct either the missing chirality or the missing exchange
+ordering. Applying Eq.~\eqref{eq:nine-line-reversal} independently to
+each of $p$ lines reduces the number of explicit chiral or ordered
+contributions in a seed by $2^p$. The outer divisors in
+Table~\ref{tab:nine-occupations} still count the same labeled diagrams.
+
 A terminal line emitting one real photon admits a shorter tensor. Write
 $G=\gamma^\mu$ for its exchanged attachment and $D=\not k\not\epsilon$
 for the real photon. Anticommuting the endpoint momenta through the

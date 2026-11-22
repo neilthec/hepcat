@@ -11,7 +11,7 @@
 using namespace hepcat;
 using namespace hepcat::validation;
 int main(int argc, char **argv) {
-  if (argc < 6 || argc > 8 || (argc == 8 && std::string(argv[7]) != "tensor"))
+  if (argc < 6 || argc > 8 || (argc == 8 && std::string(argv[7]) != "tensor" && std::string(argv[7]) != "projected"))
     return 2;
   const int pairs = std::stoi(argv[1]), nphot = std::stoi(argv[2]);
   std::string helicities = argv[3];
@@ -28,7 +28,8 @@ int main(int argc, char **argv) {
     return 2;
   const bool symbolic = argc == 6 || std::string(argv[6]) == "signed";
   const bool tensor_rate = argc == 8;
-  const bool paper = argc == 7 && std::string(argv[6]) == "paper";
+  const bool project = std::string(argv[argc - 1]) == "projected";
+  const bool paper = argc == 7 && (std::string(argv[6]) == "paper" || project);
   const bool gauge_only = argc == 7 && std::string(argv[6]) == "gauges";
   std::vector<int> types;
   for (int i = 0; i < pairs; ++i) {
@@ -101,7 +102,7 @@ int main(int argc, char **argv) {
         }
         rate += mg->evaluate(mom, hel);
         auto amplitude = [&](dirac_current::gauge g) {
-          return tensor_rate ? nine_point::tensors(p, types, e, g)()
+          return tensor_rate ? nine_point::tensors(p, types, e, g, project)()
                              : evaluate(p, e, g);
         };
         physical += std::norm(amplitude(dirac_current::gauge::physical));
@@ -116,10 +117,10 @@ int main(int argc, char **argv) {
       if (paper) {
         check(
             0, expected,
-            nine_point::tensors(p, types, e, dirac_current::gauge::physical)());
+            nine_point::tensors(p, types, e, dirac_current::gauge::physical, project)());
         check(
             1, expected,
-            nine_point::tensors(p, types, e, dirac_current::gauge::spurious)());
+            nine_point::tensors(p, types, e, dirac_current::gauge::spurious, project)());
       } else {
         check(0, expected, evaluate(p, e, dirac_current::gauge::physical));
         check(1, expected, evaluate(p, e, dirac_current::gauge::spurious));
@@ -136,6 +137,7 @@ int main(int argc, char **argv) {
                 : mg     ? "MadGraph"
                          : "independent gauge")
             << (tensor_rate ? " (paper tensors)" : "")
+            << (project ? " (charge-line reversal)" : "")
             << " maxPhysical=" << peak[0] << " maxSpurious=" << peak[1]
             << " maxIndependent=" << peak[2] << '\n';
   return *std::max_element(peak, peak + 3) <= 1e-7L ? 0 : 1;
