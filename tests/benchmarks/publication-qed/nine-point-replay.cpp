@@ -13,8 +13,15 @@ using namespace hepcat::validation;
 int main(int argc, char **argv) {
   if (argc < 6 || argc > 8 || (argc == 8 && std::string(argv[7]) != "tensor"))
     return 2;
-  const int pairs = std::stoi(argv[1]), nphot = std::stoi(argv[2]),
-            minus = std::stoi(argv[3]);
+  const int pairs = std::stoi(argv[1]), nphot = std::stoi(argv[2]);
+  std::string helicities = argv[3];
+  const bool explicit_helicities = !helicities.empty() &&
+      helicities.find_first_not_of("+-") == std::string::npos;
+  if (explicit_helicities && static_cast<int>(helicities.size()) != nphot)
+    return 2;
+  const int minus = explicit_helicities
+      ? static_cast<int>(std::count(helicities.begin(), helicities.end(), '-'))
+      : std::stoi(helicities);
   const unsigned points = std::stoul(argv[4]), seed = std::stoul(argv[5]);
   if (pairs < 1 || pairs > 4 || nphot < 0 || 2 * pairs + nphot > 9 ||
       minus < 0 || minus > nphot || !points)
@@ -30,8 +37,10 @@ int main(int argc, char **argv) {
   }
   if (pairs == 2)
     std::swap(types[2], types[3]);
-  types.insert(types.end(), nphot - minus, 2);
-  types.insert(types.end(), minus, -2);
+  if (!explicit_helicities)
+    helicities = std::string(nphot - minus, '+') + std::string(minus, '-');
+  for (char h : helicities)
+    types.push_back(h == '+' ? 2 : -2);
   std::vector<real> masses(types.size(), 0);
   std::fill(masses.begin(), masses.begin() + 2 * pairs, 1);
   const real e = 1.L / 3;
@@ -120,7 +129,7 @@ int main(int argc, char **argv) {
     }
   }
   std::cout << std::setprecision(6) << "pairs=" << pairs << " photons=" << nphot
-            << " negatives=" << minus << " points=" << points
+            << " negatives=" << minus << " helicities=" << helicities << " points=" << points
             << " seed=" << seed << " reference="
             << (symbolic ? "signed Feynman"
                 : paper  ? "paper tensors vs independent gauge"
