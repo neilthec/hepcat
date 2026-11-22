@@ -55,3 +55,50 @@ Both native constructions passed 62 physical residues, the fixed-angle energy bo
 | AllSpurious | 368,928 | 22,120 | 192.22 s | 8.10910e-11 | 8.56388e-12 |
 
 Each manuscript comparison used 100,000 phase-space points per column. The seeds were 836191 for the signed diagrams and 80000000 for MadGraph. Both formulas passed throughout at native precision. The spurious paper formula fixes the polarization of each leg before permuting its assignment to the left or right current.
+
+## Eight fermions
+
+The elementary AllPhysical and AllSpurious expressions agree after ordering the commutative sums and products. Their expanded weighted complexity is 2,433,024 over 1,728 propagator classes. The automatic permutation summand fell from 5,120 to 434. Both original constructions passed all 82 channels and 100,000 signed Feynman and final-reduction comparisons per pole choice. With the shorter display and automatic complexity measurement, the C++ notebook repeated the construction with seed 840001. Both pole prescriptions met the 2,433,024 target, returned summand score 434, passed all 82 channels and agreed with signed diagrams on another 100,000 points per prescription, to within 4.26e-11.
+
+On 100,000 new coherent-spin points (seed 106000000), the ordered Dirac formula and its bracket form had maximum relative differences of 9.32007e-11 and 8.15936e-11 against the independent Feynman sum. The bracket formula, grouped at the central propagator, agreed with the MadGraph spin-summed rate to 2.62454e-13 on 100,000 different momenta (seed 106200000). All three comparisons passed at native precision.
+
+## Scores and validation of the seven representatives
+
+The native constructor checked every listed residue in each pole prescription, the fixed-angle bound, reference independence and final reduction. The score columns use the same momentum-weighted complexity. For eight fermions the constructor measured the full elementary score by grouping disjoint propagator classes and validated the shorter generated summand in both pole prescriptions.
+
+| Pairs | Photon helicities | Pole preference | Physical channels | Elementary score | Permutation summand score | Paper vs signed Feynman | Paper vs polarized MadGraph |
+| ---: | --- | --- | ---: | ---: | ---: | ---: | ---: |
+| 1 | `+++---` | physical | 62 | 266,940 | 5,432 | 8.11e-11 | 4.45e-12 |
+| 1 | `+++---` | spurious | 62 | 368,928 | 22,120 | 8.11e-11 | 8.56e-12 |
+| 2 | `++++` | physical | 92 | 1,006,800 | 37,182 | 3.10e-10 | 2.45e-12 |
+| 2 | `++++` | spurious | 92 | 664,368 | 32,270 | 3.10e-10 | 2.44e-12 |
+| 2 | `+++-` | physical | 92 | 1,032,384 | 47,034 | 5.13e-10 | 1.85e-12 |
+| 2 | `+++-` | spurious | 92 | 589,056 | 31,518 | 7.73e-10 | 8.17e-11 |
+| 2 | `++--` | physical | 92 | 1,062,768 | 55,502 | 1.10e-9 | 3.77e-12 |
+| 2 | `++--` | spurious | 92 | 598,704 | 32,846 | 1.11e-9 | 2.34e-10 |
+| 3 | `++` | physical | 90 | 2,020,032 | 6,588 | 5.33e-10 | 2.94e-12 |
+| 3 | `++` | spurious | 90 | 2,009,376 | 5,811 | 7.97e-10 | 3.81e-11 |
+| 3 | `+-` | physical | 90 | 2,233,728 | 8,289 | 7.18e-9 | 6.21e-12 |
+| 3 | `+-` | spurious | 90 | 1,908,576 | 6,495 | 4.71e-8 | 1.56e-10 |
+| 4 | `none` | both | 82 | 2,433,024 | 434 | 8.16e-11 | 2.62e-13 |
+
+The last two columns give the largest native relative differences over 100,000 points per comparison. The charged-family signed seeds were 101000000 to 106000000 in steps of 1000000, in row order by representative. The MadGraph seeds were 200000 higher. The replay programs report native maxima and record the seeds and residuals of points requiring a 160-bit replay.
+
+Only the six-fermion `+-` AllSpurious formula crossed the signed threshold of 1e-8. At seed 105058401 the native discrepancy was 4.70819e-8. Replaying the same draw at 160 bits gave 3.50439e-42 both with the original independent Feynman reference spinors and with fixed photon references. Reproduce the point with `tests/results/eight-point-charged-trees 3 1 1 105058401`.
+
+For the three additional parity representatives (four fermions with `+---` or `----`, and six fermions with `--`), separate 256-point signed and MadGraph comparisons of both projected formulas also passed. Permutations of identical photon labels give the other assignments.
+
+## Change in automatic summand complexity
+
+The comparison uses the same complexity measure before and after the endpoint exchanges. Scores count the weighted expressions inside the displayed permutation sums.
+
+| Pairs | Photon helicities | Physical before | Physical after | Spurious before | Spurious after |
+| ---: | --- | ---: | ---: | ---: | ---: |
+| 2 | ++++ | 192,284 | 37,182 | 115,988 | 32,270 |
+| 2 | +++- | 211,312 | 47,034 | 111,908 | 31,518 |
+| 2 | ++-- | 217,916 | 55,502 | 114,764 | 32,846 |
+| 3 | ++ | 33,976 | 6,588 | 33,092 | 5,811 |
+| 3 | +- | 62,048 | 8,289 | 53,016 | 6,495 |
+| 4 | none | 5,120 | 434 | 5,120 | 434 |
+
+The targeted six-point runs used 10,000 signed points per pole choice. They reproduced the previously validated scores of 692/712 for the balanced four-photon case, 1,600/1,632 for four fermions with opposite photon helicities, and 3,168 for six fermions in both prescriptions. All 47 CTest cases passed.

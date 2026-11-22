@@ -157,7 +157,7 @@ int run(int argc, char **argv, const std::vector<int> &photons, Build build,
             } else {
                 const auto expected = (*feynman)(p);
                 std::optional<precision::phase_point> chart;
-                std::optional<precision::number> high_reference;
+                std::optional<precision::number> high_reference, original_gauge;
                 for (auto &t : comparisons) {
                     const auto value = t.evaluator(p);
                     const auto scale = std::max(std::abs(value), std::abs(expected));
@@ -169,16 +169,23 @@ int run(int argc, char **argv, const std::vector<int> &photons, Build build,
                     if (!chart) {
                         chart = precision::reconstruct(p);
                         high_reference = replay_feynman->precise(p, *chart);
+                        if (!photons.empty())
+                            original_gauge = feynman->precise(p, *chart);
                     }
                     const auto x = t.evaluator.precise(p, *chart);
-                    const auto &y = *high_reference;
-                    const auto norm = std::max(x.magnitude(), y.magnitude());
-                    const real replay =
-                        norm == 0 ? 0. : precision::scalar((x - y).magnitude() / norm).get_d();
-                    t.replay_max = std::max(t.replay_max, replay);
+                    auto discrepancy = [&](const precision::number &y) -> real {
+                        const auto norm = std::max(x.magnitude(), y.magnitude());
+                        return norm == 0 ? 0. : precision::scalar((x - y).magnitude() / norm).get_d();
+                    };
+                    const auto replay = discrepancy(*high_reference);
+                    const auto same_gauge = original_gauge ? discrepancy(*original_gauge) : replay;
+                    t.replay_max = std::max(t.replay_max, std::max(replay, same_gauge));
                     std::cout << t.name << " precision replay, seed " << seed + n
-                              << ", native " << diff << ", 160-bit " << replay << '\n';
-                    if (!(replay <= 1e-8L)) {
+                              << ", native " << diff << ", 160-bit " << replay;
+                    if (original_gauge)
+                        std::cout << ", 160-bit with original references " << same_gauge;
+                    std::cout << '\n';
+                    if (!(replay <= 1e-8L && same_gauge <= 1e-8L)) {
                         if (t.failures < 2)
                             std::cerr << t.name << " failed at seed " << seed + n << " ratio "
                                       << value / expected << '\n';

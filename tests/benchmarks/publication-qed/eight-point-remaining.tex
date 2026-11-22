@@ -28,11 +28,7 @@ sign. The same reference table works on both sides, giving
 \end{equation}
 The expression in braces generates ten partitions. The endpoint
 exchange supplies their ten complements. Parity and a photon relabeling
-map this helicity sector to itself. On 100,000 phase-space and spin samples
-both expressions agreed with the signed sum of 720 diagrams to
-$8.11\times10^{-11}$. On a separate 100,000 momenta the largest relative
-differences from the polarized MadGraph rate were $4.45\times10^{-12}$ and
-$8.57\times10^{-12}$ for the physical and spurious forms, respectively.
+map this helicity sector to itself. The signed check sums all 720 diagrams. Table~\ref{tab:eight-remaining-tests} gives the agreement for both pole forms.
 
 \subsection{Two fermion pairs and four photons}\label{sec:eight-two-pairs}
 
@@ -57,7 +53,11 @@ amplitudes are
 For example, $K(ab|cd)$ is unchanged under either exchange within a
 pair of photons and under exchange of the two complete charged lines.
 These three factors of two give its divisor eight. In the mixed
-$K(ah|bi)$ term only the joint line exchange survives.
+$K(ah|bi)$ term only the joint line exchange survives. For a separate
+count, assign $k$ labeled photons to one line and $4-k$ to the other.
+Each line also carries one exchanged photon. The two fermion matchings
+therefore give
+$2\sum_{k=0}^4\binom4k(k+1)!(5-k)!=1{,}680$ diagrams.
 
 The same spinor contraction serves both pole choices. For a pair $(t,u)$
 write $J_{tu}(L)$ as a sum of angle-square spinor pairs. Contract
@@ -137,7 +137,12 @@ three positron labels independently without normalization. For $i=7,j=8$,
 \end{align}
 For opposite helicities, emission of the positive photon from the middle
 and emission of the negative photon from the middle require separate terms.
-For two equal helicities they are exchanged by $P_{ij}$.
+For two equal helicities they are exchanged by $P_{ij}$. There are
+$3!$ matchings and three choices of middle line. For each such path the
+two labeled photons give 24 orders when both occupy the same terminal
+line, 24 on the middle line, 16 on opposite terminals and 48 when one
+lies on a terminal and one in the middle. This accounts for all
+$18(24+24+16+48)=2{,}016$ diagrams.
 
 The following open-line tensor specifies each kernel, including emission
 between two exchanged photons. At each attachment use $G_i=\not\!\varepsilon_i$
@@ -270,3 +275,63 @@ and parity reduce these 85 assignments to ten representatives, four
 with one charged pair, three with two pairs, two with three pairs and
 one with four pairs. The massive external spins remain open in every
 formula.
+
+\subsection{Factorization channels and numerical checks at eight points}
+\label{sec:eight-remaining-tests}
+
+Table~\ref{tab:eight-remaining-tests} compares the permutation formulas of
+Secs.~\ref{sec:eight-balanced}--\ref{sec:eight-four-pairs} with the signed Feynman amplitude and the polarized MadGraph rate.
+The signed comparison keeps the coherent massive spin states and tests
+the relative sign between contributions. For MadGraph we fix the labeled
+photon helicities and sum the squared modulus over every massive spin.
+We report $|x-y|/\max(|x|,|y|)$ for the two complex amplitudes or
+the two spin-summed rates, taking the discrepancy as zero if both vanish.
+Each comparison uses 100,000 phase-space points per helicity sector.
+The signed tests use $m_e=0.0005$. The MadGraph tests
+use $m_e=1$, $e=1/3$ and zero widths. The two samples have disjoint seeds.
+
+The channel counts admit a separate check. For $p$ electron--positron
+pairs and $n$ labeled photons, specify an electron propagator by choosing
+the side with one more electron than positron. Summing over the possible
+fermion subsets gives $\sum_{r=0}^{p-1}\binom{p}{r+1}\binom{p}{r}=\binom{2p}{p-1}$. The photons may occupy either
+side. Excluding the $2p$ single-fermion external legs leaves
+$2^n\binom{2p}{p-1}-2p$ electron channels. A photon propagator splits
+the pairs into two charge-neutral sets, each containing charged legs.
+Choosing either side counts the same pole twice, giving
+$2^{n-1}[\binom{2p}{p}-2]$ photon channels. At eight points these two
+counts are $(62,0)$, $(60,32)$, $(54,36)$ and $(48,34)$ in order of
+increasing $p$. Their sums agree with the residue lists in every row.
+
+
+\begin{table}[htbp]
+\centering
+\begin{tabular}{ccr@{\qquad}rr@{\qquad}rr}
+\toprule
+ & & & \multicolumn{2}{c}{Signed Feynman} & \multicolumn{2}{c}{MadGraph} \\
+Pairs & Photons & Channels & Physical & Spurious & Physical & Spurious \\
+\midrule
+1 & $+++---$ & 62 & $8.11\times10^{-11}$ & $8.11\times10^{-11}$ & $4.45\times10^{-12}$ & $8.56\times10^{-12}$ \\
+2 & $++++$ & 92 & $3.10\times10^{-10}$ & $3.10\times10^{-10}$ & $2.45\times10^{-12}$ & $2.44\times10^{-12}$ \\
+2 & $+++-$ & 92 & $5.13\times10^{-10}$ & $7.73\times10^{-10}$ & $1.85\times10^{-12}$ & $8.17\times10^{-11}$ \\
+2 & $++--$ & 92 & $1.10\times10^{-9}$ & $1.11\times10^{-9}$ & $3.77\times10^{-12}$ & $2.34\times10^{-10}$ \\
+3 & $++$ & 90 & $5.33\times10^{-10}$ & $7.97\times10^{-10}$ & $2.94\times10^{-12}$ & $3.81\times10^{-11}$ \\
+3 & $+-$ & 90 & $7.18\times10^{-9}$ & $4.71\times10^{-8}$ & $6.21\times10^{-12}$ & $1.56\times10^{-10}$ \\
+4 & none & 82 & \multicolumn{2}{c}{$8.16\times10^{-11}$} & \multicolumn{2}{c}{$2.62\times10^{-13}$} \\
+\bottomrule
+\end{tabular}
+\caption{Maximum native relative differences for the eight-point
+permutation formulas. The channel count is the number of distinct
+physical residues tested in each native construction. The eight-fermion
+formula is common to both pole choices.}
+\label{tab:eight-remaining-tests}
+\end{table}
+
+One point crossed the native signed-amplitude tolerance of $10^{-8}$.
+For six fermions and photons $+-$, the spurious form gave a relative
+difference of $4.71\times10^{-8}$ at seed 105058401. Reconstructing
+the same phase-space draw at 160 bits reduced it to
+$3.50\times10^{-42}$, both with the original independent Feynman
+reference spinors and with fixed photon references.
+For eight fermions we also replayed the ordered Dirac expression on
+the same points as the bracket formula. Its largest signed relative
+difference was $9.32\times10^{-11}$.
