@@ -117,7 +117,7 @@ public:
   // contracting this conserved vector with its neighbour. Equal outgoing
   // spinors from distinct attachment orders then have one coefficient.
   vector_current current(int particle, int antiparticle,
-                         const labels &photons) {
+                         const labels &photons, bool angle_on_particle_only = false) {
     std::map<std::pair<int, int>, std::vector<Id>> sums;
     auto partitions = [&](auto &self, size_t at, labels &left,
                           labels &right) -> void {
@@ -130,12 +130,14 @@ public:
         right.pop_back();
         return;
       }
-      for (bool square : {false, true})
+      for (bool square : {false, true}) {
+        if (square && angle_on_particle_only) continue;
         for (auto [i, u] : wave(particle, square, left))
           for (auto [j, v] : wave(antiparticle, !square, right)) {
             auto key = square ? std::make_pair(j, i) : std::make_pair(i, j);
             sums[key].push_back(a.mul({u, v}));
           }
+      }
     };
     labels left, right;
     partitions(partitions, 0, left, right);
@@ -257,7 +259,7 @@ class tree_current {
     return p.core.size() == 1 && radiated.at(p.bar).empty() && radiated.at(p.ket).empty();
   }
 
-  Id line(const path &p, bool project_leaves) {
+  Id line(const path &p, bool project_chirality) {
     struct summand {
       Id factor;
       std::vector<Id> word;
@@ -289,7 +291,7 @@ class tree_current {
     for (auto &s : words)
       terms.push_back(
           a.mul({s.factor,
-                 a.call("DiracChain", {endpoint("FermionBar", p.bar, project_leaves && bare_leaf(p)),
+                 a.call("DiracChain", {endpoint("FermionBar", p.bar, project_chirality),
                                        a.call("DiracWord", std::move(s.word)),
                                        endpoint("FermionKet", p.ket)})}));
     return a.add(std::move(terms));
@@ -440,12 +442,39 @@ public:
     return result;
   }
 
-  Id expression(Id coefficient, bool project_leaves = false) {
+  // A leaf couples through a single exchanged photon. For fixed ordering
+  // of the exchanged photons on each interior line, sum all external
+  // attachments before applying charge conjugation. Each external photon
+  // contributes one additional minus sign under endpoint reversal.
+  std::optional<std::vector<signed_exchange>> current_exchanges(unsigned& ordered_lines) const {
+    ordered_lines = 0;
+    std::vector<signed_exchange> exchanges;
+    for (const auto& p : paths) {
+      std::vector<Id> exchanged;
+      for (auto vertex : p.core) {
+        const auto port = tree.vertices[vertex].slots[2];
+        if (port < 0) exchanged.push_back(denominators.at(-1-port));
+      }
+      if (exchanged.size() > 1) {
+        ++ordered_lines;
+        if (exchanged.front() == exchanged.back()) throw std::logic_error("repeated tree exchange");
+        if (exchanged.front() > exchanged.back()) return {};
+      }
+      const auto count = p.core.size() + radiated.at(p.bar).size() + radiated.at(p.ket).size();
+      exchanges.push_back({{{p.bar, p.ket}}, count % 2 ? 1 : -1});
+    }
+    std::sort(exchanges.begin(), exchanges.end(), [](const auto& l, const auto& r) {
+      return l.swaps < r.swaps;
+    });
+    return exchanges;
+  }
+
+  Id expression(Id coefficient, bool project_leaves = false, bool radiating_leaves = false) {
     size_t core_vertices = 0;
     int sign = 1;
     std::vector<Id> numerator, factors{coefficient};
     for (const auto &p : paths)
-      numerator.push_back(line(p,project_leaves));
+      numerator.push_back(line(p, project_leaves && (radiating_leaves ? p.core.size() == 1 : bare_leaf(p))));
     for (size_t i = 0; i < tree.vertices.size(); ++i) {
       if (!keep[i])
         continue;

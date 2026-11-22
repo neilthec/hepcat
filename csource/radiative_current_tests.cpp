@@ -231,7 +231,9 @@ void check_balanced_occupations(const model& vertices) {
   if (!elementary || !form || form->joint_exchange || form->legs != std::vector<int>{5,6} ||
       form->other_groups != std::vector<std::vector<int>>{{7,8}} ||
       form->alternating_groups != std::vector<std::vector<int>>{{1,4},{2,3}} ||
-      a.node(form->kernel).head != "Plus" || a.node(form->kernel).args.size() != 5)
+      form->projected_terms.size() != 5 ||
+      !std::all_of(form->projected_terms.begin(),form->projected_terms.end(),
+                   [](const auto &term){ return term.exchanges.size() == 2; }))
     throw std::runtime_error("Expected five helicity occupations and two independent photon pairs");
   const expression_evaluator full(a,*elementary,inputs), seed(a,form->kernel,inputs);
   const auto mass = evaluate_scalar(a,m,inputs).real();
@@ -247,6 +249,29 @@ void check_balanced_occupations(const model& vertices) {
       sum += real(odd ? -1 : 1)*sum_group(seed,image,{5,6});
     }
     agree(sum,full(p),"Incorrect eight-point helicity-occupation weight");
+  }
+}
+
+// Photon attachments before, between and after the two exchanges on the
+// middle line must all survive the two chiral projections and reversal.
+void check_radiating_path(const model& vertices) {
+  const std::vector<std::string> legs{"e","E","e","E","e","E","A.+","A.-"};
+  Algebra a;
+  const auto inputs = model_parameters(vertices);
+  const auto m = a.parse(vertices.particle("e").mass), z = a.integer(0);
+  a.setKinematics({m,m,m,m,m,m,z,z}, {});
+  std::optional<permutation_sum> form;
+  auto root = fermion_current_proposal(a, vertices, legs, 2016, false, &form);
+  if (!root || !form || form->projected_terms.size() != 5)
+    throw std::runtime_error("Expected five photon allocations on the radiating path");
+  const expression_evaluator elementary(a,*root,inputs), compact(a,form->kernel,inputs);
+  const auto mass = evaluate_scalar(a,m,inputs).real();
+  for (unsigned n = 0; n < 3; ++n) {
+    auto p = sample_point({mass,mass,mass,mass,mass,mass,0,0}, 927066 + n);
+    auto value = sum_group([&](const point& image){
+      return sum_group(compact,image,form->alternating_groups[1],true);
+    },p,form->alternating_groups[0],true);
+    agree(value,elementary(p),"A radiating path projected the wrong chirality or attachment order");
   }
 }
 
@@ -340,6 +365,7 @@ int main(int argc, char **argv) {
     check(vertices,rules,{"E","e","A.+","e","E","E","e"},false,252,1,6);
     check_balanced_occupations(vertices);
     check_exchange_orderings(vertices);
+    check_radiating_path(vertices);
     std::cout << "Signed Weyl currents, Fermi exchange and photon occupations passed.\n";
   } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';

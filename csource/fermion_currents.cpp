@@ -360,7 +360,7 @@ struct group {
 
 Id contracted_radiation(line_kinematics& b, const std::vector<int>& types,
                         line l, line r, const labels& L, const labels& R, bool physical,
-                        const std::function<bool(Id)>& accepts = {}) {
+                        const std::function<bool(Id)>& accepts = {}, bool one_chirality = false) {
   auto& a = b.a;
   using current = radiative_detail::endpoint_radiation::vector_current;
   // Each of the two conserved currents can choose its own spin frames.
@@ -368,7 +368,7 @@ Id contracted_radiation(line_kinematics& b, const std::vector<int>& types,
   // Compare the complete contracted numerator, including cancellations.
   auto alternatives = [&](line side, const labels &photons) {
     std::vector<current> result;
-    if (photons.size() <= 2 &&
+    if (!one_chirality && photons.size() <= 2 &&
         (photons.empty() ||
          std::all_of(photons.begin(), photons.end(), [&](int i) {
            return types[i-1] == types[photons.front()-1];
@@ -418,7 +418,7 @@ Id contracted_radiation(line_kinematics& b, const std::vector<int>& types,
       if (!tried.insert(selected).second)
         continue;
       radiative_detail::endpoint_radiation rad(a, types, gauge);
-      result.push_back(rad.current(side[0], side[1], photons));
+      result.push_back(rad.current(side[0], side[1], photons, one_chirality));
     }
     return result;
   };
@@ -635,6 +635,55 @@ std::optional<permutation_sum> project_ordered_trees(
   return result;
 }
 
+// Hold the exchange poles fixed. The photon attachments on each charged
+// line then form a neutral current. Project each terminal current onto one
+// chirality and each interior line onto one of its two opposite orders.
+struct radiating_source {
+  const generation::term *tree;
+  Id coefficient;
+  std::map<int,int> references;
+};
+
+std::optional<permutation_sum> project_radiating_trees(
+    builder& b, const std::map<exchange_key,std::vector<radiating_source>>& groups,
+    const ordered_tree_orbits& partition, const permutation_sum& original) {
+  if (partition.seeds.size() != original.orbit_sizes.size()) return {};
+  auto result = original;
+  for (size_t i = 0; i < partition.seeds.size(); ++i) {
+    auto group = groups.find(partition.seeds[i]);
+    if (group == groups.end()) return {};
+    size_t all = 0, selected = 0;
+    std::vector<Id> terms;
+    std::vector<signed_exchange> exchanges;
+    unsigned reversed = 0;
+    for (const auto& entry : group->second) {
+      radiative_detail::tree_current line(b.a, b.m, b.external, *entry.tree, entry.references);
+      all += line.orders;
+      unsigned count;
+      auto ops = line.current_exchanges(count);
+      if (!ops) continue;
+      if (terms.empty()) {
+        exchanges = *ops;
+        reversed = count;
+      } else if (reversed != count || exchanges.size() != ops->size() ||
+                 !std::equal(exchanges.begin(), exchanges.end(), ops->begin(),
+                     [](const auto& l, const auto& r) { return l.sign == r.sign && l.swaps == r.swaps; })) {
+        return {};
+      }
+      selected += line.orders;
+      terms.push_back(line.expression(entry.coefficient, true, true));
+    }
+    if (!selected || reversed >= std::numeric_limits<size_t>::digits ||
+        mpz_class(selected) * (mpz_class(1) << reversed) != all) return {};
+    mpq_class weight(mpz_class(original.orbit_sizes[i]), partition.group_order);
+    weight.canonicalize();
+    auto kernel = collect_scalar_factors(b.a, b.a.factorSum(b.a.add(std::move(terms))));
+    result.projected_terms.push_back({b.prod({b.a.exact(weight), kernel}), std::move(exchanges)});
+  }
+  result.kernel = sum_projected_terms(b.a, result.projected_terms);
+  return result;
+}
+
 // Radiation assigned to either side of the exchanged photon is separately
 // gauge invariant after all attachment orders on that side have been summed.
 // Consequently equivalent allocations may have chosen different references.
@@ -655,7 +704,7 @@ std::optional<permutation_sum> exchange_orbits(builder& b, const std::map<group_
   // The two charged lines are interchangeable. Each photon helicity has
   // its own Bose group, so an occupation is a pair of counts on one line.
   using occupation = std::pair<size_t,size_t>;
-  struct representative { Id term{}; size_t count{}; };
+  struct representative { Id term{}; size_t count{}; const group_key *assignment{}; };
   std::map<occupation,representative> orbits;
   std::optional<Id> direct_coefficient;
   labels antiparticles;
@@ -675,7 +724,10 @@ std::optional<permutation_sum> exchange_orbits(builder& b, const std::map<group_
     const occupation left_count{plus,minus}, right_count{positive.size()-plus,negative.size()-minus};
     auto& rep = orbits[std::min(left_count,right_count)];
     const Id term = terms[index++];
-    if (!rep.count++ || b.a.cost(term)<b.a.cost(rep.term)) rep.term = term;
+    if (!rep.count++ || b.a.cost(term) < b.a.cost(rep.term)) {
+      rep.term = term;
+      rep.assignment = &key;
+    }
   }
   if (n == 3) {
     return radiation_exchange_sum(b.a,b.starts,antiparticles,b.photons,types,b.a.masses()[b.starts[0]-1],
@@ -693,6 +745,33 @@ std::optional<permutation_sum> exchange_orbits(builder& b, const std::map<group_
   if (positive.size()<negative.size()) positive.swap(negative);
   permutation_sum result{positive,b.a.add(terms_in_sum),{}, {},{b.starts,antiparticles}};
   if (negative.size()>1) result.other_groups.push_back(negative);
+
+  // A vector is the sum of two Weyl currents. Interchanging the two ends
+  // supplies the other chirality: each single-photon insertion changes
+  // sign, while a two-photon contact is even. Each chiral bilinear is
+  // neutral and the sum of its photon attachments obeys the Ward identity.
+  try {
+    const auto original_score = expression_complexity(b.a, result.kernel);
+    std::size_t score = 0;
+    std::vector<projected_kernel> projected;
+    for (const auto& [occupation_key, rep] : orbits) {
+      const auto& [left, right, L, R] = *rep.assignment;
+      const auto& allocation = groups.at(*rep.assignment);
+      mpq_class weight(mpz_class(rep.count), order);
+      weight.canonicalize();
+      const auto half = contracted_radiation(b, types, left, right, L, R, physical, {}, true);
+      const auto seed = b.prod({b.a.exact(weight), allocation.coefficient, b.inv(allocation.propagator), half});
+      const auto weight_score = expression_complexity(b.a, seed);
+      if (weight_score >= original_score - score) return result;
+      score += weight_score;
+      projected.push_back({seed, {{{{left[0],left[1]}}, L.size() % 2 ? -1 : 1},
+                                  {{{right[0],right[1]}}, R.size() % 2 ? -1 : 1}}});
+    }
+    result.kernel = sum_projected_terms(b.a, projected);
+    result.projected_terms = std::move(projected);
+  } catch (const std::length_error&) {
+  } catch (const std::overflow_error&) {
+  }
   return result;
 }
 } // namespace
@@ -748,6 +827,7 @@ fermion_current_proposal(Algebra &a, const model &m,
     std::map<std::vector<Id>,std::pair<const generation::term*,Id>> ordered_source;
     std::optional<Id> direct_coefficient;
     bool common = true;
+    std::map<exchange_key,std::vector<radiating_source>> radiating;
     struct orbit {
       size_t expected, count;
       Id coefficient;
@@ -804,6 +884,12 @@ fermion_current_proposal(Algebra &a, const model &m,
       if (first) {
         const Id term = current.expression(g.coefficient);
         attachments[exchange].push_back(term);
+        if (presentation && common && !b.photons.empty()) {
+          exchange_key key;
+          for (Id pole : exchange) key.push_back(pole_side(a, pole));
+          std::sort(key.begin(), key.end());
+          radiating[key].push_back({&tree, g.coefficient, refs});
+        }
         if (presentation && common && ordered_gauge) {
           auto key = current.core_poles();
           if (b.photons.empty()) ordered_source.emplace(key,std::make_pair(&tree,g.coefficient));
@@ -827,7 +913,29 @@ fermion_current_proposal(Algebra &a, const model &m,
       }
     }
     if (presentation && common && direct_coefficient) {
-      *presentation = tree_orbits(b,grouped,*direct_coefficient,physical);
+      ordered_tree_orbits outer;
+      *presentation = tree_orbits(b,grouped,*direct_coefficient,physical, radiating.empty() ? nullptr : &outer);
+      const auto coarse = *presentation;
+      std::optional<size_t> best_weight;
+      auto prefer = [&](const permutation_sum& candidate) {
+        auto weight = [&](const permutation_sum& form) {
+          if (form.projected_terms.empty()) return expression_complexity(a, form.kernel);
+          size_t total = 0;
+          for (const auto& t : form.projected_terms) {
+            const auto part = expression_complexity(a, t.kernel);
+            if (part > std::numeric_limits<size_t>::max() - total)
+              throw std::overflow_error("summand weight exceeds the numeric range");
+            total += part;
+          }
+          return total;
+        };
+        if (!best_weight) best_weight = weight(**presentation);
+        const auto score = weight(candidate);
+        if (score < *best_weight) {
+          best_weight = score;
+          *presentation = candidate;
+        }
+      };
       // Identical branches can already supply different attachment orders
       // under the external permutation sum. Try counting those smaller
       // orbits directly, keeping a complete charged-current sum for algebra.
@@ -848,24 +956,19 @@ fermion_current_proposal(Algebra &a, const model &m,
                                  by_labels.empty() ? nullptr : &partition);
         if (finer) {
           try {
-            auto score = expression_complexity(a, (*presentation)->kernel);
-            const auto consider = [&](const permutation_sum &form) {
-              size_t weight = 0;
-              if (form.projected_terms.empty())
-                weight = expression_complexity(a, form.kernel);
-              else
-                for (const auto &part : form.projected_terms) weight += expression_complexity(a, part.kernel);
-              if (weight < score) {
-                score = weight;
-                *presentation = form;
-              }
-            };
-            consider(*finer);
+            prefer(*finer);
             if (auto projected = project_ordered_trees(b, by_labels, partition, *finer))
-              consider(*projected);
+              prefer(*projected);
           } catch (const std::length_error &) {
           } catch (const std::overflow_error &) {
           }
+        }
+      }
+      if (coarse && coarse->projected_terms.empty() && !radiating.empty()) {
+        try {
+          if (auto form = project_radiating_trees(b, radiating, outer, *coarse)) prefer(*form);
+        } catch (const std::length_error&) {
+        } catch (const std::overflow_error&) {
         }
       }
     }
