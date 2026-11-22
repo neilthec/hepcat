@@ -82,6 +82,16 @@ void fixture_tests() {
     test.write("func1.mdl", "Name | Expression\ny | 3*g^2\n======\n");
     check(model(test.dir, 1).parameter_scope() != original_scope,
           "changed definition reused a parameter scope");
+    test.write("amps1.mdl", "q|Q|A.+||1|Shared[<13>;g;*:1,2;+:3,3;2;^:4,5]\n"
+                            "q|Q|A.-||1|(2*g*<13>)^2\n======\n");
+    const model shared(test.dir, 1);
+    check(shared.vertices()[0].expression == shared.vertices()[1].expression,
+          "shared model expression differs from ordinary model algebra");
+    for (const std::string bad : {"Shared[1;+:1,2]", "Shared[1;*:0,1]", "Shared[1;?:1,1]",
+                                  "Shared[1;^:1,1,1]", "Shared[1;;1]", "Shared[1;]", "Shared[]"}) {
+        test.write("amps1.mdl", "q|Q|A.+||1|" + bad + "\n======\n");
+        rejects([&] { model invalid(test.dir, 1); }, "accepted invalid model expression " + bad);
+    }
     test.write("amps1.mdl", "q|Q|A.+||1|<19>\n======\n");
     rejects([&] { model bad(test.dir, 1); }, "invalid compact spinor slot accepted");
     test.write("amps1.mdl", "q|Q|A.+||1|Run[123]\n======\n");

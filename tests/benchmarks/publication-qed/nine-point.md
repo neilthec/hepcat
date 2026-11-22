@@ -13,7 +13,9 @@ A term here is a current with its attachment orders already summed. HEPCAT also 
 
 ## Construction and factorization models
 
-Build from the repository root. The native QED example reads the vertices from model 3, the lower amplitudes from model 4 or 5, and the independent Feynman rules from the CalcHEP-format QED model. Models 4 and 5 each contain the 16 eight-point rows, with both members of each distinct parity pair. The catalog test reads the saved model expressions and compares them with signed Feynman amplitudes.
+Build from the repository root. The native QED example reads the vertices from model 3, the lower amplitudes from model 4 or 5, and the independent Feynman rules from the CalcHEP-format QED model. Models 4 and 5 each contain 16 eight-point rows and 20 nine-point rows. At nine points there are 8, 6, 4 and 2 helicity multisets for one through four charged pairs. Each distinct parity partner is stored explicitly. The catalog test reloads all 40 nine-point entries and compares each signed amplitude with independent off-shell Dirac currents at 32 phase-space points with coherent massive spins.
+
+For eight fermions and one photon, model 5 uses the emitting pair's reference momentum from the manuscript. For a photon of momentum $k$ emitted from the line joining legs $a,b$, set $D_i=2p_i\cdot k$. The polarization with reference $p_a+p_b$ is the linear combination of the two endpoint polarizations with weights $D_a/(D_a+D_b)$ and $D_b/(D_a+D_b)$. This gives the spurious denominator $s_{ab9}-s_{ab}$. Summing 180 diagrams for one marked fermion pairing and its 96 signed images covers all 17,280 diagrams for each photon helicity. The older single-photon scalar benchmark used the physical-pole continuation in both modes.
 
 ```sh
 build=tests/results/native-reduce-build

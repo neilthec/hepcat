@@ -8,6 +8,7 @@
 #include "reduce.hpp"
 #include "generation_feynman.hpp"
 #include "validation_feynman.hpp"
+#include "validation_dirac_current.hpp"
 #include "validation_numeric.hpp"
 
 #include <algorithm>
@@ -86,6 +87,37 @@ bool check_full(const model& vertices, const model& cuts, const model& feynman,
         std::cerr << "Unexpected denominator structure for the selected pole representation\n";
     return report.passed() && compared && has_spurious == expect_spurious;
 }
+// The single photon in this family uses the emitting fermion pair as its
+// reference in model 5. Check that every possible pair supplies its pole.
+bool emitting_pair_poles(Algebra& a, const model_vertex& row, bool spurious) {
+    const Id photon = a.integer(9);
+    const auto invariant = [&](std::vector<Id> labels) {
+        return a.call("PropDen", {a.call("Mom", {a.call("Multiparticle", std::move(labels))}), a.integer(0)});
+    };
+    std::set<Id> poles;
+    for (unsigned i = 0; i < 8; ++i)
+        for (unsigned j = i + 1; j < 8; ++j) {
+            if (row.legs[i] == row.legs[j]) continue;
+            const auto x = a.integer(i+1), y = a.integer(j+1);
+            const auto diff = a.add({invariant({x,y,photon}), a.mul({a.integer(-1),invariant({x,y})})});
+            poles.insert(a.pow(diff, -1));
+        }
+    std::vector<Id> pending{row.expression};
+    std::vector<bool> visited(a.size());
+    unsigned found = 0;
+    while (!pending.empty()) {
+        const auto id = pending.back();
+        pending.pop_back();
+        if (visited[id]) continue;
+        visited[id] = true;
+        if (poles.count(id)) ++found;
+        const auto& node = a.node(id);
+        pending.insert(pending.end(), node.args.begin(), node.args.end());
+    }
+    if (found == (spurious ? poles.size() : 0)) return true;
+    std::cerr << "Found " << found << " emitting-pair poles in the single-photon catalog entry\n";
+    return false;
+}
 // Compare the rows as read from disk, including their model-local coefficients.
 bool check_higher_point(const model& cuts, const model_vertex& row, const model& rules) {
     using namespace validation;
@@ -100,10 +132,27 @@ bool check_higher_point(const model& cuts, const model_vertex& row, const model&
     }
     a.setKinematics(cut_masses,{});
     fa.setKinematics(rule_masses,{});
+    expression_evaluator stored(a,a.mul({row.factor,row.expression}),params);
+    if (row.legs.size() == 9) {
+        // Accumulate the off-shell QED trees as Dirac currents. This keeps the
+        // independent signed check affordable for up to 18,144 diagrams.
+        std::vector<int> species;
+        for (const auto& leg : row.legs)
+            species.push_back(leg == "e" ? 1 : leg == "E" ? -1 : leg == "A.+" ? 2 : -2);
+        dirac_current::recursion reference(species);
+        const auto e = -evaluate_scalar(fa, rules.vertices().at(0).factor, model_parameters(rules)).real();
+        for (unsigned i = 0; i < 32; ++i) {
+            const auto point = sample_point(masses, 913813 + i);
+            const auto y = reference(point, e, dirac_current::gauge::independent);
+            auto x = stored(point);
+            if (std::abs(x-y) > 1e-8L * std::abs(y)) x = stored.precise(point);
+            if (!(std::abs(y) > 0 && std::abs(x-y) <= 1e-8L * std::abs(y))) return false;
+        }
+        return true;
+    }
     for (const auto& plan : generation::diagram_plans(rules,row.legs))
         trees.push_back(feynman_to_spinors(fa,generation::sew_feynman(fa,rules,row.legs,plan)));
     if (trees.empty()) return false;
-    expression_evaluator stored(a,a.mul({row.factor,row.expression}),params);
     expression_evaluator reference(fa,fa.add(trees),model_parameters(rules));
     for (unsigned i=0;i<8;++i) {
         const auto point = sample_point(masses,706181+i);
@@ -130,7 +179,7 @@ int main(int argc, char** argv) {
         for (int number : {4, 5}) {
             const model catalog(root / "models", number, vertices.parameter_scope());
             for (const auto& vertex : catalog.vertices()) {
-                if (vertex.legs.size() < 4 || vertex.legs.size() > 8) continue;
+                if (vertex.legs.size() < 4 || vertex.legs.size() > 9) continue;
                 std::string family, helicities;
                 std::vector<std::string> masses;
                 for (const auto& leg : vertex.legs) {
@@ -148,6 +197,7 @@ int main(int argc, char** argv) {
                 const auto value = joined.mul({vertex.factor, vertex.expression});
                 if (vertex.legs.size() >= 7) {
                     bool ok = check_higher_point(catalog,vertex,feynman);
+                    if (family == "eeeeeeeeA") ok = emitting_pair_poles(joined, vertex, number == 5) && ok;
                     if (argc == 3)
                         ok = check_full(vertices,catalog,feynman,vertex.legs,amp_expression(joined.format(value), masses),
                                         706181,number == 5 && family.find('A') != std::string::npos) && ok;
@@ -181,7 +231,7 @@ int main(int argc, char** argv) {
             }
         }
         for (const auto& policy : {"physical","spurious"})
-            for (unsigned legs : {7u, 8u})
+            for (unsigned legs : {7u, 8u, 9u})
                 for (unsigned pairs = 1; 2*pairs <= legs; ++pairs) {
                     const auto photons = legs - 2*pairs;
                     const auto family = std::string(2*pairs,'e') + std::string(photons,'A');
@@ -191,7 +241,7 @@ int main(int argc, char** argv) {
                             throw std::runtime_error("Missing QED catalog entry in " + family + " " + h);
                     }
                 }
-        const auto expected = formulas.size()+24+32;
+        const auto expected = formulas.size()+24+32+40;
         std::cout << passed << '/' << expected << " QED catalog entries passed\n";
         return passed == expected && seen.size() == expected ? 0 : 1;
     } catch (const std::exception& e) {

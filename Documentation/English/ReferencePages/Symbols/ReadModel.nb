@@ -39,7 +39,8 @@ numbered ", Cell[BoxData[RowBox[{"3"}]], "InlineFormula"],
      Cell[BoxData[RowBox[{"{", "particles", ",", " ", "amplitudes", ",", " ",
          "variables", ",", " ", "functions", "}"}]], "InlineFormula"], ". \
 Usually you can pass it on unchanged rather than unpacking its tables."}],
-   "Notes"], Cell[TextData[{"Particle names in a process are strings from \
+   "Notes"], Cell[TextData[{"The bundled QED factorization catalogs contain amplitudes through nine external legs. Choose model 4 for AllPhysical or model 5 for AllSpurious. The reader reconstructs large amplitudes from shared subexpressions, so the returned rows can be used directly for factorization."}], "Notes"],
+  Cell[TextData[{"Particle names in a process are strings from \
 that model, including their case and helicity suffixes. In the bundled QED \
 model, ", Cell[BoxData[RowBox[{"\"e\""}]], "InlineFormula"],
      Cell[BoxData[RowBox[{" ", "and", " "}]], "InlineFormula"],

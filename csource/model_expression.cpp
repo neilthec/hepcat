@@ -1,6 +1,7 @@
 #include "model_expression.hpp"
 #include <algorithm>
 #include <cctype>
+#include <charconv>
 #include <limits>
 #include <set>
 #include <stdexcept>
@@ -363,6 +364,43 @@ class parser {
 } // namespace
 Id parse_expression(Algebra& a, std::string_view text, Id scope, const std::vector<bool>& massive,
                     bool feynman) {
-    return parser(a, text, scope, massive, feynman).parse();
+    if (massive.empty() || feynman || text.substr(0, 7) != "Shared[")
+        return parser(a, text, scope, massive, feynman).parse();
+    if (text.back() != ']') throw std::invalid_argument("unterminated Shared expression");
+    text.remove_prefix(7);
+    text.remove_suffix(1);
+    std::vector<Id> slots;
+    while (true) {
+        const auto end = text.find(';');
+        auto node = text.substr(0, end);
+        if (node.size() >= 2 && node[1] == ':') {
+            const char operation = node[0];
+            node.remove_prefix(2);
+            std::vector<Id> operands;
+            while (true) {
+                const auto comma = node.find(',');
+                auto token = node.substr(0, comma);
+                std::size_t index = 0;
+                auto parsed = std::from_chars(token.data(), token.data() + token.size(), index);
+                if (parsed.ec != std::errc{} || parsed.ptr != token.data() + token.size() ||
+                    index == 0 || index > slots.size())
+                    throw std::invalid_argument("invalid backward reference in Shared expression");
+                operands.push_back(slots[index - 1]);
+                if (comma == view::npos) break;
+                node.remove_prefix(comma + 1);
+            }
+            if (operands.size() < 2) throw std::invalid_argument("missing Shared operands");
+            if (operation == '+') slots.push_back(a.add(std::move(operands)));
+            else if (operation == '*') slots.push_back(a.mul(std::move(operands)));
+            else if (operation == '^' && operands.size() == 2)
+                slots.push_back(a.call("Power", std::move(operands)));
+            else throw std::invalid_argument("invalid Shared operation or arity");
+        } else {
+            slots.push_back(parser(a, node, scope, massive, false).parse());
+        }
+        if (end == view::npos) break;
+        text.remove_prefix(end + 1);
+    }
+    return slots.back();
 }
 } // namespace hepcat::model_detail

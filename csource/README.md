@@ -238,7 +238,9 @@ For four massive vectors, the final reduction proposes shorter spinor tensors on
 
 ## Generate from HEPCAT model files
 
-A native program can start with particle names. Read each model once and reuse it across processes. The QED vertex model is number 3 and its physical-pole factorization model is number 4. Use models 1 and 2 for the corresponding SM pair.
+A native program can start with particle names. Read each model once and reuse it across processes. The QED vertex model is number 3. For factorization through nine external legs, use model 4 for physical poles or model 5 for the spurious-pole representation. Use models 1 and 2 for the corresponding SM pair.
+
+Large amplitude rows can store shared arithmetic in dependency order. For example, `Shared[<13>;EE;*:1,2;+:3,3]` computes the spinor bracket and coupling, multiplies them, then adds the product to itself. Slot numbers start at one. The last slot is the amplitude. Both readers return ordinary HEPCAT expressions with model-local parameters.
 
 ```cpp
 #include "amplitude.hpp"

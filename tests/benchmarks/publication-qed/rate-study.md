@@ -1,6 +1,6 @@
 # Comparing complete QED rates through nine points
 
-The study covers all 18 families from annihilation into two photons to production with four charged pairs and one real photon. Each exported process contains every labeled photon helicity. The two SPINAS prescriptions use model 4 (physical) and model 5 (spurious) through eight legs. Nine-point input comes from the completed constructors. Its manifest must select the requested pole preference for every helicity, including the all-positive sector. A common phase of a parity branch drops out after its modulus is squared.
+The study covers all 18 families from annihilation into two photons to production with four charged pairs and one real photon. Each exported process contains every labeled photon helicity. The two SPINAS prescriptions use model 4 (physical) and model 5 (spurious) through eight legs. Nine-point input for these recorded timings came from the completed constructors before the nine-point rows were added to both model files. Its manifest must select the requested pole preference for every helicity, including the all-positive sector. A common phase of a parity branch drops out after its modulus is squared.
 
 ## Read the measurements
 
