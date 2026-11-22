@@ -1,0 +1,230 @@
+\section{Nine-point QED amplitudes}\label{sec:nine-qed}
+
+Seven photons on one charged line give $7!=5{,}040$ diagrams.
+They fit in a single permutation sum. More charged pairs introduce a
+different choice: which line emitted each photon? At nine points there
+are at most four charged lines. Connecting them gives just an edge, a
+three-line path, or the four-line star and path of
+Sec.~\ref{sec:eight-four-pairs}. The following formulas keep the
+external massive spins open. Labels related by parity and permutations
+of equal-helicity photons cover all $128+32+8+2=170$ assignments.
+
+\paragraph{One charged pair.}
+Use the ordered word of Eq.~\eqref{eq:eight-ordered-tensor}. Put $c$
+at its fourth vertex, $L$ on the positron side and $R$ on the electron
+side. Define $B(L;c;R)$ by summing that word over the six orders in
+each triple separately. Include the two fermion propagators immediately
+adjacent to $G_c$. Thus $B$ is a row spinor times $G_c$ times a column
+spinor. The triples can be computed once and reused for different
+central photons. If $h$ of the seven photons have negative helicity,
+\begin{equation}
+ \M_h=-e^7\,\mathcal S_+\mathcal S_-
+ \sum_{\substack{c_-=0,1;\ 0\le j\le3\\ 0\le k=h-c_--j\le3}}
+ \frac{B(L;c;R)}{j!(3-j)!\,k!(3-k)!}.
+ \label{eq:nine-single}
+\end{equation}
+Here $c_-=1$ selects a negative central photon, $j$ and $k$ count
+the negatives on the two sides, and $\mathcal S_\pm$ sums permutations
+with unit weight. For each term assign the positive labels in increasing
+order to $L,c,R$, then the negative labels in the same way. In Eq.~\eqref{eq:nine-single}, assign a polarization vector to each
+external photon before forming the sum. Each permuted leg then carries
+that vector into its new position. In particular, the central photon
+and the two triples use the same reference assignment throughout the
+complete sum. The factorials divide out orders already included in the triples.
+For $h=0,1,2,3$ there are respectively $1,3,5,7$ summands. Each labeled
+order occurs once because it has a unique fourth vertex. For $h=0$ the
+same-helicity formulas in the main text can also be used directly with
+seven photons.
+
+\paragraph{Seven positive photons.}
+Here the spin dependence factors into
+$C=(\sqrt{2}e)^7m\langle\mathbf1\mathbf2\rangle$. Put
+$X_i=[i12i]$ and $E_i(L)=\sum_{a\in L}[ia]\langle a1i]$.
+For the physical form the ordered correction has only four steps,
+\begin{align*}
+ R_{89}&=[89]^2\tau_{18}\tau_{19}/\tau_{289},\\
+ R_{789}&=\frac{3[78]^2\tau_{17}\tau_{18}}{\tau_{2789}}
+ \left(X_9+\frac{\tau_{29}}{\tau_{278}}[X_9-E_9(78)]\right),\\
+ R_{6789}&=\frac{6[67]^2\tau_{16}\tau_{17}X_8X_9
+  +4 E_6(345)\tau_{26}R_{789}
+  -6m^2[67]^2\tau_{26}\tau_{27}R_{89}}{\tau_{1345}},\\
+ R_{56789}&=\frac{10[56]^2\tau_{15}\tau_{16} X_7X_8X_9
+ +5 E_5(34)\tau_{25}R_{6789}
+ -10m^2[56]^2\tau_{25}\tau_{26}R_{789}}{\tau_{134}} .
+\end{align*}
+For instance, the factor ten chooses the marked pair among the five
+spectators of legs 3 and 4. Momentum conservation gives
+$\tau_{256789}=\tau_{134}$. With an unnormalized sum over the seven
+photon labels, the amplitude is
+\begin{equation}
+ \M^{\phys}_{+++++++}=\frac{C}{240}\sum_{S_7}
+ \frac{[34]^2\,[X_5X_6X_7X_8X_9-m^2R_{56789}]}
+ {\displaystyle\prod_{i=3}^9\tau_{1i}\prod_{j=5}^9\tau_{2j}}.
+ \label{eq:nine-seven-physical}
+\end{equation}
+The divisor is $2!5!$. The order inside the terminal pair is immaterial.
+
+For the spurious form put
+$Y_i(L)=\sum_{a\in L}\langle3ai]/\langle3i\rangle$ and
+$y_i=Y_i(1)$. The following three factors insert the spectator photons
+one at a time,
+\begin{align*}
+ Z_9 &= y_9+\tau_{19}Y_9(156)/\tau_{156},\\
+ Z_{89} &= y_8y_9-2\tau_{18}Y_8(247)Z_9/\tau_{1569},\\
+ Z_{789} &=y_7y_8y_9-3\tau_{17}Y_7(24)Z_{89}/\tau_{2347}.
+\end{align*}
+The second momentum denominator in the last line satisfies
+$\tau_{15689}=\tau_{2347}$. The angle reference now distinguishes
+photon 3 from photon 4, giving the divisor $5!$,
+\begin{equation}
+ \M^{\spur}_{+++++++}=-\frac{C}{120}\sum_{S_7}
+ \frac{[34]}{\langle34\rangle\,\tau_{23}\prod_{i=5}^9\tau_{1i}}
+ \left[y_5y_6y_7y_8y_9-
+ \frac{10m^2[56]^2Z_{789}}{\tau_{234}}\right].
+ \label{eq:nine-seven-spurious}
+\end{equation}
+
+A second spurious form fits in a single product per photon permutation.
+Choose photon 8 as the reference and 9 as its partner. After the first
+three emissions, use momentum conservation to shorten the last two
+sandwiches. With the momentum-sum notation of
+Eq.~\eqref{eq:eight-ordered}, the result is
+\begin{align}
+ \M^{\spur}_{+++++++}={}&-C\sum_{S_7}
+ \frac{[89]\,\langle813]\,\langle8(13)4]\,\langle8(134)5]\,
+                \langle8(279)6]\,\langle8(29)7]}
+ {\langle89\rangle\,\tau_{28}\,
+  \tau_{13}\tau_{134}\tau_{1345}\tau_{2789}\tau_{289}
+  \displaystyle\prod_{i=3}^{7}\langle8i\rangle}.
+ \label{eq:nine-seven-product}
+\end{align}
+The $7\cdot6$ choices of anchor and partner leave $5!$ emission orders.
+Compared with Eq.~\eqref{eq:nine-seven-spurious}, this expression is
+shorter on the page and carries more explicit momentum insertions.
+
+\paragraph{Six positive photons and one negative.}
+There is a shorter spurious form than the three middle-vertex terms in
+Eq.~\eqref{eq:nine-single}. Insert $h=9$ into the seven gaps of an
+ordered word $(i_1,\ldots,i_6)$ of positive photons. As in
+Sec.~\ref{sec:eight-one-minus}, use $h$ as their common reference and
+choose $r=i_3$ for the negative photon. Write
+\[
+ Q_j=p_1+\sum_{a=1}^{j}p_{i_a},\qquad
+ U=\langle\mathbf1\mathbf2\rangle,\qquad
+ H=\langle\mathbf1h\rangle\langle h\mathbf2\rangle .
+\]
+Since $[i|p_h|h\rangle=0$, all seven gaps give the same orbital factors.
+Before the insertion, the propagators accumulate from leg 1. After the
+insertion, count them back from leg 2. This gives one product times a
+sum over the position of the negative photon,
+\begin{align}
+ \M^{\spur}_{++++++-}
+  =\frac{(\sqrt{2}e)^7}{m}\sum_{S_6}
+  \left(\prod_{a=1}^{6}\frac{[i_a|Q_{a-1}|h\rangle}
+                           {\langle h i_a\rangle}\right)
+  \sum_{j=0}^{6}
+  \frac{H+U\,[r|Q_j|h\rangle/[rh]}
+       {\displaystyle\prod_{a=1}^{j}\tau_{1 i_1\cdots i_a}
+        \prod_{a=j+1}^{6}\tau_{2 i_a\cdots i_6}} .
+ \label{eq:nine-one-gaps}
+\end{align}
+For example the gap after $i_2$ has left denominators $\tau_{1i_1}$
+and $\tau_{1i_1i_2}$ and four right denominators ending with
+$\tau_{2i_6}$. All spurious denominators in this form are brackets
+between external photons.
+
+\paragraph{Two or more charged pairs.}
+For two pairs use $(1,2),(4,3)$ in electron--positron order. With
+three or four pairs use $(1,2),(3,4),\ldots$. Let $\mathcal A_e$ and
+$\mathcal A_E$ denote the two unnormalized alternating sums over the
+electron and positron labels. For a tree $t$ and sets $L_v$ of real
+photons on its charged lines, write
+\begin{equation}
+ K_t(L_1|\cdots|L_p)=(-1)^p e^7
+ \left(\prod_{vw\in t}\frac{g_{\mu_{vw}\nu_{vw}}}{q_{vw}^2}\right)
+ \prod_{v=1}^p T_v(L_v,\text{exchanges incident on }v).
+ \label{eq:nine-tree}
+\end{equation}
+Use the complete open tensor of Eq.~\eqref{eq:eight-ordered-tensor}
+on each line. Each exchanged photon carries the sum of the external
+momenta on its far side. Its two indices in Eq.~\eqref{eq:nine-tree}
+belong to its two incident tensors. The common sign follows from the
+seven vertices $-ie\gamma^\mu$, the six propagators (including $p-1$
+photon propagators) and the overall $i$ removed from the amplitude.
+Permuting the external fermions supplies the sign of each matching.
+
+In Table~\ref{tab:nine-occupations} a string $L|M|R$ stands for
+$K_{\rm path}(L|M|R)$, and a zero denotes an empty set. Use successive
+letters $a,b,\ldots$ for positive photons and $h,i$ for negatives.
+The amplitude is the sum of the indicated terms acted on by
+$\mathcal A_e\mathcal A_E\mathcal S_+\mathcal S_-$.
+For example, the denominator 120 in the first row removes the $5!$
+orders of the five identical-helicity labels already summed inside
+one tensor. The denominator 12 in $abc|de$ removes $3!2!$ redundant
+permutations. No factor for exchange of the two lines survives in
+this example since their photon occupancies differ.
+\begin{table}[htbp]
+\centering\small
+\begin{tabular}{cl}
+\toprule
+Helicities & Terms and their divisors \\
+\midrule
+$+++++$ & $(abcde|0)/120+(abcd|e)/24+(abc|de)/12$\\
+$++++-$ & $[(abcdh|0)+(abcd|h)]/24+[(abch|d)+(abc|dh)]/6+(abh|cd)/4$\\
+$+++--$ & $[(abchi|0)+(abc|hi)]/12+(abch|i)/6$\\
+ & $\quad+[(abhi|c)+(ab|chi)]/4+(abh|ci)/2$\\
+\midrule
+$+++$ & $(abc|0|0)/6+[(ab|c|0)+(ab|0|c)+(a|bc|0)+(a|b|c)]/2$\\
+ & $\quad +(0|abc|0)/12$\\
+$++-$ & $[(abh|0|0)+(ab|h|0)+(ab|0|h)+(a|h|b)+(h|ab|0)]/2$\\
+ & $\quad +(ah|b|0)+(a|bh|0)+(a|b|h)+(ah|0|b)+(0|abh|0)/4$\\
+\bottomrule
+\end{tabular}
+\caption{Photon allocations on two charged lines (first three rows)
+and on a three-line path (last two rows).}\label{tab:nine-occupations}
+\end{table}
+
+For four pairs and one photon $a$, label the center of the star first
+and list the four vertices of the path in order. The alternating sums
+act on four terms,
+\begin{align}
+ \M={}&\mathcal A_e\mathcal A_E\left[
+ \frac{K_{\rm star}(a|0|0|0)}6+\frac{K_{\rm star}(0|a|0|0)}2
+ +K_{\rm path}(a|0|0|0)+K_{\rm path}(0|a|0|0)\right].
+ \label{eq:nine-four-pairs}
+\end{align}
+In the first star all three leaves are equivalent. In the second only
+the two empty leaves can be exchanged. A marked vertex breaks the
+reflection symmetry of the path. These four possibilities account for
+17,280 distinct ordered tree diagrams.
+
+\paragraph{Pole choices and checks.}
+For the physical representation use the massive electron momentum of
+the emitting line as the reference of each photon on that line. This
+gives reference denominators proportional to $2p_e\cdot p_i$, a
+physical electron virtuality. For a representation with spurious poles,
+take a photon of opposite helicity when possible, and otherwise use
+the next photon cyclically. Apply the reference prescription to the
+assigned labels. For one real photon $k$ on the line $(a,b)$, the spurious prescription
+uses $Q=p_a+p_b$. Take $Q|k]$ as the angle reference, or its parity
+conjugate for negative helicity. The new divisor is
+$2k\cdot Q=s_{abk}-s_{ab}$. At finite propagator virtualities the
+residue on this divisor vanishes by the Ward identity for that line. Each line sums all orders
+of its attachments; the Ward identity follows by telescoping adjacent
+fermion propagators and using the endpoint Dirac equations.
+
+For one through four pairs the numbers of distinct physical channels
+are 126, 188, 186 and 172. The ordered diagram counts are 5,040, 13,440,
+18,144 and 17,280. These counts concern labeled diagrams; the number
+of summands exhibited above measures the effect of the permutation sums.
+
+We checked the printed occupation divisors directly by expanding their
+permutations. The resulting attachment words and particle matchings
+agree with the independently generated diagram lists. In addition, for
+each of the 20 helicity counts, the two printed tensor prescriptions
+agreed with an independent-gauge current at 32 coherent-spin points.
+The maximum relative discrepancies in the signed amplitudes were
+$7.64\times10^{-13}$ and $3.60\times10^{-12}$, respectively. At four
+separate points per helicity count the corresponding polarized rates, summed
+over every massive spin, agreed with MadGraph within $1.42\times10^{-13}$
+and $4.31\times10^{-12}$. These samples used $m=1$ and $e=1/3$.
