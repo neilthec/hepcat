@@ -3354,6 +3354,11 @@
     "files": 1,
     "bytes": 139264,
     "sha256_file_manifest": "fd5fd9575246b77a91adc1119c6e73b3896587ab04b3bc63a8ecda0553d80df2"
+   },
+   "ch": {
+    "files": 401,
+    "bytes": 252573366,
+    "sha256_file_manifest": "8c5f25cd422becc22ecb2007bf8ee118ffd7d19c0739d274eb2c01b47b5112d4"
    }
   },
   "rate": {
@@ -3565,18 +3570,20 @@
   },
   "seed": 904113,
   "ch_generation": {
-   "completed": false,
-   "exit": -15,
-   "seconds": 75.01405766599999,
-   "diagnostic": "",
-   "squared_diagrams": 398
+   "squared_diagrams": 398,
+   "extended_trial": {
+    "completed": true,
+    "exit": 0,
+    "seconds": 11433.495337792001
+   }
   },
   "source_bytes": {
    "physical": 6418098,
    "table_physical": 1632642,
    "spurious": 5662187,
    "table_spurious": 1353608,
-   "mg": 139264
+   "mg": 139264,
+   "ch": 252573366
   }
  },
  {

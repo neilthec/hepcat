@@ -17,6 +17,7 @@ precision selection and spin-sum loops. Its size includes both its C++ source an
 the four-byte integer operand stream. The direct-build column uses the ordinary
 emitted straight-line C++. Table~\ref{tab:source-bytes} and Fig.~\ref{fig:source-size} therefore measure
 the volume of generated process algebra in each implementation.
+For annihilation into five photons the CalcHEP C source occupies 2.15 MB. Adding a sixth photon raises that figure to 252.6 MB across 401 modules. At six photons the direct physical- and spurious-pole SPINAS exports occupy 6.42 and 5.66 MB, and the MadGraph subprocess matrix occupies 0.139 MB.
 
 \input{size-table}
 \begin{figure}[!htbp]\centering
@@ -48,20 +49,15 @@ the specific builds used here.
 
 \input{rate-table}
 \input{rate-summary}
-\begin{figure}[!htbp]\centering
-\includegraphics[width=\linewidth]{figures/catalog-rates.pdf}
-\caption{Median time per complete spin- and helicity-summed rate for the current
-exports. The SPINAS curves use operand tables throughout. The four panels hold the number of charged pairs fixed and use the same logarithmic time scale. Only measured values are plotted.}
+\begin{figure}[p]\centering
+\includegraphics[width=.86\linewidth]{figures/catalog-rates.pdf}\par\medskip
+\includegraphics[width=.86\linewidth]{figures/catalog-growth.pdf}
+\caption{Complete spin- and helicity-summed rates for the current exports.
+The upper panels give the median time per point. The lower panels divide each
+series by its own median at the smallest multiplicity in that charged family.
+For one charged pair, two photons define the baseline. The SPINAS series
+use the operand-table build throughout. Both plots show measured values.}
 \label{fig:rate-survey}
-\end{figure}
-
-\begin{figure}[!htbp]\centering
-\includegraphics[width=\linewidth]{figures/catalog-growth.pdf}
-\caption{Growth of the complete-rate evaluation time. Within each charged family,
-every implementation is divided by its own median at the smallest multiplicity
-shown. For one charged pair, two photons define the baseline. SPINAS uses the
-same operand-table build at every multiplicity.}
-\label{fig:rate-growth}
 \end{figure}
 
 The installed CalcHEP 3.9.2 symbolic generator rejected all four nine-point
