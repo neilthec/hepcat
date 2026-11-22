@@ -38,9 +38,13 @@ struct Scalar {
     bool zero() const { return !c[0] && !c[1] && !c[2] && !c[3]; }
     bool rational() const { return !c[1] && !c[2] && !c[3]; }
 };
-inline Scalar operator+(Scalar p, const Scalar& q) {
+inline Scalar& operator+=(Scalar& p, const Scalar& q) {
     for (unsigned i = 0; i < 4; ++i)
-        p.c[i] += q.c[i];
+        if (q.c[i]) p.c[i] += q.c[i];
+    return p;
+}
+inline Scalar operator+(Scalar p, const Scalar& q) {
+    p += q;
     return p;
 }
 inline Scalar operator*(const Scalar& p, const Scalar& q) {

@@ -368,25 +368,26 @@ class Evaluator {
                 Scalar coefficient;
                 for (Id child : n.args)
                     if (order(child) == leading)
-                        coefficient = coefficient + get(child).coefficient;
+                        coefficient += get(child).coefficient;
                 return {leading, coefficient};
             }
             PoleValue best;
             bool any = false;
             for (Id child : n.args) {
-                auto term = get(child);
+                const auto& term = get(child);
                 if (!any || term.order < best.order) {
                     best = term;
                     any = true;
                 } else if (term.order == best.order)
-                    best.coefficient = best.coefficient + term.coefficient;
+                    best.coefficient += term.coefficient;
             }
             return best;
         }
         if (n.head == "Times") {
-            PoleValue p{0, Scalar(Q(1))};
-            for (Id child : n.args) {
-                auto factor = get(child);
+            if (n.args.empty()) return {0, Scalar(Q(1))};
+            auto p = get(n.args.front());
+            for (size_t i = 1; i < n.args.size(); ++i) {
+                const auto& factor = get(n.args[i]);
                 p.order = static_cast<int>(addOrders(p.order, factor.order));
                 p.coefficient = p.coefficient * factor.coefficient;
             }
@@ -406,7 +407,7 @@ class Evaluator {
             }
             if (q.get_den() == 1 && q.get_num().fits_slong_p()) {
                 long k = q.get_num().get_si();
-                auto p = get(n.args[0]);
+                const auto& p = get(n.args[0]);
                 if (k < -100000 || k > 100000 || (p.order && std::abs(k) > 10000))
                     throw residue_unsupported("exponent outside residue budget");
                 long order = p.order * k;
@@ -515,11 +516,9 @@ class Evaluator {
         weights.emplace(id, weight);
         return weight;
     }
-    PoleValue get(Id id) {
+    const PoleValue& get(Id id) {
         if (auto found = values.find(id); found != values.end()) return found->second;
-        auto p = evaluate(id);
-        values.emplace(id, p);
-        return p;
+        return values.emplace(id, evaluate(id)).first->second;
     }
 };
 // A single spurious extra power of the cut propagator can cancel between
@@ -702,7 +701,7 @@ auto sample_cut(const Algebra& algebra, const numerator_shell& channel, const st
         if (evaluator.internalWeight(id) != 0)
             throw residue_unsupported("unbalanced sewn internal helicity weight");
         evaluator.prune_large_sums(algebra.cost(id) > 4096);
-        auto p = evaluator.get(id);
+        const auto& p = evaluator.get(id);
         if (p.order < -1) {
             if (p.order < -2 || !p.coefficient.zero())
                 throw residue_unsupported("uncancelled or unresolved higher-order physical pole");
