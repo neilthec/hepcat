@@ -60,13 +60,13 @@ def check_central_words(negatives):
     """Expand the two triple currents and the two external Bose sums."""
     positives = 7 - negatives
     observed = Counter()
+    projected = Counter()
     kernels = 0
     for center in (0, 1):
         for left in range(4):
             right = negatives - left - center
             if right not in range(4):
                 continue
-            kernels += 1
             copies = Counter()
             for plus in permutations(range(positives)):
                 for minus in permutations(range(positives, 7)):
@@ -79,6 +79,14 @@ def check_central_words(negatives):
             if set(copies.values()) != {divisor}:
                 raise ValueError("Incorrect central-word stabilizer")
             observed.update(copies.keys())
+            if left <= right:
+                kernels += 1
+                for word in copies:
+                    for chirality in range(1 if left == right else 2):
+                        projected[word, chirality] += 1
+                        projected[word[::-1], 1 - chirality] += 1
+    if projected != Counter(product(permutations(range(7)), (0, 1))):
+        raise ValueError("Central reversal omits or duplicates a chiral word")
     if observed != Counter(permutations(range(7))):
         raise ValueError("Central sum omits or duplicates a seven-photon word")
     return kernels

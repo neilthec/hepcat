@@ -48,7 +48,7 @@ class tensors {
   // Contract one line with all photons on it. For an open virtual photon
   // insert its test four-vector successively along the four coordinate axes.
   complex line_word(int bar_leg, int ket_leg, const std::vector<port> &ports,
-                    int anchor, int next) const {
+                    int anchor, int next, bool central) const {
     auto a = raise(p.angles[bar_leg]), b = p.squares[bar_leg];
     const vector bra{-a[0], -a[1], b[0], b[1]};
     a = p.angles[ket_leg];
@@ -77,6 +77,11 @@ class tensors {
       }
     }
     const mask full = (1u << ports.size()) - 1;
+    mask negative = 0;
+    if (central)
+      for (size_t k = 0; k < ports.size(); ++k)
+        if (species[first(ports[k].momentum)] < 0)
+          negative |= 1u << k;
     std::vector<vector> row(full + 1);
     std::vector<mask> side(full + 1, 1u << bar_leg);
     row[0] = bra;
@@ -88,7 +93,15 @@ class tensors {
         if (k == next && !(before & (1u << anchor)))
           continue;
         auto previous = row[before];
-        if (k == anchor && next < 0) {
+        bool chiral = k == anchor && next < 0;
+        if (central && count(before) == ports.size() / 2) {
+          const auto left = count(before & negative);
+          const auto right = count((full ^ s) & negative);
+          if (left > right)
+            continue;
+          chiral = left == right;
+        }
+        if (chiral) {
           previous[2] = 0;
           previous[3] = 0;
         }
@@ -118,10 +131,11 @@ class tensors {
         anchor = static_cast<int>(i);
       }
     }
-    auto value = line_word(bars[v], kets[v], ports, anchor, next);
-    if (anchor >= 0) {
+    const bool central = project_ends && anchor < 0 && ports.size() % 2;
+    auto value = line_word(bars[v], kets[v], ports, anchor, next, central);
+    if (anchor >= 0 || central) {
       const int sign = ports.size() % 2 ? 1 : -1;
-      value += real(sign) * line_word(kets[v], bars[v], ports, anchor, next);
+      value += real(sign) * line_word(kets[v], bars[v], ports, anchor, next, central);
     }
     return value;
   }

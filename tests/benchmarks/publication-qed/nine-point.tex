@@ -18,9 +18,9 @@ adjacent to $G_c$. Thus $B$ is a row spinor times $G_c$ times a column
 spinor. The triples can be computed once and reused for different
 central photons. If $h$ of the seven photons have negative helicity,
 \begin{equation}
- \M_h=-e^7\,\mathcal S_+\mathcal S_-
- \sum_{\substack{c_-=0,1;\ 0\le j\le3\\ 0\le k=h-c_--j\le3}}
- \frac{B(L;c;R)}{j!(3-j)!\,k!(3-k)!}.
+ \M_h=-e^7\,\mathcal S_+\mathcal S_-(1+P_{12})
+ \sum_{\substack{c_-=0,1;\ 0\le j\le3\\ j\le k=h-c_--j\le3}}
+ \frac{B_{jk}(L;c;R)}{j!(3-j)!\,k!(3-k)!}.
  \label{eq:nine-single}
 \end{equation}
 Here $c_-=1$ selects a negative central photon, $j$ and $k$ count
@@ -31,8 +31,13 @@ external photon before forming the sum. Each permuted leg then carries
 that vector into its new position. In particular, the central photon
 and the two triples use the same reference assignment throughout the
 complete sum. The factorials divide out orders already included in the triples.
-For $h=0,1,2,3$ there are respectively $1,3,5,7$ summands. Each labeled
-order occurs once because it has a unique fourth vertex. For $h=0$ the
+For $j<k$ use the full $B_{jk}=B$. Reversal exchanges the triples and
+supplies the $j>k$ orders. For $j=k$ retain only the angle component
+immediately before the central vertex in $B_{jj}$. Its reversed partner
+supplies the square component. The endpoint exchange $P_{12}$ holds
+the photon polarizations fixed. Its sign is positive for seven vector
+vertices by Eq.~\eqref{eq:nine-line-reversal}. This leaves $1,2,3,4$
+summands for $h=0,1,2,3$, respectively. Each chiral word occurs once. For $h=0$ the
 same-helicity formulas in the main text can also be used directly with
 seven photons.
 
@@ -273,5 +278,7 @@ separate points per helicity count the corresponding polarized rates, summed
 over every massive spin, agreed with MadGraph within $1.41\times10^{-13}$
 and $1.11\times10^{-12}$. We also tested each of the 170 labeled photon
 helicity assignments directly at two new points, with maximum discrepancies
-of $3.81\times10^{-13}$ and $5.13\times10^{-12}$. These samples used
+of $3.81\times10^{-13}$ and $5.13\times10^{-12}$. Repeating the labeled
+comparison on fresh points with the endpoint projectors gave maxima
+of $7.63\times10^{-13}$ and $2.76\times10^{-12}$. These samples used
 $m=1$ and $e=1/3$.

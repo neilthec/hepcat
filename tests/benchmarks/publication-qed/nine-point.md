@@ -4,7 +4,7 @@ The manuscript formulas in [nine-point.tex](nine-point.tex) keep the massive spi
 
 | Charged pairs | Photon helicities up to parity | Labeled diagrams per helicity | Physical cuts | Terms in the central-vertex or charged-tree sum |
 |---:|---|---:|---:|---|
-| 1 | +++++++, ++++++-, +++++--, ++++--- | 5,040 | 126 | 1, 3, 5, 7 |
+| 1 | +++++++, ++++++-, +++++--, ++++--- | 5,040 | 126 | 1, 2, 3, 4 |
 | 2 | +++++, ++++-, +++-- | 13,440 | 188 | 3, 5, 6 |
 | 3 | +++, ++- | 18,144 | 186 | 6, 10 |
 | 4 | + | 17,280 | 172 | 4 |
@@ -57,3 +57,5 @@ For each of the 20 helicity counts, both literal tensor formulas were also compa
 All 170 labeled photon helicity assignments were also tested with the literal tensor formulas on two new MadGraph points per assignment. In lexicographic order with `+` before `-`, assignment `i` (zero based) for `p` charged pairs uses initial seed `998000 + 1000*p + 2*i`. The maximum relative differences were 3.81e-13 and 5.13e-12 for the physical and spurious forms.
 
 For two or more charged pairs, a charge-conjugation projector on every line supplies the other chirality of a terminal current or the opposite ordering of two exchanged photons on a nonterminal current. This reduces the explicit chiral or ordered contributions in a seed by factors of 4, 8 and 16 in the three families. Real-photon references stay fixed when the endpoints of a single word are exchanged. Use `projected` in place of `paper` or `tensor` to test this version. At 32 coherent-spin points per helicity count (initial seed `974000 + 100*p + h`), the largest relative signed-amplitude differences were 3.22e-12 and 1.90e-12. Direct MadGraph comparisons of the projected tensors for all 42 labeled helicity assignments in these families gave maximum relative rate differences of 7.63e-13 and 6.24e-13 at two points per assignment (initial seed `980000 + 1000*p + 2*i`).
+
+For the single charged pair, order the two triples by their negative-helicity counts. When the counts agree, retain one chirality at the central photon. Endpoint reversal recovers the missing words and chiralities. The orbit checker counts every one of the 5,040 words in each chirality exactly once. The projected current agreed with independent-gauge recursion at 32 coherent-spin points per helicity count, with initial seed `972100 + h`. Maximum relative differences were 3.50e-12 and 5.04e-12. For all 128 labeled assignments the maxima against MadGraph at two points each were 4.15e-13 and 2.76e-12. The seed rule is the same as in the other projected families.
