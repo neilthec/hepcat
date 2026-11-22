@@ -138,14 +138,16 @@ int main(int argc, char **argv) {
   if (argc < 2 || argc > 3 ||
       (argc == 3 && std::string(argv[2]) != "--central" &&
        std::string(argv[2]) != "--paper" &&
-       std::string(argv[2]) != "--ordered" && std::string(argv[2]) != "--gaps"))
+       std::string(argv[2]) != "--ordered" && std::string(argv[2]) != "--gaps" &&
+       std::string(argv[2]) != "--reload"))
     return 2;
   model vertices("models", 3);
   std::filesystem::create_directories(argv[1]);
   for (int h = 0; h <= 3; ++h)
     for (bool physical : {true, false}) {
       const std::string mode = argc == 3 ? argv[2] : "selected";
-      if ((mode == "--gaps" && (h != 1 || physical)) ||
+      if ((mode == "--reload" && (physical || h < 2)) ||
+          (mode == "--gaps" && (h != 1 || physical)) ||
           ((mode == "--paper" || mode == "--ordered") &&
            (h || (physical && mode == "--ordered"))))
         continue;
@@ -182,7 +184,18 @@ int main(int argc, char **argv) {
       }
       if (!full || !form)
         throw std::runtime_error("Missing Bose summand");
-      if (argc == 3 && std::string(argv[2]) != "--central") {
+      if (mode == "--reload") {
+        amp_expression saved(a.format(*full), masses);
+        saved.reduce();
+        const auto grouped = saved.signed_permutation_form();
+        if (!grouped || !grouped->joint_exchange || grouped->joint_exchange->sign != 1 ||
+            grouped->symmetric_groups.size() != 2)
+          throw std::runtime_error("Reloaded mixed-helicity expression lost its endpoint reversal");
+        form = permutation_sum{grouped->symmetric_groups.front(), a.parse(grouped->summand), {},
+                               {grouped->symmetric_groups.back()}, {}, grouped->joint_exchange};
+        std::ofstream(std::filesystem::path(argv[1]) / ("reloaded-" + std::to_string(h) + ".tex"))
+            << saved.latex() << '\n';
+      } else if (mode == "--paper" || mode == "--ordered" || mode == "--gaps") {
         const auto &vars = vertices.variables();
         const auto charge =
             std::find_if(vars.begin(), vars.end(),

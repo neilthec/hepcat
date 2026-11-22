@@ -281,8 +281,16 @@ const amp_expression::cached_permutations& amp_expression::reduced_permutations(
             kernel=sum_projected_terms(trial,ordered->projected_terms);
         }
         const Id previous = sum ? sum->kernel : root_;
-        if (trial.cost(kernel) + 16 < trial.cost(root_) && trial.cost(kernel) < trial.cost(previous) &&
-            (ordered_formula_ || expression_complexity(trial,kernel) <= expression_complexity(trial,previous))) {
+        // Both sums have already been certified. When the incumbent cannot be
+        // expanded within the scoring budget, use the strict leaf-count gain.
+        auto improves = [&] {
+            if (ordered_formula_) return true;
+            const auto incumbent = bounded_summand_weight(trial, previous);
+            if (!incumbent) return true;
+            const auto candidate = bounded_summand_weight(trial, kernel);
+            return candidate && *candidate <= *incumbent;
+        };
+        if (trial.cost(kernel) + 16 < trial.cost(root_) && trial.cost(kernel) < trial.cost(previous) && improves()) {
             ordered->kernel = kernel;
             sum = std::move(ordered);
         }

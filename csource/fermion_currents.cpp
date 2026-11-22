@@ -750,28 +750,26 @@ std::optional<permutation_sum> exchange_orbits(builder& b, const std::map<group_
   // supplies the other chirality: each single-photon insertion changes
   // sign, while a two-photon contact is even. Each chiral bilinear is
   // neutral and the sum of its photon attachments obeys the Ward identity.
-  try {
-    const auto original_score = expression_complexity(b.a, result.kernel);
-    std::size_t score = 0;
-    std::vector<projected_kernel> projected;
-    for (const auto& [occupation_key, rep] : orbits) {
-      const auto& [left, right, L, R] = *rep.assignment;
-      const auto& allocation = groups.at(*rep.assignment);
-      mpq_class weight(mpz_class(rep.count), order);
-      weight.canonicalize();
-      const auto half = contracted_radiation(b, types, left, right, L, R, physical, {}, true);
-      const auto seed = b.prod({b.a.exact(weight), allocation.coefficient, b.inv(allocation.propagator), half});
-      const auto weight_score = expression_complexity(b.a, seed);
-      if (weight_score >= original_score - score) return result;
-      score += weight_score;
-      projected.push_back({seed, {{{{left[0],left[1]}}, L.size() % 2 ? -1 : 1},
-                                  {{{right[0],right[1]}}, R.size() % 2 ? -1 : 1}}});
-    }
-    result.kernel = sum_projected_terms(b.a, projected);
-    result.projected_terms = std::move(projected);
-  } catch (const std::length_error&) {
-  } catch (const std::overflow_error&) {
+  const auto baseline_weight = bounded_summand_weight(b.a, result.kernel);
+  const auto limit = baseline_weight.value_or(b.a.cost(result.kernel));
+  std::size_t score = 0;
+  std::vector<projected_kernel> projected;
+  for (const auto& [occupation_key, rep] : orbits) {
+    const auto& [left, right, L, R] = *rep.assignment;
+    const auto& allocation = groups.at(*rep.assignment);
+    mpq_class weight(mpz_class(rep.count), order);
+    weight.canonicalize();
+    const auto half = contracted_radiation(b, types, left, right, L, R, physical, {}, true);
+    const auto seed = b.prod({b.a.exact(weight), allocation.coefficient, b.inv(allocation.propagator), half});
+    const auto size = baseline_weight ? bounded_summand_weight(b.a, seed)
+                             : std::optional<std::size_t>{b.a.cost(seed)};
+    if (!size || *size >= limit - score) return result;
+    score += *size;
+    projected.push_back({seed, {{{{left[0],left[1]}}, L.size() % 2 ? -1 : 1},
+                                {{{right[0],right[1]}}, R.size() % 2 ? -1 : 1}}});
   }
+  result.kernel = sum_projected_terms(b.a, projected);
+  result.projected_terms = std::move(projected);
   return result;
 }
 } // namespace

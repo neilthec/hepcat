@@ -128,6 +128,11 @@ void test_paired_weyl(bool physical, bool conjugate, bool shuffled, bool eight=f
     auto expected = std::vector<std::vector<int>>{major,minor};
     for (auto& group : expected) std::sort(group.begin(),group.end());
     require(grouped && grouped->groups == expected,"lost independent Weyl-current permutations");
+    if (!eight && !physical) {
+        const auto form = input.signed_permutation_form();
+        require(form && form->joint_exchange && form->joint_exchange->sign == 1,
+                "odd Weyl current lost its positive endpoint reversal");
+    }
     if(eight) {
         const auto signed_form=input.signed_permutation_form();
         require(signed_form && (physical || (signed_form->joint_exchange &&

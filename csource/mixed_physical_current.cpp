@@ -968,6 +968,10 @@ std::optional<permutation_sum> paired_weyl_sum(Algebra& a, int l, int r, Id mass
     legs vectors = majority;
     vectors.insert(vectors.end(), minority.begin(), minority.end());
     const mask full = (mask{1} << vectors.size()) - 1;
+    auto rank = [&](Id kernel) {
+        const auto weight = bounded_summand_weight(a, kernel);
+        return std::make_pair(!weight, weight.value_or(a.cost(kernel)));
+    };
     auto sew = [&](unsigned gauge) {
         auto make_line = [&](bool square) {
             std::vector<bool> pauli;
@@ -1049,7 +1053,7 @@ std::optional<permutation_sum> paired_weyl_sum(Algebra& a, int l, int r, Id mass
                                }),
                 images.end());
         }
-        std::vector<Id> terms;
+        std::vector<Id> angle_terms, square_terms;
         for (mask left = 1; left < full; ++left) {
             if (balanced_line::length(left) != count / 2)
                 continue;
@@ -1082,11 +1086,11 @@ std::optional<permutation_sum> paired_weyl_sum(Algebra& a, int l, int r, Id mass
                 Id weight = a.pow(a.integer(stabilizer), -1);
                 if (angle.normalized_pairs)
                     weight = a.mul({weight, a.pow(angle.norm(i), -1)});
-                terms.push_back(a.mul({weight, plus_term}));
-                terms.push_back(a.mul({weight, minus_term}));
+                angle_terms.push_back(a.mul({weight, plus_term}));
+                square_terms.push_back(a.mul({weight, minus_term}));
             }
         }
-        std::vector<Id> factors{angle.neg(coupling), a.add(terms)};
+        std::vector<Id> factors{angle.neg(coupling)};
         if (!angle.normalized_pairs)
             for (std::size_t i = 0; i < vectors.size(); ++i)
                 factors.push_back(a.pow(angle.norm(i), -1));
@@ -1094,16 +1098,26 @@ std::optional<permutation_sum> paired_weyl_sum(Algebra& a, int l, int r, Id mass
         // that preserves the reference assignment.
         if (images.size() < symmetric_orders)
             factors.push_back(a.pow(a.integer(symmetric_orders / images.size()), -1));
-        return permutation_sum{majority, a.mul(factors), {}, {minority}};
+        const auto scale = a.mul(factors);
+        const auto first_chirality = a.add(angle_terms), second_chirality = a.add(square_terms);
+        permutation_sum result{majority, a.mul({scale, a.add({first_chirality, second_chirality})}),
+                               {}, {minority}};
+        // With photon-only references charge reversal leaves every polarization
+        // fixed and exchanges the Weyl blocks at the central vector vertex.
+        // For an odd number of vertices the reversal has positive sign.
+        if (!physical) {
+            const auto simpler = a.cost(first_chirality) < a.cost(second_chirality)
+                ? first_chirality : second_chirality;
+            const auto kernel = a.mul({scale, simpler});
+            if (rank(kernel) < rank(result.kernel)) {
+                result.kernel = kernel;
+                result.joint_exchange = signed_exchange{{{l, r}}, 1};
+            }
+        }
+        return result;
     };
     auto best = sew(0);
     if (count > 6) {
-        auto rank = [&](Id kernel) {
-            try { return std::make_pair(false, expression_complexity(a, kernel)); }
-            catch (const std::length_error&) {}
-            catch (const std::overflow_error&) {}
-            return std::make_pair(true, static_cast<std::size_t>(a.cost(kernel)));
-        };
         auto best_rank = rank(best.kernel);
         for (unsigned ref : {1u, 2u}) {
             auto alternative = sew(ref);

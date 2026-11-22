@@ -794,6 +794,13 @@ std::optional<permutation_sum> recognize_ordered_current(Algebra& a, Id input, s
     return {};
 }
 
+std::optional<std::size_t> bounded_summand_weight(const Algebra& a, Id kernel) {
+    try { return expression_complexity(a, kernel); }
+    catch (const std::length_error&) {}
+    catch (const std::overflow_error&) {}
+    return {};
+}
+
 std::optional<Id> permute_current(Algebra &a, Id input, const std::vector<int> &from,
                                   const std::vector<int> &to) {
     auto domain = from, range = to;

@@ -6,6 +6,7 @@
 #include "generation_feynman.hpp"
 #include "generation_plan.hpp"
 #include "validation_feynman.hpp"
+#include "validation_dirac_current.hpp"
 #include "validation_numeric.hpp"
 
 #include <iostream>
@@ -252,6 +253,43 @@ void check_balanced_occupations(const model& vertices) {
   }
 }
 
+// Extended replay of the large projected formulas. Numerically permute the
+// external waves so a wrong divisor or exchange sign also fails this check.
+void check_five_photon_occupations(const model& vertices, int negatives, bool physical) {
+  std::vector<std::string> legs{"e","E","E","e"};
+  legs.insert(legs.end(), 5-negatives, "A.+");
+  legs.insert(legs.end(), negatives, "A.-");
+  Algebra a(&vertices.algebra());
+  std::vector<Id> masses;
+  for (const auto& leg : legs) masses.push_back(a.parse(vertices.particle(leg).mass));
+  a.setKinematics(masses,{});
+  std::optional<permutation_sum> form;
+  const auto amplitude = fermion_current_proposal(a, vertices, legs, 13440, physical, &form);
+  const std::array<int,3> occupations{3,5,6};
+  if (!amplitude || !form || form->projected_terms.size() != occupations.at(negatives))
+    throw std::runtime_error("Missing five-photon charge-line projection");
+  const expression_evaluator kernel(a, form->kernel, model_parameters(vertices, {{"Me",1},{"EE",1.L/3}}));
+  std::vector<int> species{1,-1,-1,1};
+  species.insert(species.end(), 5-negatives, 2);
+  species.insert(species.end(), negatives, -2);
+  const dirac_current::recursion reference(species);
+  auto groups = form->alternating_groups;
+  groups.push_back(form->legs);
+  groups.insert(groups.end(), form->other_groups.begin(), form->other_groups.end());
+  const auto evaluate = [&](auto&& self, size_t i, const point& p) -> complex {
+    if (i == groups.size()) return kernel(p);
+    return sum_group([&](const point& image){ return self(self, i+1, image); },
+                     p, groups[i], i < form->alternating_groups.size());
+  };
+  for (unsigned i=0; i<8; ++i) {
+    auto p=sample_point({1,1,1,1,0,0,0,0,0}, 983500+20*negatives+i);
+    agree(evaluate(evaluate,0,p), reference(p,1.L/3,dirac_current::gauge::independent),
+          "Five-photon signed occupation sum disagrees with the independent-gauge current");
+  }
+  std::cout << "Passed four fermions and five photons, " << negatives << " negative, "
+            << (physical ? "physical" : "spurious") << " poles.\n" << std::flush;
+}
+
 // Photon attachments before, between and after the two exchanges on the
 // middle line must all survive the two chiral projections and reversal.
 void check_radiating_path(const model& vertices) {
@@ -350,10 +388,17 @@ void check(const model &vertices, const model &rules,
 } // namespace
 
 int main(int argc, char **argv) {
-  if (argc != 3)
-    return 2;
+  const bool extended = argc == 4 && std::string(argv[3]) == "--nine-point";
+  if (argc != 3 && !extended) return 2;
   try {
-    const model vertices(argv[1], 3), rules(argv[2], 2);
+    const model vertices(argv[1], 3);
+    if (extended) {
+      for (bool physical : {true,false})
+        for (int negatives=0; negatives<=2; ++negatives)
+          check_five_photon_occupations(vertices, negatives, physical);
+      return 0;
+    }
+    const model rules(argv[2], 2);
     check(vertices, rules, {"e", "E", "E", "e", "A.+", "A.+", "A.+"}, true, 240, 1, 2, {5,6,7}, 388);
     check(vertices, rules, {"e", "E", "A.-", "e", "A.-", "E", "A.-"}, false, 240, 0, 3, {3,5,7}, 360);
     check(vertices, rules, {"e", "E", "E", "e", "A.+", "A.+", "A.-"}, true, 240,
