@@ -43,7 +43,7 @@ The first two arguments of the charged-tree replay are the number of massive pai
 
 The external library can be prepared with `source/internal/export/madgraph-runtime.py --config config.json --output reference`. Use the `sm-full` model, `AllowedParticlePDGs` equal to `[11,22]`, and `PhysicalPDGs` in beam-first order. For two fermion pairs the outgoing fermions are electron, positron. For three or four pairs the outgoing list alternates positron, electron. Photons come last.
 
-For eight fermions the signed replay evaluates the ordered Dirac expression and the spinor brackets separately. The MadGraph replay evaluates the bracket formula with the permutations grouped on each side of the propagator. Both orders follow from the same signed sum. Pass `--compare-orders` before the number of pairs to evaluate all three expressions at each point. In a 64-point fixed-helicity MadGraph control, the direct and grouped brackets agreed with the external rate to within `1.6e-14`. A separate 24-point signed control checked the relative sign of the grouped expression against the Feynman sum.
+For four and six fermions, `--compare-orders` also evaluates both original chiralities and all attachment orders, alongside the shorter endpoint-exchange formula. For eight fermions the signed replay evaluates the ordered Dirac expression and the spinor brackets separately. The MadGraph replay evaluates the bracket formula with the permutations grouped on each side of the propagator. Both orders follow from the same signed sum. Pass `--compare-orders` before the number of pairs to evaluate all three expressions at each point. In a 64-point fixed-helicity MadGraph control, the direct and grouped brackets agreed with the external rate to within `1.6e-14`. A separate 24-point signed control checked the relative sign of the grouped expression against the Feynman sum.
 
 ## Balanced six photons
 
@@ -54,4 +54,4 @@ Both native constructions passed 62 physical residues, the fixed-angle energy bo
 | AllPhysical | 266,940 | 5,432 | 194.71 s | 8.10787e-11 | 4.44907e-12 |
 | AllSpurious | 368,928 | 22,120 | 192.22 s | 8.10910e-11 | 8.56388e-12 |
 
-Each manuscript comparison used 100,000 independent momenta per column. Both formulas passed throughout at native precision. The spurious paper formula fixes the polarization of each leg before permuting its assignment to the left or right current.
+Each manuscript comparison used 100,000 phase-space points per column. The seeds were 836191 for the signed diagrams and 80000000 for MadGraph. Both formulas passed throughout at native precision. The spurious paper formula fixes the polarization of each leg before permuting its assignment to the left or right current.

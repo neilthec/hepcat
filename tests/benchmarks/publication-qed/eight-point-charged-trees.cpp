@@ -14,10 +14,10 @@ using allocation = std::vector<legs>;
 
 class kernels {
     Algebra &a;
-    const int pairs, negatives;
+    const int pairs;
     legs electron, positron, plus, minus;
     const Id mass, charge;
-    bool physical;
+    const bool physical, project_ends;
     std::vector<int> types;
 
     Id index(int i) { return a.atom("mu" + std::to_string(i)); }
@@ -48,10 +48,13 @@ class kernels {
         for (const auto &entry : attachments)
             order.push_back(entry.first);
         std::vector<Id> sum;
-        const auto spinor = [&](const char *name, int i) {
-            return a.call(name, {a.integer(i), mass, a.atom("\"Dirac\"")});
+        const auto spinor = [&](const char *name, int i, const char *hand = "\"Dirac\"") {
+            return a.call(name, {a.integer(i), mass, a.atom(hand)});
         };
+        const bool middle = pairs == 3 && vertex == 1;
         do {
+            if (middle && project_ends && std::find(order.begin(),order.end(),9) >
+                                          std::find(order.begin(),order.end(),10)) continue;
             legs side{positron[vertex]};
             std::vector<std::pair<Id, std::vector<Id>>> words{{a.integer(1), {}}};
             for (auto port : order) {
@@ -73,11 +76,20 @@ class kernels {
                 }
                 words = std::move(next);
             }
-            for (const auto &[factor, operators] : words)
+            for (const auto &[factor, operators] : words) {
+                const char *hand = "\"Dirac\"";
+                if (pairs == 3 && project_ends && !middle) {
+                    // Keep the angle block immediately before the exchanged
+                    // gamma. Every preceding slash or gamma flips the block.
+                    const auto gamma = a.call("DiracGamma", {index(vertex == 0 ? 9 : 10)});
+                    const auto before = std::find(operators.begin(),operators.end(),gamma) - operators.begin();
+                    hand = before % 2 ? "\"L\"" : "\"R\"";
+                }
                 sum.push_back(
-                    a.mul({factor, a.call("DiracChain", {spinor("FermionBar", positron[vertex]),
+                    a.mul({factor, a.call("DiracChain", {spinor("FermionBar", positron[vertex], hand),
                                                          a.call("DiracWord", operators),
                                                          spinor("FermionKet", electron[vertex])})}));
+            }
         } while (!ordered && std::next_permutation(order.begin(), order.end()));
         return a.add(std::move(sum));
     }
@@ -110,8 +122,8 @@ class kernels {
         }
         if (pairs == 2) {
             // Two open vectors, contracted by the Weyl Fierz identity.
-            const auto x = emit.current(electron[0], positron[0], photons[0]);
-            const auto y = emit.current(electron[1], positron[1], photons[1]);
+            const auto x = emit.current(electron[0], positron[0], photons[0], project_ends);
+            const auto y = emit.current(electron[1], positron[1], photons[1], project_ends);
             inverse.push_back(
                 a.mul({a.integer(-1), a.pow(a.mul({a.parse("Power[2,Rational[1,2]]"), charge}), 6),
                        emit.contract_currents(x, y)}));
@@ -123,12 +135,18 @@ class kernels {
             inverse.push_back(a.pow(charge, 6));
             inverse.push_back(a.integer(pairs % 2 ? -1 : 1));
         }
-        return a.mul(inverse);
+        auto result = a.mul(inverse);
+        if (pairs <= 3 && project_ends) {
+            for (int v = 0; v < pairs; ++v)
+                result = apply_exchanges(a, result, {signed_exchange{
+                    {{electron[v], positron[v]}}, (photons[v].size() + (pairs == 3 && v == 1)) % 2 ? -1 : 1}});
+        }
+        return result;
     }
 
   public:
-    kernels(Algebra &arena, int r, int n, Id m, Id e, bool phys)
-        : a(arena), pairs(r), negatives(n), mass(m), charge(e), physical(phys), types(8) {
+    kernels(Algebra &arena, int r, int n, Id m, Id e, bool phys, bool project = true)
+        : a(arena), pairs(r), mass(m), charge(e), physical(phys), project_ends(project), types(8) {
         electron = r == 2 ? legs{1, 4} : r == 3 ? legs{1, 3, 5} : legs{1, 3, 5, 7};
         positron = r == 2 ? legs{2, 3} : r == 3 ? legs{2, 4, 6} : legs{2, 4, 6, 8};
         for (auto i : electron)
@@ -167,7 +185,7 @@ class kernels {
                     add(path2, sets, divisor);
                 }
         } else if (pairs == 3) {
-            const bool same = negatives == 0;
+            const bool same = plus.empty() || minus.empty();
             add(path3, {{7, 8}, {}, {}}, same ? 2 : 1);
             add(path3, {{}, {7, 8}, {}}, same ? 4 : 2);
             add(path3, {{7}, {}, {8}}, same ? 2 : 1);
@@ -203,7 +221,7 @@ int main(int argc, char **argv) {
     }
     const bool madgraph = argc == 6;
     const int pairs = std::stoi(argv[1]), negatives = std::stoi(argv[2]);
-    if (pairs < 2 || pairs > 4 || negatives < 0 || negatives > 4 - pairs)
+    if (pairs < 2 || pairs > 4 || negatives < 0 || negatives > 8 - 2 * pairs)
         return 2;
     const std::vector<std::string> fermions =
         pairs == 2   ? std::vector<std::string>{"e", "E", "E", "e"}
@@ -229,6 +247,12 @@ int main(int argc, char **argv) {
                 }
                 if (madgraph || compare_orders)
                     forms.emplace_back("Weyl (grouped)", a.mul({a.pow(e, 6), waves.grouped()}));
+            }
+            if (pairs <= 3 && compare_orders) {
+                kernels full_physical(a, pairs, negatives, m, e, true, false);
+                kernels full_spurious(a, pairs, negatives, m, e, false, false);
+                forms.emplace_back("Both chiralities (physical)", full_physical.amplitude());
+                forms.emplace_back("Both chiralities (spurious)", full_spurious.amplitude());
             }
             return forms;
         },

@@ -98,6 +98,16 @@ through the two adjacent polarization matrices and summing their
 orders. Thus each subset wave can be reused when a fourth photon is
 added.
 
+There is also a shorter summand. For a line $(t,u)$ carrying the set
+$L$, keep only the first orientation in $J_{tu}(L)$, with the angle
+spinor on the electron. Apply $1+(-1)^{|L|}P_{tu}$ to this chiral
+current. Exchanging the endpoints interchanges the two orientations.
+Each single-photon insertion in Eq.~\eqref{eq:eight-charged-wave}
+changes sign, and the contact that absorbs two photons is even. This
+gives the indicated sign at every order. Use the two endpoint exchanges
+independently before the outer permutation sum. Only one angle-square
+contraction per pair of subset waves then has to be written.
+
 For AllPhysical take the electron momentum of the emitting pair as
 each polarization reference. Use its projected spinors as in
 Sec.~\ref{sec:eight-two-minus}, with $p_1$ replaced by this momentum.
@@ -157,6 +167,24 @@ The displayed Lorentz indices denote the exchanged attachments in
 Eq.~\eqref{eq:eight-ordered-tensor}. The physical reference is the
 electron on the line emitting the photon. In the spurious form the two
 external photons use each other as their references.
+
+One can shorten $H$ in the same way. In either terminal line keep the
+angle component immediately before its exchanged photon in the ordered
+word of Eq.~\eqref{eq:eight-ordered-tensor}. In the middle line keep
+only orders with the exchange attached to $A$ before the exchange
+attached to $C$, reading from the positron bra. Call this kernel $H_0$.
+Then, for each term in Eq.~\eqref{eq:eight-six-fermions},
+\begin{align}
+ H(L|M|R)={}&[1+(-1)^{|L|}P_{12}]
+ [1-(-1)^{|M|}P_{34}]
+ [1+(-1)^{|R|}P_{56}]\,H_0(L|M|R).
+ \label{eq:eight-six-ends}
+\end{align}
+Each terminal exchange restores the other chirality. Reversing the
+middle line supplies the opposite order of the two virtual photons.
+The extra minus sign there follows from the second vector vertex.
+All positions of the real photons relative to the virtual ones are
+included in each retained order.
 
 \subsection{Four fermion pairs}\label{sec:eight-four-pairs}
 
@@ -224,3 +252,21 @@ With $S_{ij}=1+P_{ij}$ and $A_{ij}=1-P_{ij}$, the bracket formula reads
 Here the local exchanges act inside the outer fermion antisymmetrization.
 The factor eight comes from the three photon contractions. This form
 exhibits all five physical propagators in each term.
+
+For numerical evaluation, the middle photon in the path divides the legs
+into two sets, each containing two electrons and two positrons. There are
+$\binom42^2/2=18$ unordered divisions. For each division, first sum the
+signed exchanges within each four-leg current, then contract the two
+currents across that photon. On the star, choosing the middle pair and
+the two sets of three dressed legs leaves $16\cdot9=144$ assignments.
+Antisymmetrizing the two equal-charge legs within each triple before
+joining the waves supplies the other four images per assignment. This
+evaluation order retains the relative sign between the star and the path.
+
+
+At eight points the four families have $2^6$, $2^4$, $2^2$ and one
+labeled photon-helicity assignment, respectively. Photon permutations
+and parity reduce these 85 assignments to ten representatives, four
+with one charged pair, three with two pairs, two with three pairs and
+one with four pairs. The massive external spins remain open in every
+formula.
