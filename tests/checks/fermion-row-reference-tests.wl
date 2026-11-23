@@ -19,7 +19,7 @@ rowIndex=SelectFirst[Range[Length[model[[2]]]],
 check["the regression uses the complete lower tensor with opposite stored fermion order",
  DeleteCases[Drop[model[[2,rowIndex]],-2],""]==={"Ne","e","W+","h"}];
 reindexRow[base_,order_List]:=ReplacePart[base,{2,rowIndex}->Join[order,{1,
- LookupAmplitude[MapIndexed[{#1,First[#2]}&,order],base,False,{i1,i2,i3,i4}]}]];
+ RetreiveAmplitude[MapIndexed[{#1,First[#2]}&,order],base,False,{i1,i2,i3,i4}]}]];
 variants=reindexRow[model,#]&/@{
  {"e","Ne","W+","h"},{"h","W+","e","Ne"},{"W+","Ne","h","e"}};
 cutTags={
@@ -56,7 +56,7 @@ Do[check["complete channel tensors are invariant under stable lower-row reindexi
 (* Stable interleavings retain occurrence order inside each role, including
    repeated identical names. A same-role exchange is tested separately below. *)
 reindexAt[base_,index_,order_List]:=ReplacePart[base,{2,index}->Join[order,{1,
- LookupAmplitude[MapIndexed[{#1,First[#2]}&,order],base,False,{i1,i2,i3,i4}]}]];
+ RetreiveAmplitude[MapIndexed[{#1,First[#2]}&,order],base,False,{i1,i2,i3,i4}]}]];
 semileptonicIndex=SelectFirst[Range[Length[model[[2]]]],
  Sort[DeleteCases[Drop[model[[2,#]],-2],""]]===Sort[{"u","D","e","Ne"}]&];
 semileptonicVariants=reindexAt[model,semileptonicIndex,#]&/@{

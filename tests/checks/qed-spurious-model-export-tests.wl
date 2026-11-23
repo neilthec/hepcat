@@ -47,7 +47,7 @@ checks = 0; failures = {};
 SetAttributes[check, HoldRest];
 check[name_, test_] := (checks++; If[!TrueQ[test],
   AppendTo[failures, name]; Print["FAIL: ", name]]);
-lookup[process_] := LookupAmplitude[
+lookup[process_] := RetreiveAmplitude[
   MapIndexed[{#1, First[#2]} &, process], model, False, {mi, mj, mk, ml}];
 rows = Select[model[[2]], Length[DeleteCases[Drop[#, -2], ""]] === 6 &];
 check["all nine independent six-point multisets occur exactly once",

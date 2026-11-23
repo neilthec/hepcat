@@ -32,8 +32,8 @@ convention. The physical process passed to ", ButtonBox["WriteSPINASProcess",
 are crossed in the generated numerical code. The exporter needs the formulas \
 for the requested helicity combinations, not just a spin-summed squared \
 amplitude."}], "TechNoteText"],
-  Cell[TextData[{ButtonBox["LookupAmplitude", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/LookupAmplitude"], " retrieves the \
+  Cell[TextData[{ButtonBox["RetreiveAmplitude", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/RetreiveAmplitude"], " retrieves the \
 stored four-point formulas from the bundled factorization model. Here the \
 three analytic sectors, together with the exporter's allowed \
 identical-particle permutations, provide the photon-helicity coverage for the \
@@ -46,7 +46,7 @@ unpolarized physical process."}], "TechNoteText"],
       " ", "\"E\"", ",", " ", "\"A.+\"", ",", " ", "\"A.-\"", "}", ",", " ",
       "{", "\"e\"", ",", " ", "\"E\"", ",", " ", "\"A.-\"", ",", " ",
       "\"A.-\"", "}", "}", ";", "\n", "entries", " ", "=", " ", "{", "#",
-      ",", " ", "LookupAmplitude", "[", "Thread", "[", "{", "#", ",", " ",
+      ",", " ", "RetreiveAmplitude", "[", "Thread", "[", "{", "#", ",", " ",
       "Range", "[", "4", "]", "}", "]", ",", " ", "knownModel", ",", " ",
       "False", ",", " ", "{", "i1", ",", " ", "i2", ",", " ", "i3", ",", " ",
       "i4", "}", "]", "}", " ", "&", " ", "/@", " ", "processes", ";"}]],
@@ -280,8 +280,8 @@ to perform that operation.", "ExampleText"], Cell["Related Functions",
    "SeeAlsoSection"],
   Cell[TextData[{ButtonBox["WriteSPINASProcess", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/WriteSPINASProcess"], "  \[Bullet]  ",
-     ButtonBox["LookupAmplitude", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/LookupAmplitude"], "  \[Bullet]  ",
+     ButtonBox["RetreiveAmplitude", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/RetreiveAmplitude"], "  \[Bullet]  ",
      ButtonBox["AppendModelAmplitudes", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/AppendModelAmplitudes"],
      "  \[Bullet]  ", ButtonBox["ModelParameterRules", BaseStyle -> "Link",

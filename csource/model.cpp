@@ -306,7 +306,7 @@ std::string model::antiparticle(const std::string& name) const {
     const auto& p = particle(name);
     return p.name == name ? p.antiname : p.name;
 }
-std::optional<amp_expression> model::retrieve_amplitude(const std::vector<std::string>& process) const {
+amp_expression model::retrieve_amplitude(const std::vector<std::string>& process) const {
     if (is_feynman()) throw std::invalid_argument("retrieve_amplitude requires a constructive model");
     const model_vertex* match = nullptr;
     bool exact = false, ambiguous = false;
@@ -319,12 +319,12 @@ std::optional<amp_expression> model::retrieve_amplitude(const std::vector<std::s
         exact = same;
         match = &row;
     }
-    if (!match) return std::nullopt;
     if (ambiguous) throw std::invalid_argument("multiple model amplitudes match the requested particles");
 
     std::vector<std::string> masses;
     for (const auto& leg : process) masses.push_back(particle(leg).mass);
     amp_expression result("0", masses);
+    if (!match) return result;
     Algebra arena(&algebra());
     Id root = arena.mul({match->factor, match->expression});
     if (!exact) {

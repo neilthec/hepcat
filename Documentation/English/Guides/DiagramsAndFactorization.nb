@@ -70,8 +70,8 @@ diagram."}], "GuideText"], Cell["Channels and Residues",
        "paclet:HEPCAT/ref/FactorizationAmplitudeChannels"], ": ", "Build the \
 known lower-point amplitude products that a full amplitude must reproduce at \
 its physical poles."}], "GuideText"],
-  Cell[TextData[{ButtonBox["LookupAmplitude", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/LookupAmplitude"], ": ", "Retrieve a \
+  Cell[TextData[{ButtonBox["RetreiveAmplitude", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/RetreiveAmplitude"], ": ", "Retrieve a \
 stored lower-point amplitude with a specified particle numbering."}],
    "GuideText"], Cell[TextData[{ButtonBox["PhysicalPoleResidue",
       BaseStyle -> "Link", ButtonData ->

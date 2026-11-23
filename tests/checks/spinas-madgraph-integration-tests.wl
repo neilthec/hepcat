@@ -44,7 +44,7 @@ miModelBefore = miModel;
 miRules = {"Me" -> 1, "EE" -> 1/3};
 miProcesses = Join[{"e", "E"}, #] & /@
   {{"A.+", "A.+"}, {"A.+", "A.-"}, {"A.-", "A.+"}, {"A.-", "A.-"}};
-miFamily = {#, LookupAmplitude[Thread[{#, Range[4]}], miModel,
+miFamily = {#, RetreiveAmplitude[Thread[{#, Range[4]}], miModel,
     False, {miI, miJ, miK, miL}]} & /@ miProcesses;
 miExport[name_String, entries_List, opts___] := WriteSPINASProcess[miPath[name],
   {"e", "E"} -> {"A", "A"}, entries, miModel, opts,
@@ -149,7 +149,7 @@ If[AssociationQ[miSelected],
 Print["Checking incoming and outgoing photon helicities in QED Compton scattering."];
 miComptonProcesses = ({"e", #[[1]], "E", #[[2]]} &) /@
   Tuples[{"A.+", "A.-"}, 2];
-miComptonEntries = {#, LookupAmplitude[Thread[{#, Range[4]}], miModel,
+miComptonEntries = {#, RetreiveAmplitude[Thread[{#, Range[4]}], miModel,
   False, {miI, miJ, miK, miL}]} & /@ miComptonProcesses;
 miCompton = WriteSPINASProcess[miPath["madgraph_compton"],
   {"e", "A"} -> {"e", "A"}, miComptonEntries, miModel,
@@ -167,10 +167,10 @@ If[AssociationQ[miCompton],
   If[!miPassed[miComptonReport, 4, 40], Print["COMPTON REPORT: ", InputForm[miComptonReport]]]];
 Print["Checking photon-only QED exchange in a four-fermion process."];
 miFermionProcess = {"e", "E", "E", "e"};
-miFermionAmplitude = LookupAmplitude[Thread[{miFermionProcess, Range[4]}], miModel,
+miFermionAmplitude = RetreiveAmplitude[Thread[{miFermionProcess, Range[4]}], miModel,
   False, {miI, miJ, miK, miL}];
 miCheck["the factorization model supplies the known QED four-fermion amplitude",
-  miFermionAmplitude =!= 0 && FreeQ[miFermionAmplitude, LookupAmplitude]];
+  miFermionAmplitude =!= 0 && FreeQ[miFermionAmplitude, RetreiveAmplitude]];
 miFermion = WriteSPINASProcess[miPath["madgraph_four_fermions"],
   {"e", "E"} -> {"e", "E"}, {{miFermionProcess, miFermionAmplitude}}, miModel,
   "ProcessName" -> "madgraph_four_fermions", "ParameterRules" -> miRules,

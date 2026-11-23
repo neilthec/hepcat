@@ -41,7 +41,7 @@ scGlobalsBefore = {OwnValues[Global`Me], OwnValues[Global`EE]};
 scRules = {"Me" -> 1, "EE" -> 1/3};
 scProcesses = Join[{"e", "E"}, #] & /@
   {{"A.+", "A.+"}, {"A.+", "A.-"}, {"A.-", "A.-"}};
-scLookup[process_List] := LookupAmplitude[Thread[{process, Range[Length[process]]}],
+scLookup[process_List] := RetreiveAmplitude[Thread[{process, Range[Length[process]]}],
   scModel, False, {scI, scJ, scK, scL}];
 scFamily = {#, scLookup[#]} & /@ scProcesses;
 scOptions = Join[Association[Options[WriteSPINASProcess]],

@@ -1210,8 +1210,8 @@ ConstructiveDiagrams`Private`colorHandednessCertificate[target_List, model_List,
       ConstructiveDiagrams`Private`spinasBareHelicityName[#]] &]] &];
  Do[names = ConstructiveDiagrams`Private`colorHandednessParticles[row]; partner = names /. map["FlipRules"];
    tagged[p_] := MapIndexed[{#1, First[#2]} &, p];
-   before = LookupAmplitude[tagged[names], lower, False, indices];
-   after = LookupAmplitude[tagged[partner], lower, False, indices];
+   before = RetreiveAmplitude[tagged[names], lower, False, indices];
+   after = RetreiveAmplitude[tagged[partner], lower, False, indices];
    difference = ConstructiveDiagrams`Private`colorHandednessFlip[before] - after;
    If[difference === 0, coefficientProofs = {<|"Proved" -> True, "Method" -> "LiteralEquality"|>},
      ext = Thread[(Mass /@ Range[4]) -> ConstantArray[0, 4]];

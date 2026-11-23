@@ -42,8 +42,8 @@ class model {
     const model_particle& particle(const std::string& name) const;
     std::string antiparticle(const std::string& name) const;
     // Return the stored factor times expression, with legs numbered in process order.
-    // An absent row returns nullopt. An ambiguous table or a Feynman model is an error.
-    std::optional<amp_expression> retrieve_amplitude(const std::vector<std::string>& process) const;
+    // An absent row gives the zero amplitude for these external particles. An ambiguous table or a Feynman model is an error.
+    amp_expression retrieve_amplitude(const std::vector<std::string>& process) const;
     const Algebra& algebra() const;
     const std::string& parameter_scope() const;
     bool is_feynman() const;

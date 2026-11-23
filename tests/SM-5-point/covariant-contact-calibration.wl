@@ -65,14 +65,14 @@ HEPCATCovariantContactCalibration`Private`metricContactCalibration[diagramModel_
   If[Length[matchingLower]=!=1,fail["UnknownOrAmbiguousCompleteLowerAmplitude"]];
   If[Length[matchingQuartic]=!=1,fail["MissingOrAmbiguousExistingQuarticOperator"]];
   known=Block[{ConstructiveDiagrams`Private`$colorFactorizationEnabled=False},
-   LookupAmplitude[MapIndexed[{#1,First[#2]}&,process],ReplacePart[lowerModel,2->matchingLower],False,Table[Unique["lowerSpin"],{4}]]];
+   RetreiveAmplitude[MapIndexed[{#1,First[#2]}&,process],ReplacePart[lowerModel,2->matchingLower],False,Table[Unique["lowerSpin"],{4}]]];
   transport=HEPCATCovariantContactCalibration`Private`parameterTransport[{known,lowerRows[[All,6]]},diagramModel,lowerModel];
   If[FailureQ[transport],Throw[transport,tag]];
   {known,transportedLowerMasses}=transport["Expression"];
   If[!AllTrue[MapThread[Cancel[Together[Rationalize[ConstructiveDiagrams`Private`modelExpandParameterDefinitions[#1-#2,diagramModel],0]]]&, {sourceMasses,transportedLowerMasses}],#===0&],fail["LowerExternalMassMismatch"]];
   If[!FreeQ[known,_Real|_ModelFunction|_SpinorHat|_MomHat|_MomQ|_xFactor|_xTildeFactor|Spinor["Xi"|"Zeta",___]],fail["UnsupportedKnownFourPointExpression"]];
   bare=Block[{ConstructiveDiagrams`Private`$colorFactorizationEnabled=False},
-   LookupAmplitude[MapIndexed[{#1,First[#2]}&,process],ReplacePart[diagramModel,2->matchingQuartic],False,Table[Unique["quarticSpin"],{4}]]];
+   RetreiveAmplitude[MapIndexed[{#1,First[#2]}&,process],ReplacePart[diagramModel,2->matchingQuartic],False,Table[Unique["quarticSpin"],{4}]]];
   rawUnit=LorentzMetric[LorentzIndex[3],LorentzIndex[4]]PolarizationVector[3,LorentzIndex[3],mv,Automatic]PolarizationVector[4,LorentzIndex[4],mv,Automatic];
   sourceBareCertificate=HEPCATCovariantCurrentSources`Private`exactVertexMatch[bare,{rawUnit},{3,4},diagramModel];
   If[!AssociationQ[sourceBareCertificate],fail["NonminimalExistingQuarticOperator",<|"Reason"->sourceBareCertificate|>]];

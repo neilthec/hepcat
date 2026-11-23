@@ -226,7 +226,7 @@ lmTensorModel = {{{"Scalar", "s", "s", 201, 0, lmScalarMassParameter, "0", 1, ""
   {{"T", "T", "s", "", lmTensorCoupling, lmTensorNumerator}}, {}, {}};
 lmTensorCut = Multiparticle[3, 4];
 Do[
-  lmTensorLookup = LookupAmplitude[{{"s", 1}, {"T", 2}, {"T", lmTensorCut}},
+  lmTensorLookup = RetreiveAmplitude[{{"s", 1}, {"T", 2}, {"T", lmTensorCut}},
     lmTensorModel, lmTensorRight, {lmI1, lmI2, lmI3, lmI4}];
   lmCheck["spin-two lookup supplies four explicit internal indices " <> ToString[lmTensorRight],
     Union[Cases[lmTensorLookup,
@@ -338,22 +338,22 @@ lmLookupModel = {lmParticles, {{"le", "lE", "lh", "", lmChargeParameter, lmAngle
 Do[
   lmTagged = { {"le", lmLabels[[1]]}, {"lE", lmLabels[[2]]}, {"lh", lmLabels[[3]]} };
   lmCheck["lookup relabels original ordered spinors " <> ToString[lmLabels],
-    LookupAmplitude[lmTagged, lmLookupModel, False, {lmI1, lmI2, lmI3, lmI4}] ===
+    RetreiveAmplitude[lmTagged, lmLookupModel, False, {lmI1, lmI2, lmI3, lmI4}] ===
       lmChargeParameter lmAngle[lmLabels[[1]], lmLabels[[2]]]],
   {lmLabels, Permutations[{1, 2, 3}]}];
 lmCheck["lookup of an amplitude absent from the model is zero",
-  LookupAmplitude[{{"le", 1}, {"lE", 2}, {"LA.+", 3}}, lmLookupModel,
+  RetreiveAmplitude[{{"le", 1}, {"lE", 2}, {"LA.+", 3}}, lmLookupModel,
     False, {lmI1, lmI2, lmI3, lmI4}] === 0];
 lmCheck["lookup recognizes scalar propagating particles without spin indices",
-  LookupAmplitude[{{"s", 1}, {"s", 2}, {"s", Multiparticle[3, 4]}},
+  RetreiveAmplitude[{{"s", 1}, {"s", 2}, {"s", Multiparticle[3, 4]}},
     lmScalarModel, True, {lmI1, lmI2, lmI3, lmI4}] === lmCubic];
 lmCheck["lookup makes an internal particle spin index explicit and upper",
-  LookupAmplitude[{{"lE", 2}, {"lh", 3}, {"le", Multiparticle[1, 4]}},
+  RetreiveAmplitude[{{"lE", 2}, {"lh", 3}, {"le", Multiparticle[1, 4]}},
     lmLookupModel, False, {lmI1, lmI2, lmI3, lmI4}] ===
       lmChargeParameter SpinorChain[Spinor["Spin", "Upper", "Angle", Multiparticle[1, 4], lmI1],
         Spinor["Spin", "Angle", 2]]];
 lmCheck["lookup makes an internal antiparticle spin index explicit and lower",
-  LookupAmplitude[{{"le", 1}, {"lh", 3}, {"lE", Multiparticle[2, 4]}},
+  RetreiveAmplitude[{{"le", 1}, {"lh", 3}, {"lE", Multiparticle[2, 4]}},
     lmLookupModel, False, {lmI1, lmI2, lmI3, lmI4}] ===
       lmChargeParameter SpinorChain[Spinor["Spin", "Angle", 1],
         Spinor["Spin", "Lower", "Angle", Multiparticle[2, 4], lmI1]]];

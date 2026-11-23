@@ -45,7 +45,7 @@ check["exhaustive diagram generation finds no missing five-point particle multis
   Sort[Select[qmePossibleParts, CreateDiagrams[#, prModel] =!= {} &]] === Sort[qmeInventory]];
 check["the factorization model stores every five-point multiset exactly once",
   Length[qmeRows] === 6 && Sort[Sort[Drop[#, -2]] & /@ qmeRows] === Sort[qmeInventory]];
-qmeLookup[particles_List] := LookupAmplitude[
+qmeLookup[particles_List] := RetreiveAmplitude[
   MapIndexed[{#1, First[#2]} &, particles], qmeModel, False,
   {qmeSpin1, qmeSpin2, qmeSpin3, qmeSpin4}];
 Do[
@@ -110,7 +110,7 @@ qmeSixProcesses = {
 qmeSixChannels = FactorizationAmplitudeChannels[#, qmeModel] & /@ qmeSixProcesses;
 check["six-point sewing includes the new three-by-five and existing four-by-four channels",
   Length /@ qmeSixChannels === {14, 14, 20, 18} &&
-    FreeQ[qmeSixChannels, _Failure | $Failed | _LookupAmplitude]];
+    FreeQ[qmeSixChannels, _Failure | $Failed | _RetreiveAmplitude]];
 check["the cubic diagram model has not acquired the new factorization amplitudes",
   AllTrue[prModel[[2]], Length[DeleteCases[Drop[#, -2], ""]] === 3 &]];
 

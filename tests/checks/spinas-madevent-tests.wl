@@ -41,7 +41,7 @@ smeSpinas = Replace[Environment["HEPCAT_SPINAS_DIRECTORY"],
   $Failed | "" -> FileNameJoin[{ParentDirectory[smeRoot], "spinas"}]];
 smeProcesses = Join[{"e", "E"}, #] & /@
   {{"A.+", "A.+"}, {"A.+", "A.-"}, {"A.-", "A.+"}, {"A.-", "A.-"}};
-smeFamily = {#, LookupAmplitude[Thread[{#, Range[4]}], smeModel,
+smeFamily = {#, RetreiveAmplitude[Thread[{#, Range[4]}], smeModel,
     False, {smeI, smeJ, smeK, smeL}]} & /@ smeProcesses;
 (* No interpreter is executed by a source-only export. Isolate its availability
    probe so this unit suite does not require an installed Python or MadGraph. *)

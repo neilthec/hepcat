@@ -34,7 +34,7 @@ g3TFull[process_List]:=g3TFull[process]=Module[{ds=CreateDiagrams[process,g3TFM]
 g3TEvaluate[expr_,chart_]:=Cancel[Together[ConstructiveDiagrams`Private`residueEvaluateChart[expr,chart["Chart"],{}]]];
 g3TPermutationProofs=Flatten[Table[
  g3TProcess=proof["OrderedParticles"][[perm]];g3TChart=HEPCATMinimalAdjointCubicSources`Private`chart[proof["Branch"]];g3TData=g3TFull[g3TProcess];
- g3TTarget=Block[{ConstructiveDiagrams`Private`$colorFactorizationEnabled=True,ConstructiveDiagrams`Private`$colorExternalLegs=Range[3]},LookupAmplitude[MapIndexed[{#1,First[#2]}&,g3TProcess],g3TModel,False,Table[Unique["unusedSpin"],{4}]]];
+ g3TTarget=Block[{ConstructiveDiagrams`Private`$colorFactorizationEnabled=True,ConstructiveDiagrams`Private`$colorExternalLegs=Range[3]},RetreiveAmplitude[MapIndexed[{#1,First[#2]}&,g3TProcess],g3TModel,False,Table[Unique["unusedSpin"],{4}]]];
  g3TTargetScalar=Cancel[g3TColour[g3TTarget]/g3TF];g3TFeynScalar=Cancel[g3TColour[g3TData["Converted"]]/g3TF];
  g3TDifference=g3TEvaluate[g3TTargetScalar-g3TFeynScalar,g3TChart];
  g3TCheck["same derived coupling in full ordered helicity permutation "<>ToString[{proof["Helicities"],perm},InputForm],g3TDifference===0];
@@ -49,7 +49,7 @@ g3TWardProofs=Flatten[Table[
 g3TZeroProofs=Flatten[Table[
  g3TProcess=ConstantArray[g3TVector[[If[hel===1,2,3]]],3];g3TData=g3TFull[g3TProcess];g3TChart=HEPCATMinimalAdjointCubicSources`Private`chart[branch];
  g3TValue=g3TEvaluate[Cancel[g3TColour[g3TData["Converted"]]/g3TF],g3TChart];
- g3TNativeZero=Block[{ConstructiveDiagrams`Private`$colorFactorizationEnabled=True,ConstructiveDiagrams`Private`$colorExternalLegs=Range[3]},LookupAmplitude[MapIndexed[{#1,First[#2]}&,g3TProcess],g3TModel,False,Table[Unique["unusedSpin"],{4}]]];
+ g3TNativeZero=Block[{ConstructiveDiagrams`Private`$colorFactorizationEnabled=True,ConstructiveDiagrams`Private`$colorExternalLegs=Range[3]},RetreiveAmplitude[MapIndexed[{#1,First[#2]}&,g3TProcess],g3TModel,False,Table[Unique["unusedSpin"],{4}]]];
  g3TCheck["missing equal helicity cubic is exactly zero "<>ToString[{hel,branch},InputForm],g3TNativeZero===0&&g3TValue===0];
  <|"Helicity"->hel,"Branch"->branch,"ExactFullTemplateValue"->g3TValue,"MissingSourceRowIsZero"->(g3TNativeZero===0)|>,{hel,{1,-1}},{branch,{"AngleCollinear","SquareCollinear"}}],1];
 g3TOld=ModelParameter[g3TModel,"GG"];g3TNew=ModelParameter["renamedStrong","independentThreeGluonScope","Real"];

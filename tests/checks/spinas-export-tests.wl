@@ -42,7 +42,7 @@ seA[i_, j_] := SpinorChain[Spinor["Helicity", "Angle", i], Spinor["Helicity", "A
 seS[i_, j_] := SpinorChain[Spinor["Helicity", "Square", i], Spinor["Helicity", "Square", j]];
 seF[type_, i_, j_] := SpinorChain[Spinor["Spin", type, i], Spinor["Spin", type, j]];
 seD[labels_List] := PropDen[Mom[Multiparticle @@ labels], seMass];
-seLookup[process_List] := LookupAmplitude[Thread[{process, Range[Length[process]]}],
+seLookup[process_List] := RetreiveAmplitude[Thread[{process, Range[Length[process]]}],
   seModel, False, {seI, seJ, seK, seL}];
 seFourPP = seLookup[{"e", "E", "A.+", "A.+"}];
 sePath[name_] := FileNameJoin[{seDirectory, name}];

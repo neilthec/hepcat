@@ -47,7 +47,7 @@ ciCounterpart = {FileNameJoin[{root, "tests", "reference-models", "calchep"}], 2
 ciOriginalFiles = FileNameJoin[{First[ciCounterpart], # <> "2.mdl"}] & /@
   {"prtcls", "vars", "func", "lgrng"};
 ciOriginalBytes = BinaryReadList[#, "Byte"] & /@ ciOriginalFiles;
-ciLookup[process_List] := LookupAmplitude[Thread[{process, Range[Length[process]]}],
+ciLookup[process_List] := RetreiveAmplitude[Thread[{process, Range[Length[process]]}],
   ciModel, False, {ciI, ciJ, ciK, ciL}];
 ciRecords[processes_List] := {#, ciLookup[#]} & /@ processes;
 ciFourProcesses = Join[{"e", "E"}, #] & /@
@@ -186,7 +186,7 @@ If[Environment["HEPCAT_TEST_CALCHEP_FIVE_POINT"] =!= "0",
   ciFiveProcesses = Join[{"e", "E"}, Join[ConstantArray["A.+", 3 - #], ConstantArray["A.-", #]]] & /@ Range[0, 3];
   ciFiveEntries = ciRecords[ciFiveProcesses];
   check["all independent three-photon helicity sectors are present as known model amplitudes",
-    FreeQ[ciFiveEntries, _LookupAmplitude | _ConstructiveAmplitude]];
+    FreeQ[ciFiveEntries, _RetreiveAmplitude | _ConstructiveAmplitude]];
   ciFive = ciExport["calchep_five", ciFiveEntries, "Build" -> True];
   check["the five-point family compiles with all eight photon-helicity arrangements",
     AssociationQ[ciFive] && Length[Lookup[ciFive, "HelicityConfigurations", {}]] === 8];

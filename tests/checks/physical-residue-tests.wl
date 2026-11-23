@@ -935,18 +935,18 @@ prLookupExpected = 7 MomProd[5, 1]^2 + 2 Mandelstahm[1, 3] +
   SpinorChain[Spinor["Spin", "Upper", "Angle", 5, -1/2],
     Spinor["Spin", "Lower", "Angle", 1, 1/2]];
 check["lower-amplitude lookup preserves coefficients, powers and spin labels while embedding invariants",
-  LookupAmplitude[prLookupTags, prLookupModel, False, {prIx1, prIx2, prIx3, prIx4}] ===
+  RetreiveAmplitude[prLookupTags, prLookupModel, False, {prIx1, prIx2, prIx3, prIx4}] ===
     prLookupExpected];
 prNestedLookupModel = ReplacePart[prLookupModel, {2, 1, -1} ->
   Mom[Multiparticle[1, Multiparticle[2, Multiparticle[3, 4]], 2]]];
 check["nested multiparticles flatten completely after lower-amplitude embedding",
-  LookupAmplitude[prLookupTags, prNestedLookupModel, False, {prIx1, prIx2, prIx3, prIx4}] ===
+  RetreiveAmplitude[prLookupTags, prNestedLookupModel, False, {prIx1, prIx2, prIx3, prIx4}] ===
     Mom[Multiparticle[5, 1, 3, 2, 4, 6, 1]]];
 prReferenceLookupModel = ReplacePart[prLookupModel, {2} -> {
   Join[ConstantArray["s", 10], {1,
     SpinorChain[Spinor["Xi", "Angle", 10], Spinor["Helicity", "Square", 10]]}]}];
 check["auxiliary Xi counters are not relabeled when physical leg ten changes",
-  LookupAmplitude[Thread[{ConstantArray["s", 10], Join[Range[9], {12}]}],
+  RetreiveAmplitude[Thread[{ConstantArray["s", 10], Join[Range[9], {12}]}],
     prReferenceLookupModel, False, {prIx1, prIx2, prIx3, prIx4}] ===
       SpinorChain[Spinor["Xi", "Angle", 10], Spinor["Helicity", "Square", 12]]];
 

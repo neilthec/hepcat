@@ -56,7 +56,7 @@ check["unfinished or failed affine-direction classification is not mistaken for 
 fpModel=ReadModel[FileNameJoin[{root,"models"}],3];fpLower=ReadModel[FileNameJoin[{root,"models"}],4];
 fpFeynman=ReadModel[FileNameJoin[{root,"tests","reference-models","calchep"}],2];
 fpProcess={"e","E","A.+","A.+"};fpMasses=Thread[(Mass/@Range[4])->ConstructiveDiagrams`Private`constructExternalMasses[fpProcess,fpModel]];
-fpKnown=Block[{ConstructiveDiagrams`Private`$colorFactorizationEnabled=False},LookupAmplitude[MapIndexed[{#1,First[#2]}&,fpProcess],fpLower,False,Table[Unique["spin"],{4}]]];
+fpKnown=Block[{ConstructiveDiagrams`Private`$colorFactorizationEnabled=False},RetreiveAmplitude[MapIndexed[{#1,First[#2]}&,fpProcess],fpLower,False,Table[Unique["spin"],{4}]]];
 (* Resolve known lower-model parameters by declared name into the model used
    for this controlled constructor, as the ordinary public path does. *)
 fpKnown=fpKnown/.(p_ModelParameter:>ModelParameter[fpModel,ModelParameterName[p]]);

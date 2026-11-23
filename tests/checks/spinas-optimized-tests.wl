@@ -34,7 +34,7 @@ soMass = ModelParameter[soModel, "Me"]; soCharge = ModelParameter[soModel, "EE"]
 soSpinas = Replace[Environment["HEPCAT_SPINAS_DIRECTORY"],
   $Failed | "" -> FileNameJoin[{ParentDirectory[root], "spinas"}]];
 soRules = {"Me" -> 1, "EE" -> 1/3};
-soLookup[particles_List] := LookupAmplitude[MapIndexed[{#1, First[#2]} &, particles],
+soLookup[particles_List] := RetreiveAmplitude[MapIndexed[{#1, First[#2]} &, particles],
   soModel, False, {soI, soJ, soK, soL}];
 soPath[name_String] := FileNameJoin[{soDirectory, name}];
 soArray[items_List] := "{{" <> StringRiffle[items, ","] <> "}}";

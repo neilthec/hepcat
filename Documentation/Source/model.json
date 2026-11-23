@@ -222,7 +222,7 @@
     ],
     "related": [
       "ReadModel",
-      "LookupAmplitude",
+      "RetreiveAmplitude",
       "AppendModelAmplitudes"
     ],
     "guide": "ModelsAndParameters",
@@ -354,14 +354,14 @@
       "Use this function after obtaining and checking a new amplitude. For example, once a five-point result has been established, storing it in a model makes it available when [FactorizationAmplitudeChannels](paclet:HEPCAT/ref/FactorizationAmplitudeChannels) builds six-point channels. The function writes the expressions you supply; it does not derive or validate their physics.",
       "Give the target directory, model number and a list of entries. An entry `{particles, amplitude}` writes the complete expression. The longer form `{particles, factor, amplitudeOverFactor}` separates a common overall factor from the expression stored after it. The particle list uses the same all-ingoing order and names as the expression.",
       "The target model supplies the particle declarations and parameter names. When taking a result from a different model, replace its model-local [ModelParameter](paclet:HEPCAT/ref/ModelParameter) objects with the corresponding parameters of the target model before writing. Matching printed names do not by themselves merge the two parameter scopes.",
-      "Complete amplitudes may retain their explicit [ColorDelta](paclet:HEPCAT/ref/ColorDelta), [ColorGenerator](paclet:HEPCAT/ref/ColorGenerator), [ColorStructure](paclet:HEPCAT/ref/ColorStructure) and [ColorTrace](paclet:HEPCAT/ref/ColorTrace) tensors. Model text preserves external [ColorIndex](paclet:HEPCAT/ref/ColorIndex) slots and dimensioned internal contraction indices. [LookupAmplitude](paclet:HEPCAT/ref/LookupAmplitude) relabels the external color slots and gives saved internal sums a fresh namespace for each lookup. Sewing joins the cut color index to the other lower-point amplitude. Cubic rows with implicit color continue to obtain their tensor from the model particle declarations.",
+      "Complete amplitudes may retain their explicit [ColorDelta](paclet:HEPCAT/ref/ColorDelta), [ColorGenerator](paclet:HEPCAT/ref/ColorGenerator), [ColorStructure](paclet:HEPCAT/ref/ColorStructure) and [ColorTrace](paclet:HEPCAT/ref/ColorTrace) tensors. Model text preserves external [ColorIndex](paclet:HEPCAT/ref/ColorIndex) slots and dimensioned internal contraction indices. [RetreiveAmplitude](paclet:HEPCAT/ref/RetreiveAmplitude) relabels the external color slots and gives saved internal sums a fresh namespace for each lookup. Sewing joins the cut color index to the other lower-point amplitude. Cubic rows with implicit color continue to obtain their tensor from the model particle declarations.",
       "The result reports the destination file and the numbers of added and skipped entries. An identical existing entry is skipped. A conflicting expression for the same particle multiset rejects the batch instead of silently replacing the old result. Every proposed row must be readable again before the amplitude file is replaced.",
       "Existing rows and comments are preserved. Reload with [ReadModel](paclet:HEPCAT/ref/ReadModel) to use the new data. First try a temporary copy of a model, as in the example, and use [CheckAmplitudes](paclet:HEPCAT/ref/CheckAmplitudes) and any independent comparisons appropriate to the process before promoting a result to factorization input."
     ],
     "examples": [
       {
         "description": "Append a known four-point result to a temporary copy of the three-point QED model.",
-        "input": "qedModel = ReadModel[modelDirectory, 3];\nknownQEDModel = ReadModel[modelDirectory, 4];\ntemporaryModelDirectory = CreateDirectory[];\nScan[CopyFile[FileNameJoin[{modelDirectory, # <> \"3.mdl\"}], FileNameJoin[{temporaryModelDirectory, # <> \"3.mdl\"}]] &, {\"prtcls\", \"amps\", \"vars\", \"func\"}];\nparticles = {\"e\", \"E\", \"A.+\", \"A.+\"};\nknownAmplitude = LookupAmplitude[Thread[{particles, Range[4]}], knownQEDModel, False, {i1, i2, i3, i4}];\n(* Use parameters declared in the target copy. *)\ncopiedModel = ReadModel[temporaryModelDirectory, 3];\nparameterMap = Thread[(First /@ ModelParameterRules[knownQEDModel]) -> (ModelParameter[copiedModel, ModelParameterName[#]] & /@ (First /@ ModelParameterRules[knownQEDModel]))];\nAppendModelAmplitudes[temporaryModelDirectory, 3, {{particles, knownAmplitude /. parameterMap}}]",
+        "input": "qedModel = ReadModel[modelDirectory, 3];\nknownQEDModel = ReadModel[modelDirectory, 4];\ntemporaryModelDirectory = CreateDirectory[];\nScan[CopyFile[FileNameJoin[{modelDirectory, # <> \"3.mdl\"}], FileNameJoin[{temporaryModelDirectory, # <> \"3.mdl\"}]] &, {\"prtcls\", \"amps\", \"vars\", \"func\"}];\nparticles = {\"e\", \"E\", \"A.+\", \"A.+\"};\nknownAmplitude = RetreiveAmplitude[Thread[{particles, Range[4]}], knownQEDModel, False, {i1, i2, i3, i4}];\n(* Use parameters declared in the target copy. *)\ncopiedModel = ReadModel[temporaryModelDirectory, 3];\nparameterMap = Thread[(First /@ ModelParameterRules[knownQEDModel]) -> (ModelParameter[copiedModel, ModelParameterName[#]] & /@ (First /@ ModelParameterRules[knownQEDModel]))];\nAppendModelAmplitudes[temporaryModelDirectory, 3, {{particles, knownAmplitude /. parameterMap}}]",
         "evaluate": false
       },
       {
@@ -373,7 +373,7 @@
     "related": [
       "ReadModel",
       "PlainText",
-      "LookupAmplitude",
+      "RetreiveAmplitude",
       "CheckAmplitudes",
       "FactorizationAmplitudeChannels"
     ],
@@ -557,40 +557,41 @@
     ],
     "related": [
       "FactorizationAmplitudeChannels",
-      "LookupAmplitude",
+      "RetreiveAmplitude",
       "CreateDiagrams"
     ],
     "guide": "DiagramsAndFactorization",
     "visibility": "internal"
   },
   {
-    "name": "LookupAmplitude",
+    "name": "RetreiveAmplitude",
+    "retiredNames": ["LookupAmplitude"],
     "summary": "Retrieve a stored lower-point amplitude with a specified particle numbering.",
     "syntaxes": [
       {
-        "input": "LookupAmplitude[particles, model]",
+        "input": "RetreiveAmplitude[particles, model]",
         "description": "Retrieve a saved amplitude for an ordered list of all-incoming particle names."
       },
       {
-        "input": "LookupAmplitude[taggedParticles, model, rightSide, spinIndices]",
+        "input": "RetreiveAmplitude[taggedParticles, model, rightSide, spinIndices]",
         "description": "Match particle names, multiply the stored factor, and relabel typed particle slots."
       }
     ],
     "details": [
       "Read the model once with [ReadModel](paclet:HEPCAT/ref/ReadModel), then pass an ordered list of particle names, including any helicity suffixes. The result includes the stored overall factor. Models 4 and 5 contain the single-flavor QED catalog through nine external legs with the physical- and spurious-pole choices, respectively.",
       "An exact row ordering has priority. Otherwise HEPCAT finds the unique row with the same particle and helicity counts and assigns successive occurrences of each species to successive positions. It relabels external spinors, momenta and explicit color slots. Coefficients, exponents and independent spin indices keep their stored values.",
-      "The two-argument form returns Missing for an absent row, the number zero for a stored zero, and Failure for an ambiguous match or a Feynman rules model. To calculate an amplitude from diagrams and factorization, use [ConstructAmplitude](paclet:HEPCAT/ref/ConstructAmplitude).",
+      "A constructive model lists its nonzero amplitudes. An absent row gives 0. An ambiguous match or a Feynman rules model gives Failure. To calculate an amplitude from diagrams and factorization, use [ConstructAmplitude](paclet:HEPCAT/ref/ConstructAmplitude).",
       "The four-argument form labels legs explicitly for sewing. The rightSide flag and four spin-index names control the internal leg. This form returns zero for an absent amplitude, as required by [FactorizationAmplitudeChannels](paclet:HEPCAT/ref/FactorizationAmplitudeChannels)."
     ],
     "examples": [
       {
         "description": "Retrieve the QED positive-helicity three-point amplitude.",
-        "input": "qedModel = ReadModel[modelDirectory, 3];\nLookupAmplitude[{\"e\", \"E\", \"A.+\"}, qedModel]",
+        "input": "qedModel = ReadModel[modelDirectory, 3];\nRetreiveAmplitude[{\"e\", \"E\", \"A.+\"}, qedModel]",
         "evaluate": true
       },
       {
         "description": "An absent lower-point amplitude contributes zero during sewing.",
-        "input": "qedModel = ReadModel[modelDirectory, 3];\nLookupAmplitude[{{\"e\", 1}, {\"e\", 2}, {\"e\", 3}}, qedModel, False, {i1, i2, i3, i4}]",
+        "input": "qedModel = ReadModel[modelDirectory, 3];\nRetreiveAmplitude[{{\"e\", 1}, {\"e\", 2}, {\"e\", 3}}, qedModel, False, {i1, i2, i3, i4}]",
         "evaluate": true,
         "expected": "0"
       }
@@ -633,7 +634,7 @@
       }
     ],
     "related": [
-      "LookupAmplitude",
+      "RetreiveAmplitude",
       "PrepareAmplitudes",
       "CompleteFactorization",
       "CheckAmplitudes"
@@ -1221,7 +1222,7 @@
     "examples": [
       {
         "description": "Check a known QED four-point amplitude against channels from three-point vertices.",
-        "input": "qedModel = ReadModel[modelDirectory, 3];\nknownQEDModel = ReadModel[modelDirectory, 4];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\namplitude = LookupAmplitude[Thread[{process, Range[4]}], knownQEDModel, False, {i1, i2, i3, i4}];\nchannels = FactorizationAmplitudeChannels[process, qedModel];\nCheckAmplitudes[amplitude, channels, knownQEDModel, \"RandomSeed\" -> 314159]",
+        "input": "qedModel = ReadModel[modelDirectory, 3];\nknownQEDModel = ReadModel[modelDirectory, 4];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\namplitude = RetreiveAmplitude[Thread[{process, Range[4]}], knownQEDModel, False, {i1, i2, i3, i4}];\nchannels = FactorizationAmplitudeChannels[process, qedModel];\nCheckAmplitudes[amplitude, channels, knownQEDModel, \"RandomSeed\" -> 314159]",
         "evaluate": false
       },
       {

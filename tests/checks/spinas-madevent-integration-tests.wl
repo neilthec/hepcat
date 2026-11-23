@@ -55,7 +55,7 @@ smeiModel = ReadModel[FileNameJoin[{smeiRoot, "models"}], 4];
 smeiModelBefore = smeiModel;
 smeiProcesses = Join[{"e", "E"}, #] & /@
   {{"A.+", "A.+"}, {"A.+", "A.-"}, {"A.-", "A.+"}, {"A.-", "A.-"}};
-smeiFamily = {#, LookupAmplitude[Thread[{#, Range[4]}], smeiModel,
+smeiFamily = {#, RetreiveAmplitude[Thread[{#, Range[4]}], smeiModel,
     False, {smeiI, smeiJ, smeiK, smeiL}]} & /@ smeiProcesses;
 Print["Building the public eeAA SPINAS export and its MadEvent numerical bridge."];
 smeiWrite[name_String, entries_] := WriteSPINASProcess[FileNameJoin[{smeiTemporary, name}],

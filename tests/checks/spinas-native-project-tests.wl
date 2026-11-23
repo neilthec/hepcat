@@ -36,7 +36,7 @@ npModel = ReadModel[FileNameJoin[{root, "models"}], 4];
 npMass = ModelParameter[npModel, "Me"]; npCharge = ModelParameter[npModel, "EE"];
 npRules = {"Me" -> 1, "EE" -> 1/3};
 npBefore = npModel;
-npLookup[process_List] := LookupAmplitude[Thread[{process, Range[Length[process]]}],
+npLookup[process_List] := RetreiveAmplitude[Thread[{process, Range[Length[process]]}],
   npModel, False, {npI, npJ, npK, npL}];
 npFamily = {#, npLookup[#]} & /@ (Join[{"e", "E"}, #] & /@
   {{"A.+", "A.+"}, {"A.+", "A.-"}, {"A.-", "A.-"}});

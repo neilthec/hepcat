@@ -108,7 +108,7 @@ HEPCATCovariantCurrentSources`Private`minimalVectorVertexMatch[row_List,model_Li
  If[FailureQ[vConverted]||!FreeQ[vConverted,_LorentzMetric|_LorentzMomentum|_PolarizationVector],Return[Failure["MinimalVVVConversionIncomplete",<||>]]];
  vIndices=Table[Unique["threePointVectorSlot"],{4}];
  vTarget=Block[{ConstructiveDiagrams`Private`$colorFactorizationEnabled=False},
-  LookupAmplitude[MapIndexed[{#1,First[#2]}&,vParts],ReplacePart[model,2->{row}],False,vIndices]];
+  RetreiveAmplitude[MapIndexed[{#1,First[#2]}&,vParts],ReplacePart[model,2->{row}],False,vIndices]];
  vCoherent=HEPCATCovariantContactCalibration`Private`coherent[vConverted];vExt=Thread[(Mass/@Range[3])->vMasses];
  vTarget=ConstructiveDiagrams`expandExternalXFactors[vTarget,3]/.vExt;
  vWeights=ConstructiveDiagrams`Private`completionExternalSpinWeights[#,vExt]&/@{vTarget,vCoherent};
@@ -192,7 +192,7 @@ HEPCATCovariantCurrentSources`Private`liftVertex[row_List,model_List]:=Module[
  If[AnyTrue[hands,FailureQ],Return[First[Select[hands,FailureQ]]]];
  pol[leg_]:=PolarizationVector[leg,LorentzIndex[leg],masses[[leg]],Automatic];
  target=Block[{ConstructiveDiagrams`Private`$colorFactorizationEnabled=False},
-  LookupAmplitude[MapIndexed[{#1,First[#2]}&,canonical],ReplacePart[model,2->{row}],False,Table[Unique["vertexSpin"],{4}]]];
+  RetreiveAmplitude[MapIndexed[{#1,First[#2]}&,canonical],ReplacePart[model,2->{row}],False,Table[Unique["vertexSpin"],{4}]]];
  Switch[type,
  "FermionFermionMassiveVector",
   word=DiracChain[FermionBar[2,masses[[2]],hands[[2]]],DiracWord[DiracGamma[LorentzIndex[3]]],FermionKet[1,masses[[1]],hands[[1]]]];

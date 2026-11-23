@@ -49,7 +49,7 @@ If[!AllTrue[{ffCH,ffMG},Lookup[#,"Status",""]==="AVAILABLE" &&
     Sort[Lookup[#,"AllowedParticlePDGs",{}]]==={11,22}&],
   Print["Explicit electron/photon-only CalcHEP and MadGraph models are required."]; Quit[1]];
 Get[FileNameJoin[{ffSource,"HEPCAT.wl"}]];
-ffLookup[particles_,model_] := LookupAmplitude[MapIndexed[{#1,First[#2]}&,particles],
+ffLookup[particles_,model_] := RetreiveAmplitude[MapIndexed[{#1,First[#2]}&,particles],
   model,False,{ffSpin1,ffSpin2,ffSpin3,ffSpin4}];
 Do[
  ffModelNumber = If[ffPreference==="AllPhysical",4,5];
@@ -88,7 +88,7 @@ Do[
       InputForm[KeyTake[ffManifest,{"CalcHEPValidation","MadGraphValidation"}]]];Quit[1]];
   Export[FileNameJoin[{ffDirectory,"benchmark-amplitudes.json"}],<|
     "PolePreference"->ffPreference,"Photons"->ffPhotons,"ModelNumber"->ffModelNumber,
-    "AmplitudeSource"->"Unchanged saved complete amplitudes from ReadModel and LookupAmplitude",
+    "AmplitudeSource"->"Unchanged saved complete amplitudes from ReadModel and RetreiveAmplitude",
     "ModelFilesSHA256"->ffModelHashes,"InputHelicitySectors"->ffRecords,
     "CompletePhotonHelicityCount"->2^ffPhotons,"Precision"->"Double","CodeStyle"->"Optimized",
     "HelicitySymmetry"->"Conjugation","HelicitySymmetryScope"->"Declared vectorlike tree-level QED with real parameters; complete massive-spin sum",

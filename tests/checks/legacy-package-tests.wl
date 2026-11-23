@@ -81,7 +81,7 @@ legacyPublicFunctions = {
   "ReadModel", "ReadVariables", "ReadFunctions", "ReadParticles", "ParticleMass",
   "ReadAmplitudes", "ConvertAmplitude", "AddOppositeHelicityAmplitudes",
   "ConstructiveDiagram", "SChannelDiagram", "TChannelDiagram", "UChannelDiagram",
-  "FactorizationPartitions", "LookupAmplitude", "ExpandXFactors", "FactorizationAmplitudeChannels",
+  "FactorizationPartitions", "RetreiveAmplitude", "ExpandXFactors", "FactorizationAmplitudeChannels",
   "SimplifyFactorizationChannels", "ExpandMomHatAlt", "SumResiduesAlt", "UnHatSpinors",
   "CreateDiagrams", "CreateArrowDiagram", "CreateArrowDiagrams", "diagramAmplitude", "DiagramAmplitudes"
 };

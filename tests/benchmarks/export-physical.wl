@@ -78,7 +78,7 @@ benchmarkModelDirectory = FileNameJoin[{benchmarkRepository, "models"}];
 benchmarkModel = ReadModel[benchmarkModelDirectory, benchmarkModelNumber];
 If[!ListQ[benchmarkModel], Print["Could not load QED factorization model ", benchmarkModelNumber, "."]; Quit[1]];
 benchmarkMass = ModelParameter[benchmarkModel, "Me"];
-benchmarkLookup[particles_] := LookupAmplitude[
+benchmarkLookup[particles_] := RetreiveAmplitude[
   MapIndexed[{#1, First[#2]} &, particles], benchmarkModel, False,
   {benchmarkSpin1, benchmarkSpin2, benchmarkSpin3, benchmarkSpin4}];
 benchmarkPhysicalPoleQ[PropDen[Mom[Multiparticle[labels__Integer]], mass_], legs_Integer] := Module[{cut = {labels}},
@@ -142,7 +142,7 @@ Do[
     "CodeStyle" -> benchmarkCodeStyle, "HelicitySymmetry" -> benchmarkHelicitySymmetryName,
     "HelicitySymmetryScope" -> "Declared tree-level vectorlike QED with real parameters; complete massive-spin sums",
     "AmplitudeSource" -> "ReadModel[models," <> ToString[benchmarkModelNumber] <>
-      "] and LookupAmplitude; unchanged saved complete amplitudes",
+      "] and RetreiveAmplitude; unchanged saved complete amplitudes",
     "ModelNumber" -> benchmarkModelNumber,
     "ModelFilesSHA256" -> benchmarkFileHashes,
     "InputHelicitySectors" -> Select[benchmarkRecords, Length[#["Particles"]] === photons + 2 &],

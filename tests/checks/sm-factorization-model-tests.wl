@@ -58,7 +58,7 @@ check["all supported trees are present without redundant zero rows",
  Sort[Sort[parts[#]]&/@fours]===Sort[Complement[tree,zeros]]];
 check["unlisted helicity zeros use the ordinary missing-amplitude semantics",
  Select[fours,MemberQ[zeros,Sort[parts[#]]]&]==={} && Length[zeros]===4 &&
- AllTrue[zeros, LookupAmplitude[Thread[{#,Range[4]}],full,False,{i,j,k,l}]===0&]];
+ AllTrue[zeros, RetreiveAmplitude[Thread[{#,Range[4]}],full,False,{i,j,k,l}]===0&]];
 check["complete rows contain no leftover reference spinors or x factors",
  FreeQ[fours,Spinor["Xi",___]|_xFactor|_xTildeFactor]];
 check["all parameters belong to the returned model",

@@ -170,8 +170,8 @@ model of particles and Feynman-rule vertices read from CalcHEP model tables."}\
 contracted Feynman amplitude in HEPCAT angle/square spinor notation while \
 retaining internal virtualities."}], "GuideText"],
   Cell["L", "GuideFunctionsSubsection"],
-  Cell[TextData[{ButtonBox["LookupAmplitude", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/LookupAmplitude"], ": ", "Retrieve a \
+  Cell[TextData[{ButtonBox["RetreiveAmplitude", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/RetreiveAmplitude"], ": ", "Retrieve a \
 stored lower-point amplitude with a specified particle numbering."}],
    "GuideText"], Cell[TextData[{ButtonBox["LorentzIndex",
       BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/ref/LorentzIndex"],

@@ -731,7 +731,7 @@ partitions
 
 
 (* ::Subsubsection::Closed:: *)
-(*LookupAmplitude[taggedParticles_List,model_,rightSide_Boolean]*)
+(*RetreiveAmplitude[taggedParticles_List,model_,rightSide_Boolean]*)
 
 
 (* ::Input::Initialization:: *)
@@ -744,15 +744,15 @@ ConstructiveDiagrams`Private`amplitudeParticleLabelRules[tagged_List,row_List]:=
   rules
 ];
 
-LookupAmplitude::usage = "LookupAmplitude[particles, model] returns the stored factor times its amplitude in the requested all-incoming leg order, or Missing if absent. LookupAmplitude[taggedParticles, model, rightSide, spinIndices] supplies a labeled lower amplitude for sewing.";
+RetreiveAmplitude::usage = "RetreiveAmplitude[particles, model] returns the stored factor times its amplitude in the requested all-incoming leg order, or 0 if absent. RetreiveAmplitude[taggedParticles, model, rightSide, spinIndices] supplies a labeled lower amplitude for sewing.";
 
-LookupAmplitude[process : {___String}, model : {_List, _List, _List, _List}] := Module[
+RetreiveAmplitude[process : {___String}, model : {_List, _List, _List, _List}] := Module[
   {rows, words, key = Sort[process], positions, row, tagged, rules, value},
   rows = model[[2]];
   words = DeleteCases[Drop[#, -2], ""] & /@ rows;
   positions = Flatten[Position[words, process, {1}, Heads -> False]];
   If[positions === {}, positions = Flatten[Position[Sort /@ words, key, {1}, Heads -> False]]];
-  If[positions === {}, Return[Missing["AmplitudeNotFound", process]]];
+  If[positions === {}, Return[0]];
   If[Length[positions] != 1, Return[Failure["AmbiguousModelAmplitude", <|"Particles" -> process|>]]];
   row = rows[[First[positions]]];
   value = row[[-2]] row[[-1]];
@@ -762,7 +762,7 @@ LookupAmplitude[process : {___String}, model : {_List, _List, _List, _List}] := 
   ConstructiveDiagrams`Private`relabelModelKinematics[value, rules] /.
     ColorIndex[i_Integer] :> ColorIndex[i /. rules]
 ];
-LookupAmplitude[process : {___String}, _FeynmanModel] :=
+RetreiveAmplitude[process : {___String}, _FeynmanModel] :=
   Failure["ConstructiveModelRequired", <|"Particles" -> process|>];
 
 ConstructiveDiagrams`Private`relabelModelKinematics[expression_,replacements_] :=
@@ -792,7 +792,7 @@ expression/.{
 }
 ];
 
-LookupAmplitude[taggedParticles_List,model_,rightSide_,{i1_,i2_,i3_,i4_}]:=Module[{amp=0,i,j,k,replacements,doubleSpin,indices,buildReplacements,explicitColor},
+RetreiveAmplitude[taggedParticles_List,model_,rightSide_,{i1_,i2_,i3_,i4_}]:=Module[{amp=0,i,j,k,replacements,doubleSpin,indices,buildReplacements,explicitColor},
 buildReplacements[i_]:=ConstructiveDiagrams`Private`amplitudeParticleLabelRules[
   taggedParticles,model[[2,i]]];
 (*End helper function*)
@@ -844,11 +844,11 @@ amp
 
 
 (* ::Input:: *)
-(*(*LookupAmplitude[{{"E",1},{"A.+",2},{"e",Multiparticle[3,4]}},sm,True,{i1,i2,i3,i4}]*)*)
+(*(*RetreiveAmplitude[{{"E",1},{"A.+",2},{"e",Multiparticle[3,4]}},sm,True,{i1,i2,i3,i4}]*)*)
 
 
 (* ::Input:: *)
-(*(*LookupAmplitude[{{"A.-",3},{"e",4},{"E",Multiparticle[1,2]}},sm,False,{i1,i2,i3,i4}]*)*)
+(*(*RetreiveAmplitude[{{"A.-",3},{"e",4},{"E",Multiparticle[1,2]}},sm,False,{i1,i2,i3,i4}]*)*)
 
 
 (* ::Subsubsection::Closed:: *)
@@ -904,7 +904,7 @@ expandExternalXFactors[newExp,n]
 
 
 (* ::Text:: *)
-(*This function uses FactorizationPartitions to create the partitions and then calls LookupAmplitude to see if each side is nonzero.  If they are, it sews them together.*)
+(*This function uses FactorizationPartitions to create the partitions and then calls RetreiveAmplitude to see if each side is nonzero.  If they are, it sews them together.*)
 
 
 (* ::Input::Initialization:: *)
@@ -948,8 +948,8 @@ supportA={}; supportB={};
 channel[[1]]=Append[channel[[1]],{model[[1,j,2]],momenta1}];
 channel[[2]]=Append[channel[[2]],{model[[1,j,3]],momenta2}];
 (*Print[channel];*)
-amp1=ReverseMomentum[LookupAmplitude[channel[[1]],model,False,{i1,i2,i3,i4}],momenta1]//.xFactorReverseProtect/.momenta1->momenta2//.xFactorReverseProtectInverse;
-If[amp1=!=0,amp2=LookupAmplitude[channel[[2]],model,True,{i1,i2,i3,i4}]];
+amp1=ReverseMomentum[RetreiveAmplitude[channel[[1]],model,False,{i1,i2,i3,i4}],momenta1]//.xFactorReverseProtect/.momenta1->momenta2//.xFactorReverseProtectInverse;
+If[amp1=!=0,amp2=RetreiveAmplitude[channel[[2]],model,True,{i1,i2,i3,i4}]];
 If[amp1=!=0&&amp2=!=0,(*Print[amp1];Print[amp2];*)
 supportA=MapThread[ConstructiveDiagrams`Private`factorizationThreePointSupport[#1,#2,model]&,
   {{amp1,amp2},channel}];
@@ -969,8 +969,8 @@ channel=partitions[[i]];
 channel[[1]]=Append[channel[[1]],{model[[1,j,3]],momenta1}];
 channel[[2]]=Append[channel[[2]],{model[[1,j,2]],momenta2}];
 (*Print[channel];*)
-amp1=ReverseMomentum[LookupAmplitude[channel[[1]],model,False,{i1,i2,i3,i4}],momenta1]//.xFactorReverseProtect/.momenta1->momenta2//.xFactorReverseProtectInverse;
-If[amp1=!=0,amp2=LookupAmplitude[channel[[2]],model,True,{i1,i2,i3,i4}]];
+amp1=ReverseMomentum[RetreiveAmplitude[channel[[1]],model,False,{i1,i2,i3,i4}],momenta1]//.xFactorReverseProtect/.momenta1->momenta2//.xFactorReverseProtectInverse;
+If[amp1=!=0,amp2=RetreiveAmplitude[channel[[2]],model,True,{i1,i2,i3,i4}]];
 If[amp1=!=0&&amp2=!=0,(*Print[amp1];Print[amp2];*)
 supportB=MapThread[ConstructiveDiagrams`Private`factorizationThreePointSupport[#1,#2,model]&,
   {{amp1,amp2},channel}];
@@ -18595,7 +18595,7 @@ completionHECubicBilinearSource[normalized_Association, model_List, choice_, sec
     MemberQ[photonNames, #[[3]]] && Take[#, 2] === species &];
   vectorCoupling = constructVectorCoupling[vectorRows, species, photonNames];
   If[MissingQ[vectorCoupling], Return[Missing["NonminimalCubicVectorVertex"]]];
-  target = Block[{$colorFactorizationEnabled = False}, LookupAmplitude[
+  target = Block[{$colorFactorizationEnabled = False}, RetreiveAmplitude[
     {{First[species], 1}, {Last[species], 2},
       {SelectFirst[scalar[[{2, 3}]], MemberQ[process, #] &], 3}}, sourceModel, False,
     {Unique["cubicSpin"], Unique["cubicSpin"], Unique["cubicSpin"], Unique["cubicSpin"]}]];
@@ -23192,7 +23192,7 @@ constructVectorLineForm[diagrams_List, process_List, model_List, external_List,
     #[[5]] === 2 && #[[6]] === 0 && #[[8]] === 1 &];
   If[!AllTrue[process[[null]], vector], Return[Missing["UnsupportedChiralLine"]]];
   vertexCoupling[name_] := Module[{body, targets, factors, found},
-    body = LookupAmplitude[{{fermion[[2]], 1}, {fermion[[3]], 2}, {name, 3}}, model,
+    body = RetreiveAmplitude[{{fermion[[2]], 1}, {fermion[[3]], 2}, {name, 3}}, model,
       False, Table[Unique["chiralSpin"], {4}]];
     targets = {xFactor[1, 2] SpinorChain[Spinor["Spin", "Angle", 1], Spinor["Spin", "Angle", 2]],
       xTildeFactor[1, 2] SpinorChain[Spinor["Spin", "Square", 1], Spinor["Spin", "Square", 2]]};

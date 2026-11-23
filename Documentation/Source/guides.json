@@ -185,7 +185,7 @@
       "Use [ReadModel](paclet:HEPCAT/ref/ReadModel) as the entry point for a model directory. It reads the related model tables together, resolves their parameter names consistently, and returns an object that you pass to subsequent functions. The component-file readers are implementation details of that operation.",
       "You can keep several models in one Mathematica session. A parameter such as the electron mass belongs to its model; loading a second model does not overwrite a global electron-mass value. [ModelParameter](paclet:HEPCAT/ref/ModelParameter), [ModelFunction](paclet:HEPCAT/ref/ModelFunction) and [ModelParameterRules](paclet:HEPCAT/ref/ModelParameterRules) let you inspect those symbolic quantities and their numerical assignments.",
       "The distinction between an interaction and a complete amplitude matters. Use elementary interactions for [CreateDiagrams](paclet:HEPCAT/ref/CreateDiagrams). Use complete known amplitudes for [FactorizationAmplitudeChannels](paclet:HEPCAT/ref/FactorizationAmplitudeChannels). For example, a five-point factorization channel can require a known four-point amplitude, even though the five-point diagrams are built from three-point vertices.",
-      "After obtaining and checking a new result, [AppendModelAmplitudes](paclet:HEPCAT/ref/AppendModelAmplitudes) can write it to the factorization model for a later higher-point calculation. Check the particle order, helicities and overall sign before saving. [LookupAmplitude](paclet:HEPCAT/ref/LookupAmplitude) retrieves a stored expression for inspection or export."
+      "After obtaining and checking a new result, [AppendModelAmplitudes](paclet:HEPCAT/ref/AppendModelAmplitudes) can write it to the factorization model for a later higher-point calculation. Check the particle order, helicities and overall sign before saving. [RetreiveAmplitude](paclet:HEPCAT/ref/RetreiveAmplitude) retrieves a stored expression for inspection or export."
     ],
     "sections": [
       {
@@ -215,7 +215,7 @@
         "title": "Known Amplitudes and Text Input",
         "description": "",
         "functions": [
-          "LookupAmplitude",
+          "RetreiveAmplitude",
           "ConvertStringAmplitude",
           "ConvertStringHattedAmplitude"
         ],
@@ -266,7 +266,7 @@
         "description": "",
         "functions": [
           "FactorizationAmplitudeChannels",
-          "LookupAmplitude",
+          "RetreiveAmplitude",
           "PhysicalPoleResidue"
         ],
         "guides": [],
@@ -727,7 +727,7 @@
         "title": "L",
         "description": "",
         "functions": [
-          "LookupAmplitude",
+          "RetreiveAmplitude",
           "LorentzIndex",
           "LorentzMetric",
           "LorentzMomentum",

@@ -229,7 +229,7 @@ check["a large fermion group cannot consume the shared budget before boson excha
 fsRealModel=ReadModel[FileNameJoin[{root,"models"}],4];
 fsDiagramModel=ReadModel[FileNameJoin[{root,"models"}],3];
 fsFeynmanModel=ReadModel[FileNameJoin[{root,"tests", "reference-models", "calchep"}],2];
-fsLookup[particles_List] := LookupAmplitude[MapIndexed[{#1,First[#2]}&,particles],
+fsLookup[particles_List] := RetreiveAmplitude[MapIndexed[{#1,First[#2]}&,particles],
   fsRealModel,False,{fsSpin1,fsSpin2,fsSpin3,fsSpin4}];
 fsCanonical[expression_,n_Integer] := ConstructiveDiagrams`Private`canonicalChains[
   ConstructiveDiagrams`Private`residueCanonicalPropagators[expression,Range[n]]];

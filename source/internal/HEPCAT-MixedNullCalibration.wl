@@ -154,7 +154,7 @@ HEPCATMasslessVectorCalibration`Private`calibrate[model_List,lower_List,parts_Li
    LorentzMetric[LorentzIndex[1],LorentzIndex[3]]LorentzMetric[LorentzIndex[2],LorentzIndex[4]],
    LorentzMetric[LorentzIndex[1],LorentzIndex[4]]LorentzMetric[LorentzIndex[2],LorentzIndex[3]]};
   Do[word=meta["HelicityWords"][[wordIndex]];knownRows=meta["KnownLowerRowsByWord"][[wordIndex]];
-   known=If[knownRows==={},0,Block[{ConstructiveDiagrams`Private`$colorFactorizationEnabled=False},LookupAmplitude[MapIndexed[{#1,First[#2]}&,word],ReplacePart[lower,2->knownRows],False,Table[Unique["lowerVectorSpin"],{4}]]]];
+   known=If[knownRows==={},0,Block[{ConstructiveDiagrams`Private`$colorFactorizationEnabled=False},RetreiveAmplitude[MapIndexed[{#1,First[#2]}&,word],ReplacePart[lower,2->knownRows],False,Table[Unique["lowerVectorSpin"],{4}]]]];
    transport=HEPCATCovariantContactCalibration`Private`parameterTransport[{known,meta["LowerParticleRows"][[All,6]]},model,lower];
    If[FailureQ[transport],fail["LowerParameterTransportFailed",<|"Report"->transport|>]];
    known=First[transport["Expression"]];

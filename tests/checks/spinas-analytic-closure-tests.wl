@@ -13,7 +13,7 @@ acSM=ReadModel[FileNameJoin[{acRoot,"models"}],1];
 acModelBefore=acModel;acSMBefore=acSM;acGlobalBefore={OwnValues[Global`Me],OwnValues[Global`EE]};
 acOptions=Join[KeyTake[Association[Options[WriteSPINASProcess]],{"IncomingLegs","ParameterRules","FixedHelicities"}],<|"ParameterRules"->{"Me"->1,"EE"->1/3}|>];
 acProcesses=Join[{"e",#[[1]],"E"},{#[[2]]}]&/@Tuples[{"A.+","A.-"},2];
-acEntries={#,LookupAmplitude[Thread[{#,Range[4]}],acModel,False,{acI,acJ,acK,acL}]}&/@acProcesses;
+acEntries={#,RetreiveAmplitude[Thread[{#,Range[4]}],acModel,False,{acI,acJ,acK,acL}]}&/@acProcesses;
 (* ++,+-,-- are supplied; the other ordering must come from Bose symmetry,
    not parity. Its independently stored model expression is the oracle. *)
 acSupplied=acEntries[[{1,2,4}]];
@@ -30,7 +30,7 @@ acFamilyIR=ConstructiveDiagrams`Private`spinasFamilyIR[acClosure["Entries"],acMo
 acCheck["physical runtime permutations still preserve roles",AssociationQ[acFamilyIR]&&AllTrue[acFamilyIR["Branches"],Sort[#["LegPermutation"][[{1,2}]]]==={1,2}&]];
 acAllOut=({{"e","E",#[[1,2]],#[[1,4]]},#[[2]]}&/@acSupplied);
 (* Use independently read formulas for the all-outgoing layout. *)
-acAllOut={#,LookupAmplitude[Thread[{#,Range[4]}],acModel,False,{acI,acJ,acK,acL}]}&/@({"e","E",#[[1]],#[[2]]}&/@{{"A.+","A.+"},{"A.+","A.-"},{"A.-","A.-"}});
+acAllOut={#,RetreiveAmplitude[Thread[{#,Range[4]}],acModel,False,{acI,acJ,acK,acL}]}&/@({"e","E",#[[1]],#[[2]]}&/@{{"A.+","A.+"},{"A.+","A.-"},{"A.-","A.-"}});
 acAllOutClosure=ConstructiveDiagrams`Private`spinasAnalyticBosonClosure[acAllOut,acModel,acOptions];
 acAllOutIR=ConstructiveDiagrams`Private`spinasFamilyIR[acAllOutClosure["Entries"],acModel,acOptions];
 acCheck["ordinary all-outgoing input and compiled branch counts stay unchanged",acAllOutClosure["Entries"]===acAllOut&&acAllOutClosure["Added"]==={}&&acAllOutIR["InputBranchCount"]===3&&acAllOutIR["GeneratedBranchCount"]===1];

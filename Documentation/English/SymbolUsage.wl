@@ -231,17 +231,18 @@ elParameterRules[model] Resolve model variables and supported dependent \
 functions.\nModelParameterRules[model, overrides] Apply local overrides keyed \
 by ModelParameter references or string names.\nObtain numerical parameter \
 substitutions while keeping model definitions local.",
- "ConstructiveDiagrams`LookupAmplitude" -> "LookupAmplitude[particles, model] \
-Retrieve a saved amplitude for an ordered list of all-incoming particle \
-names.\nLookupAmplitude[taggedParticles, model, rightSide, spinIndices] Match \
-particle names, multiply the stored factor, and relabel typed particle \
-slots.\nRetrieve a stored lower-point amplitude with a specified particle \
-numbering.", "ConstructiveDiagrams`FactorizationAmplitudeChannels" -> "Factor\
-izationAmplitudeChannels[particles, model] Return the nonzero channel \
-products for the specified all-ingoing process.\nBuild the known lower-point \
-amplitude products that a full amplitude must reproduce at its physical \
-poles.", "ConstructiveDiagrams`CreateDiagrams" -> "CreateDiagrams[{p1, p2, \
-...}, model] Generate trees for an ordered all-ingoing external particle \
+ "ConstructiveDiagrams`RetreiveAmplitude" -> "RetreiveAmplitude[particles, \
+model] Retrieve a saved amplitude for an ordered list of all-incoming \
+particle names.\nRetreiveAmplitude[taggedParticles, model, rightSide, \
+spinIndices] Match particle names, multiply the stored factor, and relabel \
+typed particle slots.\nRetrieve a stored lower-point amplitude with a \
+specified particle numbering.",
+ "ConstructiveDiagrams`FactorizationAmplitudeChannels" -> "FactorizationAmpli\
+tudeChannels[particles, model] Return the nonzero channel products for the \
+specified all-ingoing process.\nBuild the known lower-point amplitude \
+products that a full amplitude must reproduce at its physical poles.",
+ "ConstructiveDiagrams`CreateDiagrams" -> "CreateDiagrams[{p1, p2, ...}, \
+model] Generate trees for an ordered all-ingoing external particle \
 list.\nCreateDiagrams[p1, p2, ..., model] Use the equivalent \
 separate-particle argument form.\nGenerate the tree diagrams allowed by a \
 model for an ordered external process.",

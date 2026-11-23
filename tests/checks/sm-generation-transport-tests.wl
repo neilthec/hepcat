@@ -76,7 +76,7 @@ gtcCases={
 gtcRun[]:=Do[Module[{source=one["Source"],image=one["Image"],mapping=one["Map"],target,value,masses,candidate,
  channels,raw,benchmark,report,table,rows,feynmanRows,status,started,record},
  started=AbsoluteTime[];target=ConstantArray["",4];target[[image]]=source/.Normal[mapping["ParticleMap"]];
- value=LookupAmplitude[MapIndexed[{#1,First[#2]}&,source],gtcFull,False,{i1,i2,i3,i4}];
+ value=RetreiveAmplitude[MapIndexed[{#1,First[#2]}&,source],gtcFull,False,{i1,i2,i3,i4}];
  (* Build external masses without allowing nested pure-function slots to alias. *)
  masses=MapIndexed[Function[{name,pos},Mass[First[pos]]->SelectFirst[gtcFull[[1]],MemberQ[#[[{2,3}]],name]&][[6]]],source];
  candidate=SMFivePointGenerationTransport`Private`generationTransportCandidate[{masses,value},source,target,gtcFull,mapping,image,gtcElementary,{gtcRoot<>"/models",1}];

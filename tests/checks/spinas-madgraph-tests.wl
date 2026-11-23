@@ -43,7 +43,7 @@ smgSpinas = Replace[Environment["HEPCAT_SPINAS_DIRECTORY"],
   $Failed | "" -> FileNameJoin[{ParentDirectory[smgRoot], "spinas"}]];
 smgProcesses = Join[{"e", "E"}, #] & /@
   {{"A.+", "A.+"}, {"A.+", "A.-"}, {"A.-", "A.+"}, {"A.-", "A.-"}};
-smgFamily = {#, LookupAmplitude[Thread[{#, Range[4]}], smgModel,
+smgFamily = {#, RetreiveAmplitude[Thread[{#, Range[4]}], smgModel,
     False, {smgI, smgJ, smgK, smgL}]} & /@ smgProcesses;
 smgExportCase[name_String, opts___] := WriteSPINASProcess[smgPath[name],
   {"e", "E"} -> {"A", "A"}, smgFamily, smgModel, opts,

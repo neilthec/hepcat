@@ -81,19 +81,22 @@ void fixture_tests() {
     const std::vector<std::string> ordered{"q","Q","A.+","A.+","A.-"};
     auto exact = m.retrieve_amplitude(ordered);
     Algebra a(&m.algebra());
-    check(exact && exact->str() == a.format(a.mul({m.vertices()[1].factor, m.vertices()[1].expression})),
+    check(exact.str() == a.format(a.mul({m.vertices()[1].factor, m.vertices()[1].expression})),
           "exact catalog lookup omitted the factor or modified the row");
     const std::vector<std::string> permuted{"A.+","A.-","Q","A.+","q"};
     auto moved = m.retrieve_amplitude(permuted);
     test.write("amps1.mdl", "A.+|A.-|Q|A.+|q|2g^2|<512]/(s15-mass^2)\n======\n");
     auto oracle = model(test.dir, 1, m.parameter_scope()).retrieve_amplitude(permuted);
-    check(moved && oracle && moved->str() == oracle->str() && moved->particle_count() == 5,
+    check(moved.str() == oracle.str() && moved.particle_count() == 5,
           "permuted lookup changed the momentum order, masses, or repeated photon slots");
-    check(!m.retrieve_amplitude({"q","Q","A.-"}), "missing helicity returned a value");
+    const auto absent = m.retrieve_amplitude({"q","Q","A.-"});
+    const amp_expression zero("0", {m.particle("q").mass, m.particle("Q").mass, "0"});
+    check(absent.str() == "0" && absent.mathematica() == zero.mathematica(),
+          "an absent helicity must return zero with its external masses");
     test.write("amps1.mdl", "q|Q|A.+||1|0\nQ|q|A.+||1|3\n======\n");
     model alternatives(test.dir, 1);
-    check(alternatives.retrieve_amplitude({"q","Q","A.+"})->str() == "0", "stored zero lost");
-    check(alternatives.retrieve_amplitude({"Q","q","A.+"})->str() == "3", "exact row lost priority");
+    check(alternatives.retrieve_amplitude({"q","Q","A.+"}).str() == "0", "stored zero lost");
+    check(alternatives.retrieve_amplitude({"Q","q","A.+"}).str() == "3", "exact row lost priority");
     rejects([&] { alternatives.retrieve_amplitude({"A.+","q","Q"}); }, "ambiguous lookup accepted");
     // Typed external indices move with their particle. The spin slot, scalar
     // factor and summed color index each use integers with a different meaning.
@@ -106,7 +109,7 @@ void fixture_tests() {
         "A.+|q|Q||1|ColorGenerator[ColorIndex[2],ColorIndex[3],ColorInternalIndex[1,8]]"
         "*SpinorChain[Spinor[\"Spin\",\"Angle\",2,VectorSpinIndex[2,2]],Spinor[\"Spin\",\"Angle\",3]]\n======\n");
     auto expected_indices = model(test.dir, 1, m.parameter_scope()).retrieve_amplitude({"A.+","q","Q"});
-    check(with_indices->str() == expected_indices->str(), "indexed color or spin slot changed meaning");
+    check(with_indices.str() == expected_indices.str(), "indexed color or spin slot changed meaning");
     auto original_scope = m.parameter_scope();
     test.write("func1.mdl", "Name | Expression\ny | 3*g^2\n======\n");
     check(model(test.dir, 1).parameter_scope() != original_scope,

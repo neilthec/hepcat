@@ -65,14 +65,14 @@ HEPCATCovariantContactCalibration`Private`metricContactCalibration[diagramModel_
   If[Length[matchingLower]=!=1,fail["UnknownOrAmbiguousCompleteLowerAmplitude"]];
   If[Length[matchingQuartic]=!=1,fail["MissingOrAmbiguousExistingQuarticOperator"]];
   known=Block[{ConstructiveDiagrams`Private`$colorFactorizationEnabled=False},
-   LookupAmplitude[MapIndexed[{#1,First[#2]}&,process],ReplacePart[lowerModel,2->matchingLower],False,Table[Unique["lowerSpin"],{4}]]];
+   RetreiveAmplitude[MapIndexed[{#1,First[#2]}&,process],ReplacePart[lowerModel,2->matchingLower],False,Table[Unique["lowerSpin"],{4}]]];
   transport=HEPCATCovariantContactCalibration`Private`parameterTransport[{known,lowerRows[[All,6]]},diagramModel,lowerModel];
   If[FailureQ[transport],Throw[transport,tag]];
   {known,transportedLowerMasses}=transport["Expression"];
   If[!AllTrue[MapThread[Cancel[Together[Rationalize[ConstructiveDiagrams`Private`modelExpandParameterDefinitions[#1-#2,diagramModel],0]]]&, {sourceMasses,transportedLowerMasses}],#===0&],fail["LowerExternalMassMismatch"]];
   If[!FreeQ[known,_Real|_ModelFunction|_SpinorHat|_MomHat|_MomQ|_xFactor|_xTildeFactor|Spinor["Xi"|"Zeta",___]],fail["UnsupportedKnownFourPointExpression"]];
   bare=Block[{ConstructiveDiagrams`Private`$colorFactorizationEnabled=False},
-   LookupAmplitude[MapIndexed[{#1,First[#2]}&,process],ReplacePart[diagramModel,2->matchingQuartic],False,Table[Unique["quarticSpin"],{4}]]];
+   RetreiveAmplitude[MapIndexed[{#1,First[#2]}&,process],ReplacePart[diagramModel,2->matchingQuartic],False,Table[Unique["quarticSpin"],{4}]]];
   rawUnit=LorentzMetric[LorentzIndex[3],LorentzIndex[4]]PolarizationVector[3,LorentzIndex[3],mv,Automatic]PolarizationVector[4,LorentzIndex[4],mv,Automatic];
   sourceBareCertificate=HEPCATCovariantCurrentSources`Private`exactVertexMatch[bare,{rawUnit},{3,4},diagramModel];
   If[!AssociationQ[sourceBareCertificate],fail["NonminimalExistingQuarticOperator",<|"Reason"->sourceBareCertificate|>]];
@@ -208,7 +208,7 @@ HEPCATCovariantContactCalibration`Private`fourVectorMetricCalibrationWork[proces
  external=Thread[(Mass/@Range[4])->masses];
  knownRows=Select[lower[[2]],Sort[HEPCATCovariantCurrentSources`Private`rowParticles[#]]===Sort[process]&];
  If[Length[knownRows]=!=1,fail["MissingOrAmbiguousCompleteLowerFourAmplitude"]];
- known=Block[{ConstructiveDiagrams`Private`$colorFactorizationEnabled=False},LookupAmplitude[MapIndexed[{#1,First[#2]}&,process],ReplacePart[lower,2->knownRows],False,Table[Unique["knownVectorSlot"],{4}]]];
+ known=Block[{ConstructiveDiagrams`Private`$colorFactorizationEnabled=False},RetreiveAmplitude[MapIndexed[{#1,First[#2]}&,process],ReplacePart[lower,2->knownRows],False,Table[Unique["knownVectorSlot"],{4}]]];
  transport=HEPCATCovariantContactCalibration`Private`parameterTransport[{known,lowerRows[[All,6]]},model,lower];
  If[FailureQ[transport],fail["KnownLowerParameterTransportFailed",<|"Report"->transport|>]];
  {known,components}=transport["Expression"];
@@ -845,7 +845,7 @@ HEPCATCovariantContactCalibration`Private`adjointQuarticP1calibrate[HEPCATCovari
   HEPCATCovariantContactCalibration`Private`adjointQuarticP1matching=Select[HEPCATCovariantContactCalibration`Private`adjointQuarticP1lower[[2]],Sort[HEPCATCovariantCurrentSources`Private`rowParticles[#]]===Sort[HEPCATCovariantContactCalibration`Private`adjointQuarticP1word]&];
   If[Length[HEPCATCovariantContactCalibration`Private`adjointQuarticP1matching]>1,HEPCATCovariantContactCalibration`Private`adjointQuarticP1fail["AmbiguousKnownLowerHelicityWord"]];
   HEPCATCovariantContactCalibration`Private`adjointQuarticP1known=Block[{ConstructiveDiagrams`Private`$colorFactorizationEnabled=True,ConstructiveDiagrams`Private`$colorExternalLegs=Range[4]},
-   LookupAmplitude[MapIndexed[{#1,First[#2]}&,HEPCATCovariantContactCalibration`Private`adjointQuarticP1word],ReplacePart[HEPCATCovariantContactCalibration`Private`adjointQuarticP1lower,2->HEPCATCovariantContactCalibration`Private`adjointQuarticP1matching],False,Table[Unique["unusedQuarticSpin"],{4}]]];
+   RetreiveAmplitude[MapIndexed[{#1,First[#2]}&,HEPCATCovariantContactCalibration`Private`adjointQuarticP1word],ReplacePart[HEPCATCovariantContactCalibration`Private`adjointQuarticP1lower,2->HEPCATCovariantContactCalibration`Private`adjointQuarticP1matching],False,Table[Unique["unusedQuarticSpin"],{4}]]];
   HEPCATCovariantContactCalibration`Private`adjointQuarticP1transport=HEPCATCovariantContactCalibration`Private`parameterTransport[HEPCATCovariantContactCalibration`Private`adjointQuarticP1known,HEPCATCovariantContactCalibration`Private`adjointQuarticP1model,HEPCATCovariantContactCalibration`Private`adjointQuarticP1lower];
   If[FailureQ[HEPCATCovariantContactCalibration`Private`adjointQuarticP1transport],HEPCATCovariantContactCalibration`Private`adjointQuarticP1fail["LowerParameterTransportFailed",<|"Reason"->HEPCATCovariantContactCalibration`Private`adjointQuarticP1transport|>]];HEPCATCovariantContactCalibration`Private`adjointQuarticP1known=HEPCATCovariantContactCalibration`Private`adjointQuarticP1transport["Expression"];
   If[!FreeQ[HEPCATCovariantContactCalibration`Private`adjointQuarticP1known,_Real|_ModelFunction|_SpinorHat|_MomHat|_MomQ|_HEPCATCovariantContactCalibration`Private`adjointQuarticP1xFactor|_HEPCATCovariantContactCalibration`Private`adjointQuarticP1xTildeFactor],HEPCATCovariantContactCalibration`Private`adjointQuarticP1fail["UnsupportedCompleteLowerExpression"]];

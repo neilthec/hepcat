@@ -434,7 +434,7 @@ struct tagged_side {
     const std::vector<candidate>* matches = nullptr;
     tagged_side(const inventory& md, mask subset) {
         signature sig;
-        // LookupAmplitude tags external labels in increasing order for equal
+        // RetreiveAmplitude tags external labels in increasing order for equal
         // particle names. The internal port comes last.
         for (int label : labels(subset)) {
             auto p = md.ext[label - 1];

@@ -43,7 +43,7 @@ photonProcesses = Join[{"e", "E"}, #] & /@ {{"A.+", "A.+"}, {"A.+", "A.-"}, {"A.
 (* The fixture's ordered color currents follow the paper's common numerator.
    This supplies test data only, never a formula used by the exporter. *)
 entries = Table[
-  numerator = (LookupAmplitude[Thread[{p, Range[4]}], qed, False, {i, j, k, l}] /. {qm -> mu, qe -> gg}) t u;
+  numerator = (RetreiveAmplitude[Thread[{p, Range[4]}], qed, False, {i, j, k, l}] /. {qm -> mu, qe -> gg}) t u;
   {{"u", "U", StringReplace[p[[3]], "A" -> "G"], StringReplace[p[[4]], "A" -> "G"]},
     c34 numerator/s/t + c43 numerator/s/u}, {p, photonProcesses}];
 options = Join[Association[Options[WriteSPINASProcess]], <|"ParameterRules" -> {"Mu" -> 1, "GG" -> 1/3}|>];

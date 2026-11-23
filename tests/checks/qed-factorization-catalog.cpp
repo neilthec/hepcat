@@ -197,7 +197,7 @@ int main(int argc, char** argv) {
                 const auto value = joined.mul({vertex.factor, vertex.expression});
                 {
                     const auto entry = catalog.retrieve_amplitude(vertex.legs);
-                    if (!entry || validation_detail::import_expression(joined, *entry) != value)
+                    if (validation_detail::import_expression(joined, entry) != value)
                         throw std::runtime_error("Public catalog lookup disagrees with the saved row");
                 }
                 if (vertex.legs.size() >= 7) {

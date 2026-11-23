@@ -38,7 +38,7 @@ sbModel = ReadModel[FileNameJoin[{root, "models"}], 4];
 sbRules = {"Me" -> 1, "EE" -> 1/3};
 sbProcesses = Join[{"e", "E"}, #] & /@
   {{"A.+", "A.+"}, {"A.+", "A.-"}, {"A.-", "A.-"}};
-sbLookup[process_List] := LookupAmplitude[Thread[{process, Range[Length[process]]}],
+sbLookup[process_List] := RetreiveAmplitude[Thread[{process, Range[Length[process]]}],
   sbModel, False, {sbI, sbJ, sbK, sbL}];
 sbFamily = {#, sbLookup[#]} & /@ sbProcesses;
 sbResolver[option_] := ConstructiveDiagrams`Private`spinasProjectCMakeExecutable[option];

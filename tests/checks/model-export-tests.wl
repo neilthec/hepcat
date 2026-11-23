@@ -72,23 +72,23 @@ meLookupModel = ReplacePart[meModel, 2 -> {
   {"e","E","A.+","A.+",2, meCharge Mom[Multiparticle[1,3]] meSquare[3,4]^2},
   {"e","E","A.-", "",1,0}}];
 meCheck["ordinary lookup preserves model parameters, repeated photon slots and powers",
-  LookupAmplitude[{"A.+","e","A.+","E"},meLookupModel] ===
+  RetreiveAmplitude[{"A.+","e","A.+","E"},meLookupModel] ===
     2 meCharge Mom[Multiparticle[2,1]] meSquare[1,3]^2];
-meCheck["ordinary lookup distinguishes absent and explicitly zero helicities",
-  MissingQ[LookupAmplitude[{"e","E","A.+"},meLookupModel]] &&
-    LookupAmplitude[{"A.-","E","e"},meLookupModel] === 0];
+meCheck["ordinary lookup returns zero for both an absent helicity and a stored zero",
+  RetreiveAmplitude[{"e","E","A.+"},meLookupModel] === 0 &&
+    RetreiveAmplitude[{"A.-","E","e"},meLookupModel] === 0];
 meIndexed = ReplacePart[meModel, 2 -> {{"e","E","A.+",1,
   ColorDelta[ColorIndex[1],ColorIndex[2]] SpinorChain[
     Spinor["Spin","Angle",1,VectorSpinIndex[1,2]],Spinor["Spin","Angle",2]]}}];
 meCheck["external color and vector-spin labels move with their particle",
-  LookupAmplitude[{"A.+","e","E"},meIndexed] === ColorDelta[ColorIndex[2],ColorIndex[3]] SpinorChain[
+  RetreiveAmplitude[{"A.+","e","E"},meIndexed] === ColorDelta[ColorIndex[2],ColorIndex[3]] SpinorChain[
     Spinor["Spin","Angle",2,VectorSpinIndex[2,2]],Spinor["Spin","Angle",3]]];
 meLookupChoices = ReplacePart[meModel, 2 -> {{"e","E","A.+",1,2},{"E","e","A.+",1,3}}];
 meCheck["exact ordering has priority and ambiguous permutations fail",
-  LookupAmplitude[{"E","e","A.+"},meLookupChoices] === 3 &&
-  FailureQ[LookupAmplitude[{"A.+","e","E"},meLookupChoices]]];
+  RetreiveAmplitude[{"E","e","A.+"},meLookupChoices] === 3 &&
+  FailureQ[RetreiveAmplitude[{"A.+","e","E"},meLookupChoices]]];
 meCheck["raw Feynman rules cannot supply a stored amplitude",
-  FailureQ[LookupAmplitude[{"e","E","A"}, FeynmanModel[{}, {}, {}, {}]]]];
+  FailureQ[RetreiveAmplitude[{"e","E","A"}, FeynmanModel[{}, {}, {}, {}]]]];
 meAppend = AppendModelAmplitudes[meDirectory, 91,
   {{{"e", "E", "A.+", "A.+"}, meFour}}];
 meCheck["append returns a compact path and counts",
@@ -134,7 +134,7 @@ meCheck["new multiplicities receive readable matching column headers",
 meCheck["existing rows retain their ordering and scope",
   Take[meReload[[2]], Length[meModel[[2]]]] === meModel[[2]]];
 meCheck["new amplitudes participate in ordinary lookup with typed relabeling",
-  LookupAmplitude[Thread[{meFiveParts, {5, 4, 3, 2, 1}}], meReload, False, {meI, meJ, meK, meL}] =!= 0];
+  RetreiveAmplitude[Thread[{meFiveParts, {5, 4, 3, 2, 1}}], meReload, False, {meI, meJ, meK, meL}] =!= 0];
 
 (* A failed member rejects the entire batch, including previously valid members. *)
 meBytes = BinaryReadList[meFile, "Byte"];
@@ -259,9 +259,9 @@ meCheck["model text preserves every public color head and dimensioned nested dum
     meColorText, ConstructiveDiagrams`Private`modelParameterScope[meDirectory, 93]] === meColorAllHeads];
 meCheck["model text rejects an invalid private color dimension",
   FailureQ[ConstructiveDiagrams`Private`parseModelExpression["ColorInternalIndex[List[1,2],6]", "fixture"]]];
-meColorLookup = LookupAmplitude[Thread[{{"u", "U", "c", "C"}, {7, 2, 5, 6}}],
+meColorLookup = RetreiveAmplitude[Thread[{{"u", "U", "c", "C"}, {7, 2, 5, 6}}],
   meColorReload, False, {meI, meJ, meK, meL}];
-meColorLookupAgain = LookupAmplitude[Thread[{{"u", "U", "c", "C"}, {7, 2, 5, 6}}],
+meColorLookupAgain = RetreiveAmplitude[Thread[{{"u", "U", "c", "C"}, {7, 2, 5, 6}}],
   meColorReload, False, {meI, meJ, meK, meL}];
 meCheck["complete model lookup relabels external color and momentum slots only",
   Sort[DeleteDuplicates[Cases[meColorLookup, value_ColorIndex :> First[value], Infinity]]] === {2, 5, 6, 7} &&
@@ -276,11 +276,11 @@ meCheck["freshening preserves both endpoints and their adjoint representation",
     Last[dummy] === 8 && Count[meColorLookup, dummy, Infinity] === 2]];
 meSewnLeft = Block[{ConstructiveDiagrams`Private`$colorFactorizationEnabled = True,
     ConstructiveDiagrams`Private`$colorExternalLegs = Range[5]},
-  LookupAmplitude[{{"u", 1}, {"G.+", 3}, {"A.+", 4}, {"U", Multiparticle[2, 5]}},
+  RetreiveAmplitude[{{"u", 1}, {"G.+", 3}, {"A.+", 4}, {"U", Multiparticle[2, 5]}},
     meColorReload, False, {meI, meJ, meK, meL}]];
 meSewnRight = Block[{ConstructiveDiagrams`Private`$colorFactorizationEnabled = True,
     ConstructiveDiagrams`Private`$colorExternalLegs = Range[5]},
-  LookupAmplitude[{{"U", 2}, {"A.+", 5}, {"u", Multiparticle[1, 3, 4]}},
+  RetreiveAmplitude[{{"U", 2}, {"A.+", 5}, {"u", Multiparticle[1, 3, 4]}},
     meColorReload, True, {meI, meJ, meK, meL}]];
 meCheck["explicit complete tensors do not acquire another inferred vertex tensor",
   Count[meSewnLeft, _ColorGenerator, Infinity] === 1 &&
@@ -293,23 +293,23 @@ meCheck["sewing the complete amplitude contracts the shared color exactly once",
     meColorCharge^2 ColorGenerator[meCI[2], meCI[1], meCI[3]]];
 meCubicColor = Block[{ConstructiveDiagrams`Private`$colorFactorizationEnabled = True,
     ConstructiveDiagrams`Private`$colorExternalLegs = Range[3]},
-  LookupAmplitude[{{"u", 1}, {"U", 2}, {"G.+", 3}}, meColorReload,
+  RetreiveAmplitude[{{"u", 1}, {"U", 2}, {"G.+", 3}}, meColorReload,
     False, {meI, meJ, meK, meL}]];
 meCheck["elementary cubic rows retain implicit color inference",
   meCubicColor === meColorCharge ColorGenerator[meCI[2], meCI[1], meCI[3]]];
 meCheck["a saved exact-zero colored amplitude remains zero without tensor inference",
   Block[{ConstructiveDiagrams`Private`$colorFactorizationEnabled = True,
       ConstructiveDiagrams`Private`$colorExternalLegs = Range[4]},
-    LookupAmplitude[Thread[{ConstantArray["G.+", 4], Range[4]}], meColorReload,
+    RetreiveAmplitude[Thread[{ConstantArray["G.+", 4], Range[4]}], meColorReload,
       False, {meI, meJ, meK, meL}]] === 0];
 meBadColorModel = meColorReload;
 meBadColorModel[[2, -2, -1]] = ColorGenerator[meCI[2], meCI[1], meCI[4]];
 meCheck["a saved tensor cannot attach external color to a colorless leg",
-  FailureQ[LookupAmplitude[Thread[{{"u", "U", "G.+", "A.+"}, Range[4]}],
+  FailureQ[RetreiveAmplitude[Thread[{{"u", "U", "G.+", "A.+"}, Range[4]}],
     meBadColorModel, False, {meI, meJ, meK, meL}]]];
 meBadColorModel[[2, -2, -1]] = ColorGenerator[meCI[2], meCI[1], meCI[99]];
 meCheck["a saved tensor rejects an external color slot outside the process",
-  FailureQ[LookupAmplitude[Thread[{{"u", "U", "G.+", "A.+"}, Range[4]}],
+  FailureQ[RetreiveAmplitude[Thread[{{"u", "U", "G.+", "A.+"}, Range[4]}],
     meBadColorModel, False, {meI, meJ, meK, meL}]]];
 meColorChannels = FactorizationAmplitudeChannels[{"u", "U", "G.+", "A.+", "A.+"}, meColorReload];
 meCheck["the public five-point factorization path accepts complete colored lower amplitudes",

@@ -71,7 +71,7 @@ HEPCATCovariantCurrentSources`Private`liftVertex[row_List,model_List]:=Module[
  If[!AllTrue[masses,HEPCATCovariantCurrentSources`Private`modelScalarQ[#,model]&],Return[Missing["NonModelScalarParticleMass"]]];
  pol[leg_]:=PolarizationVector[leg,LorentzIndex[leg],masses[[leg]],Automatic];
  target=Block[{ConstructiveDiagrams`Private`$colorFactorizationEnabled=False},
-  LookupAmplitude[MapIndexed[{#1,First[#2]}&,canonical],ReplacePart[model,2->{row}],False,Table[Unique["vertexSpin"],{4}]]];
+  RetreiveAmplitude[MapIndexed[{#1,First[#2]}&,canonical],ReplacePart[model,2->{row}],False,Table[Unique["vertexSpin"],{4}]]];
  Switch[type,
  "FermionFermionMassiveVector",
   word=DiracChain[FermionBar[2,masses[[2]],"Dirac"],DiracWord[DiracGamma[LorentzIndex[3]]],FermionKet[1,masses[[1]],"Dirac"]];

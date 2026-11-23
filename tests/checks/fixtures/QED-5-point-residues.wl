@@ -1756,7 +1756,7 @@ QEDAllPositiveSpuriousExample[model_, photonCount_Integer] := Module[
       "The QED example requires a declared electron mass parameter Me."|>]]];
   spinTarget = xFactor[1, 2] SpinorChain[
     Spinor["Spin", "Angle", 1], Spinor["Spin", "Angle", 2]];
-  vertex = LookupAmplitude[{{"e", 1}, {"E", 2}, {"A.+", 3}}, model,
+  vertex = RetreiveAmplitude[{{"e", 1}, {"E", 2}, {"A.+", 3}}, model,
     False, Table[Unique["qedPositiveSpin"], {4}]];
   vertexFactor = Cancel[vertex/spinTarget];
   If[vertexFactor === 0 || !TrueQ[ConstructiveDiagrams`Private`rspScalarQ[vertexFactor]] ||

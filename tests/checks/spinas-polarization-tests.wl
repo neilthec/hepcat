@@ -35,7 +35,7 @@ spSpinas = Replace[Environment["HEPCAT_SPINAS_DIRECTORY"],
 spModel = ReadModel[FileNameJoin[{root, "models"}], 4];
 spModelBefore = spModel;
 spRules = {"Me" -> 1, "EE" -> 1/3};
-spLookup[process_List] := LookupAmplitude[Thread[{process, Range[Length[process]]}],
+spLookup[process_List] := RetreiveAmplitude[Thread[{process, Range[Length[process]]}],
   spModel, False, {spI, spJ, spK, spL}];
 spEntries[processes_List] := {#, spLookup[#]} & /@ processes;
 spFour = spEntries[Join[{"e", "E"}, #] & /@

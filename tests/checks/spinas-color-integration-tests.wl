@@ -66,7 +66,7 @@ c43 = c34 /. {ColorIndex[3] -> ColorIndex[4], ColorIndex[4] -> ColorIndex[3]};
 t = PropDen[Mom[Multiparticle[1, 3]], mu]; u = PropDen[Mom[Multiparticle[1, 4]], mu]; s = PropDen[Mom[Multiparticle[1, 2]], 0];
 processes = Join[{"e", "E"}, #] & /@ {{"A.+", "A.+"}, {"A.+", "A.-"}, {"A.-", "A.-"}};
 entries = Table[
-  numerator = (LookupAmplitude[Thread[{p, Range[4]}], qed, False, {i, j, k, l}] /. {qm -> mu, qe -> gg}) t u;
+  numerator = (RetreiveAmplitude[Thread[{p, Range[4]}], qed, False, {i, j, k, l}] /. {qm -> mu, qe -> gg}) t u;
   {{"u", "U", StringReplace[p[[3]], "A" -> "G"], StringReplace[p[[4]], "A" -> "G"]},
     c34 numerator/s/t + c43 numerator/s/u}, {p, processes}];
 compare["color_quark_gluons", entries, {2, 21}, 4];

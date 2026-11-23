@@ -211,7 +211,7 @@ check["ordinary virtuality reduction leaves inverse scalar products off shell",
 (* Known five-point model rows provide independent, process-diverse rational
    inputs. Compaction here changes algebraic grouping, never the spinor atoms. *)
 Do[
-  fsKnown = LookupAmplitude[MapIndexed[{#1, First[#2]} &, fsParts], fsModel, False,
+  fsKnown = RetreiveAmplitude[MapIndexed[{#1, First[#2]} &, fsParts], fsModel, False,
     {fsSpin1, fsSpin2, fsSpin3, fsSpin4}];
   fsKnownCompact = fsCompact[fsKnown];
   check[{"known five-point rows retain a nonworsening representation", fsParts},

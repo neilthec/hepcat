@@ -45,7 +45,7 @@ snSpinas = Replace[Environment["HEPCAT_SPINAS_DIRECTORY"],
 snCalcHEP = ConstructiveDiagrams`Private`spinasCalcHEPRoot[
   Replace[Environment["HEPCAT_CALCHEP_DIRECTORY"], $Failed | "" -> Automatic]];
 snModel = ReadModel[FileNameJoin[{root, "models"}], 4]; snModelBefore = snModel;
-snLookup[process_List] := LookupAmplitude[Thread[{process, Range[Length[process]]}],
+snLookup[process_List] := RetreiveAmplitude[Thread[{process, Range[Length[process]]}],
   snModel, False, {snI, snJ, snK, snL}];
 snFamily = {#, snLookup[#]} & /@ (Join[{"e", "E"}, #] & /@
   {{"A.+", "A.+"}, {"A.+", "A.-"}, {"A.-", "A.-"}});

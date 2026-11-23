@@ -41,7 +41,7 @@ sfGlobalsBefore = {OwnValues[Global`Me], OwnValues[Global`EE]};
 sfA[i_, j_] := SpinorChain[Spinor["Helicity", "Angle", i], Spinor["Helicity", "Angle", j]];
 sfS[i_, j_] := SpinorChain[Spinor["Helicity", "Square", i], Spinor["Helicity", "Square", j]];
 sfF[type_, i_, j_] := SpinorChain[Spinor["Spin", type, i], Spinor["Spin", type, j]];
-sfLookup[process_List] := LookupAmplitude[Thread[{process, Range[Length[process]]}],
+sfLookup[process_List] := RetreiveAmplitude[Thread[{process, Range[Length[process]]}],
   sfModel, False, {sfI, sfJ, sfK, sfL}];
 sfRecords[processes_List] := {#, sfLookup[#]} & /@ processes;
 sfPath[name_] := FileNameJoin[{sfDirectory, name}];

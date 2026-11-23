@@ -6,13 +6,13 @@ Notebook[
            ButtonData -> "paclet:HEPCAT/guide/DiagramsAndFactorization"]}],
         "AnchorBar"]}}, GridBoxAlignment -> {"Columns" -> {Left, Right}},
      GridBoxItemSize -> {"Columns" -> {Scaled[0.42], Scaled[0.58]}}]],
-   "AnchorBarGrid"], Cell["LookupAmplitude", "ObjectName"],
+   "AnchorBarGrid"], Cell["RetreiveAmplitude", "ObjectName"],
   Cell[TextData[{"Retrieve a stored lower-point amplitude with a specified \
 particle numbering."}], "Notes"],
-  Cell[TextData[{Cell[BoxData[RowBox[{"LookupAmplitude", "[", "particles",
+  Cell[TextData[{Cell[BoxData[RowBox[{"RetreiveAmplitude", "[", "particles",
          ",", " ", "model", "]"}]], "InlineFormula"], "  ", "Retrieve a saved \
 amplitude for an ordered list of all-incoming particle names."}], "Usage"],
-  Cell[TextData[{Cell[BoxData[RowBox[{"LookupAmplitude", "[",
+  Cell[TextData[{Cell[BoxData[RowBox[{"RetreiveAmplitude", "[",
          "taggedParticles", ",", " ", "model", ",", " ", "rightSide", ",",
          " ", "spinIndices", "]"}]], "InlineFormula"], "  ", "Match particle \
 names, multiply the stored factor, and relabel typed particle slots."}],
@@ -28,10 +28,10 @@ the unique row with the same particle and helicity counts and assigns \
 successive occurrences of each species to successive positions. It relabels \
 external spinors, momenta and explicit color slots. Coefficients, exponents \
 and independent spin indices keep their stored values."}], "Notes"],
-  Cell[TextData[{"The two-argument form returns Missing for an absent row, \
-the number zero for a stored zero, and Failure for an ambiguous match or a \
-Feynman rules model. To calculate an amplitude from diagrams and \
-factorization, use ", ButtonBox["ConstructAmplitude", BaseStyle -> "Link",
+  Cell[TextData[{"A constructive model lists its nonzero amplitudes. An \
+absent row gives 0. An ambiguous match or a Feynman rules model gives \
+Failure. To calculate an amplitude from diagrams and factorization, use ",
+     ButtonBox["ConstructAmplitude", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/ConstructAmplitude"], "."}], "Notes"],
   Cell[TextData[{"The four-argument form labels legs explicitly for sewing. \
 The rightSide flag and four spin-index names control the internal leg. This \
@@ -52,7 +52,7 @@ Evaluate loading in its own cell before the calculation.", "ExampleText"],
     {"Retrieve the QED positive-helicity three-point amplitude."}],
    "ExampleText"], Cell[BoxData[RowBox[{"qedModel", " ", "=", " ",
       "ReadModel", "[", "modelDirectory", ",", " ", "3", "]", ";", "\n",
-      "LookupAmplitude", "[", "{", "\"e\"", ",", " ", "\"E\"", ",", " ",
+      "RetreiveAmplitude", "[", "{", "\"e\"", ",", " ", "\"E\"", ",", " ",
       "\"A.+\"", "}", ",", " ", "qedModel", "]"}]], "Input"],
   Cell[BoxData[RowBox[{"-", RowBox[{"(", RowBox[{SqrtBox["2"], " ",
           InterpretationBox["EE", ModelParameter["EE",
@@ -69,7 +69,7 @@ Evaluate loading in its own cell before the calculation.", "ExampleText"],
     {"An absent lower-point amplitude contributes zero during sewing."}],
    "ExampleText"], Cell[BoxData[RowBox[{"qedModel", " ", "=", " ",
       "ReadModel", "[", "modelDirectory", ",", " ", "3", "]", ";", "\n",
-      "LookupAmplitude", "[", "{", "{", "\"e\"", ",", " ", "1", "}", ",",
+      "RetreiveAmplitude", "[", "{", "{", "\"e\"", ",", " ", "1", "}", ",",
       " ", "{", "\"e\"", ",", " ", "2", "}", ",", " ", "{", "\"e\"", ",",
       " ", "3", "}", "}", ",", " ", "qedModel", ",", " ", "False", ",", " ",
       "{", "i1", ",", " ", "i2", ",", " ", "i3", ",", " ", "i4", "}", "]"}]],
@@ -87,13 +87,13 @@ Evaluate loading in its own cell before the calculation.", "ExampleText"],
        "paclet:HEPCAT/guide/DiagramsAndFactorization"], "  \[Bullet]  ",
      ButtonBox["HEPCAT: High Energy Physics Constructive Amplitude Tool",
       BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/guide/HEPCAT"]}],
-   "MoreAbout"]}, WindowTitle -> "LookupAmplitude - HEPCAT Documentation",
+   "MoreAbout"]}, WindowTitle -> "RetreiveAmplitude - HEPCAT Documentation",
  Saveable -> False, WindowSize -> {1000, 850}, CellContext -> Notebook,
  TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
-     "uri" -> "HEPCAT/ref/LookupAmplitude", "title" -> "LookupAmplitude",
+     "uri" -> "HEPCAT/ref/RetreiveAmplitude", "title" -> "RetreiveAmplitude",
      "type" -> "Symbol", "label" -> "HEPCAT Symbol", "paclet" -> "HEPCAT",
      "language" -> "en", "summary" -> "Retrieve a stored lower-point \
 amplitude with a specified particle numbering.",
-     "keywords" -> {"HEPCAT", "LookupAmplitude", "spinor amplitudes"},
+     "keywords" -> {"HEPCAT", "RetreiveAmplitude", "spinor amplitudes"},
      "status" -> "None", "index" -> True}},
  StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

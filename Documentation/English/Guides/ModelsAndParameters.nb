@@ -41,8 +41,8 @@ three-point vertices."}], "GuideAbstract"],
       ButtonData -> "paclet:HEPCAT/ref/AppendModelAmplitudes"], " can write \
 it to the factorization model for a later higher-point calculation. Check the \
 particle order, helicities and overall sign before saving. ",
-     ButtonBox["LookupAmplitude", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/LookupAmplitude"],
+     ButtonBox["RetreiveAmplitude", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/RetreiveAmplitude"],
      " retrieves a stored expression for inspection or export."}],
    "GuideAbstract"], Cell["Read and Inspect Models",
    "GuideFunctionsSubsection"],
@@ -74,8 +74,8 @@ mass, coupling or other parameter belonging to a particular model."}],
 numerical parameter substitutions while keeping model definitions local."}],
    "GuideText"], Cell["Known Amplitudes and Text Input",
    "GuideFunctionsSubsection"],
-  Cell[TextData[{ButtonBox["LookupAmplitude", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/LookupAmplitude"], ": ", "Retrieve a \
+  Cell[TextData[{ButtonBox["RetreiveAmplitude", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/RetreiveAmplitude"], ": ", "Retrieve a \
 stored lower-point amplitude with a specified particle numbering."}],
    "GuideText"], Cell[TextData[{ButtonBox["ConvertStringAmplitude",
       BaseStyle -> "Link", ButtonData ->
