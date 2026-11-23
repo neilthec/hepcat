@@ -90,3 +90,37 @@ the driver, the loaded library and the data it touches. The operand-slot count
 measures arithmetic scratch separately. Completed JSON records can be reused
 to resume an interrupted run. Use a fresh output directory after changing the
 exporter, inputs or precision.
+
+The nine-point replay accepts `--representatives NINE_INPUTS.json` to use the
+same saved scalar expressions and parity convention as the original survey.
+This mapping uses family, pole form and helicity word as successive keys, and
+a path to an uncompressed or gzipped native expression as the value.
+
+To render the updated timing, source-size and resident-memory tables and
+figures, run `render-cache-study.py CACHE_REPLAY PAPER_DIR` with Matplotlib.
+The first argument can also be the collected `cache-study.json`. The archived
+source and rate survey remains in `rate-study.json`. The current CSV records
+both process resident size and the maximum number of live arithmetic slots.
+
+Use a separate output directory and add `--direct --points 10000` to replay
+the directly compiled C++ code. The direct study selects `eeAA`, `eeAAA`,
+`eeAAAA`, `eeeeA`, `eeeeAA` and `eeeeee` with repeated `--family` arguments.
+`render-direct-replay.py DIRECT_REPLAY PAPER_DIR` collects the timings, worst
+rate discrepancies and hashes of the little-endian binary64 weights. The
+per-point weights stay in the individual replay records.
+
+The operand-table builder defaults to sequential destinations. To trade
+arithmetic storage for indexed writes, pass `--slot-layout compact`.
+The matched cache replay explicitly selects the compact layout, so the
+published memory comparison can be reproduced independently of the builder
+default. Directly compiled process code uses the native C++ compiler's
+temporary allocation.
+
+`slot-layout-comparison.json` separates the source changes from the
+arithmetic slot layout for the nine-point, three-pair AllPhysical case.
+Build each source generation with both `--slot-layout sequential` and
+`--slot-layout compact` using the current builder and the same compiler.
+Run `time-rate SPINAS LIB 3 3 4 1 905313 OUTPUT` for each library in four
+rounds, rotating the starting implementation. All four builds use the same
+scratch-vector growth policy in this comparison. The main 24-point survey
+uses the actual archived baseline, including its original allocation policy.

@@ -4,6 +4,8 @@ import csv
 import json
 import math
 import re
+import subprocess
+import sys
 from pathlib import Path
 from statistics import median
 
@@ -93,6 +95,7 @@ def nine_point_validation(out):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("destination", type=Path)
+    parser.add_argument("--original", action="store_true", help="Render the archived pre-cache measurements")
     args = parser.parse_args()
     out = args.destination
     out.mkdir(parents=True, exist_ok=True)
@@ -171,6 +174,12 @@ def main():
     for sizes, file in [(True, "catalog-source"), (False, "catalog-rates")]:
         plots(data, figures / (file + ".pdf"), sizes)
     plots(data, figures/"catalog-growth.pdf", False, normalized=True)
+    measured = HERE / "cache-study.json"
+    if measured.is_file() and not args.original:
+        subprocess.run([sys.executable, HERE / "render-cache-study.py", measured, out], check=True)
+    direct = HERE / "direct-replay.json"
+    if direct.is_file() and not args.original:
+        subprocess.run([sys.executable, HERE / "render-direct-replay.py", direct, out], check=True)
 
 
 if __name__ == "__main__":

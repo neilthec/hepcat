@@ -1,0 +1,554 @@
+[
+ {
+  "family": "eeAA",
+  "pole": "physical",
+  "seed": 900113,
+  "polarized": {
+   "amplitudes": "64",
+   "max_relative": "0"
+  },
+  "mg": {
+   "times": [
+    1.6430708e-06,
+    1.6410458e-06,
+    1.63953955e-06
+   ],
+   "peak_rss": 4145152,
+   "mg_error": 0.0,
+   "points": 10000,
+   "weights_sha256": "f6340d9d188d1ec15694ca2ceb8c44eebcc20560f1e42dbf3ab2daf6c5e9d17e"
+  },
+  "before": {
+   "times": [
+    6.680203125e-07,
+    6.778526e-07,
+    6.741687500000001e-07
+   ],
+   "peak_rss": 3489792,
+   "mg_error": 4.3152582345128935e-15,
+   "points": 10000,
+   "weights_sha256": "b9e04f4791f553331d07d775920da07e9f6e559c886f43026d199014f79bd2e6"
+  },
+  "after": {
+   "times": [
+    4.717708375e-07,
+    4.7138228749999996e-07,
+    4.714109375e-07
+   ],
+   "peak_rss": 3489792,
+   "mg_error": 4.3152582345128935e-15,
+   "points": 10000,
+   "weights_sha256": "b9e04f4791f553331d07d775920da07e9f6e559c886f43026d199014f79bd2e6"
+  },
+  "mg_error": 4.3152582345128935e-15,
+  "archived_ch_error": 2.233119742603067e-15,
+  "source_bytes": 9135,
+  "build": "direct"
+ },
+ {
+  "family": "eeAA",
+  "pole": "spurious",
+  "seed": 900113,
+  "polarized": {
+   "amplitudes": "64",
+   "max_relative": "0"
+  },
+  "mg": {
+   "times": [
+    1.8511208500000002e-06,
+    1.850725e-06,
+    1.89079165e-06
+   ],
+   "peak_rss": 4161536,
+   "mg_error": 0.0,
+   "points": 10000,
+   "weights_sha256": "f6340d9d188d1ec15694ca2ceb8c44eebcc20560f1e42dbf3ab2daf6c5e9d17e"
+  },
+  "before": {
+   "times": [
+    7.953926999999999e-07,
+    7.94710425e-07,
+    7.8590625e-07
+   ],
+   "peak_rss": 3489792,
+   "mg_error": 4.454467953242175e-15,
+   "points": 10000,
+   "weights_sha256": "b8abe6a767f3d3b1aa3bfbc63543e37ee77432b65982781674961c42d1e6f88c"
+  },
+  "after": {
+   "times": [
+    7.959135500000001e-07,
+    4.9066615e-07,
+    4.912724e-07
+   ],
+   "peak_rss": 3489792,
+   "mg_error": 4.454467953242175e-15,
+   "points": 10000,
+   "weights_sha256": "b8abe6a767f3d3b1aa3bfbc63543e37ee77432b65982781674961c42d1e6f88c"
+  },
+  "mg_error": 4.454467953242175e-15,
+  "archived_ch_error": 2.233119742603067e-15,
+  "source_bytes": 9135,
+  "build": "direct"
+ },
+ {
+  "family": "eeAAA",
+  "pole": "physical",
+  "seed": 901113,
+  "polarized": {
+   "amplitudes": "128",
+   "max_relative": "0"
+  },
+  "mg": {
+   "times": [
+    8.4320542e-06,
+    8.4349625e-06,
+    8.4326125e-06
+   ],
+   "peak_rss": 5423104,
+   "mg_error": 0.0,
+   "points": 10000,
+   "weights_sha256": "8f522dc49c553cf5b3620baacf35ee7bee771ddbe65d3c5cb23f785ceeb8d396"
+  },
+  "before": {
+   "times": [
+    3.1871833e-06,
+    3.1837416e-06,
+    3.1783875000000003e-06
+   ],
+   "peak_rss": 4849664,
+   "mg_error": 3.576724953857543e-14,
+   "points": 10000,
+   "weights_sha256": "a4c97914493a167299f3dc8032de4eaebf256832a3ffd4d718f72ee72f85d9e2"
+  },
+  "after": {
+   "times": [
+    1.07993855e-06,
+    1.079604175e-06,
+    1.0800948e-06
+   ],
+   "peak_rss": 4833280,
+   "mg_error": 3.576724953857543e-14,
+   "points": 10000,
+   "weights_sha256": "a4c97914493a167299f3dc8032de4eaebf256832a3ffd4d718f72ee72f85d9e2"
+  },
+  "mg_error": 3.576724953857543e-14,
+  "archived_ch_error": 2.1352891990743218e-14,
+  "source_bytes": 22130,
+  "build": "direct"
+ },
+ {
+  "family": "eeAAA",
+  "pole": "spurious",
+  "seed": 901113,
+  "polarized": {
+   "amplitudes": "128",
+   "max_relative": "0"
+  },
+  "mg": {
+   "times": [
+    8.3344375e-06,
+    8.3544041e-06,
+    8.345908300000001e-06
+   ],
+   "peak_rss": 5439488,
+   "mg_error": 0.0,
+   "points": 10000,
+   "weights_sha256": "8f522dc49c553cf5b3620baacf35ee7bee771ddbe65d3c5cb23f785ceeb8d396"
+  },
+  "before": {
+   "times": [
+    8.0045042e-06,
+    7.9398083e-06,
+    7.987433300000001e-06
+   ],
+   "peak_rss": 4866048,
+   "mg_error": 5.883450191101752e-14,
+   "points": 10000,
+   "weights_sha256": "d995706ba09cd23e9a9b3ef8add384dfdf4595af3ab51f14c6cdc0e6fd5e9bff"
+  },
+  "after": {
+   "times": [
+    7.798520800000001e-06,
+    7.8243458e-06,
+    7.7931209e-06
+   ],
+   "peak_rss": 4866048,
+   "mg_error": 5.883450191101752e-14,
+   "points": 10000,
+   "weights_sha256": "d995706ba09cd23e9a9b3ef8add384dfdf4595af3ab51f14c6cdc0e6fd5e9bff"
+  },
+  "mg_error": 5.883450191101752e-14,
+  "archived_ch_error": 2.1352891990743218e-14,
+  "source_bytes": 28902,
+  "build": "direct"
+ },
+ {
+  "family": "eeeeA",
+  "pole": "physical",
+  "seed": 901213,
+  "polarized": {
+   "amplitudes": "128",
+   "max_relative": "0"
+  },
+  "mg": {
+   "times": [
+    8.6022666e-06,
+    8.646929200000001e-06,
+    8.6370416e-06
+   ],
+   "peak_rss": 5455872,
+   "mg_error": 0.0,
+   "points": 10000,
+   "weights_sha256": "f3ab3f040e0ba5b0867f8e34efdd952ae5e578cdb08606b05dfb33ce4eb77389"
+  },
+  "before": {
+   "times": [
+    4.1807e-06,
+    4.1105416e-06,
+    4.1431042e-06
+   ],
+   "peak_rss": 4816896,
+   "mg_error": 2.1552746067808282e-13,
+   "points": 10000,
+   "weights_sha256": "a72d5c11a674f2c532409273af5c2c17bafb83768ef833bfdcf4e144b5337beb"
+  },
+  "after": {
+   "times": [
+    1.9161854e-06,
+    1.9155021e-06,
+    1.9165250000000003e-06
+   ],
+   "peak_rss": 4833280,
+   "mg_error": 2.1552746067808282e-13,
+   "points": 10000,
+   "weights_sha256": "a72d5c11a674f2c532409273af5c2c17bafb83768ef833bfdcf4e144b5337beb"
+  },
+  "mg_error": 2.1552746067808282e-13,
+  "archived_ch_error": 3.5136262175233914e-14,
+  "source_bytes": 21391,
+  "build": "direct"
+ },
+ {
+  "family": "eeeeA",
+  "pole": "spurious",
+  "seed": 901213,
+  "polarized": {
+   "amplitudes": "128",
+   "max_relative": "0"
+  },
+  "mg": {
+   "times": [
+    8.7381208e-06,
+    8.7808209e-06,
+    8.694029100000001e-06
+   ],
+   "peak_rss": 5439488,
+   "mg_error": 0.0,
+   "points": 10000,
+   "weights_sha256": "f3ab3f040e0ba5b0867f8e34efdd952ae5e578cdb08606b05dfb33ce4eb77389"
+  },
+  "before": {
+   "times": [
+    4.3669208e-06,
+    4.3659e-06,
+    4.3646917e-06
+   ],
+   "peak_rss": 4800512,
+   "mg_error": 2.1552746067808282e-13,
+   "points": 10000,
+   "weights_sha256": "a72d5c11a674f2c532409273af5c2c17bafb83768ef833bfdcf4e144b5337beb"
+  },
+  "after": {
+   "times": [
+    1.98938125e-06,
+    2.00179165e-06,
+    2.0020562499999998e-06
+   ],
+   "peak_rss": 4833280,
+   "mg_error": 2.1552746067808282e-13,
+   "points": 10000,
+   "weights_sha256": "a72d5c11a674f2c532409273af5c2c17bafb83768ef833bfdcf4e144b5337beb"
+  },
+  "mg_error": 2.1552746067808282e-13,
+  "archived_ch_error": 3.5136262175233914e-14,
+  "source_bytes": 21391,
+  "build": "direct"
+ },
+ {
+  "family": "eeAAAA",
+  "pole": "physical",
+  "seed": 902113,
+  "polarized": {
+   "amplitudes": "256",
+   "max_relative": "0"
+  },
+  "mg": {
+   "times": [
+    5.21871542e-05,
+    5.22871208e-05,
+    5.144115e-05
+   ],
+   "peak_rss": 5488640,
+   "mg_error": 0.0,
+   "points": 10000,
+   "weights_sha256": "7c8d3b790e8f61d9f66122a9c89ed7bac45a820d3745457e266a09ccd1473e6b"
+  },
+  "before": {
+   "times": [
+    1.19301875e-05,
+    1.18519875e-05,
+    1.1841354099999999e-05
+   ],
+   "peak_rss": 5013504,
+   "mg_error": 1.5679224195975415e-13,
+   "points": 10000,
+   "weights_sha256": "9b47cfaa49628b7905838ff11fe19c33f0bd36bbbc171ee0c5caa8f83cd69522"
+  },
+  "after": {
+   "times": [
+    4.5423709e-06,
+    4.4995416e-06,
+    4.5013834000000006e-06
+   ],
+   "peak_rss": 5013504,
+   "mg_error": 1.5679224195975415e-13,
+   "points": 10000,
+   "weights_sha256": "9b47cfaa49628b7905838ff11fe19c33f0bd36bbbc171ee0c5caa8f83cd69522"
+  },
+  "mg_error": 1.5679224195975415e-13,
+  "archived_ch_error": 9.037337022909758e-15,
+  "source_bytes": 108217,
+  "build": "direct"
+ },
+ {
+  "family": "eeAAAA",
+  "pole": "spurious",
+  "seed": 902113,
+  "polarized": {
+   "amplitudes": "256",
+   "max_relative": "0"
+  },
+  "mg": {
+   "times": [
+    6.73458e-05,
+    6.34054916e-05,
+    6.40441334e-05
+   ],
+   "peak_rss": 5472256,
+   "mg_error": 0.0,
+   "points": 10000,
+   "weights_sha256": "7c8d3b790e8f61d9f66122a9c89ed7bac45a820d3745457e266a09ccd1473e6b"
+  },
+  "before": {
+   "times": [
+    7.09191458e-05,
+    6.79756459e-05,
+    6.48842791e-05
+   ],
+   "peak_rss": 5226496,
+   "mg_error": 3.1594803308372124e-13,
+   "points": 10000,
+   "weights_sha256": "448f4d052aaee54bc51308deb8aeced0d74da7d86352b53d1ca315db7cad1ff6"
+  },
+  "after": {
+   "times": [
+    6.93897958e-05,
+    6.75163291e-05,
+    6.56652708e-05
+   ],
+   "peak_rss": 5193728,
+   "mg_error": 3.1594803308372124e-13,
+   "points": 10000,
+   "weights_sha256": "448f4d052aaee54bc51308deb8aeced0d74da7d86352b53d1ca315db7cad1ff6"
+  },
+  "mg_error": 3.1594803308372124e-13,
+  "archived_ch_error": 1.0412583961178634e-14,
+  "source_bytes": 151673,
+  "build": "direct"
+ },
+ {
+  "family": "eeeeAA",
+  "pole": "physical",
+  "seed": 902213,
+  "polarized": {
+   "amplitudes": "256",
+   "max_relative": "0"
+  },
+  "mg": {
+   "times": [
+    6.49599584e-05,
+    6.42860417e-05,
+    6.374904999999999e-05
+   ],
+   "peak_rss": 5472256,
+   "mg_error": 0.0,
+   "points": 10000,
+   "weights_sha256": "dbd2f537df9c6aaca46663f3745a741af3f8c54cd7695dcc976874ac4a843c54"
+  },
+  "before": {
+   "times": [
+    2.29249333e-05,
+    2.3135891599999998e-05,
+    2.28939584e-05
+   ],
+   "peak_rss": 4947968,
+   "mg_error": 2.4722922310854687e-13,
+   "points": 10000,
+   "weights_sha256": "b7bba29e927f088166ae4279fa96be27f9da0a27120233f149e41c149434f0a2"
+  },
+  "after": {
+   "times": [
+    1.22937083e-05,
+    1.2717304199999998e-05,
+    1.2844008300000001e-05
+   ],
+   "peak_rss": 5013504,
+   "mg_error": 2.4722922310854687e-13,
+   "points": 10000,
+   "weights_sha256": "b7bba29e927f088166ae4279fa96be27f9da0a27120233f149e41c149434f0a2"
+  },
+  "mg_error": 2.4722922310854687e-13,
+  "archived_ch_error": 4.320017067283931e-14,
+  "source_bytes": 118605,
+  "build": "direct"
+ },
+ {
+  "family": "eeeeAA",
+  "pole": "spurious",
+  "seed": 902213,
+  "polarized": {
+   "amplitudes": "256",
+   "max_relative": "0"
+  },
+  "mg": {
+   "times": [
+    6.38157417e-05,
+    6.38499666e-05,
+    6.54540334e-05
+   ],
+   "peak_rss": 5505024,
+   "mg_error": 0.0,
+   "points": 10000,
+   "weights_sha256": "dbd2f537df9c6aaca46663f3745a741af3f8c54cd7695dcc976874ac4a843c54"
+  },
+  "before": {
+   "times": [
+    0.00012541726669999998,
+    0.00012394361250000002,
+    0.00012324276249999999
+   ],
+   "peak_rss": 5079040,
+   "mg_error": 2.484785566335196e-13,
+   "points": 10000,
+   "weights_sha256": "16c7cb1228252293343a70c9b6a567bd0ef19db5d2b2c1c13ffd2ef644e7fa9d"
+  },
+  "after": {
+   "times": [
+    0.00012520835830000002,
+    0.00012320858750000001,
+    0.0001217858291
+   ],
+   "peak_rss": 5111808,
+   "mg_error": 2.484785566335196e-13,
+   "points": 10000,
+   "weights_sha256": "16c7cb1228252293343a70c9b6a567bd0ef19db5d2b2c1c13ffd2ef644e7fa9d"
+  },
+  "mg_error": 2.484785566335196e-13,
+  "archived_ch_error": 4.392622396145846e-14,
+  "source_bytes": 121001,
+  "build": "direct"
+ },
+ {
+  "family": "eeeeee",
+  "pole": "physical",
+  "seed": 902313,
+  "polarized": {
+   "amplitudes": "256",
+   "max_relative": "0"
+  },
+  "mg": {
+   "times": [
+    6.26828041e-05,
+    6.27442959e-05,
+    6.44038583e-05
+   ],
+   "peak_rss": 5455872,
+   "mg_error": 0.0,
+   "points": 10000,
+   "weights_sha256": "da7d7b01787a03363e99c266480684502e51f07ce04949e106b4a20f7377e6f8"
+  },
+  "before": {
+   "times": [
+    6.250885419999999e-05,
+    6.25863791e-05,
+    5.98102083e-05
+   ],
+   "peak_rss": 4980736,
+   "mg_error": 2.471889963326385e-14,
+   "points": 10000,
+   "weights_sha256": "2d67d894b291cbebfa804ee8589d96d44e70dd08689afc213c6b0b400ffc9285"
+  },
+  "after": {
+   "times": [
+    4.45155792e-05,
+    4.43510542e-05,
+    4.4128320799999996e-05
+   ],
+   "peak_rss": 4997120,
+   "mg_error": 2.471889963326385e-14,
+   "points": 10000,
+   "weights_sha256": "2d67d894b291cbebfa804ee8589d96d44e70dd08689afc213c6b0b400ffc9285"
+  },
+  "mg_error": 2.471889963326385e-14,
+  "archived_ch_error": 8.349486915818027e-15,
+  "source_bytes": 132495,
+  "build": "direct"
+ },
+ {
+  "family": "eeeeee",
+  "pole": "spurious",
+  "seed": 902313,
+  "polarized": {
+   "amplitudes": "256",
+   "max_relative": "0"
+  },
+  "mg": {
+   "times": [
+    6.447161249999999e-05,
+    6.3566825e-05,
+    6.28026083e-05
+   ],
+   "peak_rss": 5455872,
+   "mg_error": 0.0,
+   "points": 10000,
+   "weights_sha256": "da7d7b01787a03363e99c266480684502e51f07ce04949e106b4a20f7377e6f8"
+  },
+  "before": {
+   "times": [
+    6.13123666e-05,
+    6.17434375e-05,
+    5.95425291e-05
+   ],
+   "peak_rss": 4964352,
+   "mg_error": 2.471889963326385e-14,
+   "points": 10000,
+   "weights_sha256": "2d67d894b291cbebfa804ee8589d96d44e70dd08689afc213c6b0b400ffc9285"
+  },
+  "after": {
+   "times": [
+    4.39721625e-05,
+    4.4211925000000004e-05,
+    4.44415333e-05
+   ],
+   "peak_rss": 4997120,
+   "mg_error": 2.471889963326385e-14,
+   "points": 10000,
+   "weights_sha256": "2d67d894b291cbebfa804ee8589d96d44e70dd08689afc213c6b0b400ffc9285"
+  },
+  "mg_error": 2.471889963326385e-14,
+  "archived_ch_error": 8.349486915818027e-15,
+  "source_bytes": 132495,
+  "build": "direct"
+ }
+]

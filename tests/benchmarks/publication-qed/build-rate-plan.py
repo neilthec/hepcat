@@ -38,7 +38,7 @@ class Table:
         self.words += len(header) + len(operands)
 
 
-def component(lines, table):
+def component(lines, table, reuse=True):
     start = table.words
     count = 0
     returned = False
@@ -46,16 +46,17 @@ def component(lines, table):
     # to stay in memory when the generated expression spans millions of bytes.
     offset = lines.tell()
     last_use = array('i')
-    for line in iter(lines.readline, ''):
-        if line == '}\n':
-            break
-        m = ASSIGN.fullmatch(line)
-        if not m or (m[1] is not None and int(m[1]) != len(last_use)):
-            raise ValueError('Unexpected generated assignment: ' + line[:100])
-        for match in re.finditer(r'\bv(\d+)\b', m[2]):
-            last_use[int(match[1])] = len(last_use)
-        last_use.append(-1)
-    lines.seek(offset)
+    if reuse:
+        for line in iter(lines.readline, ''):
+            if line == '}\n':
+                break
+            m = ASSIGN.fullmatch(line)
+            if not m or (m[1] is not None and int(m[1]) != len(last_use)):
+                raise ValueError('Unexpected generated assignment: ' + line[:100])
+            for match in re.finditer(r'\bv(\d+)\b', m[2]):
+                last_use[int(match[1])] = len(last_use)
+            last_use.append(-1)
+        lines.seek(offset)
     slots = array('i')
     free = []
     peak = 0
@@ -63,14 +64,16 @@ def component(lines, table):
         if line == '}\n':
             if not returned:
                 raise ValueError('Missing component return')
-            return start, count, peak, slots[-1]
+            return (start, count, peak, slots[-1]) if reuse else (start, count, count, count-1)
         m = ASSIGN.fullmatch(line)
-        if returned or not m:
+        if returned or not m or (m[1] is not None and int(m[1]) != count):
             raise ValueError('Unexpected component body: ' + line[:100])
         returned = m[1] is None
         expr = m[2]
 
         def read(index):
+            if not reuse:
+                return index
             if last_use[index] == count:
                 free.append(slots[index])
                 last_use[index] = -1
@@ -88,20 +91,23 @@ def component(lines, table):
                 return f'{m[2] or "v"}[a[{i}]]'
             code = OPERAND.sub(sub, expr)
             operation = (len(operands), code)
-        if free:
-            dest = free.pop()
+        if reuse:
+            if free:
+                dest = free.pop()
+            else:
+                dest = peak
+                peak += 1
+            slots.append(dest)
+            table.emit(operation, operands, dest)
+            if not returned and last_use[count] == -1:
+                free.append(dest)
         else:
-            dest = peak
-            peak += 1
-        slots.append(dest)
-        table.emit(operation, operands, dest)
-        if not returned and last_use[count] == -1:
-            free.append(dest)
+            table.emit(operation, operands)
         count += 1
     raise ValueError('Truncated component')
 
 
-def compact(source, output):
+def compact(source, output, reuse=False):
     output.mkdir(parents=True, exist_ok=True)
     words = output/'operands.i32'
     assert array('i').itemsize == 4
@@ -142,7 +148,7 @@ def compact(source, output):
                 operations.words = setup.words
                 cpp.write(line)
             elif (m := COMPONENT.fullmatch(line)):
-                start, count, peak, result = component(raw, operations)
+                start, count, peak, result = component(raw, operations, reuse)
                 stats.append(dict(component=int(m[2]), instructions=count, slots=peak))
                 ty = 'Scalar' if m[1].startswith('template') else 'cdouble'
                 cpp.write(line)
@@ -150,7 +156,13 @@ def compact(source, output):
             else:
                 cpp.write(line)
         print('namespace hepcat_generated {\ntemplate<class Scalar> Scalar qed_rate::rate_plan(const Indices& indices, unsigned start, unsigned count, unsigned slots, unsigned result) const {',file=cpp)
-        print('    static thread_local std::vector<Scalar> v; if (v.size() < slots) v.resize(slots);\n    const int* pc=hepcat_rate_operands+start;\n    for(unsigned step=0;step<count;++step) {\n        const int header=*pc++;\n        const int op = header >= 0 ? header & 255 : ~header;\n        const int dest = header >= 0 ? header >> 8 : *pc++;\n        const int* a=pc;\n        switch(op){',file=cpp)
+        print('    static thread_local std::vector<Scalar> v; if (v.size() < slots) v.resize(slots);', file=cpp)
+        print('    const int* pc=hepcat_rate_operands+start;\n    for(unsigned step=0;step<count;++step) {',file=cpp)
+        if reuse:
+            print('        const int header=*pc++;\n        const int op = header >= 0 ? header & 255 : ~header;\n        const int dest = header >= 0 ? header >> 8 : *pc++;',file=cpp)
+        else:
+            print('        const int op=*pc++; const unsigned dest=step;',file=cpp)
+        print('        const int* a=pc;\n        switch(op){',file=cpp)
         for code, i in operations.codes.items():
             if code=='sum':
                 print(f'case {i}: {{ int n=*pc++; Scalar s=v[*pc++]; while(--n) {{s=s+v[*pc++];}} v[dest]=s; break; }}',file=cpp)
@@ -172,8 +184,10 @@ def main():
     p=argparse.ArgumentParser(description=__doc__)
     for name in ('source','output','spinas_include','spinas_library'):
         p.add_argument(name,type=Path)
+    p.add_argument('--slot-layout', choices=['sequential', 'compact'], default='sequential',
+                   help='Sequential writes use implicit destinations. Compact storage reuses slots after their last read.')
     args=p.parse_args()
-    compact(args.source,args.output)
+    compact(args.source,args.output, args.slot_layout == 'compact')
     # The class layout is identical in the bridge and in the table evaluator.
     cmd=['clang++','-O2','-std=c++17','-fPIC','-dynamiclib' if sys.platform=='darwin' else '-shared',
          '-I'+str(args.output),'-I'+str(args.source),'-I'+str(args.spinas_include),

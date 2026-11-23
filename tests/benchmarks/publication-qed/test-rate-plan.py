@@ -33,6 +33,19 @@ class RatePlanTest(unittest.TestCase):
             result*256+3, 6, 0, 1, 2, 3, 3, 3,
         ])
 
+    def test_sequential_layout_has_implicit_destinations(self):
+        source = io.StringIO(
+            "    const cdouble v0 = parameters[0];\n"
+            "    const cdouble v1 = v0 * v0;\n"
+            "    return v0 + v1;\n}\n")
+        with tempfile.TemporaryFile() as binary:
+            table = plan.Table(binary)
+            self.assertEqual(plan.component(source, table, reuse=False), (0, 3, 3, 2))
+            binary.seek(0)
+            words = array('i')
+            words.fromfile(binary, table.words)
+            self.assertEqual(list(words), [0, 0, 1, 0, 0, 2, 0, 1])
+
     def test_extended_header(self):
         with tempfile.TemporaryFile() as binary:
             table = plan.Table(binary)
