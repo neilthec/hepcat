@@ -1,5 +1,7 @@
 // Optional output path retains the representative eeAA project for external integrations.
 #include "spinas_export.hpp"
+#include "spinas_open_current.hpp"
+#include "spinas_spin_schedule.hpp"
 #include "reduce.hpp"
 #include "validation_color.hpp"
 #include <chrono>
@@ -44,12 +46,52 @@ void check_color_tensors() {
     if (norm != mpq_class(16, 3) || interference != -mpq_class(2, 3))
         throw std::runtime_error("Incorrect external SU(3) normalization or interference");
 }
+void check_open_currents() {
+    Algebra tree;
+    for (bool probe_on_left : {false, true}) {
+        std::vector<Id> sums;
+        for (int probe = 6; probe <= 10; ++probe) {
+            std::vector<Id> terms;
+            for (int source = 1; source <= 4; ++source) {
+                auto spinor = [&](int i) {
+                    return tree.parse("Spinor[\"Spin\",\"Angle\"," + std::to_string(i) + "]");
+                };
+                auto left = spinor(probe_on_left ? probe : source);
+                auto right = spinor(probe_on_left ? source : probe);
+                terms.push_back(tree.parse("SpinorChain[" + tree.format(left) + ",Mom[2],Mom[3]," +
+                                           tree.format(right) + "]"));
+            }
+            sums.push_back(tree.add(terms));
+        }
+        auto currents = spinas_detail::find_open_currents(tree, tree.mul(sums));
+        if (currents.size() != sums.size())
+            throw std::runtime_error("Missed repeated weighted Weyl sums");
+        for (auto sum : sums)
+            if (currents.at(sum).probe_on_left != probe_on_left || currents.at(sum).terms.size() != 4)
+                throw std::runtime_error("Incorrect probe orientation or truncated Weyl sum");
+        if (!spinas_detail::find_open_currents(tree, sums.front()).empty())
+            throw std::runtime_error("Isolated Weyl sum has no reusable probes");
+    }
+}
+void check_spin_schedule() {
+    // v2 is a two-spin current. It must survive both choices of spin 5.
+    const std::vector<std::string> rhs{
+        "chains[0][indices[1][0] > 0]", "chains[1][indices[3][0] > 0]",
+        "v0 + v1", "v2 * v1", "v3 + v2", "v4 * chains[2][indices[5][0] > 0]", "(v5)"};
+    auto plan = spinas_detail::schedule_spins(rhs, {1,3,5});
+    if (plan.legs.back() != 5 || plan.stage[2] != 2 || plan.stage[4] != 2 ||
+        plan.shared[4] < 0 || plan.assignments >= rhs.size()*8 ||
+        spinas_detail::scheduled_rhs(rhs[5], plan, 3).find("shared[") != 0)
+        throw std::runtime_error("Failed to preserve a multi-spin current across the spectator loop");
+}
 } // namespace
 int main(int argc, char** argv) {
     try {
         if (argc < 3 || argc > 4)
             throw std::invalid_argument("usage: test_spinas_export MODELS EXPORT_TEMPLATES [OUTPUT]");
         check_color_tensors();
+        check_spin_schedule();
+        check_open_currents();
         model m(argv[1], 4);
         std::vector<spinas_component> family;
         std::vector<std::string> masses{m.particle("e").mass, m.particle("E").mass, "0", "0"};

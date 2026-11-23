@@ -1,4 +1,6 @@
 #include "spinas_export.hpp"
+#include "spinas_spin_schedule.hpp"
+#include "spinas_open_current.hpp"
 #include "reduce.hpp"
 #include "validation_numeric.hpp"
 #include "validation_color.hpp"
@@ -71,6 +73,9 @@ int physical_helicity(const model_particle& p, const std::string& input, bool be
                                     input);
     return !beam && p.spin2 % 2 ? -all_in : all_in;
 }
+// Stage calls and shared storage must pay for themselves in a spin sum.
+// Keep short straight-line components in the compiler register allocator.
+constexpr size_t spin_schedule_minimum = 32768;
 struct plan {
     spinas_project project;
     std::vector<leg_info> legs;
@@ -96,11 +101,15 @@ struct plan {
     };
     point_cache sums, insertions, massless_bras, massive_bras, partials;
     int spinning_massive_legs = 0;
+    ints binary_spin_legs;
+    bool has_higher_spin = false;
     std::map<std::string,std::string> derived_slots;
     std::map<std::string, size_t> scalars, chains, coefficients;
     strings coefficient_lines;
     std::vector<std::string> functions;
     std::vector<std::string> dispatch, color_sums, color_amps;
+    strings spin_declarations, spin_sums;
+    bool has_spin_schedule = false;
     bool colored = false;
     std::vector<ints> exchangeable;
     std::set<size_t> conditioned_components;
@@ -174,6 +183,8 @@ struct plan {
             }
             legs.push_back({massive, helicities});
             if (massive && part.spin2) ++spinning_massive_legs;
+            if (massive && part.spin2 == 1) binary_spin_legs.push_back(static_cast<int>(i));
+            if (massive && part.spin2 > 1) has_higher_spin = true;
             if (beam)
                 p.normalization /= massive ? part.spin2 + 1 : helicities.size();
             else
@@ -287,12 +298,13 @@ struct compiler {
     plan& p;
     const ints& perm;
     bool track = false;
-    strings lines;
+    strings expressions;
     std::map<std::string, std::string> temporaries;
     bool point_scope = false;
     using spin_slot = std::pair<int, int>;
     static constexpr spin_slot independent{-1, 0}, several{-2, 0};
     spin_slot dependency = independent;
+    const spinas_detail::current_catalog* currents = nullptr;
     void include(spin_slot other) {
         if (dependency == independent) dependency = other;
         else if (other != independent && dependency != other) dependency = several;
@@ -333,8 +345,7 @@ struct compiler {
             return p.cache(s);
         auto [it, added] = temporaries.emplace(s, "v" + std::to_string(temporaries.size()));
         if (added)
-            lines.push_back(std::string("    const ") + (track ? "Scalar " : "cdouble ") + it->second +
-                            " = " + s + ";");
+            expressions.push_back(s);
         return it->second;
     }
     endpoint end(Id id) const {
@@ -422,6 +433,81 @@ struct compiler {
         auto base = "ldouble(" + q.get_num().get_str() + ".0L)";
         return q.get_den() == 1 ? base : "(" + base + " / ldouble(" + q.get_den().get_str() + ".0L))";
     }
+    std::string ep(endpoint s, bool left) const {
+        auto fn = std::string(left ? "l" : "r") + (s.angle ? "angle" : "square");
+        return "particles[" + std::to_string(s.leg) + "]." + fn + "(" +
+               (p.legs[s.leg].massive
+                    ? std::string(left ? "ls" : "rs") + ", " + (s.upper ? "true" : "false")
+                    : "") +
+               ")";
+    }
+    // Store both coordinates with the same crossing phase as the scalar
+    // chain. The open object can then be dotted with any compatible endpoint.
+    std::array<std::string, 2> coordinates(endpoint e, bool bra, const Node* chain, ints& slots) {
+        auto word = ep(e, bra);
+        if (chain) {
+            const bool angle = end(chain->args.front()).angle;
+            for (size_t k = 1; k + 1 < chain->args.size(); ++k) {
+                const size_t j = bra ? k : chain->args.size() - 1 - k;
+                auto matrix = insertion(chain->args[j], angle != (j % 2 != 0));
+                word = bra ? "(" + word + " * " + matrix + ")" : "(" + matrix + " * " + word + ")";
+            }
+        }
+        const bool minus = e.angle && !incoming(p.project, e.leg);
+        const auto sign = minus ? "-" : "";
+        const bool massive = p.legs[e.leg].massive;
+        const std::string spin = bra ? "ls" : "rs";
+        const auto [it, fresh] = p.chains.emplace("coordinates " + std::string(sign) + word, p.chains.size());
+        const auto array = "chains[" + std::to_string(it->second) + "]";
+        std::string index = "0";
+        if (massive) {
+            const spin_slot slot{e.leg, slots[e.leg]++};
+            if (slot.second >= p.project.spin2[e.leg]) throw std::invalid_argument("too many current spin slots");
+            include(slot);
+            index = "(" + spin_index(slot) + " > 0)";
+        }
+        std::array<std::string, 2> out;
+        for (size_t k = 0; k < out.size(); ++k) {
+            const auto ktext = std::to_string(k);
+            if (fresh) {
+                if (massive) p.chain_lines.push_back("    for (int " + spin + " : {-1, 1})");
+                p.chain_lines.push_back(std::string(massive ? "        " : "    ") + array + "[2 * " +
+                    (massive ? "(" + spin + " > 0)" : "0") + " + " + ktext + "] = " + sign + word + ".get(" + ktext + ");");
+            }
+            out[k] = array + "[2 * " + index + " + " + ktext + "]";
+        }
+        return out;
+    }
+    std::string current(const spinas_detail::open_current& form, ints& slots) {
+        const auto initial = slots;
+        std::optional<ints> degree;
+        std::array<strings, 2> terms;
+        spin_slot total = independent;
+        for (const auto& term : form.terms) {
+            slots = initial;
+            dependency = independent;
+            strings weights;
+            for (auto factor : term.weights) weights.push_back(emit(factor, slots));
+            const auto& chain = a.node(term.chain);
+            auto l = end(chain.args.front()), r = end(chain.args.back());
+            if ((l.angle != r.angle) != ((chain.args.size()-2) % 2 != 0))
+                throw std::invalid_argument("inconsistent open chain endpoint chiralities");
+            auto open = coordinates(form.probe_on_left ? r : l, !form.probe_on_left, &chain, slots);
+            for (size_t k = 0; k < open.size(); ++k) {
+                weights.push_back(open[k]);
+                terms[k].push_back(weights.size() == 1 ? open[k] : temporary(join(weights, " * ")));
+                weights.pop_back();
+            }
+            if (degree && slots != *degree) throw std::invalid_argument("inconsistent current spin weights");
+            degree = slots;
+            include(total);
+            total = dependency;
+        }
+        auto x = temporary(join(terms[0], " + "));
+        auto y = temporary(join(terms[1], " + "));
+        auto probe = coordinates(end(form.probe), form.probe_on_left, nullptr, slots);
+        return temporary(x + " * " + probe[0] + " + " + y + " * " + probe[1]);
+    }
     std::string chain(const Node& n, ints& slots) {
         if (n.args.size() < 2)
             throw std::invalid_argument("SPINAS chain requires two endpoints");
@@ -429,14 +515,6 @@ struct compiler {
         const bool odd = (n.args.size() - 2) % 2 != 0;
         if ((l.angle != r.angle) != odd)
             throw std::invalid_argument("inconsistent chain endpoint chiralities");
-        auto ep = [&](endpoint s, bool left) {
-            auto fn = std::string(left ? "l" : "r") + (s.angle ? "angle" : "square");
-            return "particles[" + std::to_string(s.leg) + "]." + fn + "(" +
-                   (p.legs[s.leg].massive
-                        ? std::string(left ? "ls" : "rs") + ", " + (s.upper ? "true" : "false")
-                        : "") +
-                   ")";
-        };
         auto bra = ep(l, true);
         for (size_t j = 1; j + 1 < n.args.size(); ++j) {
             auto product = bra + " * " + insertion(n.args[j], l.angle != (j % 2 != 0));
@@ -535,6 +613,10 @@ struct compiler {
                 matrices.push_back(insertion(n.args[i], i % 2 != 0));
             return p.cache("hepcat_spinas::matrix_trace(" + join(matrices, " * ") + ")");
         }
+        if (h == "Plus" && currents) {
+            const auto found = currents->find(id);
+            if (found != currents->end()) return current(found->second, slots);
+        }
         if (h == "Times" || h == "Plus") {
             strings terms;
             auto initial = slots;
@@ -607,6 +689,101 @@ bool condition_sensitive(const Algebra& a, Id id) {
     inspect(id);
     return has_inverse_chain && supported;
 }
+// Each stage runs when its last required spin becomes known. Its shared
+// storage contains only values used by a later stage of this same helicity.
+bool emit_spin_schedule(plan& p, strings& rhs, const std::string& value,
+                        const std::string& member, const ints& helicities, bool track) {
+    const auto& legs = p.binary_spin_legs;
+    if (p.colored || p.has_higher_spin || rhs.size() < spin_schedule_minimum ||
+        legs.size() < 3 || legs.size() > 12) return false;
+    rhs.push_back(value);
+    const auto schedule = spinas_detail::schedule_spins(rhs, legs);
+    const auto full_work = (std::uint64_t(1) << legs.size()) * rhs.size();
+    if (schedule.assignments > full_work * 9 / 10) {
+        rhs.pop_back();
+        return false;
+    }
+    p.has_spin_schedule = true;
+    const std::string type = track ? "Scalar" : "cdouble";
+    const std::string prefix = track ? "template<class Scalar> " : "";
+    const std::string signature = prefix + type + " ";
+    const std::string sum_type = track ? "hepcat_spinas::conditioned_complex" : "cdouble";
+    std::vector<strings> stages(legs.size() + 1);
+    for (size_t i = 0; i < rhs.size(); ++i) {
+        auto stage = schedule.stage[i];
+        auto expr = spinas_detail::scheduled_rhs(rhs[i], schedule, stage);
+        if (i + 1 == rhs.size()) {
+            stages[stage].push_back("    return " + expr + ";");
+        } else {
+            if (schedule.shared[i] >= 0)
+                expr = "shared[" + std::to_string(schedule.shared[i]) + "] = " + expr;
+            stages[stage].push_back("    const " + type + " v" + std::to_string(schedule.local[i]) +
+                                    " = " + expr + ";");
+        }
+    }
+    const auto& name = p.project.name;
+    auto storage = [&](const std::string& scalar, bool summing) {
+        return "spin_workspace<" + scalar + ", " + (summing ? "true" : "false") + ">(" +
+               std::to_string(schedule.shared_count) + ")";
+    };
+    std::ostringstream polarized, sum;
+    polarized << signature << name << "::" << member << "(const Indices& indices) const { // staged\n"
+              << "    auto* shared = " << storage(type, false) << ";\n";
+    sum << "ldouble " << name << "::" << member << "_sum() const {\n"
+        << "    Indices indices{};\n    ldouble result=0;\n"
+        << "    auto* shared = " << storage(sum_type, true) << ";\n";
+    if (track) sum << "    Spins spins" << integer_list(helicities) << ";\n";
+    std::string indent = "    ";
+    strings functions;
+    for (size_t i = 0; i < stages.size(); ++i) {
+        if (i != 0) {
+            auto leg = std::to_string(schedule.legs[i-1]);
+            sum << indent << "for (int spin" << leg << " : {-1, 1}) {\n";
+            indent += "    ";
+            sum << indent << "indices[" << leg << "][0] = spin" << leg << ";\n";
+            if (track) sum << indent << "spins[" << leg << "] = spin" << leg << ";\n";
+        }
+        if (stages[i].empty()) continue;
+        const auto stage = member + "_stage_" + std::to_string(i);
+        const auto args = "(const Indices& indices, " + type + "* shared) const";
+        p.spin_declarations.push_back("    " + signature + stage + args + ";");
+        const bool final = i == legs.size();
+        if (!final) stages[i].push_back("    return ldouble(0);");
+        functions.push_back(signature + name + "::" + stage + args + " {\n" + join(stages[i], "\n") + "\n}");
+        auto call = [&](const std::string& scalar) {
+            return stage + (track ? "<" + scalar + ">" : "") + "(indices, shared)";
+        };
+        polarized << "    " << (final ? "return " : "") << call(type) << ";\n";
+        sum << indent << (final ? "const auto amplitude = " : "") << call(sum_type) << ";\n";
+    }
+    if (track) {
+        sum << indent << "if (hepcat_spinas::relative_condition(amplitude) > "
+            << "1/std::sqrt(std::numeric_limits<ldouble>::epsilon())) result += amp_squared(spins);\n"
+            << indent << "else result += std::norm(amplitude.value);\n";
+    } else {
+        // In a mixed family an exceptional untracked branch can still be
+        // rescued by the ordinary conditioned helicity-permutation path.
+        sum << indent << "if constexpr (checks_conditioning) {\n"
+            << indent << "    if (!std::isfinite(std::abs(amplitude))) {\n"
+            << indent << "        Spins spins" << integer_list(helicities) << ";\n";
+        for (auto leg : legs)
+            sum << indent << "        spins[" << leg << "] = indices[" << leg << "][0];\n";
+        sum << indent << "        result += amp_squared(spins); continue;\n"
+            << indent << "    }\n" << indent << "}\n"
+            << indent << "result += std::norm(amplitude);\n";
+    }
+    for (size_t i = 0; i < legs.size(); ++i) {
+        indent.resize(indent.size()-4);
+        sum << indent << "}\n";
+    }
+    sum << "    return result;\n}";
+    polarized << "}";
+    functions.push_back(polarized.str());
+    p.spin_declarations.push_back("    ldouble " + member + "_sum() const;");
+    functions.push_back(sum.str());
+    p.functions.push_back(join(functions, "\n\n"));
+    return true;
+}
 void compile_family(plan& p, const std::vector<spinas_component>& family) {
     const auto& names = family.front().particles;
     const size_t n = names.size();
@@ -657,6 +834,7 @@ void compile_family(plan& p, const std::vector<spinas_component>& family) {
             projected.emplace(root, project.components({root}));
         }
     }
+    std::map<Id, spinas_detail::current_catalog> open_sums;
     std::function<void(ints&)> append = [&](ints& target) {
         if (target.size() < n) {
             for (int h : p.legs[target.size()].helicities) {
@@ -724,6 +902,16 @@ void compile_family(plan& p, const std::vector<spinas_component>& family) {
                 const bool track = !p.colored && !p.exchangeable.empty() && condition_sensitive(tree, root);
                 compiler gen{tree, p, perm, track, {}, {}};
                 ints slots(n);
+                // Discover before scalar lowering so unused closed contractions
+                // never enter the phase-space-point cache. Related helicities
+                // can use the same analytic current with different leg mappings.
+                if (!track && !p.colored && !p.has_higher_spin && p.binary_spin_legs.size() >= 3 &&
+                    tree.size() >= spin_schedule_minimum) {
+                    auto [it, fresh] = open_sums.try_emplace(root);
+                    if (fresh)
+                        it->second = spinas_detail::find_open_currents(tree, root, spin_schedule_minimum);
+                    if (!it->second.empty()) gen.currents = &it->second;
+                }
                 auto value = gen.emit(root, slots);
                 for (size_t i = 0; i < n; ++i)
                     if (!component_zero && p.legs[i].massive && slots[i] != p.project.spin2[i])
@@ -733,11 +921,33 @@ void compile_family(plan& p, const std::vector<spinas_component>& family) {
                 const auto member = "component_" + std::to_string(number);
                 if (track)
                     p.conditioned_components.insert(number);
-                strings body{std::string(track ? "template<class Scalar> Scalar " : "cdouble ") +
-                             p.project.name + "::" + member + "(const Indices& indices) const {"};
-                body.insert(body.end(), gen.lines.begin(), gen.lines.end());
-                body.push_back(std::string("    return ") + (sign < 0 ? "-(" : "(") + value + ");\n}");
-                p.functions.push_back(join(body, "\n"));
+                const auto signed_value = (sign < 0 ? "-(" : "(") + value + ")";
+                if (emit_spin_schedule(p, gen.expressions, signed_value, member, target, track)) {
+                    p.spin_sums.push_back("    result += " + member + "_sum();");
+                } else {
+                    strings body{std::string(track ? "template<class Scalar> Scalar " : "cdouble ") +
+                                 p.project.name + "::" + member + "(const Indices& indices) const {"};
+                    for (size_t j = 0; j < gen.expressions.size(); ++j)
+                        body.push_back(std::string("    const ") + (track ? "Scalar" : "cdouble") + " v" +
+                                       std::to_string(j) + " = " + gen.expressions[j] + ";");
+                    body.push_back(std::string("    return ") + (sign < 0 ? "-(" : "(") + value + ");\n}");
+                    p.functions.push_back(join(body, "\n"));
+                    if (!p.colored) {
+                        std::ostringstream loop;
+                        loop << "    {\n        Spins spins" << integer_list(target) << ";\n";
+                        std::string indent = "        ";
+                        for (size_t i = 0; i < n; ++i) {
+                            if (!p.legs[i].massive || !p.project.spin2[i]) continue;
+                            const auto sub = "spins[" + std::to_string(i) + "]";
+                            const auto rank = p.project.spin2[i];
+                            loop << indent << "for (" << sub << " = " << -rank << "; " << sub
+                                 << " <= " << rank << "; " << sub << " += 2)\n";
+                            indent += "    ";
+                        }
+                        loop << indent << "result += amp_squared(spins);\n    }";
+                        p.spin_sums.push_back(loop.str());
+                    }
+                }
                 members.push_back(member + (track ? "<Scalar>" : "") + "(indices)");
                 if (p.colored && !component_zero)
                     contributions.push_back(literal(colors.summed_metric[ci].get_d()) +
@@ -831,6 +1041,10 @@ std::string header(const plan& p) {
         out << "    std::array<std::array<cdouble, 2>, " << p.partials.entries.size() << "> partials;\n";
     if (!p.coefficients.empty())
         out << "    std::array<cdouble, " << p.coefficients.size() << "> coefficients;\n";
+    if (p.has_spin_schedule)
+        out << "    static constexpr bool checks_conditioning = "
+            << (p.conditioned_components.empty() ? "false" : "true") << ";\n";
+    for (const auto& decl : p.spin_declarations) out << decl << "\n";
     for (size_t i = 0; i < p.functions.size(); ++i)
         out << (p.conditioned_components.count(i) ? "    template<class Scalar> Scalar component_"
                                                   : "    cdouble component_")
@@ -842,8 +1056,12 @@ std::string source(const plan& p) {
     const auto& project = p.project;
     auto& name = project.name;
     std::ostringstream out;
-    out << "#include \"process.hpp\"\n\nnamespace hepcat_generated {\n"
-        << name << "::" << name << "() : " << name << "(default_parameters()) {}\n"
+    out << "#include \"process.hpp\"\n\nnamespace hepcat_generated {\n";
+    if (p.has_spin_schedule)
+        out << "template<class Scalar, bool Summing> static Scalar* spin_workspace(std::size_t count) {\n"
+            << "    static thread_local std::vector<Scalar> values;\n"
+            << "    if (values.size() < count) values.resize(count);\n    return values.data();\n}\n";
+    out << name << "::" << name << "() : " << name << "(default_parameters()) {}\n"
         << name << "::" << name << "(const Parameters& values) { set_parameters(values); }\n\n"
         << name << "::Parameters " << name << "::default_parameters() {\n    return {\n";
     for (size_t i = 0; i < p.defaults.size(); ++i)
@@ -978,6 +1196,10 @@ std::string source(const plan& p) {
         << "::spin_sum() const {\n    if (!ready) throw std::logic_error(\"Call set_momenta before "
            "spin_sum.\");\n"
         << "    ldouble result=0;\n    Spins spins{};\n";
+    if (p.has_spin_schedule) {
+        out << join(p.spin_sums, "\n") << "\n    return result;\n}\n} // namespace hepcat_generated\n";
+        return out.str();
+    }
     for (size_t i = 0; i < p.legs.size(); ++i) {
         ints allowed = p.legs[i].helicities;
         if (p.legs[i].massive) {

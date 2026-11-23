@@ -46,6 +46,44 @@ class RatePlanTest(unittest.TestCase):
             words.fromfile(binary, table.words)
             self.assertEqual(list(words), [0, 0, 1, 0, 0, 2, 0, 1])
 
+    def test_narrow_stage_keeps_absolute_stream_offsets(self):
+        with tempfile.TemporaryFile() as wide, tempfile.TemporaryFile() as narrow:
+            table = plan.Table(wide)
+            table.emit("previous", [70000])
+            table.emit("stage", [0, 65535])
+            self.assertEqual(plan.narrow_stage(table, 2, narrow), 0)
+            self.assertEqual((wide.tell(), table.words), (8, 2))
+            table.emit("stage", [7])
+            self.assertEqual(plan.narrow_stage(table, 2, narrow), 3)
+            table.emit("stage", [65536])
+            self.assertIsNone(plan.narrow_stage(table, 2, narrow))
+            self.assertEqual((wide.tell(), table.words), (16, 4))
+            narrow.seek(0)
+            words = array("H")
+            words.fromfile(narrow, 5)
+            self.assertEqual(list(words), [1, 0, 65535, 1, 7])
+
+    def test_stage_spin_projection_indices(self):
+        self.assertEqual(plan.index_spin_pairs(
+            "chains[4][2 * (indices[1][0] > 0) + (indices[3][0] > 0)]", 7),
+            "chains[4][spin_pairs[18]]")
+        self.assertEqual(plan.index_spin_pairs("chains[4][2 * 0 + 0]", 7), "chains[4][0]")
+
+    def test_later_stage_reads_the_original_producer(self):
+        producers = {}
+        with tempfile.TemporaryFile() as binary:
+            table = plan.Table(binary)
+            first = io.StringIO("    const cdouble v0 = shared[7] = parameters[2];\n"
+                                "    return v0;\n}\n")
+            second = io.StringIO("    return shared[7];\n}\n")
+            plan.component(first, table, False, producers, base=10)
+            self.assertEqual(producers, {7: 10})
+            plan.component(second, table, False, producers, base=12)
+            binary.seek(0)
+            words = array("i")
+            words.fromfile(binary, table.words)
+            self.assertEqual(list(words), [0, 2, 1, 10, 1, 10])
+
     def test_extended_header(self):
         with tempfile.TemporaryFile() as binary:
             table = plan.Table(binary)

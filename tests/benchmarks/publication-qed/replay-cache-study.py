@@ -33,7 +33,16 @@ def compile_baseline(archive, family, pole, directory, source, include, library)
     section = '.section __TEXT,__const' if darwin else '.section .rodata'
     label = ('_' if darwin else '') + 'hepcat_rate_operands'
     asm = directory / 'baseline.S'
-    asm.write_text(f'{section}\n.p2align 2\n.globl {label}\n{label}:\n.incbin "{directory}/operands.i32"\n')
+    data = f'{section}\n.p2align 2\n.globl {label}\n{label}:\n.incbin "{directory}/operands.i32"'
+    layout = re.search(r'^// Narrow operand stream byte offset = (\d+)$',
+                       (directory / 'plan.cpp').read_text(), re.MULTILINE)
+    if layout:
+        split = int(layout[1])
+        if split % 4 or not 0 < split < (directory / 'operands.i32').stat().st_size:
+            raise ValueError('Invalid narrow operand stream offset')
+        narrow_label = ('_' if darwin else '') + 'hepcat_rate_narrow'
+        data += f',0,{split}\n.p2align 1\n.globl {narrow_label}\n{narrow_label}:\n.incbin "{directory}/operands.i32",{split}'
+    asm.write_text(data + '\n')
     binary = directory / 'baseline.dylib'
     run('clang++', '-O2', '-std=c++17', '-fPIC', '-dynamiclib' if darwin else '-shared',
         '-I'+str(directory), '-I'+str(source), '-I'+str(include),
@@ -156,9 +165,10 @@ def main():
                     result['build'] = 'direct' if args.direct else 'table'
                     if not args.direct:
                         result['slot_layout'] = args.slot_layout
-                        counts = re.findall(r'return rate_plan<[^>]+>\(indices, \d+, (\d+)\);',
-                                            (directory/'plan.cpp').read_text())
-                        result['before_slots'] = max(map(int, counts))
+                        calls = re.findall(
+                            r'return rate_plan<[^>]+>\(indices, \d+, (\d+)(?:, (\d+), \d+(?:, shared(?:, \d+)?)?)?\);',
+                            (directory/'plan.cpp').read_text())
+                        result['before_slots'] = max(int(peak or count) for count, peak in calls)
                         result['stats'] = json.loads((plan/'plan-stats.json').read_text())
                         result['table_bytes'] = sum((plan/name).stat().st_size for name in ('plan.cpp', 'process.hpp', 'operands.i32'))
                     checkpoint.write_text(json.dumps(result, indent=1)+'\n')

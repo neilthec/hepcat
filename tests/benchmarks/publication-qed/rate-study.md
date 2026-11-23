@@ -124,3 +124,42 @@ Run `time-rate SPINAS LIB 3 3 4 1 905313 OUTPUT` for each library in four
 rounds, rotating the starting implementation. All four builds use the same
 scratch-vector growth policy in this comparison. The main 24-point survey
 uses the actual archived baseline, including its original allocation policy.
+
+## Replaying the multi-spin comparison
+
+Build one copy of `export-rate-family` at commit `9a089e3` and another with
+the updated exporter. Use the same double-precision SPINAS library for both.
+Build `check-rate-amplitudes.cpp` with the flags used above for `time-rate`.
+The replay checks every signed complex spin amplitude against its previous
+value. It also compares the rate for each labeled photon helicity, summed
+over the massive spins, with the independent MadGraph standalone library.
+
+```sh
+python3 "$study/replay-spin-sums.py" "$OLD_EXPORT" "$NEW_EXPORT" "$TIMER" \
+  "$CHECK_POLARIZED" "$SPINAS_INCLUDE" "$SPINAS_DOUBLE_LIBRARY" \
+  "$REFERENCE_LIBRARIES_JSON" "$NINE_POINT_EXPRESSIONS_JSON" "$OUTPUT" \
+  --family eeeeeeAAA --points 12
+```
+
+To reproduce the catalog comparison, use the same output directory, omit
+`--family eeeeeeAAA` and set `--points 4`. The replay keeps each completed
+record and compares generated source and header hashes before compiling. Each
+changed program runs three times, rotating the order of the previous exporter,
+updated exporter and MadGraph. All rates include momentum setup and the full
+spin and helicity sum. Input point generation and library loading are outside
+the timed region. Peak resident size includes the loaded library and workspace
+for each evaluator in its own process.
+
+For a separate measurement of individual polarized calls, run
+`check-rate-amplitudes OLD_LIBRARY NEW_LIBRARY 3 3 2 905313 --time-polarized`.
+It times all 512 labeled states at fixed momenta and reverses evaluator order
+on the second pass. The sequential table compiler maps each shared value to
+the slot where its producing stage wrote it, precomputes chain spin indices
+per stage and uses 16-bit operands for stages whose full operand stream fits.
+
+The measurements are in `spin-sum-study.json`. For three charged pairs and
+three photons, the AllPhysical median fell from 893 to 611 ms per point
+and peak resident size from 44.5 to 39.7 MiB. AllSpurious fell from 2,166
+to 1,792 ms and from 54.5 to 50.0 MiB. MadGraph took about 125 ms and
+4.6 MiB. Recreate the time and memory comparison across changed families
+with `python3 render-spin-sums.py spin-sum-study.json multi-spin-comparison.pdf`.

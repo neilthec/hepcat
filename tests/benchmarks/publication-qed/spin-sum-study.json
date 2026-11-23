@@ -1,0 +1,944 @@
+{
+  "previous_exporter": "9a089e3a6169b526469609d2d9e3f8e0a7736aee",
+  "machine": "Apple M3, 16 GiB, macOS 26.6.2, arm64",
+  "spinas": "double precision, Apple Clang 21.0.0 -O2, sequential operand tables",
+  "madgraph": "3.8.1 standalone, same libraries as rate-study.json",
+  "protocol": "Three rotating sweeps of identical phase-space points. Complete rates include momentum setup and all external polarizations. RSS is process peak per sweep. Polarized agreement uses four points and signed complex amplitudes. Individual-amplitude timing runs all 512 states on two points, twice in alternating order, after momentum setup.",
+  "direct_generation_controls": [
+    "WWWW",
+    "ZZWW"
+  ],
+  "ordinary_table_regression": "Unstaged four-fermion two-photon example has identical plan.cpp, process.hpp and operand bytes.",
+  "allphysical_open_currents": {
+    "+ + +": {
+      "weighted_currents": 191,
+      "contracted_sums": 597
+    },
+    "+ + -": {
+      "weighted_currents": 173,
+      "contracted_sums": 518
+    }
+  },
+  "families": [
+    {
+      "family": "eeAA",
+      "pole": "physical",
+      "identical_cpp": true,
+      "source_sha256": [
+        "53abb39a8552e8fcf6243bb137f288ddd6e0deb6d15bd88acf6310e8bdea7b89",
+        "aab0d73a3abed58f531413f2aa9b195ea7b99e7a947fa8413d99b7e95febb20d"
+      ]
+    },
+    {
+      "family": "eeAA",
+      "pole": "spurious",
+      "identical_cpp": true,
+      "source_sha256": [
+        "c287f24f5660fd3156e9149363b0cfc08c81d09a98509bf755811521a1ef9797",
+        "aab0d73a3abed58f531413f2aa9b195ea7b99e7a947fa8413d99b7e95febb20d"
+      ]
+    },
+    {
+      "family": "eeee",
+      "pole": "physical",
+      "identical_cpp": true,
+      "source_sha256": [
+        "c75a6491bd719f09a7c2dbfe2483d2a7efdcb812920d7084f0829e7fcbc15854",
+        "4841c6226a585fa6a7d30d0fcff4b19086dc4821c14edf257ed6d2ec80823732"
+      ]
+    },
+    {
+      "family": "eeee",
+      "pole": "spurious",
+      "identical_cpp": true,
+      "source_sha256": [
+        "c75a6491bd719f09a7c2dbfe2483d2a7efdcb812920d7084f0829e7fcbc15854",
+        "4841c6226a585fa6a7d30d0fcff4b19086dc4821c14edf257ed6d2ec80823732"
+      ]
+    },
+    {
+      "family": "eeAAA",
+      "pole": "physical",
+      "identical_cpp": true,
+      "source_sha256": [
+        "9c09effaa35365ed5986b4bc69bc609944db36b7edc658180bcebf8c326e9e83",
+        "921bd1e6268c4dacf8c5d8243d177484984b1634afce8736f14707d170a8cc67"
+      ]
+    },
+    {
+      "family": "eeAAA",
+      "pole": "spurious",
+      "identical_cpp": true,
+      "source_sha256": [
+        "1cafdf3a685ab9fa7c3b19cb3259f6a7b22dc26177ef20cc7258253980aba27f",
+        "657cc5523ea9f1da2c153af777123bead430187b501932cc30d4d2caebc758ed"
+      ]
+    },
+    {
+      "family": "eeeeA",
+      "pole": "physical",
+      "identical_cpp": true,
+      "source_sha256": [
+        "60931da1933486b414c66da731f92c3bee174b67d60db265f4dfa31e73579347",
+        "b975808f1a6a1974383bd0fb3c5f8c670cad6ae28e8243322b165e83c1998f12"
+      ]
+    },
+    {
+      "family": "eeeeA",
+      "pole": "spurious",
+      "identical_cpp": true,
+      "source_sha256": [
+        "20c8d68d7d91911f01429686b5e7f6603cab999332cd27323f4763fb77ccb1bb",
+        "b975808f1a6a1974383bd0fb3c5f8c670cad6ae28e8243322b165e83c1998f12"
+      ]
+    },
+    {
+      "family": "eeAAAA",
+      "pole": "physical",
+      "identical_cpp": true,
+      "source_sha256": [
+        "6af65034620fc9d390514836c3f5e266521a6277e5b04588dae3eaba958f4885",
+        "5dc7c34637eac760c21ff3f1d93b4a7e9477d067283ed527cf1f8c5072f8a7e5"
+      ]
+    },
+    {
+      "family": "eeAAAA",
+      "pole": "spurious",
+      "identical_cpp": true,
+      "source_sha256": [
+        "e22b5dfb84d1883b35e9cf52b5a1c57a868eb249bd3c88d2d1144be008821ba0",
+        "777dbdb1cdbca1c2640c38369255754a07399c3728b4da11b4865e01b22aebed"
+      ]
+    },
+    {
+      "family": "eeeeAA",
+      "pole": "physical",
+      "identical_cpp": true,
+      "source_sha256": [
+        "e1daf74a4a81af4c2f240b492eee82bb985ad8b4240cdedae79d2cd00f78c0fc",
+        "89a8d78fd026a0c9e1220de851300e2ba3c53c5bbe5dec46b3a95597723b9935"
+      ]
+    },
+    {
+      "family": "eeeeAA",
+      "pole": "spurious",
+      "identical_cpp": true,
+      "source_sha256": [
+        "f3bd0e7cfe1508939949d57333beeea07683439162d1606d2ac4751cc2ecf80b",
+        "ecf67e1b40ccb96f3189bac5facbc74691822553a4c766ff33e02465e79e2c58"
+      ]
+    },
+    {
+      "family": "eeeeee",
+      "pole": "physical",
+      "identical_cpp": true,
+      "source_sha256": [
+        "9d7811fe8bbbbeff99d970e5347278e9a22a7b27d258c8d74751f990855d12fd",
+        "63717d36fe45ccdb940d296bc2f63a72e91ee40b9cccb58e34b365265ab946ce"
+      ]
+    },
+    {
+      "family": "eeeeee",
+      "pole": "spurious",
+      "identical_cpp": true,
+      "source_sha256": [
+        "c5a35d832b409bfd2a903e050c8f356bc976c1e58c34bd21968b31ded3b6e978",
+        "63717d36fe45ccdb940d296bc2f63a72e91ee40b9cccb58e34b365265ab946ce"
+      ]
+    },
+    {
+      "family": "eeAAAAA",
+      "pole": "physical",
+      "identical_cpp": true,
+      "source_sha256": [
+        "967bd6d889c023b59523e08141e684a95d49ca0e00380b687acf27e943b44258",
+        "afa1bda937309a5e07134e688e36f9c8009c4762d3fe8963bb6ae3d710b660fb"
+      ]
+    },
+    {
+      "family": "eeAAAAA",
+      "pole": "spurious",
+      "identical_cpp": true,
+      "source_sha256": [
+        "b72aec36e0ea16217cb21cdab632c4ca815bcae24f2d67713bada095d7655d65",
+        "3dc0a3a2954ac0090ffd9c0af39e709db6df4b0fefc3bcd93132e79865167c2b"
+      ]
+    },
+    {
+      "family": "eeeeAAA",
+      "pole": "physical",
+      "identical_cpp": true,
+      "source_sha256": [
+        "bedc639da3ebc2f30576674bb72b68a0455b16592ac995c28b58e9c36721d19e",
+        "0dbc6d9e6401230a8e859f8b8bf866cddaec4d16e6c263a5d911d4c19d001adb"
+      ]
+    },
+    {
+      "family": "eeeeAAA",
+      "pole": "spurious",
+      "identical_cpp": true,
+      "source_sha256": [
+        "80337112cedda3ea1261a69afe1ee356927e14791a3cc0ba68775ac5166e779c",
+        "e08c5c4266b9a8eef5807795d6db9f181c0097db82f4b8cc24ae1af2939c2d39"
+      ]
+    },
+    {
+      "family": "eeeeeeA",
+      "pole": "physical",
+      "identical_cpp": true,
+      "source_sha256": [
+        "0c1730d2d374179aacc15e9e1b7b42ad689aba49defd01837496fcc17bb6d3f1",
+        "a18283757ac86e88d49bb67cccfaa09688c9a6ba8992b46e2d7c34192441d7b7"
+      ]
+    },
+    {
+      "family": "eeeeeeA",
+      "pole": "spurious",
+      "identical_cpp": true,
+      "source_sha256": [
+        "4ec8edb29f12c3ca7854eab53c682ac5f183c7837ad531dcb929668409a6f74b",
+        "d9e30f08ca55f8e4738c73a3b1e61c0f2608379e75d8740c97b4b06a6d74531b"
+      ]
+    },
+    {
+      "family": "eeAAAAAA",
+      "pole": "physical",
+      "identical_cpp": true,
+      "source_sha256": [
+        "96deff0df5a1bd58b629aded70eb132125151c82256fd3f206c76e70d33dbd37",
+        "71cb750c1a878eea1c27362451e0718268dd0b8eec06cd2d3b14ed2b255b9dea"
+      ]
+    },
+    {
+      "family": "eeAAAAAA",
+      "pole": "spurious",
+      "identical_cpp": true,
+      "source_sha256": [
+        "ffa5a4b815a14c015909d4d752f9d6e5763dd21e17152dd2045e1f002591f34d",
+        "2bb6273e7e6bbd324995b94e4007d3f14069ec1a068f9c442442250f0e4f57b6"
+      ]
+    },
+    {
+      "family": "eeeeAAAA",
+      "pole": "physical",
+      "identical_cpp": true,
+      "source_sha256": [
+        "14084d8bbdb044b8d60e329a87a43e96219f38c5e21069e7f92b239f904e6f20",
+        "b5d77bc4c6ac4ae5be7feb277ce59c189899644aba279b0a51d7a28d51c035f1"
+      ]
+    },
+    {
+      "family": "eeeeAAAA",
+      "pole": "spurious",
+      "identical_cpp": true,
+      "source_sha256": [
+        "e46a02a0426dff4b1612765198ecb74a9fba7e243b00942d91bb4c831265d5f4",
+        "edeab945074237bc5f0f10666bbc9915e705244cbc783fb4b31b56eb45f42642"
+      ]
+    },
+    {
+      "family": "eeeeeeAA",
+      "pole": "physical",
+      "points": 4,
+      "seed": 904313,
+      "source_sha256": [
+        [
+          "d8a1bded4e40f71a239d864edc303f1f959a8c6d5937b28a97eaae7efb8d3f54",
+          "8d0c44b5fa9c37ae8a7cd07cc5b01aa1c4c3bf5a53945a6582f136c58de3e4cf"
+        ],
+        [
+          "cc3e0941855021aa833e1eb03abdf3500c69558645f208d15d15c7a8a62faa2f",
+          "9ba3fade8e915e7104aad072548eb00076b07e3b350f4fa762376c25a42daa59"
+        ]
+      ],
+      "polarized": {
+        "amplitudes": 1024,
+        "max_relative": 1.65008e-14
+      },
+      "layout": "sequential",
+      "old": {
+        "seconds_per_point": [
+          0.06517284375,
+          0.06569480225,
+          0.06521129175
+        ],
+        "peak_rss_bytes": [
+          6848512,
+          6832128,
+          6815744
+        ],
+        "max_relative": 7.0837623468985375e-15,
+        "median_seconds_per_point": 0.06521129175,
+        "median_peak_rss_mib": 6.515625
+      },
+      "new": {
+        "seconds_per_point": [
+          0.04951822925,
+          0.04896597925,
+          0.05240238525
+        ],
+        "peak_rss_bytes": [
+          5308416,
+          5292032,
+          5308416
+        ],
+        "max_relative": 5.916741415618736e-15,
+        "median_seconds_per_point": 0.04951822925,
+        "median_peak_rss_mib": 5.0625
+      },
+      "mg": {
+        "seconds_per_point": [
+          0.006016203125,
+          0.006031828125,
+          0.006013729125
+        ],
+        "peak_rss_bytes": [
+          2703360,
+          2703360,
+          2719744
+        ],
+        "max_relative": 0.0,
+        "median_seconds_per_point": 0.006016203125,
+        "median_peak_rss_mib": 2.578125
+      },
+      "scheduled_components": 4,
+      "compiled_stages": 21,
+      "stages_with_16_bit_operands": 21
+    },
+    {
+      "family": "eeeeeeAA",
+      "pole": "spurious",
+      "points": 4,
+      "seed": 904313,
+      "source_sha256": [
+        [
+          "110f4bea9bcad2acd4bc12fd43bfd15c609090c18270ecf89ba0076eab52dba6",
+          "da29364fce498dce6bf7ee1247745edb95df725477945f023e80fe4db6c6eca5"
+        ],
+        [
+          "a67694a1e109408e6860a65a66c4278f8d852a2e83aee91ec216a7b436a802f8",
+          "f189604d336dd45ec8513551284dbab1fd3b44a967d89928c4665c13d3da156d"
+        ]
+      ],
+      "polarized": {
+        "amplitudes": 1024,
+        "max_relative": 0.0
+      },
+      "layout": "sequential",
+      "old": {
+        "seconds_per_point": [
+          0.13970359375,
+          0.13517308325,
+          0.135021177
+        ],
+        "peak_rss_bytes": [
+          6782976,
+          6799360,
+          6766592
+        ],
+        "max_relative": 5.412386061413415e-15,
+        "median_seconds_per_point": 0.13517308325,
+        "median_peak_rss_mib": 6.46875
+      },
+      "new": {
+        "seconds_per_point": [
+          0.132500875,
+          0.1313956355,
+          0.10944297925
+        ],
+        "peak_rss_bytes": [
+          4915200,
+          4931584,
+          4947968
+        ],
+        "max_relative": 5.19589061895688e-15,
+        "median_seconds_per_point": 0.1313956355,
+        "median_peak_rss_mib": 4.703125
+      },
+      "mg": {
+        "seconds_per_point": [
+          0.0069873125,
+          0.007919599,
+          0.006085849
+        ],
+        "peak_rss_bytes": [
+          2703360,
+          2686976,
+          2719744
+        ],
+        "max_relative": 0.0,
+        "median_seconds_per_point": 0.0069873125,
+        "median_peak_rss_mib": 2.578125
+      },
+      "scheduled_components": 4,
+      "compiled_stages": 28,
+      "stages_with_16_bit_operands": 28
+    },
+    {
+      "family": "eeeeeeee",
+      "pole": "physical",
+      "points": 4,
+      "seed": 904413,
+      "source_sha256": [
+        [
+          "f6f07bf1d096a30f076c46f6e2e41d316975d003371a41a34c1c1473db69e002",
+          "727cd2a3371c6ec36f0f025797def67b40525b76d4bf6592cd61d1194b080146"
+        ],
+        [
+          "7252297f800bf9e4704029fe4ace171ac9271d8ff038e17d6fbdfa14944215ec",
+          "7ef939d2c6f1236cec3a6ab7cf089984638129dedfb7d942c6cff4520d477dd5"
+        ]
+      ],
+      "polarized": {
+        "amplitudes": 1024,
+        "max_relative": 4.32847e-14
+      },
+      "layout": "sequential",
+      "old": {
+        "seconds_per_point": [
+          0.096668271,
+          0.09600971875,
+          0.09540945825
+        ],
+        "peak_rss_bytes": [
+          5521408,
+          5521408,
+          5505024
+        ],
+        "max_relative": 5.767041984511761e-15,
+        "median_seconds_per_point": 0.09600971875,
+        "median_peak_rss_mib": 5.265625
+      },
+      "new": {
+        "seconds_per_point": [
+          0.07392578125,
+          0.07375233325,
+          0.073278302
+        ],
+        "peak_rss_bytes": [
+          5128192,
+          5111808,
+          5079040
+        ],
+        "max_relative": 5.01755737356785e-15,
+        "median_seconds_per_point": 0.07375233325,
+        "median_peak_rss_mib": 4.875
+      },
+      "mg": {
+        "seconds_per_point": [
+          0.004681395875,
+          0.004528198,
+          0.004633458375
+        ],
+        "peak_rss_bytes": [
+          2703360,
+          2670592,
+          2654208
+        ],
+        "max_relative": 0.0,
+        "median_seconds_per_point": 0.004633458375,
+        "median_peak_rss_mib": 2.546875
+      },
+      "scheduled_components": 1,
+      "compiled_stages": 7,
+      "stages_with_16_bit_operands": 6
+    },
+    {
+      "family": "eeeeeeee",
+      "pole": "spurious",
+      "points": 4,
+      "seed": 904413,
+      "source_sha256": [
+        [
+          "36db9059884f8e20cc97f4832ab74de9fc9dc014c304359dcc829fda782ab27a",
+          "727cd2a3371c6ec36f0f025797def67b40525b76d4bf6592cd61d1194b080146"
+        ],
+        [
+          "ced4321c86e34099281a67b63af46b33b243d257856583749370edf3e9bc3314",
+          "7ef939d2c6f1236cec3a6ab7cf089984638129dedfb7d942c6cff4520d477dd5"
+        ]
+      ],
+      "polarized": {
+        "amplitudes": 1024,
+        "max_relative": 5.04386e-14
+      },
+      "layout": "sequential",
+      "old": {
+        "seconds_per_point": [
+          0.09568815625,
+          0.0957203125,
+          0.09507905225
+        ],
+        "peak_rss_bytes": [
+          5472256,
+          5521408,
+          5521408
+        ],
+        "max_relative": 5.973007769672894e-15,
+        "median_seconds_per_point": 0.09568815625,
+        "median_peak_rss_mib": 5.265625
+      },
+      "new": {
+        "seconds_per_point": [
+          0.07315527075,
+          0.07302085425,
+          0.07306021875
+        ],
+        "peak_rss_bytes": [
+          5111808,
+          5128192,
+          5128192
+        ],
+        "max_relative": 4.9431788438672275e-15,
+        "median_seconds_per_point": 0.07306021875,
+        "median_peak_rss_mib": 4.890625
+      },
+      "mg": {
+        "seconds_per_point": [
+          0.004606036375,
+          0.004523927,
+          0.00455890625
+        ],
+        "peak_rss_bytes": [
+          2670592,
+          2654208,
+          2670592
+        ],
+        "max_relative": 0.0,
+        "median_seconds_per_point": 0.00455890625,
+        "median_peak_rss_mib": 2.546875
+      },
+      "scheduled_components": 1,
+      "compiled_stages": 7,
+      "stages_with_16_bit_operands": 6
+    },
+    {
+      "family": "eeAAAAAAA",
+      "pole": "physical",
+      "identical_cpp": true,
+      "source_sha256": [
+        "4f13c2a00413bdf0bcaf54da9d6c3c43b26f9a3d9077519098c6b173a21cb55c",
+        "b13a27e1444137204a6b8660a694aaadddf040f9e80717024fdcb956fbefc3b3"
+      ]
+    },
+    {
+      "family": "eeAAAAAAA",
+      "pole": "spurious",
+      "identical_cpp": true,
+      "source_sha256": [
+        "8fbfeee896efca4b2f3576cae49924362340801e584d0e95408e42ea90631957",
+        "6e0a003e9dc20899b216ff90eaf69a738b50db10433dd8b50d0325b778bd7560"
+      ]
+    },
+    {
+      "family": "eeeeAAAAA",
+      "pole": "physical",
+      "identical_cpp": true,
+      "source_sha256": [
+        "a4befa0d378745bfc8aa7e4a814b8a768eadffc3788316e033e8662ddff47464",
+        "6d44b1c673a4602fabd5a3efbb7135e796b3c277f068e0e1de058ddfd02c178b"
+      ]
+    },
+    {
+      "family": "eeeeAAAAA",
+      "pole": "spurious",
+      "identical_cpp": true,
+      "source_sha256": [
+        "ea06b298c9afa81da6f5c69c452b5cdc8dca29dad50e606834c6e65b4c9f6e9c",
+        "e0d847cecfc1c64bc0e8c0613fb87641df5b8ead9996f169380ee90991fc55a9"
+      ]
+    },
+    {
+      "family": "eeeeeeAAA",
+      "pole": "physical",
+      "points": 12,
+      "seed": 905313,
+      "polarized": {
+        "photon_rates": 32,
+        "max_relative_mg": 2.43913e-13,
+        "amplitudes": 2048,
+        "max_relative": 3.12999e-14
+      },
+      "layout": "sequential",
+      "old": {
+        "seconds_per_point": [
+          0.900324625,
+          0.8627078368333333,
+          0.8930601110833334
+        ],
+        "peak_rss_bytes": [
+          46612480,
+          46628864,
+          46628864
+        ],
+        "max_relative": 2.412434688467607e-13,
+        "weights": [
+          0.0015896313921189428,
+          2.405112029116168e-06,
+          2.5094863264492876e-05,
+          0.0574942996436193,
+          5.035368327711703e-10,
+          0.0001478170667990987,
+          2.1086337458352024e-06,
+          0.006036512320118413,
+          2.7332909934844216e-08,
+          2.079280521017811e-05,
+          0.016418761706614535,
+          4.832560029671019e-07
+        ],
+        "median_seconds_per_point": 0.8930601110833334,
+        "median_peak_rss_mib": 44.46875
+      },
+      "new": {
+        "seconds_per_point": [
+          0.603095625,
+          0.6114184270833333,
+          0.6227871214999999
+        ],
+        "peak_rss_bytes": [
+          41631744,
+          41615360,
+          41631744
+        ],
+        "max_relative": 2.4141955897000653e-13,
+        "weights": [
+          0.0015896313921189417,
+          2.4051120291161676e-06,
+          2.509486326449287e-05,
+          0.05749429964361935,
+          5.035368327711705e-10,
+          0.0001478170667990986,
+          2.1086337458352015e-06,
+          0.006036512320118412,
+          2.7332909934844206e-08,
+          2.0792805210178116e-05,
+          0.01641876170661454,
+          4.832560029671019e-07
+        ],
+        "median_seconds_per_point": 0.6114184270833333,
+        "median_peak_rss_mib": 39.703125
+      },
+      "mg": {
+        "seconds_per_point": [
+          0.12438500000000001,
+          0.14091189233333332,
+          0.12454500341666667
+        ],
+        "peak_rss_bytes": [
+          4882432,
+          4882432,
+          4866048
+        ],
+        "max_relative": 0.0,
+        "weights": [
+          0.0015896313921189324,
+          2.4051120291167482e-06,
+          2.5094863264492687e-05,
+          0.0574942996436268,
+          5.035368327711683e-10,
+          0.00014781706679909838,
+          2.108633745835197e-06,
+          0.006036512320118392,
+          2.733290993484429e-08,
+          2.0792805210178028e-05,
+          0.01641876170661438,
+          4.832560029671009e-07
+        ],
+        "median_seconds_per_point": 0.12454500341666667,
+        "median_peak_rss_mib": 4.65625
+      },
+      "max_relative_previous": 8.4481866251833e-16,
+      "generated_cpp_sha256": [
+        "584b2712913f21f3f28a33ac090baaeefc82e3d85ef54850c0e11137a293f483",
+        "83a054a4887b23452f650ae10d4d4b66baa00722857e25e1c087e6308bbb0c08"
+      ],
+      "build_sizes": {
+        "old": 39799512,
+        "new": 34808632
+      },
+      "scheduled_components": 8,
+      "compiled_stages": 48,
+      "stages_with_16_bit_operands": 32,
+      "individual_amplitude_timing": {
+        "old": [
+          0.870388,
+          0.864112,
+          0.876506,
+          0.864532
+        ],
+        "new": [
+          0.805648,
+          0.80098,
+          0.803044,
+          0.80333
+        ]
+      },
+      "median_matched_individual_amplitude_ratio": 0.9262797026182658
+    },
+    {
+      "family": "eeeeeeAAA",
+      "pole": "spurious",
+      "points": 12,
+      "seed": 905313,
+      "polarized": {
+        "photon_rates": 32,
+        "max_relative_mg": 5.31478e-13,
+        "amplitudes": 2048,
+        "max_relative": 0.0
+      },
+      "layout": "sequential",
+      "old": {
+        "seconds_per_point": [
+          2.1664040694166666,
+          2.0363708020833333,
+          2.1795205
+        ],
+        "peak_rss_bytes": [
+          57098240,
+          57081856,
+          57098240
+        ],
+        "max_relative": 2.211691947966894e-13,
+        "weights": [
+          0.0015896313921189378,
+          2.40511202911728e-06,
+          2.509486326449284e-05,
+          0.05749429964362122,
+          5.035368327711699e-10,
+          0.00014781706679910256,
+          2.108633745835198e-06,
+          0.0060365123201184066,
+          2.7332909934844242e-08,
+          2.079280521017816e-05,
+          0.01641876170661451,
+          4.832560029671021e-07
+        ],
+        "median_seconds_per_point": 2.1664040694166666,
+        "median_peak_rss_mib": 54.453125
+      },
+      "new": {
+        "seconds_per_point": [
+          1.8197220868333333,
+          1.7922793125,
+          1.6829910173333333
+        ],
+        "peak_rss_bytes": [
+          52461568,
+          52461568,
+          52461568
+        ],
+        "max_relative": 2.2134528491993513e-13,
+        "weights": [
+          0.001589631392118937,
+          2.4051120291172806e-06,
+          2.5094863264492815e-05,
+          0.05749429964362128,
+          5.035368327711701e-10,
+          0.0001478170667991025,
+          2.1086337458351973e-06,
+          0.006036512320118405,
+          2.7332909934844245e-08,
+          2.0792805210178174e-05,
+          0.01641876170661451,
+          4.832560029671019e-07
+        ],
+        "median_seconds_per_point": 1.7922793125,
+        "median_peak_rss_mib": 50.03125
+      },
+      "mg": {
+        "seconds_per_point": [
+          0.125316191,
+          0.12576802774999998,
+          0.12379927425
+        ],
+        "peak_rss_bytes": [
+          4849664,
+          4866048,
+          4849664
+        ],
+        "max_relative": 0.0,
+        "weights": [
+          0.0015896313921189324,
+          2.4051120291167482e-06,
+          2.5094863264492687e-05,
+          0.0574942996436268,
+          5.035368327711683e-10,
+          0.00014781706679909838,
+          2.108633745835197e-06,
+          0.006036512320118392,
+          2.733290993484429e-08,
+          2.0792805210178028e-05,
+          0.01641876170661438,
+          4.832560029671009e-07
+        ],
+        "median_seconds_per_point": 0.125316191,
+        "median_peak_rss_mib": 4.625
+      },
+      "max_relative_previous": 1.0861954232378165e-15,
+      "generated_cpp_sha256": [
+        "4de53c21796477071753706c020707cf46ac52971e8bbcba93a9895fefad7ff6",
+        "da4c5de220906a5665e7f3be2497d912836073b4a8df431e70faa9b6f311c525"
+      ],
+      "build_sizes": {
+        "old": 47085528,
+        "new": 42452712
+      },
+      "scheduled_components": 8,
+      "compiled_stages": 56,
+      "stages_with_16_bit_operands": 40,
+      "individual_amplitude_timing": {
+        "old": [
+          0.954988,
+          0.945893,
+          1.11506,
+          1.135
+        ],
+        "new": [
+          1.0977,
+          0.946004,
+          0.941872,
+          0.993299
+        ]
+      },
+      "median_matched_individual_amplitude_ratio": 0.9376353266950579
+    },
+    {
+      "family": "eeeeeeeeA",
+      "pole": "physical",
+      "points": 4,
+      "seed": 905413,
+      "source_sha256": [
+        [
+          "bd81fc99ad181540307f0a0588c3e93e1d2a54b7f6142f949bcae46ea509f84c",
+          "ca5aad9958081c65aef9f24290beeb07219e8e51e8a472ab6a945f6f17cd91ba"
+        ],
+        [
+          "cf325597ae67cc51f240ad6a61df97affec4dfb4b399b91c53102b7f6f6edad3",
+          "f96fae2401ef78d61f6a3ac9b179dc1061e8db60ce743bc570c96796a0c48bf9"
+        ]
+      ],
+      "polarized": {
+        "amplitudes": 2048,
+        "max_relative": 1.34719e-13
+      },
+      "layout": "sequential",
+      "old": {
+        "seconds_per_point": [
+          2.70323560425,
+          3.3023342395,
+          2.5819430105
+        ],
+        "peak_rss_bytes": [
+          38993920,
+          38993920,
+          38977536
+        ],
+        "max_relative": 1.051035115191891e-14,
+        "median_seconds_per_point": 2.70323560425,
+        "median_peak_rss_mib": 37.1875
+      },
+      "new": {
+        "seconds_per_point": [
+          2.12865691675,
+          2.53767969775,
+          2.01646460425
+        ],
+        "peak_rss_bytes": [
+          36372480,
+          36356096,
+          36356096
+        ],
+        "max_relative": 9.571926941926158e-15,
+        "median_seconds_per_point": 2.12865691675,
+        "median_peak_rss_mib": 34.671875
+      },
+      "mg": {
+        "seconds_per_point": [
+          0.196294052,
+          0.1535599895,
+          0.23015748975
+        ],
+        "peak_rss_bytes": [
+          4751360,
+          4685824,
+          4734976
+        ],
+        "max_relative": 0.0,
+        "median_seconds_per_point": 0.196294052,
+        "median_peak_rss_mib": 4.515625
+      },
+      "scheduled_components": 2,
+      "compiled_stages": 14,
+      "stages_with_16_bit_operands": 8
+    },
+    {
+      "family": "eeeeeeeeA",
+      "pole": "spurious",
+      "points": 4,
+      "seed": 905413,
+      "source_sha256": [
+        [
+          "507ac68c4582fdcb65c9628918955a96c5020530588098dd2f30d9c32d0c9457",
+          "69dc8272e560add481ad98e949d5fa29393587e86e9d344cf29934c111a175e9"
+        ],
+        [
+          "040b33dcf259bd5b7eea0ba208270473c814d6d5451756caf67db2ed1e6efb0c",
+          "07eccc6d5be056de17ec5c52ea9254ef77e6cd41e21b7df8179820ed583af8cb"
+        ]
+      ],
+      "polarized": {
+        "amplitudes": 2048,
+        "max_relative": 9.56133e-14
+      },
+      "layout": "sequential",
+      "old": {
+        "seconds_per_point": [
+          1.687348875,
+          1.687389771,
+          1.6953245625
+        ],
+        "peak_rss_bytes": [
+          38993920,
+          38977536,
+          38993920
+        ],
+        "max_relative": 9.947296625923259e-15,
+        "median_seconds_per_point": 1.687389771,
+        "median_peak_rss_mib": 37.1875
+      },
+      "new": {
+        "seconds_per_point": [
+          1.2432178125,
+          1.250416375,
+          1.26815747925
+        ],
+        "peak_rss_bytes": [
+          36356096,
+          36372480,
+          36372480
+        ],
+        "max_relative": 9.571926941926158e-15,
+        "median_seconds_per_point": 1.250416375,
+        "median_peak_rss_mib": 34.6875
+      },
+      "mg": {
+        "seconds_per_point": [
+          0.10658379175,
+          0.1069206875,
+          0.106838146
+        ],
+        "peak_rss_bytes": [
+          4685824,
+          4702208,
+          4702208
+        ],
+        "max_relative": 0.0,
+        "median_seconds_per_point": 0.106838146,
+        "median_peak_rss_mib": 4.484375
+      },
+      "scheduled_components": 2,
+      "compiled_stages": 14,
+      "stages_with_16_bit_operands": 8
+    }
+  ]
+}
