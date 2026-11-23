@@ -240,6 +240,16 @@ For four massive vectors, the final reduction proposes shorter spinor tensors on
 
 A native program can start with particle names. Read each model once and reuse it across processes. The QED vertex model is number 3. For factorization through nine external legs, use model 4 for physical poles or model 5 for the spurious-pole representation. Use models 1 and 2 for the corresponding SM pair.
 
+To read a catalog entry directly, supply the ordered all-incoming particle names, including photon helicities:
+
+```cpp
+hepcat::model catalog("models", 4);
+auto amp = catalog.retrieve_amplitude({"e", "E", "A.+", "A.-"});
+if (amp) std::cout << amp->plain_text() << '\n';
+```
+
+The result owns its expression and external masses. It includes the stored factor and uses the requested leg numbering. Repeated species keep their occurrence order. An absent row returns `std::nullopt`, while a stored zero yields a present amplitude. Exact row order takes priority over multiset matching. An ambiguous match or a Feynman model throws `std::invalid_argument`.
+
 Large amplitude rows can store shared arithmetic in dependency order. For example, `Shared[<13>;EE;*:1,2;+:3,3]` computes the spinor bracket and coupling, multiplies them, then adds the product to itself. Slot numbers start at one. The last slot is the amplitude. Both readers return ordinary HEPCAT expressions with model-local parameters.
 
 ```cpp

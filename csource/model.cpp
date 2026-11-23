@@ -4,6 +4,7 @@
 #include <array>
 #include <cctype>
 #include <fstream>
+#include <functional>
 #include <iomanip>
 #include <limits>
 #include <map>
@@ -304,6 +305,75 @@ const model_particle& model::particle(const std::string& label) const { return d
 std::string model::antiparticle(const std::string& name) const {
     const auto& p = particle(name);
     return p.name == name ? p.antiname : p.name;
+}
+std::optional<amp_expression> model::retrieve_amplitude(const std::vector<std::string>& process) const {
+    if (is_feynman()) throw std::invalid_argument("retrieve_amplitude requires a constructive model");
+    const model_vertex* match = nullptr;
+    bool exact = false, ambiguous = false;
+    for (const auto& row : vertices()) {
+        if (row.legs.size() != process.size()) continue;
+        const bool same = row.legs == process;
+        if (exact && !same) continue;
+        if (!same && !std::is_permutation(row.legs.begin(), row.legs.end(), process.begin())) continue;
+        ambiguous = match && same == exact;
+        exact = same;
+        match = &row;
+    }
+    if (!match) return std::nullopt;
+    if (ambiguous) throw std::invalid_argument("multiple model amplitudes match the requested particles");
+
+    std::vector<std::string> masses;
+    for (const auto& leg : process) masses.push_back(particle(leg).mass);
+    amp_expression result("0", masses);
+    Algebra arena(&algebra());
+    Id root = arena.mul({match->factor, match->expression});
+    if (!exact) {
+        // Match successive identical particles in their original order. The
+        // stored expression already carries the identical-fermion antisymmetry.
+        std::vector<Id> labels;
+        std::vector<bool> used(process.size());
+        for (const auto& leg : match->legs) {
+            std::size_t i = 0;
+            while (used[i] || process[i] != leg) ++i;
+            used[i] = true;
+            labels.push_back(arena.integer(i + 1));
+        }
+        std::unordered_map<Id, Id> memo;
+        std::function<Id(Id)> visit = [&](Id id) -> Id {
+            if (auto it = memo.find(id); it != memo.end()) return it->second;
+            const auto& n = arena.node(id);
+            if (!n.compound) return id;
+            const auto head = n.head.substr(n.head.find_last_of('`') + 1);
+            auto args = n.args;
+            auto slot = [&](std::size_t i) {
+                const Id old = args.at(i);
+                args[i] = arena.node(old).head == "Multiparticle" ? visit(old) : labels.at(arena.leg(old)-1);
+            };
+            if (head == "Spinor" || head == "SpinorHat") {
+                if (arena.node(args.at(0)).head == "\"Xi\"") return id;
+                slot(args.size() == 5 ? 3 : 2);
+                if (args.size() >= 4) args.back() = visit(args.back());
+            } else if (head == "ColorIndex" || head == "VectorSpinIndex" || head == "Mom" ||
+                       head == "MomHat" || head == "MomQ" || head == "Mass") {
+                slot(0);
+            } else if (head == "MomProd" || head == "Mandelstahm" || head == "xFactor" ||
+                       head == "xTildeFactor" || head == "Multiparticle") {
+                for (std::size_t i = 0; i < args.size(); ++i) slot(i);
+                if (head == "Multiparticle")
+                    std::sort(args.begin(), args.end(), [&](Id a, Id b) { return arena.leg(a) < arena.leg(b); });
+            } else if (head == "colorInternalIndex" || head == "ColorInternalIndex" || head == "ModelParameter") {
+                return id;
+            } else {
+                for (auto& arg : args) arg = visit(arg);
+            }
+            const Id out = args == n.args ? id : arena.call(n.head, std::move(args));
+            memo.emplace(id, out);
+            return out;
+        };
+        root = visit(root);
+    }
+    result.set_from(arena, root);
+    return result;
 }
 const Algebra& model::algebra() const { return data_->arena; }
 const std::string& model::parameter_scope() const { return data_->scope; }

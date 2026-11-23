@@ -744,18 +744,43 @@ ConstructiveDiagrams`Private`amplitudeParticleLabelRules[tagged_List,row_List]:=
   rules
 ];
 
-LookupAmplitude[taggedParticles_List,model_,rightSide_,{i1_,i2_,i3_,i4_}]:=Module[{amp=0,i,j,k,replacements,doubleSpin,indices,buildReplacements,relabelIndex,relabelExpression,explicitColor},
+LookupAmplitude::usage = "LookupAmplitude[particles, model] returns the stored factor times its amplitude in the requested all-incoming leg order, or Missing if absent. LookupAmplitude[taggedParticles, model, rightSide, spinIndices] supplies a labeled lower amplitude for sewing.";
+
+LookupAmplitude[process : {___String}, model : {_List, _List, _List, _List}] := Module[
+  {rows, words, key = Sort[process], positions, row, tagged, rules, value},
+  rows = model[[2]];
+  words = DeleteCases[Drop[#, -2], ""] & /@ rows;
+  positions = Flatten[Position[words, process, {1}, Heads -> False]];
+  If[positions === {}, positions = Flatten[Position[Sort /@ words, key, {1}, Heads -> False]]];
+  If[positions === {}, Return[Missing["AmplitudeNotFound", process]]];
+  If[Length[positions] != 1, Return[Failure["AmbiguousModelAmplitude", <|"Particles" -> process|>]]];
+  row = rows[[First[positions]]];
+  value = row[[-2]] row[[-1]];
+  If[words[[First[positions]]] === process, Return[value]];
+  tagged = MapIndexed[{#1, First[#2]} &, process];
+  rules = ConstructiveDiagrams`Private`amplitudeParticleLabelRules[tagged, row];
+  ConstructiveDiagrams`Private`relabelModelKinematics[value, rules] /.
+    ColorIndex[i_Integer] :> ColorIndex[i /. rules]
+];
+LookupAmplitude[process : {___String}, _FeynmanModel] :=
+  Failure["ConstructiveModelRequired", <|"Particles" -> process|>];
+
+ConstructiveDiagrams`Private`relabelModelKinematics[expression_,replacements_] :=
+Module[{relabelIndex,relabelSpin},
 (*Helper function*)
 relabelIndex[index_Integer]:=index/.replacements;
 relabelIndex[Multiparticle[labels___]]:=Multiparticle@@Flatten[
   (relabelIndex/@{labels})/.Multiparticle->List];
 relabelIndex[index_]:=index;
+relabelSpin[ConstructiveDiagrams`VectorSpinIndex[label_,slot_]]:=
+  ConstructiveDiagrams`VectorSpinIndex[relabelIndex[label],slot];
+relabelSpin[index_]:=index;
 (* Only particle-label positions are changed, not coefficients, powers or spin indices. *)
-relabelExpression[expression_]:=expression/.{
+expression/.{
   head:(Spinor|SpinorHat)[type:Except["Xi"],position:("Upper"|"Lower"),kind:("Angle"|"Square"),label_,spin_]:>
-    Head[head][type,position,kind,relabelIndex[label],spin],
+    Head[head][type,position,kind,relabelIndex[label],relabelSpin[spin]],
   head:(Spinor|SpinorHat)[type:Except["Xi"],kind:("Angle"|"Square"),label_,rest___]:>
-    Head[head][type,kind,relabelIndex[label],rest],
+    Head[head][type,kind,relabelIndex[label],Sequence@@(relabelSpin/@{rest})],
   Mom[label_]:>Mom[relabelIndex[label]],
   MomHat[label_]:>MomHat[relabelIndex[label]],
   MomQ[label_]:>MomQ[relabelIndex[label]],
@@ -764,7 +789,10 @@ relabelExpression[expression_]:=expression/.{
   Mandelstahm[a_,b_]:>Mandelstahm[relabelIndex[a],relabelIndex[b]],
   xFactor[labels___]:>xFactor@@(relabelIndex/@{labels}),
   xTildeFactor[labels___]:>xTildeFactor@@(relabelIndex/@{labels})
-};
+}
+];
+
+LookupAmplitude[taggedParticles_List,model_,rightSide_,{i1_,i2_,i3_,i4_}]:=Module[{amp=0,i,j,k,replacements,doubleSpin,indices,buildReplacements,explicitColor},
 buildReplacements[i_]:=ConstructiveDiagrams`Private`amplitudeParticleLabelRules[
   taggedParticles,model[[2,i]]];
 (*End helper function*)
@@ -788,7 +816,7 @@ If[explicitColor,
     If[TrueQ[ConstructiveDiagrams`Private`$colorFactorizationEnabled],
       ConstructiveDiagrams`Private`$colorExternalLegs,{}]];
   If[FailureQ[amp],Return[amp]]];
-amp=relabelExpression[amp];
+amp=ConstructiveDiagrams`Private`relabelModelKinematics[amp,replacements];
 If[!explicitColor && amp=!=0 && TrueQ[ConstructiveDiagrams`Private`$colorFactorizationEnabled],
 amp=amp ConstructiveDiagrams`Private`colorLowerAmplitudeTensor[
   taggedParticles,model[[2,i]],model,

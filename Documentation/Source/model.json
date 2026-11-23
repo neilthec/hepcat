@@ -568,24 +568,28 @@
     "summary": "Retrieve a stored lower-point amplitude with a specified particle numbering.",
     "syntaxes": [
       {
+        "input": "LookupAmplitude[particles, model]",
+        "description": "Retrieve a saved amplitude for an ordered list of all-incoming particle names."
+      },
+      {
         "input": "LookupAmplitude[taggedParticles, model, rightSide, spinIndices]",
         "description": "Match particle names, multiply the stored factor, and relabel typed particle slots."
       }
     ],
     "details": [
-      "This is an advanced way to obtain a complete amplitude already present in a constructive model. `taggedParticles` has entries such as `{\"e\", 1}` and `{\"E\", 2}`. The function matches their particle content to a stored model row, includes that row's overall factor and relabels its typed particle slots to the supplied numbering.",
-      "Only particle-label positions are relabeled. Numerical coefficients, powers and independent spin-index symbols are not interpreted as particle numbers. Repeated identical species are assigned distinct matching labels instead of repeatedly replacing every occurrence by the same leg.",
-      "The `rightSide` argument and four supplied spin-index names support sewing lower-point amplitudes across an internal line. In an ordinary lookup with only integer external labels, the common form is `LookupAmplitude[Thread[{particles, Range[Length[particles]]}], model, False, {i1, i2, i3, i4}]`.",
-      "An absent amplitude returns `0`. That is the same missing-amplitude convention used by [FactorizationAmplitudeChannels](paclet:HEPCAT/ref/FactorizationAmplitudeChannels). For an entire calculation, prefer that function or [ConstructAmplitude](paclet:HEPCAT/ref/ConstructAmplitude), which also carry the channel and external-state information needed for sewing and validation."
+      "Read the model once with [ReadModel](paclet:HEPCAT/ref/ReadModel), then pass an ordered list of particle names, including any helicity suffixes. The result includes the stored overall factor. Models 4 and 5 contain the single-flavor QED catalog through nine external legs with the physical- and spurious-pole choices, respectively.",
+      "An exact row ordering has priority. Otherwise HEPCAT finds the unique row with the same particle and helicity counts and assigns successive occurrences of each species to successive positions. It relabels external spinors, momenta and explicit color slots. Coefficients, exponents and independent spin indices keep their stored values.",
+      "The two-argument form returns Missing for an absent row, the number zero for a stored zero, and Failure for an ambiguous match or a Feynman rules model. To calculate an amplitude from diagrams and factorization, use [ConstructAmplitude](paclet:HEPCAT/ref/ConstructAmplitude).",
+      "The four-argument form labels legs explicitly for sewing. The rightSide flag and four spin-index names control the internal leg. This form returns zero for an absent amplitude, as required by [FactorizationAmplitudeChannels](paclet:HEPCAT/ref/FactorizationAmplitudeChannels)."
     ],
     "examples": [
       {
         "description": "Retrieve the QED positive-helicity three-point amplitude.",
-        "input": "qedModel = ReadModel[modelDirectory, 3];\nLookupAmplitude[{{\"e\", 1}, {\"E\", 2}, {\"A.+\", 3}}, qedModel, False, {i1, i2, i3, i4}]",
+        "input": "qedModel = ReadModel[modelDirectory, 3];\nLookupAmplitude[{\"e\", \"E\", \"A.+\"}, qedModel]",
         "evaluate": true
       },
       {
-        "description": "Missing model amplitudes give zero.",
+        "description": "An absent lower-point amplitude contributes zero during sewing.",
         "input": "qedModel = ReadModel[modelDirectory, 3];\nLookupAmplitude[{{\"e\", 1}, {\"e\", 2}, {\"e\", 3}}, qedModel, False, {i1, i2, i3, i4}]",
         "evaluate": true,
         "expected": "0"

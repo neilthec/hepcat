@@ -78,6 +78,35 @@ void fixture_tests() {
     check(m.high_energy_parameter_points({"ModelParameter[\"g\",\"other\",\"Real\"]"}).empty(),
           "foreign model parameter adopted");
     check(model(test.dir / ".", 1).parameter_scope() == m.parameter_scope(), "equivalent path scopes");
+    const std::vector<std::string> ordered{"q","Q","A.+","A.+","A.-"};
+    auto exact = m.retrieve_amplitude(ordered);
+    Algebra a(&m.algebra());
+    check(exact && exact->str() == a.format(a.mul({m.vertices()[1].factor, m.vertices()[1].expression})),
+          "exact catalog lookup omitted the factor or modified the row");
+    const std::vector<std::string> permuted{"A.+","A.-","Q","A.+","q"};
+    auto moved = m.retrieve_amplitude(permuted);
+    test.write("amps1.mdl", "A.+|A.-|Q|A.+|q|2g^2|<512]/(s15-mass^2)\n======\n");
+    auto oracle = model(test.dir, 1, m.parameter_scope()).retrieve_amplitude(permuted);
+    check(moved && oracle && moved->str() == oracle->str() && moved->particle_count() == 5,
+          "permuted lookup changed the momentum order, masses, or repeated photon slots");
+    check(!m.retrieve_amplitude({"q","Q","A.-"}), "missing helicity returned a value");
+    test.write("amps1.mdl", "q|Q|A.+||1|0\nQ|q|A.+||1|3\n======\n");
+    model alternatives(test.dir, 1);
+    check(alternatives.retrieve_amplitude({"q","Q","A.+"})->str() == "0", "stored zero lost");
+    check(alternatives.retrieve_amplitude({"Q","q","A.+"})->str() == "3", "exact row lost priority");
+    rejects([&] { alternatives.retrieve_amplitude({"A.+","q","Q"}); }, "ambiguous lookup accepted");
+    // Typed external indices move with their particle. The spin slot, scalar
+    // factor and summed color index each use integers with a different meaning.
+    test.write("amps1.mdl",
+        "q|Q|A.+||1|ColorGenerator[ColorIndex[1],ColorIndex[2],ColorInternalIndex[1,8]]"
+        "*SpinorChain[Spinor[\"Spin\",\"Angle\",1,VectorSpinIndex[1,2]],Spinor[\"Spin\",\"Angle\",2]]\n======\n");
+    model indexed(test.dir, 1, m.parameter_scope());
+    auto with_indices = indexed.retrieve_amplitude({"A.+","q","Q"});
+    test.write("amps1.mdl",
+        "A.+|q|Q||1|ColorGenerator[ColorIndex[2],ColorIndex[3],ColorInternalIndex[1,8]]"
+        "*SpinorChain[Spinor[\"Spin\",\"Angle\",2,VectorSpinIndex[2,2]],Spinor[\"Spin\",\"Angle\",3]]\n======\n");
+    auto expected_indices = model(test.dir, 1, m.parameter_scope()).retrieve_amplitude({"A.+","q","Q"});
+    check(with_indices->str() == expected_indices->str(), "indexed color or spin slot changed meaning");
     auto original_scope = m.parameter_scope();
     test.write("func1.mdl", "Name | Expression\ny | 3*g^2\n======\n");
     check(model(test.dir, 1).parameter_scope() != original_scope,
@@ -147,6 +176,7 @@ void repository_tests(const fs::path& repo) {
     auto ch = repo / "tests" / "reference-models" / "calchep";
     model ew(ch, 1);
     model qed(ch, 2);
+    rejects([&] { qed.retrieve_amplitude({"e","E","A"}); }, "Feynman vertex returned as a catalog row");
     check(ew.is_feynman() && qed.is_feynman() && qed.vertices().size() == 1, "Feynman model detection");
     check(ew.particle("G.t").auxiliary == "T" && ew.particle("G.t").spin2 == 4 &&
               ew.antiparticle("G.t") == "G.t",

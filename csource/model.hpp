@@ -1,4 +1,5 @@
 #pragma once
+#include "amp_expression.hpp"
 #include <cstdint>
 #include <filesystem>
 #include <memory>
@@ -40,6 +41,9 @@ class model {
     const std::vector<model_parameter>& functions() const;
     const model_particle& particle(const std::string& name) const;
     std::string antiparticle(const std::string& name) const;
+    // Return the stored factor times expression, with legs numbered in process order.
+    // An absent row returns nullopt. An ambiguous table or a Feynman model is an error.
+    std::optional<amp_expression> retrieve_amplitude(const std::vector<std::string>& process) const;
     const Algebra& algebra() const;
     const std::string& parameter_scope() const;
     bool is_feynman() const;

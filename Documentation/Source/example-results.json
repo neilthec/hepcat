@@ -144,7 +144,7 @@
   "qedModel = ReadModel[modelDirectory, 3];\n{ModelParameter[qedModel, \"Me\"], ModelParameter[qedModel, \"EE\"]} /. ModelParameterRules[qedModel, {\"Me\" -> 1, \"EE\" -> 1}]": "{1, 1}",
   "Length[FactorizationPartitions[{\"e\", \"E\", \"A.+\", \"A.-\"}]]": "3",
   "Length[FactorizationPartitions[{\"e\", \"E\", \"A.+\", \"A.+\", \"A.-\"}]]": "10",
-  "qedModel = ReadModel[modelDirectory, 3];\nLookupAmplitude[{{\"e\", 1}, {\"E\", 2}, {\"A.+\", 3}}, qedModel, False, {i1, i2, i3, i4}]": "-(Sqrt[2]*ModelParameter[\"EE\", \"c290c11592fdb153523bc79fa19d6792772af2948585b673a998d4f95927eaad\", \"Real\"]*SpinorChain[Spinor[\"Spin\", \"Angle\", 1], Spinor[\"Spin\", \"Angle\", 2]]*xFactor[1, 2])",
+  "qedModel = ReadModel[modelDirectory, 3];\nLookupAmplitude[{\"e\", \"E\", \"A.+\"}, qedModel]": "-(Sqrt[2]*ModelParameter[\"EE\", \"c290c11592fdb153523bc79fa19d6792772af2948585b673a998d4f95927eaad\", \"Real\"]*SpinorChain[Spinor[\"Spin\", \"Angle\", 1], Spinor[\"Spin\", \"Angle\", 2]]*xFactor[1, 2])",
   "qedModel = ReadModel[modelDirectory, 3];\nLookupAmplitude[{{\"e\", 1}, {\"e\", 2}, {\"e\", 3}}, qedModel, False, {i1, i2, i3, i4}]": "0",
   "qedModel = ReadModel[modelDirectory, 3];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\nchannels = FactorizationAmplitudeChannels[process, qedModel];\nLength[channels]": "2",
   "knownQEDModel = ReadModel[modelDirectory, 4];\nfivePointChannels = FactorizationAmplitudeChannels[{\"e\", \"E\", \"A.+\", \"A.+\", \"A.+\"}, knownQEDModel];\nLength[fivePointChannels]": "6",

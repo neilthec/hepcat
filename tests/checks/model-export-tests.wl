@@ -68,6 +68,27 @@ meSquare[i_, j_, left_: "Helicity", right_: "Helicity"] :=
   SpinorChain[Spinor[left, "Square", i], Spinor[right, "Square", j]];
 meFour = 2 meCharge^2 meMass meAngle[1, 2] meSquare[3, 4]^2 /
   (PropDen[Mom[Multiparticle[1, 3]], meMass] PropDen[Mom[Multiparticle[1, 4]], meMass]);
+meLookupModel = ReplacePart[meModel, 2 -> {
+  {"e","E","A.+","A.+",2, meCharge Mom[Multiparticle[1,3]] meSquare[3,4]^2},
+  {"e","E","A.-", "",1,0}}];
+meCheck["ordinary lookup preserves model parameters, repeated photon slots and powers",
+  LookupAmplitude[{"A.+","e","A.+","E"},meLookupModel] ===
+    2 meCharge Mom[Multiparticle[2,1]] meSquare[1,3]^2];
+meCheck["ordinary lookup distinguishes absent and explicitly zero helicities",
+  MissingQ[LookupAmplitude[{"e","E","A.+"},meLookupModel]] &&
+    LookupAmplitude[{"A.-","E","e"},meLookupModel] === 0];
+meIndexed = ReplacePart[meModel, 2 -> {{"e","E","A.+",1,
+  ColorDelta[ColorIndex[1],ColorIndex[2]] SpinorChain[
+    Spinor["Spin","Angle",1,VectorSpinIndex[1,2]],Spinor["Spin","Angle",2]]}}];
+meCheck["external color and vector-spin labels move with their particle",
+  LookupAmplitude[{"A.+","e","E"},meIndexed] === ColorDelta[ColorIndex[2],ColorIndex[3]] SpinorChain[
+    Spinor["Spin","Angle",2,VectorSpinIndex[2,2]],Spinor["Spin","Angle",3]]];
+meLookupChoices = ReplacePart[meModel, 2 -> {{"e","E","A.+",1,2},{"E","e","A.+",1,3}}];
+meCheck["exact ordering has priority and ambiguous permutations fail",
+  LookupAmplitude[{"E","e","A.+"},meLookupChoices] === 3 &&
+  FailureQ[LookupAmplitude[{"A.+","e","E"},meLookupChoices]]];
+meCheck["raw Feynman rules cannot supply a stored amplitude",
+  FailureQ[LookupAmplitude[{"e","E","A"}, FeynmanModel[{}, {}, {}, {}]]]];
 meAppend = AppendModelAmplitudes[meDirectory, 91,
   {{{"e", "E", "A.+", "A.+"}, meFour}}];
 meCheck["append returns a compact path and counts",

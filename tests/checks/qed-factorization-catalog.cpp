@@ -195,6 +195,11 @@ int main(int argc, char** argv) {
                 if (!seen.insert(label).second) throw std::runtime_error("Duplicate QED model row");
                 Algebra joined(&catalog.algebra());
                 const auto value = joined.mul({vertex.factor, vertex.expression});
+                {
+                    const auto entry = catalog.retrieve_amplitude(vertex.legs);
+                    if (!entry || validation_detail::import_expression(joined, *entry) != value)
+                        throw std::runtime_error("Public catalog lookup disagrees with the saved row");
+                }
                 if (vertex.legs.size() >= 7) {
                     bool ok = check_higher_point(catalog,vertex,feynman);
                     if (family == "eeeeeeeeA") ok = emitting_pair_poles(joined, vertex, number == 5) && ok;

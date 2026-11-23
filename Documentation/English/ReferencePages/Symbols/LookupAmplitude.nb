@@ -9,51 +9,36 @@ Notebook[
    "AnchorBarGrid"], Cell["LookupAmplitude", "ObjectName"],
   Cell[TextData[{"Retrieve a stored lower-point amplitude with a specified \
 particle numbering."}], "Notes"],
+  Cell[TextData[{Cell[BoxData[RowBox[{"LookupAmplitude", "[", "particles",
+         ",", " ", "model", "]"}]], "InlineFormula"], "  ", "Retrieve a saved \
+amplitude for an ordered list of all-incoming particle names."}], "Usage"],
   Cell[TextData[{Cell[BoxData[RowBox[{"LookupAmplitude", "[",
          "taggedParticles", ",", " ", "model", ",", " ", "rightSide", ",",
          " ", "spinIndices", "]"}]], "InlineFormula"], "  ", "Match particle \
 names, multiply the stored factor, and relabel typed particle slots."}],
    "Usage"], Cell["Details", "NotesSection"],
-  Cell[TextData[{"This is an advanced way to obtain a complete amplitude \
-already present in a constructive model. ",
-     Cell[BoxData[RowBox[{"taggedParticles"}]], "InlineFormula"],
-     Cell[BoxData[RowBox[{" ", "has", " ", "entries", " ", "such", " ", "as",
-         " "}]], "InlineFormula"],
-     Cell[BoxData[RowBox[{"{", "\"e\"", ",", " ", "1", "}"}]],
-      "InlineFormula"], Cell[BoxData[RowBox[{" ", "and", " "}]],
-      "InlineFormula"], Cell[BoxData[RowBox[{"{", "\"E\"", ",", " ", "2",
-         "}"}]], "InlineFormula"], ". The function matches their particle \
-content to a stored model row, includes that row's overall factor and \
-relabels its typed particle slots to the supplied numbering."}], "Notes"],
-  Cell[TextData[{"Only particle-label positions are relabeled. Numerical \
-coefficients, powers and independent spin-index symbols are not interpreted \
-as particle numbers. Repeated identical species are assigned distinct \
-matching labels instead of repeatedly replacing every occurrence by the same \
-leg."}], "Notes"],
-  Cell[TextData[{"The ", Cell[BoxData[RowBox[{"rightSide"}]],
-      "InlineFormula"], Cell[BoxData[RowBox[{" ", "argument", " ", "and",
-         " ", "four", " ", "supplied", " ", "spin", "-", "index", " ",
-         "names", " ", "support", " ", "sewing", " ", "lower", "-", "point",
-         " ", "amplitudes", " ", "across", " ", "an", " ", "internal", " ",
-         "line", ".", " ", "In", " ", "an", " ", "ordinary", " ", "lookup",
-         " ", "with", " ", "only", " ", "integer", " ", "external", " ",
-         "labels", ",", " ", "the", " ", "common", " ", "form", " ", "is",
-         " "}]], "InlineFormula"],
-     Cell[BoxData[RowBox[{"LookupAmplitude", "[", "Thread", "[", "{",
-         "particles", ",", " ", "Range", "[", "Length", "[", "particles",
-         "]", "]", "}", "]", ",", " ", "model", ",", " ", "False", ",", " ",
-         "{", "i1", ",", " ", "i2", ",", " ", "i3", ",", " ", "i4", "}",
-         "]"}]], "InlineFormula"], "."}], "Notes"],
-  Cell[TextData[{"An absent amplitude returns ", Cell[BoxData[RowBox[{"0"}]],
-      "InlineFormula"],
-     ". That is the same missing-amplitude convention used by ",
+  Cell[TextData[{"Read the model once with ", ButtonBox["ReadModel",
+      BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/ref/ReadModel"], ", \
+then pass an ordered list of particle names, including any helicity suffixes. \
+The result includes the stored overall factor. Models 4 and 5 contain the \
+single-flavor QED catalog through nine external legs with the physical- and \
+spurious-pole choices, respectively."}], "Notes"],
+  Cell[TextData[{"An exact row ordering has priority. Otherwise HEPCAT finds \
+the unique row with the same particle and helicity counts and assigns \
+successive occurrences of each species to successive positions. It relabels \
+external spinors, momenta and explicit color slots. Coefficients, exponents \
+and independent spin indices keep their stored values."}], "Notes"],
+  Cell[TextData[{"The two-argument form returns Missing for an absent row, \
+the number zero for a stored zero, and Failure for an ambiguous match or a \
+Feynman rules model. To calculate an amplitude from diagrams and \
+factorization, use ", ButtonBox["ConstructAmplitude", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ConstructAmplitude"], "."}], "Notes"],
+  Cell[TextData[{"The four-argument form labels legs explicitly for sewing. \
+The rightSide flag and four spin-index names control the internal leg. This \
+form returns zero for an absent amplitude, as required by ",
      ButtonBox["FactorizationAmplitudeChannels", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/FactorizationAmplitudeChannels"],
-     ". For an entire calculation, prefer that function or ",
-     ButtonBox["ConstructAmplitude", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/ConstructAmplitude"], ", which also \
-carry the channel and external-state information needed for sewing and \
-validation."}], "Notes"], Cell["Examples", "PrimaryExamplesSection"],
+     "."}], "Notes"], Cell["Examples", "PrimaryExamplesSection"],
   Cell[CellGroupData[{Cell["Load HEPCAT if needed", "ExampleSubsection"],
      Cell["Skip this setup if HEPCAT is already loaded. These examples assume \
 the checkout is in ~/code/hepcat; change the paths if yours is elsewhere. \
@@ -67,11 +52,8 @@ Evaluate loading in its own cell before the calculation.", "ExampleText"],
     {"Retrieve the QED positive-helicity three-point amplitude."}],
    "ExampleText"], Cell[BoxData[RowBox[{"qedModel", " ", "=", " ",
       "ReadModel", "[", "modelDirectory", ",", " ", "3", "]", ";", "\n",
-      "LookupAmplitude", "[", "{", "{", "\"e\"", ",", " ", "1", "}", ",",
-      " ", "{", "\"E\"", ",", " ", "2", "}", ",", " ", "{", "\"A.+\"", ",",
-      " ", "3", "}", "}", ",", " ", "qedModel", ",", " ", "False", ",", " ",
-      "{", "i1", ",", " ", "i2", ",", " ", "i3", ",", " ", "i4", "}", "]"}]],
-   "Input"],
+      "LookupAmplitude", "[", "{", "\"e\"", ",", " ", "\"E\"", ",", " ",
+      "\"A.+\"", "}", ",", " ", "qedModel", "]"}]], "Input"],
   Cell[BoxData[RowBox[{"-", RowBox[{"(", RowBox[{SqrtBox["2"], " ",
           InterpretationBox["EE", ModelParameter["EE",
             "c290c11592fdb153523bc79fa19d6792772af2948585b673a998d4f95927eaad\
@@ -83,14 +65,16 @@ Evaluate loading in its own cell before the calculation.", "ExampleText"],
             ShowStringCharacters -> False], SpinorChain[Spinor["Spin",
              "Angle", 1], Spinor["Spin", "Angle", 2]], Editable -> False],
           " ", SubscriptBox["\"x\"", "\"1,2\""]}], ")"}]}]], "Output"],
-  Cell[TextData[{"Missing model amplitudes give zero."}], "ExampleText"],
-  Cell[BoxData[RowBox[{"qedModel", " ", "=", " ", "ReadModel", "[",
-      "modelDirectory", ",", " ", "3", "]", ";", "\n", "LookupAmplitude",
-      "[", "{", "{", "\"e\"", ",", " ", "1", "}", ",", " ", "{", "\"e\"",
-      ",", " ", "2", "}", ",", " ", "{", "\"e\"", ",", " ", "3", "}", "}",
-      ",", " ", "qedModel", ",", " ", "False", ",", " ", "{", "i1", ",", " ",
-      "i2", ",", " ", "i3", ",", " ", "i4", "}", "]"}]], "Input"],
-  Cell[BoxData[RowBox[{"0"}]], "Output"], Cell["See Also", "SeeAlsoSection"],
+  Cell[TextData[
+    {"An absent lower-point amplitude contributes zero during sewing."}],
+   "ExampleText"], Cell[BoxData[RowBox[{"qedModel", " ", "=", " ",
+      "ReadModel", "[", "modelDirectory", ",", " ", "3", "]", ";", "\n",
+      "LookupAmplitude", "[", "{", "{", "\"e\"", ",", " ", "1", "}", ",",
+      " ", "{", "\"e\"", ",", " ", "2", "}", ",", " ", "{", "\"e\"", ",",
+      " ", "3", "}", "}", ",", " ", "qedModel", ",", " ", "False", ",", " ",
+      "{", "i1", ",", " ", "i2", ",", " ", "i3", ",", " ", "i4", "}", "]"}]],
+   "Input"], Cell[BoxData[RowBox[{"0"}]], "Output"],
+  Cell["See Also", "SeeAlsoSection"],
   Cell[TextData[{ButtonBox["ReadModel", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/ReadModel"], "  \[Bullet]  ",
      ButtonBox["FactorizationAmplitudeChannels", BaseStyle -> "Link",

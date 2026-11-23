@@ -102,6 +102,7 @@ public:
     std::size_t leaf_count() const;
 private:
     friend class amplitude;
+    friend class model;
     friend std::uint32_t validation_detail::import_expression(Algebra&, const amp_expression&, bool);
     amp_expression& reduce_with_factor_passes(unsigned passes);
     void restore_prepared(const std::string& remainder);
