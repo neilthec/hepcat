@@ -68,3 +68,25 @@ The direct SPINAS count is `process.cpp + process.hpp`. The table build counts `
 To rebuild the numerical inventory, run `collect-rate-study.py WORK CONSTRUCTION_ROOT INVENTORY_MAP TIMINGS OUTPUT_JSON`. WORK holds the grouped sources under `spinas/{physical,spurious}/FAMILY` and the operand-table builds under `plan/{physical,spurious}/FAMILY`. INVENTORY_MAP is a JSON object keyed by family. Each value supplies `MadGraph` (the standalone reference directory) and optionally `CalcHEP` (a directory of generated C modules or a tar archive). A `ch_generation` entry can record an incomplete attempt. The collector checks diagram counts against MadGraph, counts charge-allowed cuts, retains SHA-256 source inventories and verifies all recorded spin sums point by point.
 
 The eight-point CalcHEP squared-diagram menu listed 398 independent contributions for one charged pair, 59,150 for two, 255,024 for three and 41,856 for four. The initial generation survey allotted 75 seconds per eight-point family. Six-photon annihilation finished symbolic generation in 11,433 seconds. Its 401 generated C modules occupy 252,573,366 bytes. The three other eight-point families did not reach C output within the initial survey. A missing cell has no inferred byte count or run time. All four nine-point inputs returned exit 110 and the message `Too many particles` in the installed CalcHEP 3.9.2 symbolic parser.
+
+### Replaying the spinor-cache comparison
+
+Build `check-rate-amplitudes.cpp` alongside `time-rate.cpp` with the same flags.
+Run from the HEPCAT root, with the current exporter, timer and polarized checker.
+The manifest is the mapping of families to reference libraries described above.
+
+```sh
+python3 "$study/replay-cache-study.py" "$out/export-rate-family" "$out/time-rate" \
+  "$out/check-rate-amplitudes" "$spinas/include" "$spinas_build/libspinas.a" \
+  libraries.json measured-process-sources.tar.gz "$out/cache-replay"
+```
+
+For a short run, append `--family eeeeAAA`. Each family and pole form gets
+a fresh export. The checker compares the real and imaginary parts for every
+labeled spin assignment at four phase-space points. The timing driver measures
+the complete rate at the 24 original points in separate processes for the
+archived evaluator, the new evaluator and MadGraph. Peak resident size includes
+the driver, the loaded library and the data it touches. The operand-slot count
+measures arithmetic scratch separately. Completed JSON records can be reused
+to resume an interrupted run. Use a fresh output directory after changing the
+exporter, inputs or precision.

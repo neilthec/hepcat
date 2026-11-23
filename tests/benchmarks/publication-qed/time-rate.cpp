@@ -1,6 +1,7 @@
 // Time one backend per invocation. Input vectors and model setup are outside the timer.
 #include "validation_numeric.hpp"
 #include <dlfcn.h>
+#include <sys/resource.h>
 #include <algorithm>
 #include <chrono>
 #include <ctime>
@@ -121,5 +122,14 @@ int main(int argc,char** argv) try {
         out<<"cpu_seconds_per_point "<<cpu/(loops*count)<<'\n';
     }
     out<<"passes_per_sweep "<<loops<<"\nchecksum "<<checksum<<'\n';
+    struct rusage usage{};
+    if (getrusage(RUSAGE_SELF, &usage) == 0) {
+#if defined(__APPLE__)
+        constexpr long rss_unit = 1;
+#else
+        constexpr long rss_unit = 1024;
+#endif
+        out << "peak_rss_bytes " << usage.ru_maxrss * rss_unit << '\n';
+    }
     return 0;
 } catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}

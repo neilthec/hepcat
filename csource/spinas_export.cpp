@@ -80,8 +80,25 @@ struct plan {
     std::map<std::string, std::pair<std::string, std::complex<long double>>> known;
     std::set<std::string> widths;
     strings masses, point_lines, chain_lines, derived_updates;
+    struct point_cache {
+        std::map<std::string, size_t> entries;
+        strings statements;
+        std::string insert(const std::string& group, const std::string& expr, bool spin = false,
+                           const std::string& spin_value = "ls") {
+            auto [it, fresh] = entries.emplace(expr, entries.size());
+            auto name = group + "[" + std::to_string(it->second) + "]";
+            if (fresh) {
+                if (spin) statements.push_back("    for (int ls : {-1, 1})");
+                statements.push_back(std::string(spin ? "        " : "    ") + name + (spin ? "[(ls > 0)]" : "") + " = " + expr + ";");
+            }
+            return spin ? name + "[(" + spin_value + " > 0)]" : name;
+        }
+    };
+    point_cache sums, insertions, massless_bras, massive_bras, partials;
+    int spinning_massive_legs = 0;
     std::map<std::string,std::string> derived_slots;
-    std::map<std::string, size_t> scalars, chains;
+    std::map<std::string, size_t> scalars, chains, coefficients;
+    strings coefficient_lines;
     std::vector<std::string> functions;
     std::vector<std::string> dispatch, color_sums, color_amps;
     bool colored = false;
@@ -156,6 +173,7 @@ struct plan {
                 helicities = {selected->second};
             }
             legs.push_back({massive, helicities});
+            if (massive && part.spin2) ++spinning_massive_legs;
             if (beam)
                 p.normalization /= massive ? part.spin2 + 1 : helicities.size();
             else
@@ -272,6 +290,16 @@ struct compiler {
     strings lines;
     std::map<std::string, std::string> temporaries;
     bool point_scope = false;
+    using spin_slot = std::pair<int, int>;
+    static constexpr spin_slot independent{-1, 0}, several{-2, 0};
+    spin_slot dependency = independent;
+    void include(spin_slot other) {
+        if (dependency == independent) dependency = other;
+        else if (other != independent && dependency != other) dependency = several;
+    }
+    static std::string spin_index(spin_slot s) {
+        return "indices[" + std::to_string(s.first) + "][" + std::to_string(s.second) + "]";
+    }
     // Massive slot occurrences along a product define an arbitrary ordering of
     // the symmetric spin tensor. Every summand starts with the same slot offsets.
     size_t mapped(Id id) const {
@@ -281,6 +309,26 @@ struct compiler {
         return perm[l - 1];
     }
     std::string temporary(const std::string& s) {
+        // Brackets with only helicity endpoints and all kinematic coefficients
+        // have one value for every massive spin assignment at this point.
+        if (!point_scope && !track && dependency == independent) {
+            auto [it, fresh] = p.coefficients.emplace(s, p.coefficients.size());
+            auto name = "coefficients[" + std::to_string(it->second) + "]";
+            if (fresh) p.coefficient_lines.push_back("    " + name + " = " + s + ";");
+            return name;
+        }
+        // A contraction depending on one massive slot has just two values,
+        // shared across the spin sum over all the other legs. Bound the cache
+        // so a large generated process can still be used for polarized calls.
+        constexpr size_t max_two_value_contractions = 4096;
+        if (!point_scope && !track && dependency.first >= 0 && p.spinning_massive_legs >= 3 &&
+            p.partials.entries.size() < max_two_value_contractions) {
+            const auto index = spin_index(dependency);
+            auto expr = s;
+            for (size_t pos = 0; (pos = expr.find(index, pos)) != std::string::npos; pos += 2)
+                expr.replace(pos, index.size(), "ls");
+            return p.partials.insert("partials", expr, true, index);
+        }
         if (point_scope)
             return p.cache(s);
         auto [it, added] = temporaries.emplace(s, "v" + std::to_string(temporaries.size()));
@@ -357,12 +405,18 @@ struct compiler {
                                             std::to_string(mu) + "]");
                     components.push_back(terms.empty() ? "0" : join(terms, " + "));
                 }
-                return "hepcat_spinas::FourMomentum{" + join(components, ", ") + "}";
+                return p.sums.insert("sums", "hepcat_spinas::FourMomentum{" + join(components, ", ") + "}");
             }
             for (long k = 0; k < std::abs(w.get_num().get_si()); ++k)
                 signed_labels.push_back((w > 0 ? 1 : -1) * static_cast<int>(i + 1));
         }
-        return "hepcat_spinas::sum_momenta(momenta, " + integer_list(signed_labels) + ")";
+        if (signed_labels.size() == 1 && signed_labels.front() > 0)
+            return "momenta[" + std::to_string(signed_labels.front() - 1) + "]";
+        return p.sums.insert("sums", "hepcat_spinas::sum_momenta(momenta, " + integer_list(signed_labels) + ")");
+    }
+    std::string insertion(Id momentum, bool upper) const {
+        return p.insertions.insert("insertions", "hepcat_spinas::momentum_matrix(" + vector({momentum}) +
+                                   (upper ? ", true)" : ", false)"));
     }
     static std::string rational(const mpq_class& q) {
         auto base = "ldouble(" + q.get_num().get_str() + ".0L)";
@@ -383,13 +437,14 @@ struct compiler {
                         : "") +
                    ")";
         };
-        strings parts{ep(l, true)};
-        for (size_t j = 1; j + 1 < n.args.size(); ++j)
-            parts.push_back("hepcat_spinas::momentum_matrix(" + vector({n.args[j]}) + ", " +
-                            ((l.angle != (j % 2 != 0)) ? "true" : "false") + ")");
-        parts.push_back(ep(r, false));
+        auto bra = ep(l, true);
+        for (size_t j = 1; j + 1 < n.args.size(); ++j) {
+            auto product = bra + " * " + insertion(n.args[j], l.angle != (j % 2 != 0));
+            bra = p.legs[l.leg].massive ? p.massive_bras.insert("massive_bras", product, true)
+                                        : p.massless_bras.insert("massless_bras", product);
+        }
         bool minus = (l.angle && !incoming(p.project, l.leg)) != (r.angle && !incoming(p.project, r.leg));
-        auto s = std::string(minus ? "-(" : "(") + join(parts, " * ") + ")";
+        auto s = std::string(minus ? "-(" : "(") + bra + " * " + ep(r, false) + ")";
         auto [c, new_chain] = p.chains.emplace(s, p.chains.size());
         std::string name = "chains[" + std::to_string(c->second) + "]";
         auto index = [&](endpoint e) {
@@ -399,7 +454,8 @@ struct compiler {
             if (slot >= p.project.spin2[e.leg])
                 throw std::invalid_argument("too many massive spinor slots on leg " +
                                             std::to_string(e.leg + 1));
-            return "(indices[" + std::to_string(e.leg) + "][" + std::to_string(slot) + "] > 0)";
+            include({e.leg, slot});
+            return "(" + spin_index({e.leg, slot}) + " > 0)";
         };
         auto left = index(l), right = index(r);
         if (new_chain) {
@@ -421,7 +477,10 @@ struct compiler {
     }
     std::string emit(Id id, ints& slots) {
         const auto h = head(a.node(id));
+        const auto parent = dependency;
+        dependency = independent;
         auto value = emit_raw(id, slots);
+        include(parent);
         if (track && (h == "SpinorChain" || h == "ModelParameter" || h == "PropDen" || h == "MomProd" ||
                       h == "Mandelstahm" || h == "SpinorTrace" || h == "Mass" || p.known.count(h)))
             return "Scalar(" + value + ")";
@@ -473,8 +532,7 @@ struct compiler {
                 return "ldouble(2)";
             strings matrices;
             for (size_t i = 0; i < n.args.size(); ++i)
-                matrices.push_back("hepcat_spinas::momentum_matrix(" + vector({n.args[i]}) + ", " +
-                                   (i % 2 ? "true" : "false") + ")");
+                matrices.push_back(insertion(n.args[i], i % 2 != 0));
             return p.cache("hepcat_spinas::matrix_trace(" + join(matrices, " * ") + ")");
         }
         if (h == "Times" || h == "Plus") {
@@ -769,6 +827,10 @@ std::string header(const plan& p) {
         << "    template<class Scalar> Scalar evaluate(const Spins&,std::size_t color_component=0) const;\n"
         << "    template<class Scalar> Scalar component(const Spins&, const Indices&,std::size_t "
            "color_component) const;\n";
+    if (!p.partials.entries.empty())
+        out << "    std::array<std::array<cdouble, 2>, " << p.partials.entries.size() << "> partials;\n";
+    if (!p.coefficients.empty())
+        out << "    std::array<cdouble, " << p.coefficients.size() << "> coefficients;\n";
     for (size_t i = 0; i < p.functions.size(); ++i)
         out << (p.conditioned_components.count(i) ? "    template<class Scalar> Scalar component_"
                                                   : "    cdouble component_")
@@ -807,9 +869,20 @@ std::string source(const plan& p) {
         << "    auto test = hepcat_spinas::validate_momenta(physical, external_masses, incoming_legs());\n"
         << "    if (!test.valid) throw std::invalid_argument(test.message);\n    ready = false;\n    momenta "
            "= physical;\n"
-        << "    for (std::size_t i=0; i<leg_count; ++i) particles[i].set_momentum(momenta[i].data());\n"
+        << "    for (std::size_t i=0; i<leg_count; ++i) particles[i].set_momentum(momenta[i].data());\n";
+    auto declare = [&](const auto& cache, const char* type, const char* name) {
+        if (!cache.entries.empty())
+            out << "    std::array<" << type << ", " << cache.entries.size() << "> " << name << ";\n";
+    };
+    declare(p.sums, "hepcat_spinas::FourMomentum", "sums");
+    declare(p.insertions, "spinas::cmatrix", "insertions");
+    declare(p.massive_bras, "std::array<spinas::cvector, 2>", "massive_bras");
+    declare(p.massless_bras, "spinas::cvector", "massless_bras");
+    out << join(p.sums.statements, "\n") << "\n" << join(p.insertions.statements, "\n") << "\n"
+        << join(p.massive_bras.statements, "\n") << "\n" << join(p.massless_bras.statements, "\n") << "\n"
         << join(p.point_lines, "\n") << "\n"
-        << join(p.chain_lines, "\n") << "\n    ready = true;\n}\n\n"
+        << join(p.chain_lines, "\n") << "\n" << join(p.coefficient_lines, "\n") << "\n"
+        << join(p.partials.statements, "\n") << "\n    ready = true;\n}\n\n"
         << join(p.functions, "\n\n") << "\n\n"
         << "template<class Scalar> Scalar " << name
         << "::component(const Spins& spins, const Indices& indices, std::size_t color_component) const {\n"
