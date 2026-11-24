@@ -1,0 +1,123 @@
+\documentclass[11pt]{article}
+\usepackage[letterpaper,margin=0.85in]{geometry}
+\usepackage{amsmath,amssymb,booktabs}
+\newcommand{\ang}[1]{\langle #1\rangle}
+\newcommand{\sq}[1]{[#1]}
+\newcommand{\M}{\mathcal M}
+\newcommand{\J}{\mathcal J}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.42em}
+\begin{document}
+{\LARGE\bfseries Four Fermion Pairs from One Photon Sewing}\par
+\textit{Massive tree-level QED in HEPCAT's all-incoming spinor conventions}
+
+Label the electrons $1,3,5,7$ and the positrons $2,4,6,8$. Keep all eight spin indices open.
+Let $s_S=(\sum_{i\in S}p_i)^2$. For every unordered division into two nonempty
+charge-neutral sets, sew one angle-square spinor tensor on either side:
+\begin{equation}
+ \boxed{\displaystyle
+ \M_8=8e^6\sum_{\{S,\bar S\}}\epsilon(S,\bar S)\,
+       \frac{\J(S):\J(\bar S)}{s_S}.}
+ \label{eq:sew}
+\end{equation}
+There are 16 choices of one electron and one positron against the remaining six legs,
+and $\binom42^2/2=18$ divisions into two sets of four.
+On the $2+6$ terms, evaluate $s_S$ on the two-leg side.
+This is particularly useful numerically near a small photon invariant.
+The formula serves both pole preferences.
+
+\textbf{The neutral tensor.}
+A charged block is a singleton or a triple $ijk$ in which $i,j$ have the same
+charge, $i<j$, and $k$ has the opposite charge. For either kind write $W_A$
+for its pair of angle and square spinors. Put
+\[
+ U\odot V=U^\angle\otimes V^\square+V^\angle\otimes U^\square,
+ \qquad
+ (a^\angle\otimes b^\square):(c^\angle\otimes d^\square)
+       =\ang{ca}\sq{bd}.
+\]
+Extend the contraction by linearity. Everything here carries only spinor indices.
+For each neutral $S$, enumerate its divisions into a net-electron block $A$ and a
+net-positron block $B$. Then
+\[
+ \J(S)=\sum_{A\sqcup B=S}\epsilon_S(A,B)\,W_A\odot W_B .
+\]
+The sign is the parity of the concatenated leg list $(A,B)$ relative to the
+increasing list of $S$. Keep $ijk$ in the displayed like-charge-first order.
+In Eq.~\eqref{eq:sew}, use the same rule on the two increasing lists $S,\bar S$.
+Interchanging the two even-sized lists leaves the sign invariant.
+For instance, $\J(12)=W_1\odot W_2$, while
+\[
+ \J(1234)=-W_1\odot W_{243}+W_3\odot W_{241}
+          -W_{132}\odot W_4+W_{134}\odot W_2 .
+\]
+
+\textbf{The charged spinor.}
+For a singleton, $W_i=(|i\rangle,|i])$. For a triple put $Q=p_i+p_j+p_k$ and
+$\tau_{ijk}=s_{ijk}-m^2$. The same rule applies to either net charge:
+\begin{align}
+ X_i^{jk}&=|j]\ang{ki}+|k]\ang{ji}, &
+ Y_i^{jk}&=|k\rangle[ji]+|j\rangle[ki],\nonumber\\
+ D_i^{jk}&=\big(QX_i^{jk}-mY_i^{jk},\; QY_i^{jk}-mX_i^{jk}\big),&
+ W_{ijk}&=\frac{1}{\tau_{ijk}}
+          \left(\frac{D_i^{jk}}{s_{jk}}-\frac{D_j^{ik}}{s_{ik}}\right).
+ \label{eq:wave}
+\end{align}
+$Q$ denotes the corresponding Weyl momentum insertion on each chirality.
+The difference in Eq.~\eqref{eq:wave} performs the identical-fermion exchange
+inside the triple. Its two physical poles are explicit in each contribution.
+
+\newpage
+{\Large\bfseries Why the 34 Sewings Are Complete}
+
+Every eight-fermion tree has six cubic vertices, three internal photons and
+two internal electron propagators. Contract each charged line to a vertex.
+The resulting tree on four vertices is a star or a path. In the star, the
+two ends of the central electron line each attach to a terminal pair.
+In the path, each of the two middle lines attaches to one terminal pair.
+Cutting both electron propagators thus detaches two disjoint three-leg
+branches in either topology. Four charged endpoints remain, two of which
+carry those branches. The photon between the two remaining cubic vertices is
+unique. Grouping by this photon's external partition gives Eq.~\eqref{eq:sew}.
+
+A terminal photon Fierz contraction supplies the two chiral terms $X$ and
+$Y$. Acting with the adjacent electron propagator numerator gives $D$. Combining
+its two attachments gives the signed wave $W_{ijk}$. The Fierz contraction at
+the middle photon is the colon in Eq.~\eqref{eq:sew}. Each of the three photon
+contractions supplies a factor two, giving $8e^6$ in these conventions.
+All internal propagators stay off shell.
+
+\begin{center}
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+Middle photon & Channels & Block divisions per channel & Diagrams \\
+\midrule
+Two legs against six  & 16 & $1\times9$ & $16\cdot9\cdot4=576$ \\
+Four legs against four & 18 & $4\times4$ & $18\cdot16\cdot4=1,152$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+The last factor four is the product of the two local, two-term fermion exchanges.
+The 34 photon channels and 48 possible charged triples also recover the
+82 physical channels of the eight-point amplitude. These counts measure
+different things from the number of monomials after fully expanding the result.
+
+\textbf{Numerical checks.} At 10,000 phase-space points with $m=0.0005$,
+$e=1/3$ and coherent external spins, the maximum relative difference from
+the signed sum of 1,728 HEPCAT Feynman diagrams was $3.86\times10^{-12}$
+(seed 19300001). At 10,000 different momenta with $m=1$ and the same charge,
+the full sum of the 256 squared spin amplitudes agreed with MadGraph to
+$1.97\times10^{-13}$ (seed 19600001). A further 1,000 signed checks at
+seed 19500001 gave $2.44\times10^{-13}$.
+
+\textbf{Evaluation cost.} Each charged wave or neutral tensor can be tabulated
+once for the spin states of its own legs. The final sum retains interference
+between all 34 channels at each spin assignment. On an Apple M3, the median
+of three 512-point sweeps at seed 19700001 was 0.116 ms per full spin sum
+with the standalone sewing evaluator and 3.84 ms with the MadGraph standalone
+library. Including phase-space generation and external spinor preparation on
+the sewing side raised its time to 0.118 ms. Both timings use the same momenta
+and exclude library initialization. The evaluator implements this eight-fermion
+formula directly. The general SPINAS exporter was measured separately.
+
+\end{document}
