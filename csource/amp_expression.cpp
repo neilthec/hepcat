@@ -1,4 +1,6 @@
 #include "amp_expression.hpp"
+#include "charged_tree_sewing.hpp"
+#include "generation_plan.hpp"
 #include "hepcat.h"
 #include "identities_detail.hpp"
 #include "mathematica.hpp"
@@ -109,6 +111,8 @@ amp_expression& amp_expression::reduce(generation_references preference) {
     std::optional<bool> physical;
     if (preference == generation_references::physical || preference == generation_references::cyclic)
         physical = preference == generation_references::physical;
+    if (preference == generation_references::keep) sewing_.reset();
+    else if (sewing_ && physical && sewing_->physical() != *physical) sewing_ = sewing_->alternate_gauge();
     if (physical != summand_physical_) {
         summand_physical_ = physical;
         permutations_.reset();
@@ -141,6 +145,7 @@ std::optional<amp_expression> amp_expression::discarded_remainder() const {
     output.kinematics_=std::move(external);
     output.root_=*remainder_;
     output.ordered_formula_.reset();
+    output.sewing_.reset();
     output.reduced_=false;
     output.remainder_.reset();
     return output;
@@ -383,6 +388,7 @@ std::string cycles(const signed_exchange& exchange) {
 
 std::string amp_expression::plain_text() const {
     std::lock_guard<std::mutex> guard(*kinematics_->lock);
+    if (sewing_ && sewing_->diagrams() >= generation::grouped_current_threshold) return sewing_->description();
     if (reduced_ && kinematics_->shells.empty()) {
         if (const auto& sum = reduced_permutations().sum) {
             std::string groups = "(" + leg_list(sum->legs) + ")";
@@ -418,6 +424,7 @@ std::string amp_expression::plain_text() const {
 }
 std::string amp_expression::latex() const {
     std::lock_guard<std::mutex> guard(*kinematics_->lock);
+    if (sewing_ && sewing_->diagrams() >= generation::grouped_current_threshold) return sewing_->latex();
     if (reduced_ && kinematics_->shells.empty()) {
         if (const auto& sum = reduced_permutations().sum) {
             std::string group;
@@ -489,6 +496,7 @@ amp_expression amp_expression::apply_identity(const identity_candidate& edit) co
     auto result = *this;
     result.root_ = retain_borrowed(*arena_, trial, alternative, original_size);
     result.ordered_formula_.reset();
+    result.sewing_.reset();
     result.reduced_ = false;
     return result;
 }

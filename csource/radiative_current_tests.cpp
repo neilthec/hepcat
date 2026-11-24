@@ -1,6 +1,7 @@
 // Focused comparison of the grouped endpoint currents with the independently
 // planned CalcHEP rules. The public notebook driver runs the full checks.
 #include "fermion_currents.hpp"
+#include "charged_tree_sewing.hpp"
 #include "amp_expression.hpp"
 #include <algorithm>
 #include "generation_feynman.hpp"
@@ -385,6 +386,52 @@ void check(const model &vertices, const model &rules,
           "Identical-fermion exchange lost its sign");
   }
 }
+
+void check_central_sewings(const model& m) {
+  struct example { std::vector<int> types; unsigned cuts, diagrams; };
+  for (const auto& test : std::vector<example>{
+           {{1,-1,1,-1,1,-1,1,-1},34,1728},
+           {{-1,1,2,1,-1,-2,-1,1,2},72,18144},
+           {{1,-1,1,-1,1,-1,1,-1,2},68,17280}}) {
+    std::vector<std::string> legs;
+    std::vector<real> masses;
+    for (int t : test.types) {
+      legs.emplace_back(t==1 ? "e" : t==-1 ? "E" : t==2 ? "A.+" : "A.-");
+      masses.push_back(std::abs(t)==1 ? 1 : 0);
+    }
+    const dirac_current::recursion independent(test.types);
+    auto sewing = charged_tree_sewing::from_model(m,legs,true);
+    if (!sewing || sewing->sewings().size()!=test.cuts || sewing->diagrams()!=test.diagrams)
+      throw std::runtime_error("Incorrect inventory of central sewings");
+    auto alternate=sewing->alternate_gauge();
+    for (unsigned seed : {2019201u,2019202u}) {
+      const auto p=sample_point(masses,seed);
+      const auto expected=independent(p,0.5L,dirac_current::gauge::independent);
+      agree(sewing->amplitude(p,0.5L),expected,"Physical central sewing");
+      agree(alternate->amplitude(p,0.5L),expected,"Spurious central sewing");
+    }
+    if (test.diagrams!=18144) continue;
+    if (sewing->latex().find("leftarrow") == std::string::npos ||
+        sewing->latex().find("frac") != std::string::npos)
+      throw std::runtime_error("Wrong multiplicity of the identical-fermion seed");
+    auto p=sample_point(masses,2019301);
+    real explicit_sum=0;
+    for (unsigned h=0;h<64;++h) {
+      unsigned bit=0;
+      for (unsigned leg=0;leg<masses.size();++leg) if (masses[leg]) {
+        unsigned col=(h>>bit++)&1;
+        p.angles[leg]=p.angle_basis[leg][col];
+        p.squares[leg]=p.square_basis[leg][col];
+      }
+      explicit_sum+=std::norm(independent(p,0.5L,dirac_current::gauge::independent));
+    }
+    agree(sewing->spin_sum(p,0.5L),explicit_sum,"Central sewing lost spin interference");
+  }
+  if (charged_tree_sewing::from_model(m,{"e","E","A.+","A.-"},true) ||
+      charged_tree_sewing::from_model(m,{"e","e","e","e","e","E"},true))
+    throw std::runtime_error("A process outside the central-sewing scope was accepted");
+}
+
 } // namespace
 
 int main(int argc, char **argv) {
@@ -408,6 +455,7 @@ int main(int argc, char **argv) {
     check(vertices, rules, {"e", "E", "e", "E", "e", "E", "A.-"}, true, 252, 0,
           4);
     check(vertices,rules,{"E","e","A.+","e","E","E","e"},false,252,1,6);
+    check_central_sewings(vertices);
     check_balanced_occupations(vertices);
     check_exchange_orderings(vertices);
     check_radiating_path(vertices);

@@ -13,7 +13,8 @@
 // and the .txt amplitudes in spinor notation. Use .tex for papers, .wl with
 // Mathematica HEPCAT, and .expr to reload the exact native expression.
 // The threshold applies to the full elementary expression. When a permutation
-// sum is displayed, summand_complexity scores the expression inside that sum.
+// sum is available, summand_complexity scores its scalar kernel. Central
+// spinor sewings have a separate count of cuts and labeled trees.
 //
 // To extend the notebook, start at the process list below. construct_helicity()
 // shows how to set up, construct, check, and save one amplitude. construct_family()
@@ -21,6 +22,7 @@
 
 #include "QED-all-positive-replay.hpp"
 #include "amplitude.hpp"
+#include "charged_tree_sewing.hpp"
 #include "construction-progress.hpp"
 #include "external_export.hpp"
 #include "generation_sew.hpp"
@@ -262,7 +264,10 @@ selected_amplitude construct_helicity(const settings& run, const construction_mo
     std::cout << "    Elementary complexity   " << measured;
     if (target) std::cout << " (target " << *target << ", " << (meets_target ? "met" : "unmet") << ')';
     std::cout << ", " << notebook_output::number(leaves) << " leaves\n";
-    if (summand) std::cout << "    Permutation summand     " << *summand << " (weighted complexity)\n";
+    if (const auto sewing = result.sewing_form())
+        std::cout << "    Central sewings         " << sewing->sewings().size() << " cuts, "
+                  << notebook_output::number(sewing->diagrams()) << " labeled trees\n";
+    if (summand) std::cout << "    Scalar perm. summand    " << *summand << " (weighted complexity)\n";
     std::cout << "    Time                    " << notebook_output::seconds(report.total_seconds) << '\n'
               << "    Formula files           " << (relative_dir / (branch + ".txt")).string()
               << "  (also .tex, .wl and .expr)" << std::endl;

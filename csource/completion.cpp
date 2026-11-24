@@ -2,6 +2,7 @@
 #include "line_current.hpp"
 #include "four_point_numerators.hpp"
 #include "fermion_currents.hpp"
+#include "charged_tree_sewing.hpp"
 #include "native_fit.hpp"
 #include "modular_fit.hpp"
 #include "continuations.hpp"
@@ -740,6 +741,11 @@ const amp_expression& amplitude::complete_factorization_impl(const factorization
             presentation.symmetric_groups.insert(presentation.symmetric_groups.end(),
                 ordered->other_groups.begin(),ordered->other_groups.end());
             result.ordered_formula_ = std::make_shared<amp_expression::signed_permutation_product>(std::move(presentation));
+        }
+        if (work.report.route == "ContractedDiracCurrents") {
+            auto sewing = charged_tree_sewing::from_model(*vertices_model_, particles_,
+                                                         references_ == generation_references::physical);
+            if (sewing && sewing->diagrams() == generated_diagrams) result.sewing_ = std::move(sewing);
         }
         construction_.reset();
         completed_ = std::move(result);

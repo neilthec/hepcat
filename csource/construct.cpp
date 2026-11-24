@@ -81,7 +81,7 @@ const amp_expression &amplitude::construct(const construct_options &options) {
   if (staged.vertices_model_ && staged.channels_model_ && staged.diagrams_.empty() &&
       staged.products_.empty() && policy != generation_references::keep &&
       std::all_of(staged.particles_.begin(), staged.particles_.end(), dirac_or_vector) &&
-      generation::diagram_plans(*staged.vertices_model_, staged.particles_).size() >= 512) {
+      generation::diagram_plans(*staged.vertices_model_, staged.particles_).size() >= generation::grouped_current_threshold) {
     amplitude trial = staged;
     run("Generate rows for the complete current", [&] {
       trial.generate_rows(true, true, trial.feynman_model_.has_value(), options.workers, false);

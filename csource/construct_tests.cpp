@@ -1,4 +1,5 @@
 #include "amplitude.hpp"
+#include "charged_tree_sewing.hpp"
 
 #include <stdexcept>
 
@@ -62,4 +63,20 @@ int main(int argc, char **argv) {
   process.construct(options);
   require(process.diagrams().size() == diagram_count + 1,
           "manual row lost during policy change");
+  require(!process.final_amplitude().sewing_form(), "four-point presentation changed");
+  const std::vector<std::string> legs{"e","E","e","E","e","E"};
+  amplitude three_pairs(legs,vertices,channels);
+  auto result=three_pairs.construct(options);
+  const auto sewn=result.sewing_form();
+  require(sewn && sewn->sewings().size()==9 && sewn->diagrams()==36,
+          "the complete constructor lost the balanced fermion cuts");
+  require(sewn->description().find("Wbar[6<-4,5]")!=std::string::npos &&
+          result.latex()!=sewn->latex(), "short six-point result lost its original display");
+  result.reduce(generation_references::cyclic);
+  require(result.sewing_form() && !result.sewing_form()->physical(), "requested reference was lost");
+  result.reduce(generation_references::keep);
+  require(!result.sewing_form(), "an explicit reference was replaced");
+  model standard_model(argv[1],1);
+  require(!charged_tree_sewing::from_model(standard_model,legs,true),
+          "an additional interacting sector was silently dropped");
 }

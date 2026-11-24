@@ -6,6 +6,8 @@
 namespace hepcat {
 class model;
 namespace generation {
+// Existing crossover for constructing large trees through grouped currents.
+inline constexpr std::size_t grouped_current_threshold = 512;
 struct vertex {
     std::size_t row;        // index into model.vertices()
     std::vector<int> slots; // model order: external leg 1..n or -(edge index + 1)

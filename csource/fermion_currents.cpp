@@ -1,4 +1,5 @@
 #include "fermion_currents.hpp"
+#include "charged_tree_sewing.hpp"
 #include "generation_plan.hpp"
 #include "radiative_currents.hpp"
 #include "six_radiation.hpp"
@@ -803,6 +804,63 @@ bool verify_radiation_exchange(Algebra& a, const labels& fermions, const labels&
     }
   }
   return true;
+}
+
+
+std::shared_ptr<const charged_tree_sewing> charged_tree_sewing::from_model(
+    const model& m,const std::vector<std::string>& legs,bool physical) {
+  if (m.is_feynman() || legs.size()<6 || legs.size()>10) return {};
+  // Disconnected spectator sectors may be present. The charged species and
+  // exchanged vector must have only the two minimal cubic interactions.
+  const auto& particles=m.particles();
+  const auto fermion=std::find_if(particles.begin(),particles.end(),[&](const model_particle& p) {
+    return p.spin2==1 && p.mass!="0" && p.name!=p.antiname &&
+           std::find(legs.begin(),legs.end(),p.name)!=legs.end();
+  });
+  if (fermion==particles.end() || fermion->width!="0") return {};
+  Algebra scratch(&m.algebra());
+  builder verify(scratch,m,legs);
+  std::vector<size_t> rows;
+  const auto& vertices=m.vertices();
+  for(size_t i=0;i<vertices.size();++i) {
+    const auto& names=vertices[i].legs;
+    if(std::find(names.begin(),names.end(),fermion->name)==names.end() &&
+       std::find(names.begin(),names.end(),fermion->antiname)==names.end()) continue;
+    if(rows.size()==2 || !verify.minimal(i)) return {};
+    rows.push_back(i);
+  }
+  if(rows.size()!=2) return {};
+  const auto& a=vertices[rows[0]];
+  const auto& b=vertices[rows[1]];
+  if(a.legs[0]!=fermion->name || b.legs[0]!=fermion->name ||
+     a.factor!=b.factor || a.legs[2]==b.legs[2] || m.antiparticle(a.legs[2])!=b.legs[2]) return {};
+  const auto& photon=m.particle(a.legs[2]);
+  if(photon.width!="0") return {};
+  for(size_t i=0;i<vertices.size();++i) {
+    if(i==rows[0] || i==rows[1]) continue;
+    for(const auto& leg:vertices[i].legs)
+      if(leg==photon.name || leg==photon.antiname) return {};
+  }
+  std::vector<int> types;
+  unsigned electrons=0,positrons=0;
+  for(const auto& leg:legs) {
+    if(leg==a.legs[0]) { types.push_back(1); ++electrons; }
+    else if(leg==a.legs[1]) { types.push_back(-1); ++positrons; }
+    else if(leg==photon.name) types.push_back(2);
+    else if(leg==photon.antiname) types.push_back(-2);
+    else return {};
+  }
+  if(electrons!=positrons || electrons<3) return {};
+  const auto& coefficient=scratch.node(a.factor);
+  std::vector<Id> factors=coefficient.head=="Times" ? coefficient.args : std::vector<Id>{a.factor};
+  const auto sqrt_two=scratch.parse("Power[2,Rational[1,2]]");
+  const auto radical=std::find(factors.begin(),factors.end(),sqrt_two);
+  if (radical!=factors.end()) factors.erase(radical);
+  else factors.push_back(scratch.parse("Power[2,Rational[-1,2]]"));
+  factors.push_back(scratch.integer(-1));
+  auto e=scratch.simplify(scratch.mul(std::move(factors)));
+  return std::shared_ptr<const charged_tree_sewing>(
+      new charged_tree_sewing(std::move(types),physical,scratch.format(e)));
 }
 
 std::optional<Id>

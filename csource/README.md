@@ -30,11 +30,37 @@ Here the numerator shell is $(p_1+p_3)^2=m_e^2$. Since $p_1^2=m_e^2$ and $p_3^2=
 
 A reduced expression with repeated external masses can have a compact permutation sum. HEPCAT checks the action of adjacent leg swaps on every signed term, including spinor-chain reversal signs. When the sum shortens the formula, `plain_text()` and `latex()` print one summand and the legs to permute. Use `permutation_form()` to retrieve that summand in native syntax and the number of distinct terms represented by each orbit. The sum runs over every permutation with its normalization included. The complexity reported by `complexity()` is the weight of the full expression. The [five-positive example](../tests/benchmarks/publication-qed/seven-point-all-positive.md) gives both weights. For a complete fermion line with one photon of opposite helicity, the constructor can also sum the insertions along the line. In that case the formula exposes the permuted legs and the summand, and its list of monomial orbit sizes is empty. A saved elementary expression also carries enough information for `reduce()` to recover this presentation. The first request for `plain_text()`, `latex()` or `permutation_form()` reads the external spin weights, reconstructs a candidate ordered current, and checks every signed coefficient up to one common scalar factor. The search is bounded and uses the external masses supplied with the expression. The [four-positive, one-negative example](../tests/benchmarks/publication-qed/seven-point-one-negative.md) derives both pole choices and gives their numerical checks.
 
+For a certified complete tree built from one massive Dirac species and a massless
+vector with a common minimal coupling, the native constructor can also return
+a sum over central sewings. It counts the charged leaves on each side of a
+cut after stripping away external photon emissions. Balanced cuts split the
+charged leaves equally. Otherwise the unique central vertex has three branches
+each containing fewer than half the charged leaves. Its virtual photon supplies
+the cut. A balanced fermion bridge is cut next to the virtual exchange on the
+net-particle side, so emissions between exchanges are counted once.
+This presentation is enabled for three or more pairs and up to ten external
+legs, with zero widths. Each internal propagator keeps its virtuality.
+
+Above the existing 512-diagram crossover (including 512), `plain_text()`
+prints the central sum and `latex()` gives the paper formula. Smaller trees
+keep their existing scalar or permutation display. Their alternative sewing
+is available through `sewing_form()` when certified. `str()` still serializes the
+elementary expression. Include `charged_tree_sewing.hpp` and call
+`result.sewing_form()` to access the cut list and evaluate coherent amplitudes
+or the massive spin sum at fixed photon helicities. A null pointer means that
+the model, process or completion did not certify a sewing.
+`charged_tree_sewing::from_model(vertices, legs, physical)` builds the same
+plan directly for a supported elementary model. `amplitude(point, e)` and
+`spin_sum(point, e)` take the numerical value of the model charge returned by
+`coupling()`. The spin sum contains no incoming averages or identical-particle
+factors. The [worked example](../tests/benchmarks/publication-qed/centered-sewing.md)
+includes signed checks, polarized checks and complete-rate measurements.
+
 For two independent sets of identical legs, `grouped_permutation_form()` returns the leg groups and a single summand. Sum over every permutation within each group. The older `permutation_form()` expands the additional groups into its summand for callers that loop over one group. With two photons at each end of a fermion line and one in the middle, the two orders at either end can be added before joining the left and right currents. The [three-positive, two-negative example](../tests/benchmarks/publication-qed/seven-point-two-negative.md) gives the pole choices, symmetry factors, and a signed check of the paper formulas.
 
 For identical fermions, `signed_permutation_form()` returns a summand, symmetric and alternating leg groups, and an optional `joint_exchange`. If the exchange is present, start with the summand plus `joint_exchange->sign` times its image with all listed pairs exchanged simultaneously. Then sum over permutations in each group, multiplying by the sign of every alternating permutation. Spin labels move with the momenta. The unsigned accessors expand all signed operations automatically.
 
-`complexity()` scores the full elementary expression. `permutation_summand_complexity()` gives the score inside the displayed sum, or an empty optional when there is no compact permutation form. The QED C++ notebook reports both scores and checks its historical thresholds against the elementary score.
+`complexity()` scores the full elementary expression. `permutation_summand_complexity()` gives the score inside the scalar permutation sum, or an empty optional when there is no compact permutation form. The QED C++ notebook reports both scores and checks its historical thresholds against the elementary score.
 
 For photon exchange between two identical charged pairs, the reducer groups ways of distributing photons between the two lines. An occupation specifies how many photons of each helicity attach to one line. Its complement represents the same occupation after exchanging the two lines. Each representative carries the weight required to recover every attachment once. This applies to any photon multiplicity for which the complete exchange topology is present.
 
