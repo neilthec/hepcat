@@ -95,3 +95,5 @@ tests/results/reconstruction/hepcat-check-three-pair-photon-sewings models tests
 ```
 
 For three positive helicities use A.+ on all three photon legs, change ++- to +++, and use another output directory. The four charged cuts label each orbit. The files with the .permutations extension record the signed maps from its representative to each distinct sewing.
+
+One fully numbered part of the mixed-helicity expression has four explicit powers of the electron mass, charged poles on 48, 59, 123 and 1237, and photon poles on 23 and 569. Run `python3 tests/benchmarks/publication-qed/check-nine-point-printed-numerator.py tests/results/nine-ppm` to select the unique sewing by these poles and verify both signed numerator monomials and every denominator in the printed fraction.
