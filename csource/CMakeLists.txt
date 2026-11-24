@@ -126,3 +126,23 @@ endif()
 
 add_executable(hepcat-reconstruct-qed ../tests/checks/reconstruct-qed-channels.cpp)
 target_link_libraries(hepcat-reconstruct-qed PRIVATE hepcat_reduce)
+
+add_executable(hepcat-reconstruct-charged ../tests/checks/reconstruct-charged-blocks.cpp)
+target_include_directories(hepcat-reconstruct-charged SYSTEM PRIVATE ${GMP_INCLUDE_DIR})
+target_link_libraries(hepcat-reconstruct-charged PRIVATE hepcat_reduce)
+
+foreach(driver three-pair-photon-sewings check-three-pair-photon-sewings)
+    add_executable(hepcat-${driver} EXCLUDE_FROM_ALL
+        ../tests/benchmarks/publication-qed/${driver}.cpp)
+    target_include_directories(hepcat-${driver} SYSTEM PRIVATE ${GMP_INCLUDE_DIR})
+    target_link_libraries(hepcat-${driver} PRIVATE hepcat_reduce)
+endforeach()
+
+if(BUILD_TESTING)
+    find_package(Python3 COMPONENTS Interpreter QUIET)
+    if(Python3_Interpreter_FOUND)
+        add_test(NAME charged_block_sewing COMMAND "${Python3_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/../tests/checks/check-charged-blocks.py"
+            "${CMAKE_CURRENT_SOURCE_DIR}/.." "$<TARGET_FILE:hepcat-reconstruct-charged>")
+    endif()
+endif()

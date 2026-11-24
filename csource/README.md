@@ -18,6 +18,10 @@ int main() {
 
 Here the numerator shell is $(p_1+p_3)^2=m_e^2$. Since $p_1^2=m_e^2$ and $p_3^2=0$, the reduced dot product is zero. Its off-cut remainder is `MomProd[1,3]`. Omit the third constructor argument to use external masses and momentum conservation alone. The optional C interface is in [hepcat.h](hepcat.h), with a runnable short example in [c_api_test.c](c_api_test.c).
 
+When a calculation has already built its result in an `Algebra` arena, use
+`amp_expression(arena, root, external_masses)`. It copies the reachable nodes
+while retaining shared subexpressions, so a large sum need not be expanded into text.
+
 ## Read, publish or reuse an expression
 
 | In C++ | Notebook output | Use |

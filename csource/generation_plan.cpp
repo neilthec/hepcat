@@ -226,6 +226,48 @@ int channel_sign(const inventory& md, const term& t) {
     return pairs[0] % 2 && pairs[1] % 2 ? -sign : sign;
 }
 
+// Each block is an on-shell amplitude whose Dirac slots are ordered within
+// each particle role. Removing a contracted pair from that word contributes
+// the parity of its intervening slots and of its orientation. For a charged
+// cut, channel_sign also contributes (l-1)(r-1) transpositions for l and r
+// pairs on the two sides. This equals F(l+r-1)-F(l)-F(r), where
+// F(n)=(n-1)(n-2)/2, so it telescopes over the charged sewings.
+int charged_block_sign(const inventory& md, const term& tree) {
+    std::vector<ordered_port> word;
+    auto phase = [](int pairs) { return (pairs - 1) * (pairs - 2) / 2; };
+    int swaps = 0, external_pairs = 0;
+    for (const auto& vertex : tree.vertices) {
+        int counts[2]{};
+        for (int role = 0; role < 2; ++role) {
+            for (std::size_t j = 0; j < vertex.slots.size(); ++j) {
+                auto type = md.ports[vertex.row][j];
+                if (!md.dirac[type] || md.antiparticle[type] != bool(role)) continue;
+                ++counts[role];
+                word.emplace_back(role, vertex.slots[j]);
+            }
+        }
+        if (!counts[0] || counts[0] != counts[1])
+            throw std::invalid_argument("The charged blocks must have balanced Dirac legs");
+        external_pairs += counts[0];
+        swaps -= phase(counts[0]);
+    }
+    for (std::size_t j = 0; j < tree.edges.size(); ++j) {
+        const int slot = -1 - static_cast<int>(j);
+        auto on_edge = [slot](const ordered_port& x) { return x.second == slot; };
+        auto first = std::find_if(word.begin(), word.end(), on_edge);
+        if (first == word.end()) throw std::logic_error("Missing internal Dirac slot");
+        auto second = std::find_if(first + 1, word.end(), on_edge);
+        if (second == word.end() || first->first == second->first)
+            throw std::logic_error("Missing conjugate Dirac slot");
+        swaps += static_cast<int>(second - first - 1) + (first->first == 0);
+        word.erase(second);
+        word.erase(first);
+        --external_pairs;
+    }
+    swaps += phase(external_pairs);
+    return (swaps % 2 ? -1 : 1) * parity(word);
+}
+
 int diagram_sign(const inventory& md, const term& t) {
     std::set<species> used;
     bool repeats = false;
@@ -290,6 +332,7 @@ struct current {
 
 class diagram_search {
     const inventory& md;
+    bool charged_only;
     std::unordered_map<mask, std::vector<current>> cache;
     using group_key = std::vector<std::pair<mask, species>>;
     std::map<group_key, std::size_t> groups;
@@ -363,8 +406,11 @@ class diagram_search {
                 std::sort(sig.begin(), sig.end());
                 auto matches = md.openings.find(sig);
                 if (matches == md.openings.end()) return;
-                for (auto c : matches->second)
+                for (auto c : matches->second) {
+                    // The top slot joins external leg 1; it may be a photon.
+                    if (charged_only && !md.dirac[c.port] && legs != (full_set(md.ext.size()) ^ mask(1))) continue;
                     out.push_back({legs, md.anti[c.port], c.row, selected});
+                }
             };
             product(product, 0);
         };
@@ -407,7 +453,7 @@ class diagram_search {
     }
 
   public:
-    explicit diagram_search(const inventory& m) : md(m) {}
+    explicit diagram_search(const inventory& m, bool charged = false) : md(m), charged_only(charged) {}
     std::vector<plan> run() {
         // Rooting every labeled tree at external leg 1 removes arbitrary
         // fusion orders. Memoized subcurrents share child descriptors; no
@@ -420,7 +466,8 @@ class diagram_search {
             t.vertices.emplace_back();
             place(c, 0, 1, t, key);
             std::sort(key.begin(), key.end());
-            if (!md.m.is_feynman()) t.sign = diagram_sign(md, t);
+            if (charged_only) t.sign = charged_block_sign(md, t);
+            else if (!md.m.is_feynman()) t.sign = diagram_sign(md, t);
             auto [it, added] = groups.emplace(key, plans.size());
             if (added) plans.emplace_back();
             plans[it->second].terms.push_back(std::move(t));
@@ -468,6 +515,14 @@ std::vector<plan> diagram_plans(const model& m, const std::vector<std::string>& 
     inventory md(m, process, true);
     if (process.size() < 3) return {};
     return diagram_search(md).run();
+}
+
+std::vector<plan> charged_block_plans(const model& m, const std::vector<std::string>& process) {
+    if (m.is_feynman()) throw std::invalid_argument("Charged sewing requires on-shell amplitudes");
+    if (process.size() < 3) return {};
+    full_set(process.size());
+    inventory md(m, process, true);
+    return diagram_search(md, true).run();
 }
 
 std::vector<plan> channel_plans(const model& m, const std::vector<std::string>& process) {

@@ -46,6 +46,8 @@ public:
     amp_expression(const std::string& expression,
                    const std::vector<std::string>& masses,
                    const std::vector<numerator_shell>& shells = {});
+    // Import an exact expression from an existing arena without expanding shared subexpressions to text.
+    amp_expression(const Algebra& source, std::uint32_t expression, const std::vector<std::string>& masses);
     amp_expression& reduce();
     // Choose the pole form for a recognized, equivalent permutation summand.
     amp_expression& reduce(generation_references preference);

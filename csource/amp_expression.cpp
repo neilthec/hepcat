@@ -184,6 +184,11 @@ std::vector<Id> amp_expression::import_masses(Algebra& destination) const {
     return result;
 }
 
+amp_expression::amp_expression(const Algebra& source, Id expression, const std::vector<std::string>& masses)
+    : amp_expression("0", masses) {
+    set_from(source, expression);
+}
+
 void amp_expression::set_from(const Algebra& source, Id result) {
     root_ = copy_tree(source, *arena_, result);
 }

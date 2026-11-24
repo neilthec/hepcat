@@ -27,6 +27,8 @@ struct plan {
     std::vector<term> terms; // coherent internal-species/helicity alternatives
 };
 std::vector<plan> diagram_plans(const model&, const std::vector<std::string>& process);
+// Restrict the internal lines to Dirac states when composing complete on-shell blocks.
+std::vector<plan> charged_block_plans(const model&, const std::vector<std::string>& process);
 std::vector<plan> channel_plans(const model&, const std::vector<std::string>& process);
 } // namespace generation
 } // namespace hepcat
