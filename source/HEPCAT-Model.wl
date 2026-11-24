@@ -171,7 +171,7 @@ ReadAmplitudes[file_,particleList_]:=Module[{rows,amplitudeList={},line,scope,pa
 rows=ConstructiveDiagrams`Private`readModelRows[file];
 If[FailureQ[rows],Return[rows]];
 scope=ConstructiveDiagrams`Private`modelParameterScope[file];
-Catch[
+Block[{ConstructiveDiagrams`Private`$orbitReadCache=<||>},Catch[
 Do[
 If[Length[line]>=5&&line[[3]]!="P3"&&!StringContainsQ[line[[1]],"%"],
 parsed=ConstructiveDiagrams`Private`parseModelExpression[line[[-2]],scope];
@@ -182,7 +182,7 @@ AppendTo[amplitudeList,line];
 ];
 ,{line,rows}];
 (*AddOppositeHelicityAmplitudes[amplitudeList]*)
-amplitudeList,tag]
+amplitudeList,tag]]
 ]
 
 
@@ -213,6 +213,71 @@ ConstructiveDiagrams`Private`readSharedAmplitude[text_String, readLeaf_] := Modu
     value, tag]
 ];
 
+(* A signed permutation sum of an external-spinor polynomial. The projection
+   of each external polarization is applied after the particle permutation. *)
+ConstructiveDiagrams`Private`readLegOrbit[text_, masses_, read_] := Module[
+  {s, cuts, fields, groups, rules, labels, leg, decode, common, kernel,
+   fail, unique = {}, slots = {}, tag = Unique["orbit"]},
+  fail[] := Throw[Failure["InvalidLegOrbit", <||>], tag];
+  leg[x_] := If[StringMatchQ[x, DigitCharacter ..] && 1 <= FromDigits[x] <= Length[masses],
+    FromDigits[x], fail[]];
+  labels[x_] := With[{ls = leg /@ StringSplit[x, "."]},
+    If[ls === {} || !DuplicateFreeQ[ls], fail[], ls]];
+  decode[x_] := Module[{eq, rhs, from, to, insert, kind},
+    If[!StringMatchQ[x, RegularExpression["[AS][0-9]+=[0-9]+(@[0-9]+(\\.[0-9]+)*)?"]], fail[]];
+    eq = StringSplit[x, "="];
+    kind = If[StringStartsQ[First[eq], "A"], "Angle", "Square"];
+    from = leg[StringDrop[First[eq], 1]];
+    rhs = StringSplit[Last[eq], "@"]; to = leg[First[rhs]];
+    If[masses[[from]] =!= 0 || masses[[to]] =!= 0 || MemberQ[slots, {kind, from}], fail[]];
+    AppendTo[slots, {kind, from}];
+    insert = If[Length[rhs] == 1, {}, With[{ls = labels[Last[rhs]]},
+      {Mom[If[Length[ls] == 1, First[ls], Multiparticle @@ ls]]}]];
+    {kind, from} -> {to, insert}];
+  Catch[
+    If[!StringEndsQ[text, "]"], fail[]];
+    s = StringDrop[StringDrop[text, 9], -1]; cuts = Flatten[StringPosition[s, ";", 3]];
+    If[Length[cuts] =!= 6, fail[]];
+    fields = StringTake[s, #] & /@ {{1,cuts[[1]]-1},{cuts[[2]]+1,cuts[[3]]-1},
+      {cuts[[4]]+1,cuts[[5]]-1},{cuts[[6]]+1,-1}};
+    groups = If[fields[[1]] === "-", {}, Map[Function[g, Module[{ls},
+      If[!StringMatchQ[g, RegularExpression["[+-][0-9]+(\\.[0-9]+)*"]], fail[]];
+      ls = labels[StringDrop[g,1]];
+      If[Intersection[unique,ls] =!= {}, fail[]]; unique=Join[unique,ls];
+      {StringStartsQ[g,"-"], Sort[ls]}]], StringSplit[fields[[1]],","]]];
+    rules = If[fields[[2]] === "-", {}, decode /@ StringSplit[fields[[2]],","]];
+    If[!StringStartsQ[fields[[4]], "Shared["], fail[]];
+    common = read[fields[[3]]];
+    kernel = If[AssociationQ[ConstructiveDiagrams`Private`$orbitReadCache],
+      With[{key={Map[#===0 &, masses],fields[[4]]}},
+        If[!KeyExistsQ[ConstructiveDiagrams`Private`$orbitReadCache,key],
+          AssociateTo[ConstructiveDiagrams`Private`$orbitReadCache,key -> read[fields[[4]]]]];
+        ConstructiveDiagrams`Private`$orbitReadCache[key]],read[fields[[4]]]];
+    If[FailureQ[kernel] || FailureQ[common], fail[]];
+    ConstructiveDiagrams`Private`modelLegOrbit[groups, Association[rules], common, kernel], tag]
+];
+
+ConstructiveDiagrams`Private`materializeLegOrbit[
+    ConstructiveDiagrams`Private`modelLegOrbit[groups_, rules_, common_, kernel_]] :=
+  Module[{pol, project, expand},
+    pol[Spinor["Polarization", kind_, i_], left_] := Module[{entry, other, endpoint},
+      entry = rules[{kind,i}];
+      If[MissingQ[entry], Return[{1,{Spinor["Helicity",kind,i]}}]];
+      If[Last[entry] === {}, Return[{1,{Spinor["Helicity",kind,First[entry]]}}]];
+      other = If[kind === "Angle","Square","Angle"];
+      endpoint = Spinor["Helicity",other,First[entry]];
+      If[left, {1,Prepend[Last[entry],endpoint]}, {-1,Append[Last[entry],endpoint]}]];
+    pol[x_,_] := {1,{x}};
+    project[SpinorChain[x_,ms___,y_]] := With[{l=pol[x,True],r=pol[y,False]},
+      First[l] First[r] (SpinorChain @@ Join[Last[l],{ms},Last[r]])];
+    expand[perms_] := Module[{labels, sign, value},
+      labels=Flatten[MapThread[Thread[#1[[2]] -> #2] &, {groups,perms}]];
+      sign=Times @@ MapThread[If[First[#1],Signature[#2],1] &, {groups,perms}];
+      value=ConstructiveDiagrams`Private`relabelModelKinematics[kernel,labels];
+      sign (value /. chain_SpinorChain :> project[chain])];
+    common Total[expand /@ Tuples[Permutations[Last[#]] & /@ groups]]];
+ConstructiveDiagrams`Private`materializeLegOrbit[expr_] := expr;
+
 ConvertAmplitude[line_,particleList_,scope_:Automatic]:=Module[
 {masses={},res,SpinHelicity,parameterScope,segments,compactIndices,compactPattern,
  compactChain,convertSegment},
@@ -221,6 +286,9 @@ ModelParameter[_String,s_String,_String]:>s,"StandaloneConstructiveAmplitude",In
 If[!StringQ[parameterScope],Return[Failure["InvalidModelParameterScope",<||>]]];
 SpinHelicity[mass_]:=If[mass===0,"Helicity","Spin"];
 Do[AppendTo[masses,ParticleMass[line[[ii]],particleList]],{ii,1,Length[line]-2}];
+If[StringStartsQ[line[[-1]], "LegOrbit["],
+  Return[ConstructiveDiagrams`Private`readLegOrbit[line[[-1]],masses,
+    With[{prefix=Most[line]}, Function[part,ConvertAmplitude[Append[prefix,part],particleList,parameterScope]]]]]];
 If[StringStartsQ[line[[-1]], "Shared["],
   Return[ConstructiveDiagrams`Private`readSharedAmplitude[line[[-1]],
     With[{prefix = Most[line]}, Function[leaf,
@@ -757,7 +825,7 @@ RetreiveAmplitude[process : {___String}, model : {_List, _List, _List, _List}] :
   row = rows[[First[positions]]];
   If[row[[-1]] === Missing["PendingConstructiveDerivation"],
     Return[Failure["PendingConstructiveDerivation", <|"Particles" -> process|>]]];
-  value = row[[-2]] row[[-1]];
+  value = row[[-2]] ConstructiveDiagrams`Private`materializeLegOrbit[row[[-1]]];
   If[words[[First[positions]]] === process, Return[value]];
   tagged = MapIndexed[{#1, First[#2]} &, process];
   rules = ConstructiveDiagrams`Private`amplitudeParticleLabelRules[tagged, row];
@@ -812,7 +880,7 @@ replacements=buildReplacements[i];
 (*Print[replacements];*)
 If[model[[2,i,-1]] === Missing["PendingConstructiveDerivation"],
   amp=Failure["PendingConstructiveDerivation", <|"Particles" -> First /@ taggedParticles|>]; Break[]];
-amp=model[[2,i,-2]]model[[2,i,-1]];
+amp=model[[2,i,-2]] ConstructiveDiagrams`Private`materializeLegOrbit[model[[2,i,-1]]];
 explicitColor=!FreeQ[amp,_ColorDelta|_ColorGenerator|_ColorStructure|_ColorTrace];
 If[explicitColor,
   amp=ConstructiveDiagrams`Private`colorRelabelModelAmplitude[
@@ -1705,7 +1773,7 @@ vertexStructureInstances[vertex_, incidentLegs_, md_, orientations_: <||>] := Mo
                 "InternalHelicities" -> ConstructiveDiagrams`Private`choices,
                 "ModelRow" -> row["Row"],
                 "SlotRules" -> AssociationThread[Range @ Length[ordered], Map[#["Index"] &, ordered]],
-                "Expression" -> replaceVertexIndices[row["Expression"],
+                "Expression" -> replaceVertexIndices[row["Expression"] /. orbit_ConstructiveDiagrams`Private`modelLegOrbit :> ConstructiveDiagrams`Private`materializeLegOrbit[orbit],
                   AssociationThread[Range @ Length[ordered], Map[#["Index"] &, ordered]]]
               |>
             ]

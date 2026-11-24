@@ -6,6 +6,7 @@
 // signed value with the independent off-shell Feynman diagrams at 100,000 points.
 #include "amplitude.hpp"
 #include "reduce.hpp"
+#include "model_orbit.hpp"
 #include "generation_feynman.hpp"
 #include "validation_feynman.hpp"
 #include "validation_dirac_current.hpp"
@@ -90,6 +91,29 @@ bool check_full(const model& vertices, const model& cuts, const model& feynman,
 // The single photon in this family uses the emitting fermion pair as its
 // reference in model 5. Check that every possible pair supplies its pole.
 bool emitting_pair_poles(Algebra& a, const model_vertex& row, bool spurious) {
+    if (a.node(row.expression).head == "ModelLegOrbit") {
+        // The contracted model now fixes one external reference after all
+        // exchanges. Test its complete, common normalization in both gauges.
+        const auto projected = a.node(row.expression).args.at(3);
+        const auto &inverse = a.node(projected);
+        if (inverse.head != "Power" || inverse.args.size()!=2 || inverse.args[1]!=a.integer(-1)) return false;
+        const auto term = inverse.args[0];
+        const auto cuts = a.node(term).head=="Plus" ? a.node(term).args : std::vector<Id>{term};
+        std::set<std::vector<int>> found;
+        for (Id cut : cuts) {
+            const auto& pd = a.node(cut);
+            if (pd.head!="PropDen" || pd.args.size()!=2 || pd.args[1]==a.integer(0)) return false;
+            const auto& mom=a.node(pd.args[0]);
+            if (mom.head!="Mom" || mom.args.size()!=1) return false;
+            const auto& labels=a.node(mom.args[0]);
+            if (labels.head!="Multiparticle") return false;
+            std::vector<int> subset; for (Id label:labels.args) subset.push_back(a.leg(label));
+            found.insert(subset);
+        }
+        const std::set<std::vector<int>> expected = spurious ?
+            std::set<std::vector<int>>{{1,9},{2,9}} : std::set<std::vector<int>>{{1,9}};
+        return found==expected;
+    }
     const Id photon = a.integer(9);
     const auto invariant = [&](std::vector<Id> labels) {
         return a.call("PropDen", {a.call("Mom", {a.call("Multiparticle", std::move(labels))}), a.integer(0)});
@@ -119,9 +143,9 @@ bool emitting_pair_poles(Algebra& a, const model_vertex& row, bool spurious) {
     return false;
 }
 // Compare the rows as read from disk, including their model-local coefficients.
-bool check_higher_point(const model& cuts, const model_vertex& row, const model& rules) {
+bool check_higher_point(const model& cuts, const model_vertex& row, const model& rules, Algebra& a, Id value) {
     using namespace validation;
-    Algebra a(&cuts.algebra()), fa(&rules.algebra());
+    Algebra fa(&rules.algebra());
     const auto params = model_parameters(cuts);
     std::vector<Id> cut_masses, rule_masses, trees;
     std::vector<real> masses;
@@ -132,7 +156,7 @@ bool check_higher_point(const model& cuts, const model_vertex& row, const model&
     }
     a.setKinematics(cut_masses,{});
     fa.setKinematics(rule_masses,{});
-    expression_evaluator stored(a,a.mul({row.factor,row.expression}),params);
+    expression_evaluator stored(a,value,params);
     if (row.legs.size() == 9) {
         // Accumulate the off-shell QED trees as Dirac currents. This keeps the
         // independent signed check affordable for up to 18,144 diagrams.
@@ -194,17 +218,17 @@ int main(int argc, char** argv) {
                 const key label{number == 4 ? "physical" : "spurious", family, helicities};
                 if (!seen.insert(label).second) throw std::runtime_error("Duplicate QED model row");
                 Algebra joined(&catalog.algebra());
-                const auto value = joined.mul({vertex.factor, vertex.expression});
+                const auto value = joined.mul({vertex.factor, model_detail::expand_leg_orbit(joined,vertex.expression)});
                 {
                     const auto entry = catalog.retrieve_amplitude(vertex.legs);
                     if (validation_detail::import_expression(joined, entry) != value)
                         throw std::runtime_error("Public catalog lookup disagrees with the saved row");
                 }
                 if (vertex.legs.size() >= 7) {
-                    bool ok = check_higher_point(catalog,vertex,feynman);
+                    bool ok = check_higher_point(catalog,vertex,feynman,joined,value);
                     if (family == "eeeeeeeeA") ok = emitting_pair_poles(joined, vertex, number == 5) && ok;
                     if (argc == 3)
-                        ok = check_full(vertices,catalog,feynman,vertex.legs,amp_expression(joined.format(value), masses),
+                        ok = check_full(vertices,catalog,feynman,vertex.legs,amp_expression(joined, value, masses),
                                         706181,number == 5 && family.find('A') != std::string::npos) && ok;
                     std::cout << (ok ? "PASS" : "FAIL") << "  model " << number << "  " << family
                               << ' ' << helicities << "  signed Feynman diagrams" << std::endl;

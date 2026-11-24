@@ -1,4 +1,5 @@
 #include "model_expression.hpp"
+#include "model_orbit.hpp"
 #include <algorithm>
 #include <cctype>
 #include <charconv>
@@ -364,6 +365,8 @@ class parser {
 } // namespace
 Id parse_expression(Algebra& a, std::string_view text, Id scope, const std::vector<bool>& massive,
                     bool feynman) {
+    if (!massive.empty() && !feynman && text.substr(0, 9) == "LegOrbit[")
+        return read_leg_orbit(a, text, scope, massive);
     if (massive.empty() || feynman || text.substr(0, 7) != "Shared[")
         return parser(a, text, scope, massive, feynman).parse();
     if (text.back() != ']') throw std::invalid_argument("unterminated Shared expression");

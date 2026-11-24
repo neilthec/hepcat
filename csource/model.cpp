@@ -1,5 +1,6 @@
 #include "model.hpp"
 #include "model_expression.hpp"
+#include "model_orbit.hpp"
 #include <algorithm>
 #include <array>
 #include <cctype>
@@ -311,7 +312,7 @@ amp_expression model::retrieve_amplitude(const std::vector<std::string>& process
     if (match->pending_constructive_derivation)
         throw std::domain_error("Stored amplitude is pending a constructive derivation");
     Algebra arena(&algebra());
-    Id root = arena.mul({match->factor, match->expression});
+    Id root = arena.mul({match->factor, model_detail::expand_leg_orbit(arena, match->expression)});
     if (!exact) {
         // Match successive identical particles in their original order. The
         // stored expression already carries the identical-fermion antisymmetry.

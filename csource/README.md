@@ -215,7 +215,9 @@ std::cout << amp.plain_text() << '\n';
 
 The result owns its expression and external masses. It includes the stored factor and uses the requested leg numbering. Repeated species keep their occurrence order. An absent row gives the zero amplitude with the requested external masses. A complete model only needs to list its nonzero amplitudes. Exact row order takes priority over multiset matching. An ambiguous match or a Feynman model throws `std::invalid_argument`.
 
-Large amplitude rows can store shared arithmetic in dependency order. For example, `Shared[<13>;EE;*:1,2;+:3,3]` computes the spinor bracket and coupling, multiplies them, then adds the product to itself. Slot numbers start at one. The last slot is the amplitude. Both readers return ordinary HEPCAT expressions with model-local parameters.
+Large amplitude rows can store shared arithmetic in dependency order. For example, `Shared[<13>;EE;*:1,2;+:3,3]` computes the spinor bracket and coupling, multiplies them, then adds the product to itself. Slot numbers start at one. The last slot is the amplitude. Both readers use model-local parameters. The QED tables also store signed sums of external-spinor polynomials. The model keeps the shared polynomial once per row and expands it when you retrieve or sew that amplitude.
+
+The table syntax is `LegOrbit[groups;projections;common;Shared[...]]`. Each disjoint group is a signed list of external labels, for example `-1.3,+5.6` antisymmetrizes legs 1 and 3 and symmetrizes legs 5 and 6. Exchange the external labels in the shared polynomial first. Then replace its marked massless polarization endpoints. For example `A5=6` takes the angle endpoint of photon 5 from leg 6, and `A5=5@1` uses the square spinor of leg 5 contracted with momentum 1. Ordinary momentum insertions keep their particle momenta. The common scalar multiplies the entire sum after permutation. A dash denotes an empty group or projection list. The stored sums contain only external spinors.
 
 ```cpp
 #include "amplitude.hpp"

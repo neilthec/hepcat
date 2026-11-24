@@ -59,6 +59,12 @@ meScope = ConstructiveDiagrams`Private`modelParameterScope[meDirectory, 91];
 meParse[text_] := ConvertAmplitude[{"e", "E", "A.+", 1, text}, meModel[[1]], meScope];
 meCheck["shared amplitude arithmetic uses the same scoped spinor and parameter leaves",
   meParse["Shared[<13>;EE;*:1,2;+:3,3;2;^:4,5]"] === meParse["(2*EE*<13>)^2"]];
+meOrbit = meParse["LegOrbit[-1.2;A3=3@2;1;Shared[SpinorChain[Spinor[\"Spin\",\"Angle\",1],Spinor[\"Polarization\",\"Angle\",3]]]]"];
+meCheck["external exchanges precede a fixed external polarization choice",
+  ConstructiveDiagrams`Private`materializeLegOrbit[meOrbit] === meParse["<223]-<123]"]];
+meCheck["invalid permutation groups and external slots are rejected",
+  AllTrue[{"LegOrbit[-1.2,+2.3;-;1;Shared[1]]", "LegOrbit[-;A1=3;1;Shared[1]]",
+    "LegOrbit[+4;-;1;Shared[1]]"}, FailureQ[meParse[#]] &]];
 meCheck["invalid shared records are rejected",
   AllTrue[{"Shared[1;+:1,2]", "Shared[1;*:0,1]", "Shared[1;?:1,1]",
     "Shared[1;^:1,1,1]", "Shared[1;;1]", "Shared[1;]", "Shared[]"}, FailureQ[meParse[#]] &]];

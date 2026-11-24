@@ -1,4 +1,5 @@
 #include "generation_sew.hpp"
+#include "model_orbit.hpp"
 #include "generation_current.hpp"
 #include "generation_spin.hpp"
 #include <algorithm>
@@ -195,7 +196,7 @@ class sewing {
         const auto& row = mdl.vertices().at(tree.vertices[v].row);
         std::unordered_map<Id, Id> cache;
         stored_reference = false;
-        Id kinematics = kinematic(v, row.expression, cache);
+        Id kinematics = kinematic(v, model_detail::expand_leg_orbit(a, row.expression), cache);
         if (chiral_vertex && *chiral_vertex == v)
             kinematics = a.call("NullChannelBranch", {group(light), chiral_kind == 1 ? angle : square, kinematics});
         Id expr = a.mul({kinematic(v, row.factor, cache), kinematics, vertex_color(a, mdl, tree, v, process)});

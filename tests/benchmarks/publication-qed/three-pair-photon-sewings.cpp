@@ -67,14 +67,16 @@ int printed_parity(const model &m, const generation::term &tree) {
   return sign;
 }
 int main(int argc, char **argv) try {
-  if (argc != 12)
+  const bool external = argc > 1 && std::string(argv[1]) == "--external";
+  if (external) { --argc; ++argv; }
+  if ((!external && argc != 12) || argc < 7 || argc > 12)
     throw std::invalid_argument(
         "Use CHARGED_BLOCKS NEW_OUTPUT e E e E e E PHOTON PHOTON PHOTON");
   std::vector<std::string> legs(argv + 3, argv + argc);
-  for (size_t i = 0; i < 6; ++i)
+  for (size_t i = 0; !external && i < 6; ++i)
     if (legs[i] != (i % 2 ? "E" : "e"))
       throw std::invalid_argument("Expected three ordered charged pairs");
-  for (size_t i = 6; i < 9; ++i)
+  for (size_t i = 6; !external && i < 9; ++i)
     if (legs[i] != "A.+" && legs[i] != "A.-")
       throw std::invalid_argument("Expected three photon helicities");
   auto n = legs.size();
@@ -83,13 +85,14 @@ int main(int argc, char **argv) try {
   unsigned all = (1 << n) - 1;
   model m(argv[1], 3, "qed-reconstruction");
   auto plans = generation::charged_block_plans(m, legs);
+  if (plans.empty()) throw std::runtime_error("No constructive terms for this external state");
   std::map<masks, std::size_t> keys;
   for (std::size_t g = 0; g < plans.size(); ++g) {
     masks k;
     auto &t = plans[g].terms;
     if (t.size() != 1)
       throw std::runtime_error("Unexpected internal-state multiplicity");
-    if (t[0].edges.size() != 4 || t[0].sign != -printed_parity(m, t[0]))
+    if (!external && (t[0].edges.size() != 4 || t[0].sign != -printed_parity(m, t[0])))
       throw std::logic_error(
           "Printed fermion sign does not match the sewn expression");
     for (auto &e : t[0].edges)
@@ -181,7 +184,7 @@ int main(int argc, char **argv) try {
   }
   std::cout << seeds << " on-shell expression seeds covering " << done.size()
             << " of " << plans.size() << " charged sewings\n";
-  if (done.size() != 4536 || done.size() != plans.size())
+  if ((!external && done.size() != 4536) || done.size() != plans.size())
     throw std::logic_error("Incomplete set of labeled sewings");
   std::ofstream manifest(dir / "checked-order.txt");
   for (const auto &leg : legs)

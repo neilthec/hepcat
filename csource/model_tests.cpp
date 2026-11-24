@@ -119,6 +119,20 @@ void fixture_tests() {
     const model shared(test.dir, 1);
     check(shared.vertices()[0].expression == shared.vertices()[1].expression,
           "shared model expression differs from ordinary model algebra");
+    // Permute the external legs first. Their reference is fixed in the
+    // physical process, even if it also occurs in the alternating group.
+    test.write("amps1.mdl",
+        "q|Q|A.+||1|LegOrbit[-1.2;A3=3@2;1;Shared[SpinorChain[Spinor[\"Spin\",\"Angle\",1],"
+        "Spinor[\"Polarization\",\"Angle\",3]]]]\n"
+        "q|Q|A.-||1|<223]-<123]\n======\n");
+    const model orbit(test.dir, 1);
+    check(orbit.retrieve_amplitude({"q","Q","A.+"}).str() ==
+          orbit.retrieve_amplitude({"q","Q","A.-"}).str(), "external-spinor orbit projection or exchange sign");
+    for (const std::string bad : {"LegOrbit[-1.2,+2.3;-;1;Shared[1]]",
+             "LegOrbit[-;A1=3;1;Shared[1]]", "LegOrbit[+4;-;1;Shared[1]]"}) {
+        test.write("amps1.mdl", "q|Q|A.+||1|" + bad + "\n======\n");
+        rejects([&] { model invalid(test.dir, 1); }, "invalid permutation sum accepted");
+    }
     for (const std::string bad : {"Shared[1;+:1,2]", "Shared[1;*:0,1]", "Shared[1;?:1,1]",
                                   "Shared[1;^:1,1,1]", "Shared[1;;1]", "Shared[1;]", "Shared[]"}) {
         test.write("amps1.mdl", "q|Q|A.+||1|" + bad + "\n======\n");

@@ -1,0 +1,1500 @@
+[
+  {
+    "legs": 4,
+    "pairs": 1,
+    "photons": 2,
+    "helicity_rows": 3,
+    "pole_products": 2,
+    "external_fractions": 1,
+    "independent_numerator_monomials": 2,
+    "uncompressed_coefficients": 4,
+    "ward_checks": 96,
+    "max_relative_ward": 6.3243831415e-15,
+    "readback_points_per_row": 3,
+    "readback_relative_errors": [
+      2.55115e-15,
+      1.50877e-15
+    ],
+    "signed": [
+      {
+        "photons": 2,
+        "negatives": 0,
+        "points": 100000,
+        "max_physical": 2.141725e-12,
+        "max_spurious": 2.152411e-12,
+        "worst_physical_seed": 2026177169,
+        "worst_spurious_seed": 2026177169,
+        "physical_s": 0.05911081,
+        "spurious_s": 0.05714063,
+        "feynman_s": 0.03828697,
+        "failures": 0
+      },
+      {
+        "photons": 2,
+        "negatives": 1,
+        "points": 100000,
+        "max_physical": 6.08615e-13,
+        "max_spurious": 6.09061e-13,
+        "worst_physical_seed": 2026117366,
+        "worst_spurious_seed": 2026117366,
+        "physical_s": 0.05918858,
+        "spurious_s": 0.05654934,
+        "feynman_s": 0.03854601,
+        "failures": 0
+      },
+      {
+        "photons": 2,
+        "negatives": 2,
+        "points": 100000,
+        "max_physical": 1.061795e-12,
+        "max_spurious": 1.018016e-12,
+        "worst_physical_seed": 2026126325,
+        "worst_spurious_seed": 2026126325,
+        "physical_s": 0.05933383,
+        "spurious_s": 0.0570482,
+        "feynman_s": 0.03854522,
+        "failures": 0
+      }
+    ],
+    "external": {
+      "family": "eeAA",
+      "legs": 4,
+      "pairs": 1,
+      "points": 24,
+      "first_seed": 900113,
+      "fixed_photon_helicities": 4,
+      "max_polarized_relative_madgraph": 5.220195551288317e-15,
+      "median_seconds_per_complete_spin_sum": {
+        "physical": 9.3345e-06,
+        "spurious": 9.1445e-06,
+        "madgraph": 1.959e-06
+      },
+      "matched_calchep_points": 24,
+      "max_relative_calchep": 3.3820567871914242e-15,
+      "archived_calchep_seconds": 2.700712432861328e-07
+    }
+  },
+  {
+    "legs": 4,
+    "pairs": 2,
+    "photons": 0,
+    "helicity_rows": 1,
+    "pole_products": 2,
+    "external_fractions": 1,
+    "independent_numerator_monomials": 1,
+    "uncompressed_coefficients": 4,
+    "ward_checks": 0,
+    "max_relative_ward": 0.0,
+    "readback_points_per_row": 3,
+    "readback_relative_errors": [
+      2.00364e-16,
+      2.00364e-16
+    ],
+    "signed": [
+      {
+        "photons": 0,
+        "negatives": 0,
+        "points": 100000,
+        "max_physical": 2.470563e-13,
+        "max_spurious": 2.470563e-13,
+        "worst_physical_seed": 2026116375,
+        "worst_spurious_seed": 2026116375,
+        "physical_s": 0.04757105,
+        "spurious_s": 0.04578672,
+        "feynman_s": 0.01957079,
+        "failures": 0
+      }
+    ],
+    "external": {
+      "family": "eeee",
+      "legs": 4,
+      "pairs": 2,
+      "points": 24,
+      "first_seed": 900213,
+      "fixed_photon_helicities": 1,
+      "max_polarized_relative_madgraph": 9.50811620555869e-15,
+      "median_seconds_per_complete_spin_sum": {
+        "physical": 6.6025e-06,
+        "spurious": 6.562999999999999e-06,
+        "madgraph": 1.5004999999999999e-06
+      },
+      "matched_calchep_points": 24,
+      "max_relative_calchep": 1.0067417158826843e-14,
+      "archived_calchep_seconds": 1.3606431579589844e-07
+    }
+  },
+  {
+    "legs": 5,
+    "pairs": 1,
+    "photons": 3,
+    "helicity_rows": 4,
+    "pole_products": 6,
+    "external_fractions": 1,
+    "independent_numerator_monomials": 3,
+    "uncompressed_coefficients": 8,
+    "ward_checks": 192,
+    "max_relative_ward": 3.36716632031e-15,
+    "readback_points_per_row": 3,
+    "readback_relative_errors": [
+      1.03113e-14,
+      4.04078e-15
+    ],
+    "signed": [
+      {
+        "photons": 3,
+        "negatives": 0,
+        "points": 100000,
+        "max_physical": 3.457509e-12,
+        "max_spurious": 1.702316e-11,
+        "worst_physical_seed": 2026160013,
+        "worst_spurious_seed": 2026193534,
+        "physical_s": 0.1379564,
+        "spurious_s": 0.1361343,
+        "feynman_s": 0.06538991,
+        "failures": 0
+      },
+      {
+        "photons": 3,
+        "negatives": 1,
+        "points": 100000,
+        "max_physical": 5.693728e-12,
+        "max_spurious": 1.707419e-11,
+        "worst_physical_seed": 2026145940,
+        "worst_spurious_seed": 2026193534,
+        "physical_s": 0.1320655,
+        "spurious_s": 0.1307646,
+        "feynman_s": 0.06329476,
+        "failures": 0
+      },
+      {
+        "photons": 3,
+        "negatives": 2,
+        "points": 100000,
+        "max_physical": 2.79768e-12,
+        "max_spurious": 1.721276e-11,
+        "worst_physical_seed": 2026121645,
+        "worst_spurious_seed": 2026193534,
+        "physical_s": 0.130072,
+        "spurious_s": 0.1289542,
+        "feynman_s": 0.06220776,
+        "failures": 0
+      },
+      {
+        "photons": 3,
+        "negatives": 3,
+        "points": 100000,
+        "max_physical": 4.711729e-12,
+        "max_spurious": 1.709543e-11,
+        "worst_physical_seed": 2026211547,
+        "worst_spurious_seed": 2026193534,
+        "physical_s": 0.1371538,
+        "spurious_s": 0.135561,
+        "feynman_s": 0.06869741,
+        "failures": 0
+      }
+    ],
+    "external": {
+      "family": "eeAAA",
+      "legs": 5,
+      "pairs": 1,
+      "points": 24,
+      "first_seed": 901113,
+      "fixed_photon_helicities": 8,
+      "max_polarized_relative_madgraph": 1.606781079879896e-14,
+      "median_seconds_per_complete_spin_sum": {
+        "physical": 4.5836499999999994e-05,
+        "spurious": 4.5125499999999993e-05,
+        "madgraph": 8.292000000000001e-06
+      },
+      "matched_calchep_points": 24,
+      "max_relative_calchep": 2.967917691795127e-14,
+      "archived_calchep_seconds": 2.0097808837890625e-06
+    }
+  },
+  {
+    "legs": 5,
+    "pairs": 2,
+    "photons": 1,
+    "helicity_rows": 2,
+    "pole_products": 8,
+    "external_fractions": 1,
+    "independent_numerator_monomials": 2,
+    "uncompressed_coefficients": 16,
+    "ward_checks": 32,
+    "max_relative_ward": 9.71463471194e-15,
+    "readback_points_per_row": 3,
+    "readback_relative_errors": [
+      1.90657e-15,
+      2.45425e-15
+    ],
+    "signed": [
+      {
+        "photons": 1,
+        "negatives": 0,
+        "points": 100000,
+        "max_physical": 7.250947e-12,
+        "max_spurious": 6.994119e-12,
+        "worst_physical_seed": 2026130290,
+        "worst_spurious_seed": 2026130290,
+        "physical_s": 0.1242817,
+        "spurious_s": 0.1239641,
+        "feynman_s": 0.04724975,
+        "failures": 0
+      },
+      {
+        "photons": 1,
+        "negatives": 1,
+        "points": 100000,
+        "max_physical": 6.180339e-12,
+        "max_spurious": 6.18309e-12,
+        "worst_physical_seed": 2026193296,
+        "worst_spurious_seed": 2026193296,
+        "physical_s": 0.120039,
+        "spurious_s": 0.1185842,
+        "feynman_s": 0.04577372,
+        "failures": 0
+      }
+    ],
+    "external": {
+      "family": "eeeeA",
+      "legs": 5,
+      "pairs": 2,
+      "points": 24,
+      "first_seed": 901213,
+      "fixed_photon_helicities": 2,
+      "max_polarized_relative_madgraph": 1.308309056289638e-13,
+      "median_seconds_per_complete_spin_sum": {
+        "physical": 3.9043500000000007e-05,
+        "spurious": 3.9225e-05,
+        "madgraph": 8.627500000000002e-06
+      },
+      "matched_calchep_points": 24,
+      "max_relative_calchep": 1.6617385169934156e-13,
+      "archived_calchep_seconds": 5.939873555501301e-07
+    }
+  },
+  {
+    "legs": 6,
+    "pairs": 1,
+    "photons": 4,
+    "helicity_rows": 5,
+    "pole_products": 24,
+    "external_fractions": 1,
+    "independent_numerator_monomials": 6,
+    "uncompressed_coefficients": 16,
+    "ward_checks": 320,
+    "max_relative_ward": 1.20347623998e-14,
+    "readback_points_per_row": 3,
+    "readback_relative_errors": [
+      7.42707e-15,
+      3.41838e-14
+    ],
+    "signed": [
+      {
+        "photons": 4,
+        "negatives": 0,
+        "points": 100000,
+        "max_physical": 8.510419e-12,
+        "max_spurious": 7.656127e-11,
+        "worst_physical_seed": 2026161644,
+        "worst_spurious_seed": 2026113729,
+        "physical_s": 0.6871388,
+        "spurious_s": 0.6868551,
+        "feynman_s": 0.1116017,
+        "failures": 0
+      },
+      {
+        "photons": 4,
+        "negatives": 1,
+        "points": 100000,
+        "max_physical": 8.972741e-12,
+        "max_spurious": 7.654793e-11,
+        "worst_physical_seed": 2026116236,
+        "worst_spurious_seed": 2026113729,
+        "physical_s": 0.6689369,
+        "spurious_s": 0.6753367,
+        "feynman_s": 0.1092591,
+        "failures": 0
+      },
+      {
+        "photons": 4,
+        "negatives": 2,
+        "points": 100000,
+        "max_physical": 2.651118e-11,
+        "max_spurious": 7.654877e-11,
+        "worst_physical_seed": 2026190487,
+        "worst_spurious_seed": 2026113729,
+        "physical_s": 0.685124,
+        "spurious_s": 0.6714447,
+        "feynman_s": 0.1079293,
+        "failures": 0
+      },
+      {
+        "photons": 4,
+        "negatives": 3,
+        "points": 100000,
+        "max_physical": 1.756943e-11,
+        "max_spurious": 7.654163e-11,
+        "worst_physical_seed": 2026168374,
+        "worst_spurious_seed": 2026113729,
+        "physical_s": 0.6687264,
+        "spurious_s": 0.6712532,
+        "feynman_s": 0.1082345,
+        "failures": 0
+      },
+      {
+        "photons": 4,
+        "negatives": 4,
+        "points": 100000,
+        "max_physical": 6.683426e-12,
+        "max_spurious": 7.655821e-11,
+        "worst_physical_seed": 2026114323,
+        "worst_spurious_seed": 2026113729,
+        "physical_s": 0.6524056,
+        "spurious_s": 0.651378,
+        "feynman_s": 0.1081921,
+        "failures": 0
+      }
+    ],
+    "external": {
+      "family": "eeAAAA",
+      "legs": 6,
+      "pairs": 1,
+      "points": 24,
+      "first_seed": 902113,
+      "fixed_photon_helicities": 16,
+      "max_polarized_relative_madgraph": 4.153585154648068e-14,
+      "median_seconds_per_complete_spin_sum": {
+        "physical": 0.0004031470000000001,
+        "spurious": 0.0004285445000000001,
+        "madgraph": 5.070899999999998e-05
+      },
+      "matched_calchep_points": 24,
+      "max_relative_calchep": 2.4807005950349404e-14,
+      "archived_calchep_seconds": 2.4966172526041665e-05
+    }
+  },
+  {
+    "legs": 6,
+    "pairs": 2,
+    "photons": 2,
+    "helicity_rows": 3,
+    "pole_products": 40,
+    "external_fractions": 3,
+    "independent_numerator_monomials": 13,
+    "uncompressed_coefficients": 96,
+    "ward_checks": 96,
+    "max_relative_ward": 6.76527634072e-15,
+    "readback_points_per_row": 3,
+    "readback_relative_errors": [
+      5.58622e-15,
+      3.92505e-14
+    ],
+    "signed": [
+      {
+        "photons": 2,
+        "negatives": 0,
+        "points": 100000,
+        "max_physical": 4.495026e-12,
+        "max_spurious": 1.996824e-10,
+        "worst_physical_seed": 2026157690,
+        "worst_spurious_seed": 2026156636,
+        "physical_s": 0.7508695,
+        "spurious_s": 0.7484227,
+        "feynman_s": 0.1034567,
+        "failures": 0
+      },
+      {
+        "photons": 2,
+        "negatives": 1,
+        "points": 100000,
+        "max_physical": 2.811045e-11,
+        "max_spurious": 4.859243e-10,
+        "worst_physical_seed": 2026177963,
+        "worst_spurious_seed": 2026156636,
+        "physical_s": 0.77332,
+        "spurious_s": 0.7707214,
+        "feynman_s": 0.1081856,
+        "failures": 0
+      },
+      {
+        "photons": 2,
+        "negatives": 2,
+        "points": 100000,
+        "max_physical": 5.219722e-12,
+        "max_spurious": 6.624969e-10,
+        "worst_physical_seed": 2026130050,
+        "worst_spurious_seed": 2026156636,
+        "physical_s": 0.8240716,
+        "spurious_s": 0.7684688,
+        "feynman_s": 0.109945,
+        "failures": 0
+      }
+    ],
+    "external": {
+      "family": "eeeeAA",
+      "legs": 6,
+      "pairs": 2,
+      "points": 24,
+      "first_seed": 902213,
+      "fixed_photon_helicities": 4,
+      "max_polarized_relative_madgraph": 9.73799332951447e-14,
+      "median_seconds_per_complete_spin_sum": {
+        "physical": 0.0005059560000000001,
+        "spurious": 0.0005085425,
+        "madgraph": 6.070999999999999e-05
+      },
+      "matched_calchep_points": 24,
+      "max_relative_calchep": 9.229996790994285e-14,
+      "archived_calchep_seconds": 1.844778125e-05
+    }
+  },
+  {
+    "legs": 6,
+    "pairs": 3,
+    "photons": 0,
+    "helicity_rows": 1,
+    "pole_products": 36,
+    "external_fractions": 1,
+    "independent_numerator_monomials": 2,
+    "uncompressed_coefficients": 16,
+    "ward_checks": 0,
+    "max_relative_ward": 0.0,
+    "readback_points_per_row": 3,
+    "readback_relative_errors": [
+      9.90511e-15,
+      9.90511e-15
+    ],
+    "signed": [
+      {
+        "photons": 0,
+        "negatives": 0,
+        "points": 100000,
+        "max_physical": 3.487554e-12,
+        "max_spurious": 3.487554e-12,
+        "worst_physical_seed": 2026137272,
+        "worst_spurious_seed": 2026137272,
+        "physical_s": 0.6496016,
+        "spurious_s": 0.6486941,
+        "feynman_s": 0.08087805,
+        "failures": 0
+      }
+    ],
+    "external": {
+      "family": "eeeeee",
+      "legs": 6,
+      "pairs": 3,
+      "points": 24,
+      "first_seed": 902313,
+      "fixed_photon_helicities": 1,
+      "max_polarized_relative_madgraph": 1.198434342902277e-14,
+      "median_seconds_per_complete_spin_sum": {
+        "physical": 0.0004386665000000001,
+        "spurious": 0.0004336479999999999,
+        "madgraph": 5.9686500000000005e-05
+      },
+      "matched_calchep_points": 24,
+      "max_relative_calchep": 1.320412171905477e-14,
+      "archived_calchep_seconds": 1.7278211588541667e-05
+    }
+  },
+  {
+    "legs": 7,
+    "pairs": 1,
+    "photons": 5,
+    "helicity_rows": 6,
+    "pole_products": 120,
+    "external_fractions": 1,
+    "independent_numerator_monomials": 10,
+    "uncompressed_coefficients": 32,
+    "ward_checks": 480,
+    "max_relative_ward": 1.61907311077e-14,
+    "readback_points_per_row": 3,
+    "readback_relative_errors": [
+      7.04953e-15,
+      1.20374e-12
+    ],
+    "signed": [
+      {
+        "photons": 5,
+        "negatives": 0,
+        "points": 100000,
+        "max_physical": 1.515106e-11,
+        "max_spurious": 1.512683e-11,
+        "worst_physical_seed": 2026137934,
+        "worst_spurious_seed": 2026137934,
+        "physical_s": 4.891585,
+        "spurious_s": 4.913787,
+        "feynman_s": 0.2054047,
+        "failures": 0
+      },
+      {
+        "photons": 5,
+        "negatives": 1,
+        "points": 100000,
+        "max_physical": 2.100937e-11,
+        "max_spurious": 2.100053e-11,
+        "worst_physical_seed": 2026150661,
+        "worst_spurious_seed": 2026150661,
+        "physical_s": 4.800058,
+        "spurious_s": 4.790022,
+        "feynman_s": 0.1993372,
+        "failures": 0
+      },
+      {
+        "photons": 5,
+        "negatives": 2,
+        "points": 100000,
+        "max_physical": 2.362439e-11,
+        "max_spurious": 2.362523e-11,
+        "worst_physical_seed": 2026150661,
+        "worst_spurious_seed": 2026150661,
+        "physical_s": 4.836125,
+        "spurious_s": 4.834169,
+        "feynman_s": 0.1995627,
+        "failures": 0
+      },
+      {
+        "photons": 5,
+        "negatives": 3,
+        "points": 100000,
+        "max_physical": 1.58351e-11,
+        "max_spurious": 1.58475e-11,
+        "worst_physical_seed": 2026203561,
+        "worst_spurious_seed": 2026203561,
+        "physical_s": 4.766759,
+        "spurious_s": 4.755548,
+        "feynman_s": 0.1976022,
+        "failures": 0
+      },
+      {
+        "photons": 5,
+        "negatives": 4,
+        "points": 100000,
+        "max_physical": 4.550999e-11,
+        "max_spurious": 4.575501e-11,
+        "worst_physical_seed": 2026130050,
+        "worst_spurious_seed": 2026130050,
+        "physical_s": 4.738609,
+        "spurious_s": 4.729424,
+        "feynman_s": 0.1961594,
+        "failures": 0
+      },
+      {
+        "photons": 5,
+        "negatives": 5,
+        "points": 100000,
+        "max_physical": 1.263581e-11,
+        "max_spurious": 1.263147e-11,
+        "worst_physical_seed": 2026184387,
+        "worst_spurious_seed": 2026184387,
+        "physical_s": 4.930069,
+        "spurious_s": 4.927167,
+        "feynman_s": 0.2059145,
+        "failures": 0
+      }
+    ],
+    "external": {
+      "family": "eeAAAAA",
+      "legs": 7,
+      "pairs": 1,
+      "points": 24,
+      "first_seed": 903113,
+      "fixed_photon_helicities": 32,
+      "max_polarized_relative_madgraph": 1.272451739700511e-13,
+      "median_seconds_per_complete_spin_sum": {
+        "physical": 0.006420041499999999,
+        "spurious": 0.006379602500000002,
+        "madgraph": 0.00029594099999999965
+      },
+      "matched_calchep_points": 24,
+      "max_relative_calchep": 8.166920793260038e-14,
+      "archived_calchep_seconds": 0.004985725708333334
+    }
+  },
+  {
+    "legs": 7,
+    "pairs": 2,
+    "photons": 3,
+    "helicity_rows": 4,
+    "pole_products": 240,
+    "external_fractions": 4,
+    "independent_numerator_monomials": 40,
+    "uncompressed_coefficients": 320,
+    "ward_checks": 192,
+    "max_relative_ward": 9.04188578606e-15,
+    "readback_points_per_row": 3,
+    "readback_relative_errors": [
+      6.60931e-15,
+      1.58985e-13
+    ],
+    "signed": [
+      {
+        "photons": 3,
+        "negatives": 0,
+        "points": 100000,
+        "max_physical": 1.036826e-11,
+        "max_spurious": 1.369838e-11,
+        "worst_physical_seed": 2026130050,
+        "worst_spurious_seed": 2026129219,
+        "physical_s": 8.531127,
+        "spurious_s": 8.52191,
+        "feynman_s": 0.2688719,
+        "failures": 0
+      },
+      {
+        "photons": 3,
+        "negatives": 1,
+        "points": 100000,
+        "max_physical": 3.754736e-11,
+        "max_spurious": 3.7672e-11,
+        "worst_physical_seed": 2026173521,
+        "worst_spurious_seed": 2026173521,
+        "physical_s": 8.354766,
+        "spurious_s": 8.372398,
+        "feynman_s": 0.2444008,
+        "failures": 0
+      },
+      {
+        "photons": 3,
+        "negatives": 2,
+        "points": 100000,
+        "max_physical": 2.25007e-11,
+        "max_spurious": 3.075739e-11,
+        "worst_physical_seed": 2026173521,
+        "worst_spurious_seed": 2026173021,
+        "physical_s": 8.213105,
+        "spurious_s": 8.203143,
+        "feynman_s": 0.239501,
+        "failures": 0
+      },
+      {
+        "photons": 3,
+        "negatives": 3,
+        "points": 100000,
+        "max_physical": 7.693191e-11,
+        "max_spurious": 7.726056e-11,
+        "worst_physical_seed": 2026130050,
+        "worst_spurious_seed": 2026130050,
+        "physical_s": 8.198536,
+        "spurious_s": 8.221717,
+        "feynman_s": 0.2407251,
+        "failures": 0
+      }
+    ],
+    "external": {
+      "family": "eeeeAAA",
+      "legs": 7,
+      "pairs": 2,
+      "points": 24,
+      "first_seed": 903213,
+      "fixed_photon_helicities": 8,
+      "max_polarized_relative_madgraph": 1.120757475951232e-13,
+      "median_seconds_per_complete_spin_sum": {
+        "physical": 0.0106875165,
+        "spurious": 0.0106242015,
+        "madgraph": 0.0005067920000000004
+      },
+      "matched_calchep_points": 24,
+      "max_relative_calchep": 1.7762341192734515e-13,
+      "archived_calchep_seconds": 0.13363463370833334
+    }
+  },
+  {
+    "legs": 7,
+    "pairs": 3,
+    "photons": 1,
+    "helicity_rows": 2,
+    "pole_products": 252,
+    "external_fractions": 3,
+    "independent_numerator_monomials": 15,
+    "uncompressed_coefficients": 224,
+    "ward_checks": 32,
+    "max_relative_ward": 4.45265400752e-15,
+    "readback_points_per_row": 3,
+    "readback_relative_errors": [
+      1.87036e-13,
+      2.81901e-14
+    ],
+    "signed": [
+      {
+        "photons": 1,
+        "negatives": 0,
+        "points": 100000,
+        "max_physical": 1.631239e-11,
+        "max_spurious": 1.535727e-11,
+        "worst_physical_seed": 2026128788,
+        "worst_spurious_seed": 2026128788,
+        "physical_s": 7.519711,
+        "spurious_s": 7.533669,
+        "feynman_s": 0.2154209,
+        "failures": 0
+      },
+      {
+        "photons": 1,
+        "negatives": 1,
+        "points": 100000,
+        "max_physical": 1.640387e-11,
+        "max_spurious": 1.543812e-11,
+        "worst_physical_seed": 2026128788,
+        "worst_spurious_seed": 2026128788,
+        "physical_s": 7.577,
+        "spurious_s": 7.545626,
+        "feynman_s": 0.2149203,
+        "failures": 0
+      }
+    ],
+    "external": {
+      "family": "eeeeeeA",
+      "legs": 7,
+      "pairs": 3,
+      "points": 24,
+      "first_seed": 903313,
+      "fixed_photon_helicities": 2,
+      "max_polarized_relative_madgraph": 8.959085568329549e-14,
+      "median_seconds_per_complete_spin_sum": {
+        "physical": 0.0100157305,
+        "spurious": 0.010099233999999999,
+        "madgraph": 0.0005015225000000003
+      },
+      "matched_calchep_points": 24,
+      "max_relative_calchep": 1.371836681288666e-13,
+      "archived_calchep_seconds": 0.13816886979166668
+    }
+  },
+  {
+    "legs": 8,
+    "pairs": 1,
+    "photons": 6,
+    "helicity_rows": 7,
+    "pole_products": 720,
+    "external_fractions": 1,
+    "independent_numerator_monomials": 20,
+    "uncompressed_coefficients": 64,
+    "ward_checks": 672,
+    "max_relative_ward": 3.09466725331e-14,
+    "readback_points_per_row": 3,
+    "readback_relative_errors": [
+      8.15755e-15,
+      4.27176e-13
+    ],
+    "signed": [
+      {
+        "photons": 6,
+        "negatives": 0,
+        "points": 5000,
+        "max_physical": 1.835034e-11,
+        "max_spurious": 1.835082e-11,
+        "worst_physical_seed": 2026116481,
+        "worst_spurious_seed": 2026116481,
+        "physical_s": 2.85206,
+        "spurious_s": 2.87758,
+        "feynman_s": 0.01793565,
+        "failures": 0
+      },
+      {
+        "photons": 6,
+        "negatives": 1,
+        "points": 5000,
+        "max_physical": 4.69665e-12,
+        "max_spurious": 4.698684e-12,
+        "worst_physical_seed": 2026114614,
+        "worst_spurious_seed": 2026114614,
+        "physical_s": 2.854446,
+        "spurious_s": 2.898188,
+        "feynman_s": 0.01783394,
+        "failures": 0
+      },
+      {
+        "photons": 6,
+        "negatives": 2,
+        "points": 5000,
+        "max_physical": 7.484041e-12,
+        "max_spurious": 7.487187e-12,
+        "worst_physical_seed": 2026114614,
+        "worst_spurious_seed": 2026114614,
+        "physical_s": 2.861595,
+        "spurious_s": 2.8792,
+        "feynman_s": 0.0182889,
+        "failures": 0
+      },
+      {
+        "photons": 6,
+        "negatives": 3,
+        "points": 5000,
+        "max_physical": 1.002009e-11,
+        "max_spurious": 1.002918e-11,
+        "worst_physical_seed": 2026116140,
+        "worst_spurious_seed": 2026116140,
+        "physical_s": 2.862422,
+        "spurious_s": 2.878888,
+        "feynman_s": 0.01845613,
+        "failures": 0
+      },
+      {
+        "photons": 6,
+        "negatives": 4,
+        "points": 5000,
+        "max_physical": 9.327403e-12,
+        "max_spurious": 9.306022e-12,
+        "worst_physical_seed": 2026115061,
+        "worst_spurious_seed": 2026115061,
+        "physical_s": 2.90685,
+        "spurious_s": 2.925003,
+        "feynman_s": 0.0184912,
+        "failures": 0
+      },
+      {
+        "photons": 6,
+        "negatives": 5,
+        "points": 5000,
+        "max_physical": 7.883874e-12,
+        "max_spurious": 7.840042e-12,
+        "worst_physical_seed": 2026114323,
+        "worst_spurious_seed": 2026114323,
+        "physical_s": 2.849674,
+        "spurious_s": 2.882491,
+        "feynman_s": 0.01792031,
+        "failures": 0
+      },
+      {
+        "photons": 6,
+        "negatives": 6,
+        "points": 5000,
+        "max_physical": 1.392533e-11,
+        "max_spurious": 1.395654e-11,
+        "worst_physical_seed": 2026116280,
+        "worst_spurious_seed": 2026116280,
+        "physical_s": 2.907363,
+        "spurious_s": 2.898697,
+        "feynman_s": 0.0183732,
+        "failures": 0
+      }
+    ],
+    "external": {
+      "family": "eeAAAAAA",
+      "legs": 8,
+      "pairs": 1,
+      "points": 24,
+      "first_seed": 904113,
+      "fixed_photon_helicities": 64,
+      "max_polarized_relative_madgraph": 1.051102524718159e-13,
+      "median_seconds_per_complete_spin_sum": {
+        "physical": 0.1429644185,
+        "spurious": 0.1467244365,
+        "madgraph": 0.006113664000000003
+      },
+      "matched_calchep_points": 24,
+      "max_relative_calchep": 6.798348855708338e-13,
+      "archived_calchep_seconds": 34.715797171875
+    }
+  },
+  {
+    "legs": 8,
+    "pairs": 2,
+    "photons": 4,
+    "helicity_rows": 5,
+    "pole_products": 1680,
+    "external_fractions": 8,
+    "independent_numerator_monomials": 149,
+    "uncompressed_coefficients": 1216,
+    "ward_checks": 320,
+    "max_relative_ward": 3.32111070476e-14,
+    "readback_points_per_row": 3,
+    "readback_relative_errors": [
+      1.21319e-14,
+      1.32878e-14
+    ],
+    "signed": [
+      {
+        "photons": 4,
+        "negatives": 0,
+        "points": 5000,
+        "max_physical": 6.738366e-12,
+        "max_spurious": 6.738734e-12,
+        "worst_physical_seed": 2026116906,
+        "worst_spurious_seed": 2026116906,
+        "physical_s": 5.632722,
+        "spurious_s": 5.631564,
+        "feynman_s": 0.02952234,
+        "failures": 0
+      },
+      {
+        "photons": 4,
+        "negatives": 1,
+        "points": 5000,
+        "max_physical": 6.731467e-12,
+        "max_spurious": 6.73224e-12,
+        "worst_physical_seed": 2026116906,
+        "worst_spurious_seed": 2026116906,
+        "physical_s": 5.55227,
+        "spurious_s": 5.595308,
+        "feynman_s": 0.02808808,
+        "failures": 0
+      },
+      {
+        "photons": 4,
+        "negatives": 2,
+        "points": 5000,
+        "max_physical": 6.737823e-12,
+        "max_spurious": 6.738733e-12,
+        "worst_physical_seed": 2026116906,
+        "worst_spurious_seed": 2026116906,
+        "physical_s": 5.531766,
+        "spurious_s": 5.532484,
+        "feynman_s": 0.02745889,
+        "failures": 0
+      },
+      {
+        "photons": 4,
+        "negatives": 3,
+        "points": 5000,
+        "max_physical": 6.732726e-12,
+        "max_spurious": 6.733538e-12,
+        "worst_physical_seed": 2026116906,
+        "worst_spurious_seed": 2026116906,
+        "physical_s": 5.608266,
+        "spurious_s": 5.588194,
+        "feynman_s": 0.02848831,
+        "failures": 0
+      },
+      {
+        "photons": 4,
+        "negatives": 4,
+        "points": 5000,
+        "max_physical": 6.740282e-12,
+        "max_spurious": 6.740768e-12,
+        "worst_physical_seed": 2026116906,
+        "worst_spurious_seed": 2026116906,
+        "physical_s": 5.5414,
+        "spurious_s": 5.541296,
+        "feynman_s": 0.02806664,
+        "failures": 0
+      }
+    ],
+    "external": {
+      "family": "eeeeAAAA",
+      "legs": 8,
+      "pairs": 2,
+      "points": 2,
+      "first_seed": 904213,
+      "fixed_photon_helicities": 16,
+      "max_polarized_relative_madgraph": 6.033131532663102e-14,
+      "median_seconds_per_complete_spin_sum": {
+        "physical": 0.2858755235,
+        "spurious": 0.2863651885000001,
+        "madgraph": 0.004891834500000003
+      }
+    }
+  },
+  {
+    "legs": 8,
+    "pairs": 3,
+    "photons": 2,
+    "helicity_rows": 3,
+    "pole_products": 2016,
+    "external_fractions": 10,
+    "independent_numerator_monomials": 120,
+    "uncompressed_coefficients": 1792,
+    "ward_checks": 96,
+    "max_relative_ward": 5.08582320455e-15,
+    "readback_points_per_row": 3,
+    "readback_relative_errors": [
+      1.92738e-14,
+      4.53405e-14
+    ],
+    "signed": [
+      {
+        "photons": 2,
+        "negatives": 0,
+        "points": 5000,
+        "max_physical": 4.660392e-12,
+        "max_spurious": 1.004255e-11,
+        "worst_physical_seed": 2026116806,
+        "worst_spurious_seed": 2026114055,
+        "physical_s": 5.957088,
+        "spurious_s": 5.953297,
+        "feynman_s": 0.0273748,
+        "failures": 0
+      },
+      {
+        "photons": 2,
+        "negatives": 1,
+        "points": 5000,
+        "max_physical": 4.580696e-12,
+        "max_spurious": 8.651234e-12,
+        "worst_physical_seed": 2026116806,
+        "worst_spurious_seed": 2026116907,
+        "physical_s": 6.130667,
+        "spurious_s": 6.152854,
+        "feynman_s": 0.02990242,
+        "failures": 0
+      },
+      {
+        "photons": 2,
+        "negatives": 2,
+        "points": 5000,
+        "max_physical": 4.603491e-12,
+        "max_spurious": 1.217756e-11,
+        "worst_physical_seed": 2026116806,
+        "worst_spurious_seed": 2026114055,
+        "physical_s": 6.192514,
+        "spurious_s": 6.203839,
+        "feynman_s": 0.03039657,
+        "failures": 0
+      }
+    ],
+    "external": {
+      "family": "eeeeeeAA",
+      "legs": 8,
+      "pairs": 3,
+      "points": 2,
+      "first_seed": 904313,
+      "fixed_photon_helicities": 4,
+      "max_polarized_relative_madgraph": 5.99648993819948e-15,
+      "median_seconds_per_complete_spin_sum": {
+        "physical": 0.3068508530000001,
+        "spurious": 0.30722775449999995,
+        "madgraph": 0.005886207999999997
+      }
+    }
+  },
+  {
+    "legs": 8,
+    "pairs": 4,
+    "photons": 0,
+    "helicity_rows": 1,
+    "pole_products": 1728,
+    "external_fractions": 2,
+    "independent_numerator_monomials": 9,
+    "uncompressed_coefficients": 256,
+    "ward_checks": 0,
+    "max_relative_ward": 0.0,
+    "readback_points_per_row": 3,
+    "readback_relative_errors": [
+      6.40499e-14,
+      5.979e-14
+    ],
+    "signed": [
+      {
+        "photons": 0,
+        "negatives": 0,
+        "points": 5000,
+        "max_physical": 9.828599e-13,
+        "max_spurious": 9.828599e-13,
+        "worst_physical_seed": 2026116170,
+        "worst_spurious_seed": 2026116170,
+        "physical_s": 5.221172,
+        "spurious_s": 5.2366,
+        "feynman_s": 0.02694063,
+        "failures": 0
+      }
+    ],
+    "external": {
+      "family": "eeeeeeee",
+      "legs": 8,
+      "pairs": 4,
+      "points": 2,
+      "first_seed": 904413,
+      "fixed_photon_helicities": 1,
+      "max_polarized_relative_madgraph": 2.380049072973122e-14,
+      "median_seconds_per_complete_spin_sum": {
+        "physical": 0.2580473550000001,
+        "spurious": 0.25767085450000005,
+        "madgraph": 0.004439937500000006
+      }
+    }
+  },
+  {
+    "legs": 9,
+    "pairs": 1,
+    "photons": 7,
+    "helicity_rows": 8,
+    "pole_products": 5040,
+    "external_fractions": 1,
+    "independent_numerator_monomials": 36,
+    "uncompressed_coefficients": 128,
+    "ward_checks": 896,
+    "max_relative_ward": 4.39702014823e-14,
+    "readback_points_per_row": 3,
+    "readback_relative_errors": [
+      1.47951e-14,
+      1.58477e-12
+    ],
+    "signed": [
+      {
+        "photons": 7,
+        "negatives": 0,
+        "points": 512,
+        "max_physical": 3.509263e-12,
+        "max_spurious": 3.534188e-12,
+        "worst_physical_seed": 2026112632,
+        "worst_spurious_seed": 2026112632,
+        "physical_s": 4.108068,
+        "spurious_s": 4.016519,
+        "feynman_s": 0.004384702,
+        "failures": 0
+      },
+      {
+        "photons": 7,
+        "negatives": 1,
+        "points": 512,
+        "max_physical": 6.135109e-12,
+        "max_spurious": 6.154639e-12,
+        "worst_physical_seed": 2026112829,
+        "worst_spurious_seed": 2026112829,
+        "physical_s": 4.04609,
+        "spurious_s": 4.080987,
+        "feynman_s": 0.00442613,
+        "failures": 0
+      },
+      {
+        "photons": 7,
+        "negatives": 2,
+        "points": 512,
+        "max_physical": 3.717776e-12,
+        "max_spurious": 3.813362e-12,
+        "worst_physical_seed": 2026112678,
+        "worst_spurious_seed": 2026112678,
+        "physical_s": 3.897668,
+        "spurious_s": 3.904291,
+        "feynman_s": 0.003838323,
+        "failures": 0
+      },
+      {
+        "photons": 7,
+        "negatives": 3,
+        "points": 512,
+        "max_physical": 3.492975e-12,
+        "max_spurious": 3.450059e-12,
+        "worst_physical_seed": 2026112632,
+        "worst_spurious_seed": 2026112632,
+        "physical_s": 3.899519,
+        "spurious_s": 3.907717,
+        "feynman_s": 0.003763877,
+        "failures": 0
+      },
+      {
+        "photons": 7,
+        "negatives": 4,
+        "points": 512,
+        "max_physical": 4.765871e-12,
+        "max_spurious": 4.838866e-12,
+        "worst_physical_seed": 2026112777,
+        "worst_spurious_seed": 2026112777,
+        "physical_s": 3.892187,
+        "spurious_s": 3.889328,
+        "feynman_s": 0.003699848,
+        "failures": 0
+      },
+      {
+        "photons": 7,
+        "negatives": 5,
+        "points": 512,
+        "max_physical": 3.585683e-12,
+        "max_spurious": 3.512904e-12,
+        "worst_physical_seed": 2026112634,
+        "worst_spurious_seed": 2026112634,
+        "physical_s": 3.921435,
+        "spurious_s": 3.92729,
+        "feynman_s": 0.003952458,
+        "failures": 0
+      },
+      {
+        "photons": 7,
+        "negatives": 6,
+        "points": 512,
+        "max_physical": 3.224055e-12,
+        "max_spurious": 3.244207e-12,
+        "worst_physical_seed": 2026112634,
+        "worst_spurious_seed": 2026112634,
+        "physical_s": 4.045531,
+        "spurious_s": 4.037719,
+        "feynman_s": 0.004308906,
+        "failures": 0
+      },
+      {
+        "photons": 7,
+        "negatives": 7,
+        "points": 512,
+        "max_physical": 1.362305e-11,
+        "max_spurious": 1.351747e-11,
+        "worst_physical_seed": 2026112486,
+        "worst_spurious_seed": 2026112486,
+        "physical_s": 3.928544,
+        "spurious_s": 3.935774,
+        "feynman_s": 0.00389028,
+        "failures": 0
+      }
+    ],
+    "external": {
+      "family": "eeAAAAAAA",
+      "legs": 9,
+      "pairs": 1,
+      "points": 2,
+      "first_seed": 905113,
+      "fixed_photon_helicities": 128,
+      "max_polarized_relative_madgraph": 2.075871083712534e-14,
+      "median_seconds_per_complete_spin_sum": {
+        "physical": 4.176396013500002,
+        "spurious": 4.104526374499999,
+        "madgraph": 0.07970927550000002
+      }
+    }
+  },
+  {
+    "legs": 9,
+    "pairs": 2,
+    "photons": 5,
+    "helicity_rows": 6,
+    "pole_products": 13440,
+    "external_fractions": 10,
+    "independent_numerator_monomials": 448,
+    "uncompressed_coefficients": 3584,
+    "ward_checks": 480,
+    "max_relative_ward": 1.55085664098e-13,
+    "readback_points_per_row": 3,
+    "readback_relative_errors": [
+      5.29673e-14,
+      1.03294e-13
+    ],
+    "signed": [
+      {
+        "photons": 5,
+        "negatives": 0,
+        "points": 512,
+        "max_physical": 1.497019e-12,
+        "max_spurious": 1.576954e-12,
+        "worst_physical_seed": 2026112419,
+        "worst_spurious_seed": 2026112419,
+        "physical_s": 9.291281,
+        "spurious_s": 9.304837,
+        "feynman_s": 0.007716839,
+        "failures": 0
+      },
+      {
+        "photons": 5,
+        "negatives": 1,
+        "points": 512,
+        "max_physical": 1.00245e-12,
+        "max_spurious": 1.215237e-12,
+        "worst_physical_seed": 2026112419,
+        "worst_spurious_seed": 2026112419,
+        "physical_s": 9.306193,
+        "spurious_s": 9.312405,
+        "feynman_s": 0.007810525,
+        "failures": 0
+      },
+      {
+        "photons": 5,
+        "negatives": 2,
+        "points": 512,
+        "max_physical": 1.649966e-12,
+        "max_spurious": 3.159013e-12,
+        "worst_physical_seed": 2026112419,
+        "worst_spurious_seed": 2026112848,
+        "physical_s": 9.302163,
+        "spurious_s": 9.375424,
+        "feynman_s": 0.007703577,
+        "failures": 0
+      },
+      {
+        "photons": 5,
+        "negatives": 3,
+        "points": 512,
+        "max_physical": 1.755058e-12,
+        "max_spurious": 2.450321e-12,
+        "worst_physical_seed": 2026112419,
+        "worst_spurious_seed": 2026112889,
+        "physical_s": 9.320605,
+        "spurious_s": 9.315178,
+        "feynman_s": 0.007706632,
+        "failures": 0
+      },
+      {
+        "photons": 5,
+        "negatives": 4,
+        "points": 512,
+        "max_physical": 3.823795e-11,
+        "max_spurious": 3.850387e-11,
+        "worst_physical_seed": 2026112419,
+        "worst_spurious_seed": 2026112419,
+        "physical_s": 9.300112,
+        "spurious_s": 9.295602,
+        "feynman_s": 0.007634668,
+        "failures": 0
+      },
+      {
+        "photons": 5,
+        "negatives": 5,
+        "points": 512,
+        "max_physical": 1.959807e-12,
+        "max_spurious": 2.583148e-12,
+        "worst_physical_seed": 2026112419,
+        "worst_spurious_seed": 2026112787,
+        "physical_s": 9.406338,
+        "spurious_s": 9.405432,
+        "feynman_s": 0.008056241,
+        "failures": 0
+      }
+    ],
+    "external": {
+      "family": "eeeeAAAAA",
+      "legs": 9,
+      "pairs": 2,
+      "points": 2,
+      "first_seed": 905213,
+      "fixed_photon_helicities": 32,
+      "max_polarized_relative_madgraph": 2.845036980004692e-14,
+      "median_seconds_per_complete_spin_sum": {
+        "physical": 9.52401111650001,
+        "spurious": 9.513682358500004,
+        "madgraph": 0.12671700299999994
+      }
+    }
+  },
+  {
+    "legs": 9,
+    "pairs": 3,
+    "photons": 3,
+    "helicity_rows": 4,
+    "pole_products": 18144,
+    "external_fractions": 24,
+    "independent_numerator_monomials": 680,
+    "uncompressed_coefficients": 10752,
+    "ward_checks": 192,
+    "max_relative_ward": 1.17380757706e-14,
+    "readback_points_per_row": 3,
+    "readback_relative_errors": [
+      1.38557e-13,
+      1.36369e-13
+    ],
+    "signed": [
+      {
+        "photons": 3,
+        "negatives": 0,
+        "points": 512,
+        "max_physical": 2.042559e-12,
+        "max_spurious": 1.986791e-12,
+        "worst_physical_seed": 2026112507,
+        "worst_spurious_seed": 2026112507,
+        "physical_s": 11.31049,
+        "spurious_s": 11.29717,
+        "feynman_s": 0.008943785,
+        "failures": 0
+      },
+      {
+        "photons": 3,
+        "negatives": 1,
+        "points": 512,
+        "max_physical": 3.110556e-12,
+        "max_spurious": 3.098296e-12,
+        "worst_physical_seed": 2026112730,
+        "worst_spurious_seed": 2026112730,
+        "physical_s": 11.41542,
+        "spurious_s": 11.42208,
+        "feynman_s": 0.008783298,
+        "failures": 0
+      },
+      {
+        "photons": 3,
+        "negatives": 2,
+        "points": 512,
+        "max_physical": 2.040436e-12,
+        "max_spurious": 1.985826e-12,
+        "worst_physical_seed": 2026112507,
+        "worst_spurious_seed": 2026112507,
+        "physical_s": 11.49677,
+        "spurious_s": 11.422,
+        "feynman_s": 0.008682071,
+        "failures": 0
+      },
+      {
+        "photons": 3,
+        "negatives": 3,
+        "points": 512,
+        "max_physical": 2.041462e-12,
+        "max_spurious": 1.986907e-12,
+        "worst_physical_seed": 2026112507,
+        "worst_spurious_seed": 2026112507,
+        "physical_s": 11.44634,
+        "spurious_s": 11.47269,
+        "feynman_s": 0.008728122,
+        "failures": 0
+      }
+    ],
+    "external": {
+      "family": "eeeeeeAAA",
+      "legs": 9,
+      "pairs": 3,
+      "points": 2,
+      "first_seed": 905313,
+      "fixed_photon_helicities": 8,
+      "max_polarized_relative_madgraph": 4.08407868521648e-12,
+      "median_seconds_per_complete_spin_sum": {
+        "physical": 11.30939251549999,
+        "spurious": 11.27123722899999,
+        "madgraph": 0.21762090749999996
+      }
+    }
+  },
+  {
+    "legs": 9,
+    "pairs": 4,
+    "photons": 1,
+    "helicity_rows": 2,
+    "pole_products": 17280,
+    "external_fractions": 8,
+    "independent_numerator_monomials": 120,
+    "uncompressed_coefficients": 3840,
+    "ward_checks": 32,
+    "max_relative_ward": 4.97696084278e-15,
+    "readback_points_per_row": 3,
+    "readback_relative_errors": [
+      2.903e-14,
+      3.50108e-14
+    ],
+    "signed": [
+      {
+        "photons": 1,
+        "negatives": 0,
+        "points": 512,
+        "max_physical": 1.652368e-12,
+        "max_spurious": 1.795188e-12,
+        "worst_physical_seed": 2026112767,
+        "worst_spurious_seed": 2026112767,
+        "physical_s": 10.13177,
+        "spurious_s": 10.13166,
+        "feynman_s": 0.008115096,
+        "failures": 0
+      },
+      {
+        "photons": 1,
+        "negatives": 1,
+        "points": 512,
+        "max_physical": 1.407057e-12,
+        "max_spurious": 1.560783e-12,
+        "worst_physical_seed": 2026112767,
+        "worst_spurious_seed": 2026112767,
+        "physical_s": 10.16775,
+        "spurious_s": 10.17301,
+        "feynman_s": 0.007975708,
+        "failures": 0
+      }
+    ],
+    "external": {
+      "family": "eeeeeeeeA",
+      "legs": 9,
+      "pairs": 4,
+      "points": 2,
+      "first_seed": 905413,
+      "fixed_photon_helicities": 2,
+      "max_polarized_relative_madgraph": 7.290513418077157e-14,
+      "median_seconds_per_complete_spin_sum": {
+        "physical": 9.8477462725,
+        "spurious": 9.841509060499995,
+        "madgraph": 0.1902645035000002
+      }
+    }
+  }
+]

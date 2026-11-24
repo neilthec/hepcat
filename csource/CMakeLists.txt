@@ -8,7 +8,7 @@ find_library(GMPXX_LIBRARY gmpxx REQUIRED)
 find_library(GMP_LIBRARY gmp REQUIRED)
 
 add_library(hepcat_reduce
-    model.cpp model_expression.cpp model_parameters.cpp generation_plan.cpp generation_sew.cpp generation_spin.cpp generation_null.cpp
+    model.cpp model_expression.cpp model_orbit.cpp model_parameters.cpp generation_plan.cpp generation_sew.cpp generation_spin.cpp generation_null.cpp
     color_basis.cpp color_completion.cpp generation_current.cpp generation_feynman.cpp generation.cpp amplitude.cpp construct.cpp spinas_export.cpp external_export.cpp completion.cpp continuations.cpp null_shift.cpp residue.cpp
     high_energy.cpp high_energy_chart.cpp high_energy_contacts.cpp
     validation.cpp validation_checks.cpp validation_numeric.cpp validation_feynman.cpp
@@ -131,7 +131,8 @@ add_executable(hepcat-reconstruct-charged ../tests/checks/reconstruct-charged-bl
 target_include_directories(hepcat-reconstruct-charged SYSTEM PRIVATE ${GMP_INCLUDE_DIR})
 target_link_libraries(hepcat-reconstruct-charged PRIVATE hepcat_reduce)
 
-foreach(driver three-pair-photon-sewings check-three-pair-photon-sewings check-three-pair-photon-residues)
+foreach(driver three-pair-photon-sewings check-three-pair-photon-sewings check-three-pair-photon-residues
+               check-contracted-catalog check-contracted-model check-contracted-ward)
     add_executable(hepcat-${driver} EXCLUDE_FROM_ALL
         ../tests/benchmarks/publication-qed/${driver}.cpp)
     target_include_directories(hepcat-${driver} SYSTEM PRIVATE ${GMP_INCLUDE_DIR})

@@ -1,5 +1,26 @@
 # QED reconstruction from on-shell products
 
+## Complete external-spinor catalog
+
+The construction now covers all 18 massive single-species QED families from four through nine external legs. There are 67 independent photon-helicity assignments up to permutation, or 333 with the photon labels distinguished. Both QED factorization tables contain all 67 rows plus the cubic vertices. The earlier partial reconstruction below records the history of the calculation.
+
+The only amplitude read by the external-polynomial constructor is the complete four-fermion amplitude. Its photon-pole residue supplies the two terms of the emission numerator. The constructive sewing contracts each massive on-shell spin index before substituting the sum of external momenta. The resulting rational functions contain external spinors, products of momenta and ordinary propagator denominators. The two pole forms specialize the same polynomial with different external reference choices. Independent Feynman and MadGraph calculations enter solely after the polynomial is fixed.
+
+From the repository root, rebuild and verify the catalog in a fresh scratch directory:
+
+```sh
+cmake -S csource -B tests/results/contracted-build -DCMAKE_BUILD_TYPE=Release
+cmake --build tests/results/contracted-build --target hepcat-three-pair-photon-sewings hepcat-check-contracted-catalog hepcat-check-contracted-model
+cd tests/benchmarks/publication-qed
+python3 reconstruct-contracted-catalog.py ../../results/contracted-build/hepcat-three-pair-photon-sewings ../../results/contracted
+python3 write-contracted-models.py ../../../models ../../results/contracted ../../results/readback-models
+../../results/contracted-build/hepcat-check-contracted-catalog ../../results/contracted/9-3.spinors 24 2026112401
+../../results/contracted-build/hepcat-check-contracted-model ../../results/readback-models 4 ../../results/contracted/9-3.spinors
+```
+
+For each denominator the exact replay expands the printed permutations and the chirality partner, and compares each signed rational coefficient with the original contracted numerator. The numerical catalog check uses signed coherent massive spins. The model check retrieves every helicity row in the selected family and compares it with the external-spinor polynomial on three further evaluations. For the external rate check, compile `check-contracted-external.cpp` with HEPCAT and SPINAS, and give `replay-contracted-rates.py` the resulting executable, the spinor table directory, a JSON mapping of each family name to its MadGraph library under `mg`, and an output directory. The script evaluates each photon helicity, sums the massive spins, and compares with the archived CalcHEP rates where they exist.
+
+
 The only inputs to each candidate are complete amplitudes of lower multiplicity, their on-shell internal-state sums, and the channel propagators. A shift in the table lists the photon whose square spinor changes followed by the photon whose angle spinor changes. The six-fermion row sums the nine massive cuts without a shift. All physical channels, including the photon poles omitted from that sum, enter validation.
 
 Each row below passed all intrinsic checks and a separate signed comparison with the Feynman amplitudes. The seed for the 100,000-point comparisons was 20261124. “Maximum raw relative error” is the largest value before precision replay. A successful comparison can include a replay. CalcHEP and MadGraph have separate validations and were not run for these new forms.
