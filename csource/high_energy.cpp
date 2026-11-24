@@ -287,10 +287,6 @@ const amp_expression& amplitude::complete_energy_components(const amp_expression
         // Every diagram and cut has already been combined. Only external
         // kinematics apply to the expression returned to the caller.
         result.set_from(a, answer);
-        if (answer == seed) {
-            result.ordered_formula_ = expression.ordered_formula_;
-            result.sewing_ = expression.sewing_;
-        }
         auto original = result; // The two roots share the original interned tree.
         if (vertices_model_) result.set_from(a, contract_model_couplings(a,answer,*vertices_model_));
         result.reduce_with_factor_passes(1);

@@ -28,43 +28,13 @@ Here the numerator shell is $(p_1+p_3)^2=m_e^2$. Since $p_1^2=m_e^2$ and $p_3^2=
 | `expr.str()` | `.expr` | Read the exact native expression back into `amp_expression` with the original masses and any applicable shells. |
 | `write_spinas_process(...)` | SPINAS project | Export one or more helicity expressions with their model and physical incoming legs as numerical C++. |
 
-A reduced expression with repeated external masses can have a compact permutation sum. HEPCAT checks the action of adjacent leg swaps on every signed term, including spinor-chain reversal signs. When the sum shortens the formula, `plain_text()` and `latex()` print one summand and the legs to permute. Use `permutation_form()` to retrieve that summand in native syntax and the number of distinct terms represented by each orbit. The sum runs over every permutation with its normalization included. The complexity reported by `complexity()` is the weight of the full expression. The [five-positive example](../tests/benchmarks/publication-qed/seven-point-all-positive.md) gives both weights. For a complete fermion line with one photon of opposite helicity, the constructor can also sum the insertions along the line. In that case the formula exposes the permuted legs and the summand, and its list of monomial orbit sizes is empty. A saved elementary expression also carries enough information for `reduce()` to recover this presentation. The first request for `plain_text()`, `latex()` or `permutation_form()` reads the external spin weights, reconstructs a candidate ordered current, and checks every signed coefficient up to one common scalar factor. The search is bounded and uses the external masses supplied with the expression. The [four-positive, one-negative example](../tests/benchmarks/publication-qed/seven-point-one-negative.md) derives both pole choices and gives their numerical checks.
+A reduced expression with repeated external masses can have a compact permutation sum. HEPCAT checks the action of adjacent leg swaps on every signed term, including spinor-chain reversal signs. When the sum shortens the formula, `plain_text()` and `latex()` print one summand and the legs to permute. Use `permutation_form()` to retrieve that summand in native syntax and the number of distinct terms represented by each orbit. The sum runs over every permutation with its normalization included. The complexity reported by `complexity()` is the weight of the full expression.
 
-For a certified complete tree built from one massive Dirac species and a massless
-vector with a common minimal coupling, the native constructor can also return
-a sum over central sewings. It counts the charged leaves on each side of a
-cut after stripping away external photon emissions. Balanced cuts split the
-charged leaves equally. Otherwise the unique central vertex has three branches
-each containing fewer than half the charged leaves. Its virtual photon supplies
-the cut. A balanced fermion bridge is cut next to the virtual exchange on the
-net-particle side, so emissions between exchanges are counted once.
-This presentation is enabled for three or more pairs and up to ten external
-legs, with zero widths. Each internal propagator keeps its virtuality.
-
-Above the existing 512-diagram crossover (including 512), `plain_text()`
-prints the central sum and `latex()` gives the paper formula. Smaller trees
-keep their existing scalar or permutation display. Their alternative sewing
-is available through `sewing_form()` when certified. `str()` still serializes the
-elementary expression. Include `charged_tree_sewing.hpp` and call
-`result.sewing_form()` to access the cut list and evaluate coherent amplitudes
-or the massive spin sum at fixed photon helicities. A null pointer means that
-the model, process or completion did not certify a sewing.
-`charged_tree_sewing::from_model(vertices, legs, physical)` builds the same
-plan directly for a supported elementary model. `amplitude(point, e)` and
-`spin_sum(point, e)` take the numerical value of the model charge returned by
-`coupling()`. The spin sum contains no incoming averages or identical-particle
-factors. The [worked example](../tests/benchmarks/publication-qed/centered-sewing.md)
-includes signed checks, polarized checks and complete-rate measurements.
-
-For two independent sets of identical legs, `grouped_permutation_form()` returns the leg groups and a single summand. Sum over every permutation within each group. The older `permutation_form()` expands the additional groups into its summand for callers that loop over one group. With two photons at each end of a fermion line and one in the middle, the two orders at either end can be added before joining the left and right currents. The [three-positive, two-negative example](../tests/benchmarks/publication-qed/seven-point-two-negative.md) gives the pole choices, symmetry factors, and a signed check of the paper formulas.
+For two independent sets of identical legs, `grouped_permutation_form()` returns the leg groups and one summand. Sum over every permutation within each group. The older `permutation_form()` expands the additional groups into its summand for callers that loop over one group.
 
 For identical fermions, `signed_permutation_form()` returns a summand, symmetric and alternating leg groups, and an optional `joint_exchange`. If the exchange is present, start with the summand plus `joint_exchange->sign` times its image with all listed pairs exchanged simultaneously. Then sum over permutations in each group, multiplying by the sign of every alternating permutation. Spin labels move with the momenta. The unsigned accessors expand all signed operations automatically.
 
-`complexity()` scores the full elementary expression. `permutation_summand_complexity()` gives the score inside the scalar permutation sum, or an empty optional when there is no compact permutation form. The QED C++ notebook reports both scores and checks its historical thresholds against the elementary score.
-
-For photon exchange between two identical charged pairs, the reducer groups ways of distributing photons between the two lines. An occupation specifies how many photons of each helicity attach to one line. Its complement represents the same occupation after exchanging the two lines. Each representative carries the weight required to recover every attachment once. This applies to any photon multiplicity for which the complete exchange topology is present.
-
-At three photons, the [equal-helicity amplitude](../tests/benchmarks/publication-qed/seven-point-four-fermions.md) needs two current contractions and the [mixed-helicity amplitude](../tests/benchmarks/publication-qed/seven-point-four-fermions-mixed.md) needs three. A simultaneous reversal of both lines supplies the second Weyl orientation. The reducer infers helicities, particle labels, and the two identical-fermion groups. When it reads a saved elementary expression, it verifies the signed coefficients of all 16 exchange allocations before accepting the current identity.
+`complexity()` scores the full elementary expression. `permutation_summand_complexity()` gives the score inside the displayed sum, or an empty optional when there is no compact permutation form. The QED C++ notebook reports both scores and checks its historical thresholds against the elementary score.
 
 For a certified signed sum, the reducer can also combine terms related by a Bose exchange, a Fermi exchange or a simultaneous line reversal. It may apply the identity inside a product when the exchange leaves the other factors invariant. It keeps a rewrite only when the summand has fewer leaves and its weighted complexity is at least as good.
 
@@ -118,8 +88,8 @@ Unsupported functions or radicals outside the chart's coefficient field
 produce an unresolved result. For the final process, run the full validations.
 
 The [worked six-point QED derivation](../tests/Spinor-identity-derivation.cpp)
-starts from the independent sum of Feynman diagrams for an electron pair
-and four mixed-helicity photons. It previews common-factor extractions,
+starts by sewing lower-point amplitudes across the physical cuts exposed
+by shifting two photons of opposite helicity. It previews common-factor extractions,
 applies an improving edit, and reduces the spinor chains. Each step includes
 a signed check, followed by a comparison with the constructive amplitude in
 model 4 at fresh kinematic points. Run it from the repository root.
@@ -182,50 +152,11 @@ For large color-singlet expressions with at least three massive spin-half legs, 
 
 The native writer supports color singlets, SU(3) triplets, antitriplets and adjoints. A colored process exposes the fixed-color amplitude as `amp(spins, colors)`, with each color numbered from zero. Its `amp_squared(spins)` contracts all color components coherently and `amp2()` also averages the incoming colors. Supply the helicity components and the zero-based incoming leg positions to `write_spinas_process`. Set the model and installation paths for each generator in `external_options`, call `write_external_project`, then `validate_external_project`. These C++ APIs are declared in [spinas_export.hpp](spinas_export.hpp) and [external_export.hpp](external_export.hpp). CalcHEP tests the polarization sum. For validation the build uses the standalone denominator helper from the selected CalcHEP sources. CalcHEP 3.9.2's optional micrOMEGAs helper indexes a 40-entry width array starting at one. A process with 40 or more distinct denominators can then acquire unintended widths. A binary-only installation that supplies this helper reports the affected process before evaluation. The native validator appends `-g0` to a private copy of the CalcHEP compiler flags for its temporary matrix library. This saves disk space when linking processes with thousands of squared diagrams and preserves the selected arithmetic and optimization settings. MadGraph tests each labeled massless helicity with massive spins summed, and checks the complete rate independently against the exported spin sum. For spurious-pole expressions with identical massless bosons, the generated squared-rate routine estimates cancellation and can choose a better-conditioned, Bose-equivalent ordering. The complex polarized amplitude keeps the original ordering and phase convention for use in spin correlations. Widths are disabled during comparisons. Both C++ notebook drivers default to 100,000 common phase-space points per family and engine. Use `--points N` to choose another sample size (minimum 10,000, or 100,000 in QED publication mode). At seven points the full families include all 32 ordered five-photon helicities, all eight ordered three-photon helicities with four fermions, and both single-photon helicities with six fermions. The exporter obtains permutations of identical photons from the constructed representatives. Selecting only the published five-positive-photon case runs a fixed-helicity MadGraph comparison.
 
-To run just the seven-point calculations, use the following command. The default covers both pole preferences. Each helicity representative goes through factorization, high-energy and signed Feynman checks. Once all the representatives in a family pass, its full SPINAS process is built for the external comparisons.
-
-```sh
-tests/results/native-reduce-build/hepcat-qed --legs 7
-```
-
-Use `--legs 7 --list` to see the three families and their 12 representatives. For a single construction, try `--family eeeeAAA --helicity ++- --construct-only`. The [seven-point measurements](../tests/benchmarks/qed-seven-point.tsv) give the weighted complexity, the automatic and shortest validated leaf counts, diagram and channel counts, and signed Feynman comparisons for each pole preference. Each run writes the formulas in plain text, LaTeX, Mathematica and native form. The size targets in the example are regression checks. Construction uses the cubic vertices and lower-point products. Select `--publication` to compare the earlier published cases against their signed formulas.
-
-For six photons with one negative helicity, select `--family eeAAAAAA --helicity '+++++-'`. The [eight-point formulas and validation results](../tests/benchmarks/publication-qed/eight-point-one-negative.md) include two spurious-pole representations and compare their numerical conditioning. For two negative photons, use `--family eeAAAAAA --helicity '++++--'`. The [midpoint formulas and validation results](../tests/benchmarks/publication-qed/eight-point-two-negative.md) show how three-photon currents at opposite ends of the electron line cover all 720 diagrams.
-
-At eight points use `--legs 8` or select a family with `--family eeAAAAAA`, `eeeeAAAA`, `eeeeeeAA` or `eeeeeeee`. The [remaining eight-point formulas](../tests/benchmarks/publication-qed/eight-point-remaining.tex) give the balanced six-photon result and the helicity representatives of the multi-pair families. For large generated Dirac trees, the constructor tries conserving the full current before searching for a smaller expression for each individual diagram. It checks that candidate on every factorization channel. For trees containing only massive charged pairs, the reducer also reverses ordered vector insertions along a charged line and writes a bare vector current as the two Weyl orientations related by endpoint exchange. It counts the ordered diagrams covered by those operations before assigning a weight. For eight fermions the star covers 576 diagrams and the path covers 1,152.
-
-With radiation, the same endpoint exchange supplies the second Weyl orientation of a complete terminal current. Each emitted photon changes the exchange sign. On an interior line, retaining one of the two opposite orders of the virtual photons gives a further reduction. The real photons still occupy every position relative to those exchanges. HEPCAT counts the original orders and compares the reduced summand weights before adopting a presentation. It keeps the elementary expression for residue tests and numerical export.
-
-For large final expressions, `amp_expression::complexity()` can collect by monomials in the propagators and expand one coefficient at a time. It uses the same momentum-weighted score as direct expansion. The [eight-point QED comparison](../tests/benchmarks/publication-qed/eight-point-remaining.md) gives the full and permutation-summand scores separately.
-
-The five-photon line also admits a check against the independent [one-negative-photon formula](../tests/benchmarks/one-minus/README.md). Its spurious-pole form and the parity-conjugate construction each agreed on 32 exact external-kinematic samples. The [two-pair all-positive formula](../tests/benchmarks/four-fermion-all-plus/README.md) gives a separate 32-sample signed check for four fermions and three positive photons. The expressions can be shorter when written in terms of recursively defined currents. The table measures the full HEPCAT expression returned by the constructor.
-
-After both helicity partners have been constructed, a [worked C++ derivation](../tests/benchmarks/qed-helicity-partners.cpp) can search for a shorter way to print either partner. It exchanges angle and square brackets, relabels the photons and checks the overall sign against the target. For each improvement it runs 32 fresh exact signed comparisons, the built-in checks and 100,000 signed comparisons with independent Feynman diagrams. The formulas and measured sizes are saved in the family's `parity-alternatives` directory. Six seven-point expressions became shorter this way at the same weighted score. The physical five-photon `++++-` expression fell from 7,192 to 6,871 leaves and the spurious four-fermion `+--` expression from 56,798 to 56,110. For example, set `run_dir` to the output directory printed by the constructor and run
-
-```sh
-cmake --build tests/results/native-reduce-build --target hepcat-qed-helicity-partners
-tests/results/native-reduce-build/hepcat-qed-helicity-partners "$run_dir/physical/eeAAAAA"
-```
-
-If native reference arithmetic misses the tolerance, the external validators can replay the same phase-space points with 113-bit arithmetic. CalcHEP replays every saved outlier and checks the original binary64 values. MadGraph rebuilds its generated matrix and HELAS routines, then repeats every requested helicity and the polarization sum. The reports keep the original discrepancies and identify the precision used for the final comparison. The CalcHEP replay requires GCC and libquadmath. The MadGraph replay requires GNU Fortran with binary128 support.
-
-For massless two-body scattering, rounded four-vector components can leave a small mass-shell residual near a forward pole. If every nonzero helicity passes the unchanged-point MadGraph replay and only symbolic zeros still fail, the validator reconstructs those zero-sector points from the same beam energy and scattering direction at 113 bits. Each component must agree with the original within 16 binary64 machine epsilons times the beam energy. The report retains both unchanged-point comparisons and the largest component adjustment. The original absolute tolerance for zero amplitudes also applies to the reconstructed points.
-
-Near a radiation zero, even small mass-shell defects can affect the relative accuracy of CalcHEP's squared amplitude. If its unchanged-input 113-bit replay still disagrees for a two-body final state, the validator reconstructs the on-shell momenta from the sampled beam momentum and scattering direction. It evaluates the generated SPINAS process and CalcHEP at 113 bits on those identical components. This comparison also checks the original SPINAS result against its high-precision value. The report preserves the raw and refined results and saves the shared input in `calchep-chart.csv`. This optional replay uses the SPINAS sources beside its include directory and a GNU C++23 compiler with binary128 and libquadmath.
-
-For event generation, enter a generated family's `spinas` directory and run `cmake --build build`. This builds the Monte Carlo targets as well as the validators. For an installed SPINAS library with no precision setting in its CMake cache, first configure the generated project with `cmake -S . -B build -DSPINAS_PRECISION=DOUBLE` or `LONG_DOUBLE` to match its ABI. For the two-photon example, launch CalcHEP with `(cd build/results && ./n_calchep)` or MadEvent with `(cd build/PROC_eeAA && ./bin/madevent)`. Type `generate_events` at the MadEvent prompt. Each integration uses the exported HEPCAT amplitude through SPINAS. Its independent validator uses the external generator's own matrix element.
-
-### Why grouping photon emissions helps
-
-For a model with the minimal Abelian Dirac coupling, the constructor first checks the two cubic spinor vertices, the internal helicity sum, and the identical-fermion sign on every topology. On a fermion line, moving a propagator momentum past a polarization gives the ordinary Clifford identity
-
-$$
-(\not{P}+\not{k}+m)\not{\epsilon}
- = 2P\cdot\epsilon+\not{k}\not{\epsilon}
-   -\not{\epsilon}(\not{P}-m).
-$$
-
-The last term either vanishes on an external spinor or cancels the adjoining fermion propagator. Combining its two emission orders gives the definite contact contribution proportional to $-2\epsilon_i\cdot\epsilon_j$. The spin term acts on one chirality and produces a spinor of the emitted photon. These relations let the code sum over subsets of photons attached to each end of a charged line and reuse the resulting spinors. With two charged lines it sums these placements before contracting the two currents at the exchanged photon. With additional lines it also retains emissions between two exchanges. All intermediate electron momenta remain off shell. The assembled candidate must agree with every signed lower-point residue before the constructor accepts it. The [focused C++ regression](radiative_current_tests.cpp) also tests identical-fermion exchange directly.
+For a single calculation, use `--family`, `--helicity` and `--construct-only`.
+An external Feynman model is used only after completion. An unresolved
+residue or high-energy constraint is reported as a failed construction.
+Earlier nine-point performance figures measured an off-shell evaluator
+and have been withdrawn from the constructive results.
 
 ### Compare with the publication catalog
 
@@ -264,13 +195,11 @@ Each family directory contains one `.expr` file per constructed amplitude, `chec
 
 Run from the repository root or pass `--root DIR`. By default the executable looks for the three external programs alongside HEPCAT. Set `--spinas DIR`, `--calchep DIR`, or `--madgraph DIR` to use another installation. Supply `--seed N` to repeat a draw. Each invocation prints its run directory under `tests/results/spinas-output/SM-4-point`, the same output area used by the Mathematica notebook. With `--construct-only` it runs the native checks and skips the two external programs.
 
-For a four-fermion exchange, the native constructor can recognize a cubic chiral current and contract it with the massive vector spin projector before expanding its momenta. The resulting numerator keeps the transverse contraction and the product of current divergences together. Each divergence simplifies against its external fermion equations. The original sewn expression remains available to factorization completion through the discarded remainder.
-
 For four massive vectors, the final reduction proposes shorter spinor tensors on each physical pole, then fits the remaining local term to the complete amplitude at generic kinematics. A candidate must also agree on 24 independent exact rational samples away from the poles. Colored amplitudes use an exact SU(3) tensor basis. The constructor completes each independent coefficient, recombines them, and validates the full amplitude including color interference. Once the color terms are back together, the four-point reducer factors common products, recognizes exact binomial squares, and tries collecting over existing propagators. It ranks equivalent candidates first by momentum-weighted complexity and then by expression size. This can shorten a printed formula even when the weighted score is already minimal among the candidates.
 
 ## Generate from HEPCAT model files
 
-A native program can start with particle names. Read each model once and reuse it across processes. The QED vertex model is number 3. For factorization through nine external legs, use model 4 for physical poles or model 5 for the spurious-pole representation. Use models 1 and 2 for the corresponding SM pair.
+A native program can start with particle names. Read each model once and reuse it across processes. The QED vertex model is number 3. Use model 4 for physical poles or model 5 for expressions that allow spurious poles. A catalog row marked `PendingConstructiveDerivation` is unavailable for lookup and sewing. See the [reconstruction record](../tests/benchmarks/publication-qed/constructive-reconstruction.md) for the checked rows. Use models 1 and 2 for the corresponding SM pair.
 
 To read a catalog entry directly, supply the ordered all-incoming particle names, including photon helicities:
 

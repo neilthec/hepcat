@@ -3,13 +3,11 @@
 //   cmake --build tests/results/native-reduce-build --target hepcat-derive-example --parallel
 //   tests/results/native-reduce-build/hepcat-derive-example models
 //
-// Start from the sum of the independent Feynman diagrams for e E -> four photons.
+// Sew lower-point amplitudes on the poles exposed by shifting photons 5 and 3.
 // Extract common factors at a selected occurrence, then reduce the remaining spinor
 // chains. Check both steps and compare the final expression with the separately
 // stored constructive amplitude. Internal propagators stay off shell throughout.
 #include "amplitude.hpp"
-#include "reduce.hpp"
-#include "validation_feynman.hpp"
 
 #include <filesystem>
 #include <iostream>
@@ -23,29 +21,6 @@ using namespace hepcat;
 namespace fs = std::filesystem;
 
 namespace {
-amp_expression catalog_expression(const model& catalog, const std::vector<std::string>& particles) {
-    for (const auto& row : catalog.vertices()) {
-        if (row.legs != particles) continue;
-        std::vector<std::string> masses;
-        for (const auto& leg : particles) masses.push_back(catalog.particle(leg).mass);
-        Algebra joined(&catalog.algebra());
-        return amp_expression(joined.format(joined.mul({row.factor, row.expression})), masses);
-    }
-    throw std::runtime_error("Missing six-point model entry");
-}
-
-amp_expression feynman_sum(amplitude& process) {
-    process.generate_feynman_diagrams();
-    Algebra algebra;
-    std::vector<Id> masses, terms;
-    for (const auto& mass : process.external_masses()) masses.push_back(algebra.parse(mass));
-    algebra.setKinematics(masses, {});
-    for (const auto& diagram : process.feynman_diagrams())
-        terms.push_back(feynman_to_spinors(algebra, algebra.parse(diagram.expression.str())));
-    std::cout << "    " << terms.size() << " Feynman diagrams\n";
-    return amp_expression(algebra.format(algebra.add(terms)), process.external_masses());
-}
-
 void check_step(const amp_expression& before, const amp_expression& after, std::uint64_t seed) {
     identity_check_options options;
     options.samples = 32;
@@ -67,12 +42,12 @@ int main(int argc, char** argv) {
         if (argc != 2) throw std::invalid_argument("Usage: hepcat-derive-example MODEL_DIRECTORY");
         const auto directory = fs::canonical(argv[1]);
         const std::vector<std::string> legs{"e", "E", "A.+", "A.+", "A.-", "A.-"};
-        // The two descriptions of QED use the same mass and charge.
         const model vertices(directory, 3, "QED-example"), catalog(directory, 4, "QED-example");
-        const model feynman(directory.parent_path() / "tests/reference-models/calchep", 2, "QED-example");
-        amplitude process(legs, vertices, catalog, feynman);
-        std::cout << "Six-point QED   e, E, A.+, A.+, A.-, A.-\nStarting Feynman expression\n";
-        const auto input = feynman_sum(process);
+        amplitude process(legs, vertices, catalog, generation_references::physical);
+        process.generate_factorization_products(1);
+        std::cout << "Six-point QED   e, E, A.+, A.+, A.-, A.-\n"
+                  << "Starting from lower-point amplitudes on the physical poles\n";
+        const auto input = process.channel_sum_candidate(std::make_pair(5, 3));
         show_size(input);
 
         // Only build the most compact candidate. Extracting a shared factor can
@@ -107,7 +82,7 @@ int main(int argc, char** argv) {
         check_step(factored, current, 41711);
 
         std::cout << "\nComparison with the constructive amplitude in model 4\n";
-        const auto reference = catalog_expression(catalog, legs);
+        const auto reference = catalog.retrieve_amplitude(legs);
         show_size(reference);
         check_step(current, reference, 61711);
         return 0;

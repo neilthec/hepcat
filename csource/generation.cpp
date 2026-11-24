@@ -138,12 +138,6 @@ amplitude& amplitude::generate_rows(bool diagrams, bool products, bool feynman, 
                                            : generation::sew(tree, m, particles_, p, channel,
                                                              references_ != generation_references::keep,
                                                              references_ == generation_references::physical);
-                std::optional<Id> current;
-                if (!channel && !m.is_feynman()) {
-                    current = generation::massive_vector_fermion_exchange(tree, m, particles_, p);
-                    if (!current)
-                        current = generation::covariant_fermion_vector_exchange(tree, m, particles_, p, root);
-                }
                 if (channel && root == tree.integer(0)) return;
                 std::vector<numerator_shell> shells;
                 if (!m.is_feynman())
@@ -161,7 +155,7 @@ amplitude& amplitude::generate_rows(bool diagrams, bool products, bool feynman, 
                 if (m.is_feynman())
                     item.expression.set_from(tree, root);
                 else
-                    item.expression.reduce_from(tree, current.value_or(root), root, search);
+                    item.expression.reduce_from(tree, root, root, search);
                 item.reduced_ = true;
                 item.generated_ = true;
                 generated[i] = std::move(item);

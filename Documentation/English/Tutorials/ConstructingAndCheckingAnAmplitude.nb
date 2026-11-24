@@ -116,16 +116,7 @@ formula (.txt), a LaTeX math fragment (.tex), and a Wolfram expression with \
 its mass rules (.wl). Load HEPCAT before reading the .wl file with Get. The \
 .expr file is the exact native form. For comparing to a model read separately \
 in Mathematica, the native README explains how to share its parameter scope."}\
-], "TechNoteText"], Cell[TextData[{"For several identical massive fermion \
-pairs coupled only to a massless vector, the native constructor can group a \
-large tree sum by its central propagator. The text and LaTeX output show \
-which spinor currents to join. For three pairs and three photons, a single \
-oriented contraction generates all eight photon helicities by the indicated \
-sums. In C++, final_amplitude().sewing_form() gives access to the cuts, the \
-coherent amplitude and the massive-spin sum at fixed photon helicities. The \
-.expr file still stores the elementary expression. The ordinary scalar SPINAS \
-exporter and the central-sewing evaluator can be timed separately."}],
-   "TechNoteText"], Cell[TextData[{"The standalone C++ example in \
+], "TechNoteText"], Cell[TextData[{"The standalone C++ example in \
 tests/QED-6-point-construction.cpp runs the QED notebook families with both \
 pole preferences. Use write_spinas_process to combine labeled helicities into \
 a numerical process. Use write_external_project to generate the CalcHEP and \

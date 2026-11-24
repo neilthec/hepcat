@@ -207,6 +207,16 @@ For explicit identity edits on a combined or final amplitude, pass
 momentum conservation only with the complete declared external particle set.
 Preserve regular remainders when rearranging numerators and denominators.
 
+## Keep construction independent of Feynman diagrams
+
+Use Feynman diagrams solely to validate a finished candidate. Build the
+candidate from constructive vertices, lower-point residue products, spinor
+identities and physical constraints. This rule also covers simplification,
+model entries, export, timing studies and formulas in manuscripts. Rewriting
+an off-shell Feynman numerator in Weyl-spinor notation preserves its origin.
+If only an independent Feynman result is available, record the constructive
+amplitude as unresolved. Keep the reference separate from the constructor.
+
 ## Respect the model and theory
 
 Select identities and computational effort from the expression, declared

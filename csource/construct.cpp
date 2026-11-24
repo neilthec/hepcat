@@ -39,6 +39,8 @@ const construction_report &amplitude::last_construction() const {
 const amp_expression &amplitude::construct(const construct_options &options) {
   using clock = std::chrono::steady_clock;
   const auto start = clock::now();
+  if (vertices_model_ && vertices_model_->is_feynman())
+    throw std::invalid_argument("Construction requires a constructive vertex model. Supply a Feynman model for validation.");
   amplitude staged = *this;
   construction_report report;
   auto run = [&](const char *name, auto action) {
@@ -53,66 +55,57 @@ const amp_expression &amplitude::construct(const construct_options &options) {
       references_ == generation_references::automatic
           ? generation_references::physical
           : references_);
-  if (staged.vertices_model_ && policy != staged.references_) {
+  auto select_references = [&](generation_references choice) {
+    if (!staged.vertices_model_ || choice == staged.references_) return;
     auto remove_generated = [](auto &rows) {
       rows.erase(std::remove_if(rows.begin(), rows.end(),
                                 [](const auto &row) { return row.generated_; }),
                  rows.end());
     };
-    staged.references_ = policy;
+    staged.references_ = choice;
     remove_generated(staged.diagrams_);
     remove_generated(staged.products_);
     staged.diagrams_generated_ = staged.channels_generated_ = false;
-  }
+  };
+  select_references(policy);
   auto factor = options.factorization;
-  factor.try_grouped_currents = true;
   if (!factor.workers)
     factor.workers = options.workers;
 
-  // For a large, freshly generated color-singlet Dirac tree sum, individual
-  // diagram searches can dominate the complete calculation. Try the cheaper
-  // exact rows first. Only a certified graph sum passing every residue can win.
-  bool completed = false;
-  const auto dirac_or_vector = [&](const std::string &name) {
-    const auto &p = staged.vertices_model_->particle(name);
-    return p.color == 1 && ((p.spin2 == 1 && p.mass != "0" && p.name != p.antiname) ||
-                            (p.spin2 == 2 && p.mass == "0"));
-  };
-  if (staged.vertices_model_ && staged.channels_model_ && staged.diagrams_.empty() &&
-      staged.products_.empty() && policy != generation_references::keep &&
-      std::all_of(staged.particles_.begin(), staged.particles_.end(), dirac_or_vector) &&
-      generation::diagram_plans(*staged.vertices_model_, staged.particles_).size() >= generation::grouped_current_threshold) {
-    amplitude trial = staged;
-    run("Generate rows for the complete current", [&] {
-      trial.generate_rows(true, true, trial.feynman_model_.has_value(), options.workers, false);
-    });
-    try {
-      run("Check the complete current on all factorization channels", [&] {
-        trial.complete_factorization_impl(factor, true);
-      });
-      staged = std::move(trial);
-      completed = true;
-    } catch (const no_grouped_current&) {
-      // The ordinary construction below retains diagram and remainder searches.
+  run("Generate and reduce", [&] {
+    if (staged.vertices_model_) {
+      staged.generate_diagrams(options.workers);
+      if (staged.channels_model_) staged.generate_factorization_products(options.workers);
     }
-  }
-  if (!completed) {
-    run("Generate and reduce", [&] {
-      if (staged.vertices_model_)
-        staged.generate(options.workers);
-      staged.reduce(options.workers);
-    });
-    run("Complete factorization", [&] { staged.complete_factorization(factor); });
-  }
+    staged.reduce(options.workers);
+  });
+  run("Complete factorization", [&] { staged.complete_factorization(factor); });
   auto energy = options.high_energy;
   if (!energy.workers)
     energy.workers = options.workers;
   run("Complete high energy and reduce",
-      [&] { staged.complete_high_energy(energy); });
+      [&] {
+        try {
+          staged.complete_high_energy(energy);
+        } catch (const std::runtime_error&) {
+          if (!staged.vertices_model_ || !staged.channels_model_ ||
+              policy != generation_references::cyclic)
+            throw;
+          // Try a different constructive continuation only after the intrinsic
+          // energy test fails. The comparison model is read in the next stage.
+          select_references(generation_references::physical);
+          staged.generate_diagrams(options.workers);
+          staged.generate_factorization_products(options.workers);
+          staged.reduce(options.workers);
+          staged.complete_factorization(factor);
+          staged.complete_high_energy(energy);
+        }
+      });
   auto validation = options.validation;
   if (!validation.workers)
     validation.workers = options.workers;
   run("Validate", [&] {
+    if (staged.feynman_model_) staged.generate_feynman_diagrams(options.workers);
     report.validation =
         options.reference_amplitude
             ? staged.validate_against(*options.reference_amplitude, validation)

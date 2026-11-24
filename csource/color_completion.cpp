@@ -72,7 +72,6 @@ bool amplitude::complete_color_rows(const factorization_options* factor, const h
                 scalar_corrections.push_back(a.format(c[pos]));
         if (factor) {
             auto opts = *factor;
-            opts.try_grouped_currents = false;
             opts.correction_basis = std::move(scalar_corrections);
             auto& result = partial.complete_factorization(opts);
             answers.push_back(a.mul({decomposition.tensors[i], result.import_into(a)}));

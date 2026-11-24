@@ -37,9 +37,7 @@ Module[{sourceDirectory = If[ValueQ[Global`$HEPCATpath], Global`$HEPCATpath,
 sourceFiles = If[StringQ[sourceDirectory],
   FileNameJoin[{sourceDirectory, #}] & /@ {"HEPCAT-Base.wl", "internal/HEPCAT-Parameters.wl", "HEPCAT-Model.wl",
     "internal/HEPCAT-Feynman.wl", "internal/HEPCAT-Color.wl", "internal/HEPCAT-SPINAS.wl",
-    "internal/HEPCAT-MadGraph.wl", "internal/HEPCAT-CovariantSources.wl",
-    "internal/HEPCAT-CovariantContacts.wl", "internal/HEPCAT-ColoredCurrents.wl",
-    "internal/HEPCAT-QCDCurrents.wl", "internal/HEPCAT-MixedNullCalibration.wl", "internal/HEPCAT-MixedNullIntegration.wl", "internal/HEPCAT-MixedNullPublic.wl"}, {}];
+    "internal/HEPCAT-MadGraph.wl"}, {}];
 missingFiles = Select[Join[sourceFiles, If[StringQ[sourceDirectory],
   {FileNameJoin[{sourceDirectory, "internal", "HEPCAT-SPINAS-Optimize.wl"}]}, {}]],
   !FileExistsQ[#] || DirectoryQ[#] &];

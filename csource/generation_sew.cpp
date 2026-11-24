@@ -539,8 +539,10 @@ class sewing {
 } // namespace
 Id sew(Algebra& a, const model& m, const std::vector<std::string>& p, const plan& row, bool channel,
        bool cyclic, bool phys) {
-    if (!channel)
-        if (auto special = four_point_vector_exchange(a, m, p, row)) return *special;
+    for (const auto& tree : row.terms)
+        for (const auto& vertex : tree.vertices)
+            if (m.vertices().at(vertex.row).pending_constructive_derivation)
+                throw std::domain_error("Sewing requires a lower amplitude pending a constructive derivation");
     ids expressions;
     std::vector<std::pair<int, int>> branches;
     for (size_t i = 0; i < row.terms.size(); ++i) {

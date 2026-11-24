@@ -9,7 +9,7 @@ find_library(GMP_LIBRARY gmp REQUIRED)
 
 add_library(hepcat_reduce
     model.cpp model_expression.cpp model_parameters.cpp generation_plan.cpp generation_sew.cpp generation_spin.cpp generation_null.cpp
-    color_basis.cpp color_completion.cpp generation_current.cpp generation_chiral.cpp generation_feynman.cpp generation.cpp amplitude.cpp construct.cpp line_current.cpp mixed_physical_current.cpp chiral_radiation.cpp mixed_radiation.cpp six_radiation.cpp fermion_currents.cpp charged_tree_sewing.cpp spinas_export.cpp external_export.cpp completion.cpp continuations.cpp null_shift.cpp residue.cpp
+    color_basis.cpp color_completion.cpp generation_current.cpp generation_feynman.cpp generation.cpp amplitude.cpp construct.cpp spinas_export.cpp external_export.cpp completion.cpp continuations.cpp null_shift.cpp residue.cpp
     high_energy.cpp high_energy_chart.cpp high_energy_contacts.cpp
     validation.cpp validation_checks.cpp validation_numeric.cpp validation_feynman.cpp
     validation_precision_chart.cpp validation_precision_parameters.cpp
@@ -44,7 +44,7 @@ target_link_libraries(hepcat-derive-example PRIVATE hepcat_reduce)
 
 include(CTest)
 if(BUILD_TESTING)
-    foreach(suite IN ITEMS spinor generation_spin kinematics collect vector_basis chiral_line api latex mathematica identity identity_check amplitude completion residue continuations high_energy high_energy_chart validation_checks validation_numeric validation_precision_chart)
+    foreach(suite IN ITEMS spinor generation_spin kinematics collect vector_basis api latex mathematica identity identity_check amplitude completion residue continuations high_energy high_energy_chart validation_checks validation_numeric validation_precision_chart)
         add_executable(test_${suite} ${suite}_tests.cpp)
         target_include_directories(test_${suite} SYSTEM PRIVATE ${GMP_INCLUDE_DIR})
         target_link_libraries(test_${suite} PRIVATE hepcat_reduce)
@@ -101,11 +101,6 @@ if(BUILD_TESTING)
         target_link_libraries(test_${suite} PRIVATE hepcat_reduce)
         add_test(NAME ${suite} COMMAND test_${suite} "${HEPCAT_TEST_MODELS}" "${HEPCAT_MODEL_ROOT}/source/internal/export")
     endforeach()
-    add_executable(test_radiative_current radiative_current_tests.cpp)
-    target_include_directories(test_radiative_current SYSTEM PRIVATE ${GMP_INCLUDE_DIR})
-    target_link_libraries(test_radiative_current PRIVATE hepcat_reduce)
-    add_test(NAME radiative_current COMMAND test_radiative_current "${HEPCAT_TEST_MODELS}"
-             "${HEPCAT_MODEL_ROOT}/tests/reference-models/calchep")
     add_executable(test_validation_feynman validation_feynman_tests.cpp)
     target_include_directories(test_validation_feynman SYSTEM PRIVATE ${GMP_INCLUDE_DIR})
     target_link_libraries(test_validation_feynman PRIVATE hepcat_reduce)
@@ -128,3 +123,6 @@ if(BUILD_TESTING)
     target_link_libraries(test_c_api PRIVATE hepcat_reduce)
     add_test(NAME c_api COMMAND test_c_api)
 endif()
+
+add_executable(hepcat-reconstruct-qed ../tests/checks/reconstruct-qed-channels.cpp)
+target_link_libraries(hepcat-reconstruct-qed PRIVATE hepcat_reduce)

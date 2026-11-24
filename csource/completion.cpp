@@ -1,8 +1,5 @@
 #include "amplitude.hpp"
-#include "line_current.hpp"
 #include "four_point_numerators.hpp"
-#include "fermion_currents.hpp"
-#include "charged_tree_sewing.hpp"
 #include "native_fit.hpp"
 #include "modular_fit.hpp"
 #include "continuations.hpp"
@@ -577,6 +574,48 @@ std::optional<Id> physical_four_point_fit(completion& work, const model& model,
 }
 } // namespace
 
+amp_expression amplitude::channel_sum_candidate(std::optional<std::pair<int,int>> null_pair,
+                                                 unsigned multiplicity) const {
+    if (products_.empty() || !multiplicity || (null_pair && multiplicity != 1))
+        throw std::invalid_argument("Supply constructive channel products and a valid multiplicity");
+    Algebra arena;
+    std::vector<Id> masses;
+    for (const auto& mass : masses_) masses.push_back(arena.parse(mass));
+    arena.setKinematics(masses, {});
+    if (null_pair) {
+        const auto [i,j] = *null_pair;
+        if (i < 1 || j < 1 || i == j || std::size_t(std::max(i,j)) > masses.size() ||
+            masses[i-1] != arena.integer(0) || masses[j-1] != arena.integer(0))
+            throw std::invalid_argument("The two shifted legs must be distinct external massless particles");
+    }
+    std::vector<Id> terms;
+    for (const auto& channel : products_) {
+        if (channel.shells.size() != 1)
+            throw std::invalid_argument("Each factorization product must declare one channel");
+        const auto& cut = channel.shells.front();
+        if (null_pair) {
+            auto includes = [&](int leg) {
+                return std::find(cut.legs.begin(),cut.legs.end(),leg) != cut.legs.end();
+            };
+            if (includes(null_pair->first) == includes(null_pair->second)) continue;
+        } else if (arena.parse(cut.mass) == arena.integer(0)) continue;
+        Id product = sewn(arena, channel.expression.import_into(arena, false));
+        if (product == arena.integer(0)) continue;
+        if (null_pair) {
+            auto lift = shifted_channel_continuations(arena, {{cut,product}}, null_pair->first, null_pair->second);
+            if (lift.size() != 1)
+                throw residue_unsupported("A moving nonzero channel could not be lifted");
+            product = lift.front();
+        }
+        terms.push_back(product);
+    }
+    if (terms.empty()) throw residue_unsupported("No contributing factorization channels");
+    const Id answer = arena.mul({arena.exact(mpq_class(1,multiplicity)), arena.add(std::move(terms))});
+    amp_expression result("0", masses_);
+    result.set_from(arena, answer);
+    return result;
+}
+
 validation_detail::cut_inventory validation_detail::validation_inventory(Algebra& a, const amplitude& process,
                                                                          const amp_expression& candidate) {
     expressions trees(a);
@@ -643,15 +682,12 @@ const amp_expression& amplitude::complete_factorization(std::size_t workers) {
 }
 
 const amp_expression& amplitude::complete_factorization(const factorization_options& options) {
-    return complete_factorization_impl(options, false);
-}
-
-const amp_expression& amplitude::complete_factorization_impl(const factorization_options& options, bool grouped_only) {
     if(vertices_model_ && (!channels_model_ || vertices_model_->is_feynman()))
         throw std::logic_error("native factorization completion requires both constructive model roles");
     if(vertices_model_ && (!diagrams_generated_ || !channels_generated_)) {
         amplitude staged = *this;
-        staged.generate(options.workers);
+        staged.generate_diagrams(options.workers);
+        staged.generate_factorization_products(options.workers);
         staged.complete_factorization(options);
         *this=std::move(staged);
         return *completed_;
@@ -686,14 +722,9 @@ const amp_expression& amplitude::complete_factorization_impl(const factorization
     auto import = [&](const amplitude_item& item, bool rest = false) {
         return trees.canonical(item.expression.import_into(a, rest));
     };
-    std::size_t generated_diagrams = 0;
-    bool has_manual_contribution = false;
     for (const auto& item : diagrams_) {
         diagrams.push_back(import(item));
         remains.push_back(import(item, true));
-        generated_diagrams += item.generated_;
-        if (!item.generated_ && (diagrams.back() != zero || remains.back() != zero))
-            has_manual_contribution = true;
         for (const auto& cut : item.shells)
             targets.emplace(key(a, cut.legs, trees.canonical(a.parse(cut.mass))), zero);
     }
@@ -729,24 +760,9 @@ const amp_expression& amplitude::complete_factorization_impl(const factorization
     work.report.channels = work.cuts.size();
     auto workers = options.workers ? options.workers : std::max(1u, std::thread::hardware_concurrency());
     work.report.workers = std::min(workers, work.cuts.size());
-    auto publish = [&](Id answer, const std::optional<permutation_sum>& ordered = {}) -> const amp_expression& {
+    auto publish = [&](Id answer) -> const amp_expression& {
         amp_expression result("0", masses_);
         result.set_from(a, answer);
-        if (ordered) {
-            amp_expression::signed_permutation_product presentation{{ordered->legs},ordered->alternating_groups,
-                                                                   a.format(ordered->kernel),ordered->joint_exchange,
-                                                                   ordered->orbit_sizes,ordered->inner_exchanges};
-            for (const auto& part : ordered->projected_terms)
-                presentation.projected_terms.push_back({a.format(part.kernel),part.exchanges});
-            presentation.symmetric_groups.insert(presentation.symmetric_groups.end(),
-                ordered->other_groups.begin(),ordered->other_groups.end());
-            result.ordered_formula_ = std::make_shared<amp_expression::signed_permutation_product>(std::move(presentation));
-        }
-        if (work.report.route == "ContractedDiracCurrents") {
-            auto sewing = charged_tree_sewing::from_model(*vertices_model_, particles_,
-                                                         references_ == generation_references::physical);
-            if (sewing && sewing->diagrams() == generated_diagrams) result.sewing_ = std::move(sewing);
-        }
         construction_.reset();
         completed_ = std::move(result);
         high_energy_result_.reset();
@@ -754,34 +770,6 @@ const amp_expression& amplitude::complete_factorization_impl(const factorization
         report_ = std::move(work.report);
         return *completed_;
     };
-    // Group elementary graphs only when the entire input is generated from the model.
-    // A caller can supply additional terms, including contact terms invisible on every cut.
-    if (options.try_grouped_currents && vertices_model_ && !products_.empty() &&
-        references_ != generation_references::keep && !has_manual_contribution) {
-        const bool physical = references_ == generation_references::physical;
-        try {
-            std::optional<permutation_sum> ordered;
-            auto candidate = dirac_line_proposal(a, *vertices_model_, particles_, generated_diagrams, physical, &ordered);
-            const char* name = "DiracLineCurrent";
-            if (!candidate) {
-                ordered.reset();
-                candidate = fermion_current_proposal(a, *vertices_model_, particles_, generated_diagrams, physical, &ordered);
-                name = "ContractedDiracCurrents";
-            }
-            if (candidate) {
-                auto proposed = trees.canonical(*candidate);
-                if (work.verified(proposed)) {
-                    work.report.route = name;
-                    return publish(proposed,ordered);
-                }
-            }
-        } catch (const residue_unsupported&) {
-            // Try the ordinary residue fit if this representation exceeds the cut evaluator.
-        } catch (const residue_singular&) {
-            // A singular trial does not invalidate the diagram seed or the other continuations.
-        }
-    }
-    if (grouped_only) throw no_grouped_current{};
     if (products_.empty() && trees.has_pole(work.seed))
         throw residue_unsupported("a pole-bearing amplitude requires physical factorization channels");
     std::exception_ptr singular_seed;

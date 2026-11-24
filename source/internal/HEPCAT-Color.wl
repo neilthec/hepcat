@@ -781,6 +781,8 @@ colorProjectionData[pairs_List, channels_List, representations_List,
     "A zero expression without any color tensor needs a nonzero channel or diagram to define its color basis."]]];
   data = colorTensorBasis[First /@ Flatten[terms, 1], representations, 65536, False];
   If[FailureQ[data], Return[data]];
+  If[benchmarkPairs =!= {} && AnyTrue[data["BasisPositions"], # > Total[Take[counts, Length[pairs] + Length[channels]]] &],
+    Return[colorFailure["BenchmarkColorMismatch","The independent benchmark contains a color tensor outside the constructive span."]]];
   rank = Length[data["Basis"]]; coordinates = data["DiagramCoordinates"];
   split = Table[With[{start = offset + 1, count = counts[[i]]},
     offset += count;
@@ -1563,16 +1565,6 @@ colorConstructAmplitude[process_List, diagramModel_List, factorizationModel_List
   If[FailureQ[pairs] || FailureQ[channels], Return[SelectFirst[{pairs, channels}, FailureQ]]];
   reps = colorParticleRepresentation[#, diagramModel] & /@ process;
   If[AnyTrue[reps, FailureQ], Return[SelectFirst[reps, FailureQ]]];
-  currentAttempt=ConstructiveDiagrams`Private`colorCurrentPrepare[process,diagramModel,factorizationModel,settings,deadline,diagrams];
-  qcdAttempt=ConstructiveDiagrams`Private`colorQCDCurrentPrepare[process,diagramModel,factorizationModel,settings,deadline,diagrams];
-  If[ConstructiveDiagrams`Private`colorCurrentSourceClass[process,diagramModel],
-    spectatorAttempt=<|"Attempted"->False,"Selected"->False,"Reason"->"DisjointColoredCurrentClass"|>;
-    handednessAttempt=<|"Attempted"->False,"Selected"->False,"Reason"->"DisjointColoredCurrentClass"|>,
-    spectatorAttempt=ConstructiveDiagrams`Private`colorSpectatorPrepare[process,diagramModel,factorizationModel,settings,deadline,diagrams];
-    If[Lookup[spectatorAttempt,"Status",None]=!="PROPOSED",
-      handednessAttempt = colorHandednessPrepare[process, diagramModel, factorizationModel,
-        settings, channels, deadline],
-      handednessAttempt=<|"Attempted"->False,"Selected"->False,"Reason"->"DeferredForSpectatorSource"|>]];
   If[feynmanModel =!= None,
     If[TrueQ[settings["ProgressReporting"]], Print["Building independent colored Feynman benchmark."]];
     feynmanDiagrams = CreateDiagrams[process,feynmanModel];
@@ -1609,7 +1601,7 @@ colorConstructAmplitude[process_List, diagramModel_List, factorizationModel_List
           "The independent Feynman benchmark did not prepare completely.",
           <|"Report"->feynmanPrepared|>]]];
       feynmanPairs = feynmanPrepared["PreparedAmplitudes"]]];
-  If[FreeQ[{pairs,channels,feynmanPairs}, _ColorDelta | _ColorGenerator | _ColorStructure | _ColorTrace] &&
+  If[FreeQ[{pairs,channels}, _ColorDelta | _ColorGenerator | _ColorStructure | _ColorTrace] &&
       AllTrue[Last /@ pairs, TrueQ[# === 0] &] &&
       AllTrue[Last /@ channels, TrueQ[# === 0] &],
     external = Thread[(Mass /@ Range[Length[process]]) -> constructExternalMasses[process,diagramModel]];
@@ -1633,58 +1625,6 @@ colorConstructAmplitude[process_List, diagramModel_List, factorizationModel_List
   If[TrueQ[settings["ProgressReporting"]], Print["Constructing ", rank,
     " independent color coefficients."]];
   reports = ConstantArray[Missing["NotConstructed"], rank];
-  If[Lookup[qcdAttempt,"Status",None]==="PROPOSED",
-    qcdProjection=ConstructiveDiagrams`Private`colorQCDCurrentProjection[qcdAttempt,pairs,channels,reps,feynmanPairs];
-    AssociateTo[qcdAttempt,"Projection"->qcdProjection];
-    If[AssociationQ[qcdProjection],
-      qcdValidation=colorOrbitValidate[process,qcdProjection["Amplitudes"],
-        First[qcdAttempt["PreparedPair"]],qcdProjection["Data"],factorizationModel,settings,deadline];
-      AssociateTo[qcdAttempt,"Validation"->qcdValidation];
-      If[Lookup[qcdValidation,"Status",None]==="COMPLETE",
-        data=qcdProjection["Data"];rank=Length[data["Basis"]];
-        reports=Join[#,<|"ConstructionMethod"->"CertifiedFullColourMinimalAdjointCurrents"|>]&/@qcdValidation["CoefficientReports"];
-        orbitSelected=True;orbitAttempt=<|"Attempted"->False,"Reason"->"ValidatedAdjointCurrentSource"|>;
-        AssociateTo[qcdAttempt,"Selected"->True]]]];
-  If[!orbitSelected&&Lookup[currentAttempt,"Status",None]==="PROPOSED",
-    currentProjection=ConstructiveDiagrams`Private`colorCurrentProjection[currentAttempt,pairs,channels,reps,feynmanPairs];
-    AssociateTo[currentAttempt,"Projection"->currentProjection];
-    If[AssociationQ[currentProjection],
-      currentValidation=colorOrbitValidate[process,currentProjection["Amplitudes"],
-        First[currentAttempt["PreparedPair"]],currentProjection["Data"],factorizationModel,settings,deadline];
-      AssociateTo[currentAttempt,"Validation"->currentValidation];
-      If[Lookup[currentValidation,"Status",None]==="COMPLETE",
-        data=currentProjection["Data"];rank=Length[data["Basis"]];
-        reports=Join[#,<|"ConstructionMethod"->"CertifiedPerGraphColoredCurrent"|>]&/@currentValidation["CoefficientReports"];
-        orbitSelected=True;orbitAttempt=<|"Attempted"->False,"Reason"->"ValidatedColoredCurrentSource"|>;
-        AssociateTo[currentAttempt,"Selected"->True]]]];
-  If[!orbitSelected&&Lookup[spectatorAttempt,"Status",None]==="PROPOSED",
-    spectatorProjection=ConstructiveDiagrams`Private`colorSpectatorProjection[spectatorAttempt,pairs,channels,reps,feynmanPairs];
-    AssociateTo[spectatorAttempt,"Projection"->spectatorProjection];
-    If[AssociationQ[spectatorProjection],
-      spectatorValidation=colorOrbitValidate[process,spectatorProjection["Amplitudes"],
-        First[spectatorAttempt["PreparedPair"]],spectatorProjection["Data"],factorizationModel,settings,deadline];
-      AssociateTo[spectatorAttempt,"Validation"->spectatorValidation];
-      If[Lookup[spectatorValidation,"Status",None]==="COMPLETE",
-        data=spectatorProjection["Data"];rank=Length[data["Basis"]];
-        reports=Join[#,<|"ConstructionMethod"->"CertifiedRankOneSpectatorCurrent"|>]&/@spectatorValidation["CoefficientReports"];
-        orbitSelected=True;orbitAttempt=<|"Attempted"->False,"Reason"->"ValidatedSpectatorSource"|>;
-        AssociateTo[spectatorAttempt,"Selected"->True]]];
-    If[!orbitSelected,handednessAttempt=colorHandednessPrepare[process,diagramModel,factorizationModel,settings,channels,deadline]]];
-  If[!orbitSelected&&Lookup[handednessAttempt, "Status", None] === "PROPOSED",
-    handednessProjection = colorHandednessProjection[handednessAttempt, pairs, channels, reps, feynmanPairs];
-    AssociateTo[handednessAttempt, "Projection" -> handednessProjection];
-    If[AssociationQ[handednessProjection],
-      handednessValidation = colorOrbitValidate[process, handednessProjection["Amplitudes"],
-        handednessAttempt["Proposal"]["ExternalMassRules"], handednessProjection["Data"],
-        factorizationModel, settings, deadline];
-      AssociateTo[handednessAttempt, "Validation" -> handednessValidation];
-      If[Lookup[handednessValidation, "Status", None] === "COMPLETE",
-        data = handednessProjection["Data"]; rank = Length[data["Basis"]];
-        reports = Join[#, <|"ConstructionMethod" -> "ModelCertifiedHandednessTransport"|>] & /@
-          handednessValidation["CoefficientReports"];
-        orbitSelected = True;
-        orbitAttempt = <|"Attempted" -> False, "Reason" -> "ValidatedModelHandedness"|>;
-        AssociateTo[handednessAttempt, "Selected" -> True]]]];
   constructCoefficient[index_Integer] := Module[{coefficientOptions, coefficientInput, value},
     If[KeyExistsQ[coefficientCache, index], Return[coefficientCache[index]]];
     If[AbsoluteTime[] >= deadline, Return[Missing["ColorConstructionTimeConstraint"]]];
@@ -1731,6 +1671,8 @@ colorConstructAmplitude[process_List, diagramModel_List, factorizationModel_List
       If[Lookup[orbitValidation, "Status", None] === "COMPLETE",
         reports = orbitValidation["CoefficientReports"]; orbitSelected = True;
         AssociateTo[orbitAttempt, "Selected" -> True]]]];
+  If[AssociationQ[orbitTransport] && AssociationQ[orbitValidation] && !orbitSelected,
+    Return[colorFailure["ColorOrbitValidation","The constructed color orbit failed validation.", <|"Report"->orbitValidation|>]]];
   If[!orbitSelected,
     Do[
       If[AbsoluteTime[] >= deadline, Throw[colorFailure["ColorConstructionTimeConstraint",

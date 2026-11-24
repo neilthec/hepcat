@@ -1,6 +1,4 @@
 #include "amp_expression.hpp"
-#include "charged_tree_sewing.hpp"
-#include "generation_plan.hpp"
 #include "hepcat.h"
 #include "identities_detail.hpp"
 #include "mathematica.hpp"
@@ -111,8 +109,6 @@ amp_expression& amp_expression::reduce(generation_references preference) {
     std::optional<bool> physical;
     if (preference == generation_references::physical || preference == generation_references::cyclic)
         physical = preference == generation_references::physical;
-    if (preference == generation_references::keep) sewing_.reset();
-    else if (sewing_ && physical && sewing_->physical() != *physical) sewing_ = sewing_->alternate_gauge();
     if (physical != summand_physical_) {
         summand_physical_ = physical;
         permutations_.reset();
@@ -144,8 +140,6 @@ std::optional<amp_expression> amp_expression::discarded_remainder() const {
     external->shells.clear();
     output.kinematics_=std::move(external);
     output.root_=*remainder_;
-    output.ordered_formula_.reset();
-    output.sewing_.reset();
     output.reduced_=false;
     output.remainder_.reset();
     return output;
@@ -262,44 +256,6 @@ const amp_expression::cached_permutations& amp_expression::reduced_permutations(
     Algebra trial(arena_.get());
     trial.setKinematics(kinematics_->masses, {});
     auto sum = compact_permutations(trial, root_);
-    std::optional<permutation_sum> ordered;
-    if (summand_physical_ || !ordered_formula_)
-        ordered = recognize_ordered_current(trial,root_,summand_physical_);
-    if (!ordered && ordered_formula_) {
-        const auto& groups = ordered_formula_->symmetric_groups;
-        ordered = permutation_sum{groups.empty() ? std::vector<int>{} : groups.front(),
-                                  trial.parse(ordered_formula_->summand),ordered_formula_->orbit_sizes,
-                                  {groups.empty() ? groups.end() : groups.begin()+1,groups.end()},ordered_formula_->alternating_groups,
-                                  ordered_formula_->joint_exchange,ordered_formula_->inner_exchanges};
-        for (const auto& term : ordered_formula_->projected_terms)
-            ordered->projected_terms.push_back({trial.parse(term.summand),term.exchanges});
-    }
-    if (ordered) {
-        Id kernel;
-        if (ordered->projected_terms.empty()) kernel=reduce_kernel(trial,ordered->kernel,*ordered);
-        else {
-            for (auto& term : ordered->projected_terms) {
-                permutation_sum local = *ordered;
-                local.inner_exchanges.insert(local.inner_exchanges.begin(),term.exchanges.begin(),term.exchanges.end());
-                term.kernel=reduce_kernel(trial,term.kernel,local);
-            }
-            kernel=sum_projected_terms(trial,ordered->projected_terms);
-        }
-        const Id previous = sum ? sum->kernel : root_;
-        // Both sums have already been certified. When the incumbent cannot be
-        // expanded within the scoring budget, use the strict leaf-count gain.
-        auto improves = [&] {
-            if (ordered_formula_) return true;
-            const auto incumbent = bounded_summand_weight(trial, previous);
-            if (!incumbent) return true;
-            const auto candidate = bounded_summand_weight(trial, kernel);
-            return candidate && *candidate <= *incumbent;
-        };
-        if (trial.cost(kernel) + 16 < trial.cost(root_) && trial.cost(kernel) < trial.cost(previous) && improves()) {
-            ordered->kernel = kernel;
-            sum = std::move(ordered);
-        }
-    }
     if (sum) {
         const auto original_size=arena_->size();
         sum->kernel = retain_borrowed(*arena_,trial,sum->kernel,original_size);
@@ -388,7 +344,6 @@ std::string cycles(const signed_exchange& exchange) {
 
 std::string amp_expression::plain_text() const {
     std::lock_guard<std::mutex> guard(*kinematics_->lock);
-    if (sewing_ && sewing_->diagrams() >= generation::grouped_current_threshold) return sewing_->description();
     if (reduced_ && kinematics_->shells.empty()) {
         if (const auto& sum = reduced_permutations().sum) {
             std::string groups = "(" + leg_list(sum->legs) + ")";
@@ -424,7 +379,6 @@ std::string amp_expression::plain_text() const {
 }
 std::string amp_expression::latex() const {
     std::lock_guard<std::mutex> guard(*kinematics_->lock);
-    if (sewing_ && sewing_->diagrams() >= generation::grouped_current_threshold) return sewing_->latex();
     if (reduced_ && kinematics_->shells.empty()) {
         if (const auto& sum = reduced_permutations().sum) {
             std::string group;
@@ -495,8 +449,6 @@ amp_expression amp_expression::apply_identity(const identity_candidate& edit) co
     const Id alternative = apply_in_trial(trial, edit);
     auto result = *this;
     result.root_ = retain_borrowed(*arena_, trial, alternative, original_size);
-    result.ordered_formula_.reset();
-    result.sewing_.reset();
     result.reduced_ = false;
     return result;
 }

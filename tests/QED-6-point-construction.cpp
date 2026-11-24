@@ -13,8 +13,7 @@
 // and the .txt amplitudes in spinor notation. Use .tex for papers, .wl with
 // Mathematica HEPCAT, and .expr to reload the exact native expression.
 // The threshold applies to the full elementary expression. When a permutation
-// sum is available, summand_complexity scores its scalar kernel. Central
-// spinor sewings have a separate count of cuts and labeled trees.
+// sum is displayed, summand_complexity scores the expression inside that sum.
 //
 // To extend the notebook, start at the process list below. construct_helicity()
 // shows how to set up, construct, check, and save one amplitude. construct_family()
@@ -22,7 +21,6 @@
 
 #include "QED-all-positive-replay.hpp"
 #include "amplitude.hpp"
-#include "charged_tree_sewing.hpp"
 #include "construction-progress.hpp"
 #include "external_export.hpp"
 #include "generation_sew.hpp"
@@ -184,6 +182,11 @@ std::optional<amp_expression> signed_reference(const family& process, const heli
             throw std::invalid_argument("The all-positive reference requires e, E followed by positive photons");
         return qed_notebook::all_positive_reference(models.vertices, entry.helicities.size()).expression(spurious);
     }
+    // A missing independent comparison must not prevent construction from lower rows.
+    for (const auto& row : models.factorization.vertices())
+        if (row.pending_constructive_derivation && row.legs.size() == legs.size() &&
+            std::is_permutation(row.legs.begin(), row.legs.end(), legs.begin()))
+            return std::nullopt;
     return catalog_reference(models.factorization, legs);
 }
 
@@ -264,38 +267,13 @@ selected_amplitude construct_helicity(const settings& run, const construction_mo
     std::cout << "    Elementary complexity   " << measured;
     if (target) std::cout << " (target " << *target << ", " << (meets_target ? "met" : "unmet") << ')';
     std::cout << ", " << notebook_output::number(leaves) << " leaves\n";
-    if (const auto sewing = result.sewing_form())
-        std::cout << "    Central sewings         " << sewing->sewings().size() << " cuts, "
-                  << notebook_output::number(sewing->diagrams()) << " labeled trees\n";
-    if (summand) std::cout << "    Scalar perm. summand    " << *summand << " (weighted complexity)\n";
+    if (summand) std::cout << "    Permutation summand     " << *summand << " (weighted complexity)\n";
     std::cout << "    Time                    " << notebook_output::seconds(report.total_seconds) << '\n'
               << "    Formula files           " << (relative_dir / (branch + ".txt")).string()
               << "  (also .tex, .wl and .expr)" << std::endl;
 
-    // As in the notebook, validate a shorter worked form before selecting it
-    // for export. Publication mode always measures the automatic construction.
-    if (!reference || meets_target || run.publication || reference_score > target)
-        return {{legs, std::move(result)}, meets_target};
+    return {{legs, std::move(result)}, meets_target};
 
-    notebook_output::print_stage("Validating the notebook's shorter worked expression");
-    const auto verified = amp.validate(*reference, options.validation);
-    log << branch << " worked representative, independently checked\n";
-    print_checks(log, verified);
-    notebook_output::print_validation(verified);
-    if (!verified.passed())
-        throw std::runtime_error("worked representative failed its own validation");
-    notebook_output::write_expression(directory / (branch + ".selected"), *reference);
-    const auto worked_summand = measure_score([&] { return reference->permutation_summand_complexity(); },
-                                              log, branch + " worked summand complexity");
-    scores << policy << '\t' << process.name << '\t' << branch << "\tWORKED_FORM_PASS\t"
-           << *reference_score << '\t' << *target << '\t' << *reference_score << '\t' << run.engines.points
-           << "\t\tvalidated after construction\t" << reference->leaf_count() << '\t'
-           << reference->leaf_count() << '\t' << (worked_summand ? std::to_string(*worked_summand) : "") << '\n'
-           << std::flush;
-    std::cout << "    Selected for export  " << (relative_dir / (branch + ".selected.txt")).string()
-              << " (elementary complexity " << *reference_score << ")\n";
-    if (worked_summand) std::cout << "    Permutation summand     " << *worked_summand << " (weighted complexity)\n";
-    return {{legs, std::move(*reference)}, true};
 }
 
 bool validate_export(const settings& run, const model& vertices, const family& process,

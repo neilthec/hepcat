@@ -26,13 +26,7 @@ int main(int argc, char** argv) try {
             const auto& v = catalog.vertices()[i];
             if (int(v.legs.size()) != 2 * pairs + photons ||
                 std::count(v.legs.begin(), v.legs.end(), "e") != pairs) continue;
-            std::vector<int> slots(v.legs.size());
-            std::iota(slots.begin(), slots.end(), 1);
-            std::vector<std::string> masses;
-            for (const auto& name : v.legs) masses.push_back(catalog.particle(name).mass);
-            Algebra tree(&catalog.algebra());
-            auto expr = generation::sew(tree, catalog, v.legs, {{{{{i,slots}}, {}, 1}}}, false);
-            family.push_back({v.legs, amp_expression(tree.format(expr), masses)});
+            family.push_back({v.legs, catalog.retrieve_amplitude(v.legs)});
         }
     } else {
         std::vector<std::string> fermions;

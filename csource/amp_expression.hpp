@@ -16,7 +16,6 @@ enum class generation_references { automatic, keep, physical, cyclic };
 
 class Algebra;
 class amp_expression;
-class charged_tree_sewing;
 namespace validation_detail {
 std::uint32_t import_expression(Algebra&, const amp_expression&, bool remainder = false);
 }
@@ -56,8 +55,6 @@ public:
     std::string str() const;
     // Readable spinor brackets and invariants for display. str() preserves exact FullForm.
     std::string plain_text() const;
-    // Optional certified decomposition of the complete, minimally coupled charged tree.
-    std::shared_ptr<const charged_tree_sewing> sewing_form() const { return sewing_; }
     std::string latex() const;
     std::optional<permutation_formula> permutation_form() const;
     // Each group permutes independently. The single-group API expands the
@@ -87,8 +84,7 @@ public:
         std::vector<projected_term> projected_terms{};
     };
     std::optional<signed_permutation_product> signed_permutation_form() const;
-    // Weighted score of the scalar permutation summand, before the sums.
-    // The separate sewing presentation is measured by its cuts and labeled trees.
+    // Weighted score of the displayed summand, before any permutation sums.
     std::optional<std::size_t> permutation_summand_complexity() const;
     // Load HEPCAT, then evaluate the result in a Wolfram kernel. By default
     // the expression is paired with its external and diagram-local mass rules.
@@ -118,8 +114,6 @@ private:
     struct context;
     // This representation belongs to a certified complete graph sum. Propagate
     // it through exact reductions and drop it if completion changes the amplitude.
-    std::shared_ptr<const signed_permutation_product> ordered_formula_;
-    std::shared_ptr<const charged_tree_sewing> sewing_;
     struct cached_permutations;
     const cached_permutations& reduced_permutations() const; // caller holds context lock
     mutable std::shared_ptr<const cached_permutations> permutations_;

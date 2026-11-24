@@ -24,11 +24,6 @@ struct permutation_sum {
     std::vector<signed_exchange> inner_exchanges{};
     std::vector<projected_kernel> projected_terms{};
 };
-// Complete the three-photon Weyl kernel by simultaneous charge conjugation.
-// Only photons of the same helicity enter the symmetric group.
-permutation_sum radiation_exchange_sum(Algebra&, const std::vector<int>& fermions,
-                                      const std::vector<int>& antifermions, const std::vector<int>& photons,
-                                      const std::vector<int>& types, Id mass, Id coefficient, bool physical);
 // Preserves the sum over all permutations of legs. Individual summands can change.
 Id simplify_permutation_kernel(Algebra&, Id, const std::vector<int>& legs,
                                const std::vector<std::vector<int>>& other_groups = {});
@@ -46,9 +41,6 @@ Id expand_permutation_groups(Algebra&, Id, const std::vector<std::vector<int>>&,
 Id apply_exchanges(Algebra&, Id, const std::vector<signed_exchange>&);
 Id sum_projected_terms(Algebra&, const std::vector<projected_kernel>&);
 Id expand_signed_operators(Algebra&, const permutation_sum&);
-// Recognize an equivalent current from its signed coefficients and external masses.
-std::optional<permutation_sum> recognize_ordered_current(Algebra& a, Id input,
-                                                        std::optional<bool> physical = {});
 std::optional<permutation_sum> compact_permutations(Algebra& a, Id expression);
 
 } // namespace hepcat

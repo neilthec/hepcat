@@ -102,31 +102,3 @@ The comparison uses the same complexity measure before and after the endpoint ex
 | 4 | none | 5,120 | 434 | 5,120 | 434 |
 
 The targeted six-point runs used 10,000 signed points per pole choice. They reproduced the previously validated scores of 692/712 for the balanced four-photon case, 1,600/1,632 for four fermions with opposite photon helicities, and 3,168 for six fermions in both prescriptions. All 47 CTest cases passed.
-
-## Four pairs through a common photon kernel
-
-The derivation in [four-pair-sewing.tex](four-pair-sewing.tex) organizes the
-eight-fermion amplitude into 34 unordered neutral partitions. Every partition
-uses the same contraction of two angle-square spinor tensors. The standalone
-C++ replay evaluates the signed amplitude on coherent spin states or squares
-and sums over all 256 external spin assignments for a MadGraph comparison.
-
-From the repository root, using the same native library and include paths as above:
-
-```sh
-mkdir -p tests/results/four-pair-sewing
-c++ -std=c++17 -O2 -Icsource -Isource/internal/export -I../spinas/include \
-    -I/opt/homebrew/include tests/benchmarks/publication-qed/four-pair-sewing.cpp \
-    tests/results/native-reduce-build/libhepcat_reduce.a -L/opt/homebrew/lib \
-    -lgmpxx -lgmp -o tests/results/four-pair-sewing/replay
-tests/results/four-pair-sewing/replay 10000 19300001
-tests/results/four-pair-sewing/replay 10000 19600001 "$MG_EIGHT_FERMIONS"
-```
-
-The signed and MadGraph tests passed with maximum relative differences of
-3.86e-12 and 1.97e-13. A preliminary evaluation of the 216 charged-block
-partitions crossed the native signed tolerance of 1e-8 at seed 19301964.
-Choosing the two-leg representative of the central photon invariant in
-the final 34-term evaluator gives a residual of 4.94e-13 at that point.
-To reproduce the timing in the derivation, run the MadGraph command with
-512 points and seed 19700001 three times.

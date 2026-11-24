@@ -10,7 +10,6 @@
 namespace hepcat {
 class Algebra;
 class model;
-namespace radiative_detail { model unit_vector_model(const std::string& mass); }
 struct model_particle {
     std::string description, name, antiname;
     int pdg = 0, spin2 = 0;
@@ -21,6 +20,7 @@ struct model_particle {
 struct model_vertex {
     std::vector<std::string> legs;
     std::uint32_t factor, expression; // Node IDs in model::algebra().
+    bool pending_constructive_derivation = false;
 };
 struct model_parameter {
     std::string name;
@@ -54,8 +54,6 @@ class model {
 
   private:
     struct data;
-    explicit model(std::shared_ptr<const data> table) : data_(std::move(table)) {}
-    friend model radiative_detail::unit_vector_model(const std::string&);
     std::shared_ptr<const data> data_;
 };
 std::uint32_t contract_model_couplings(Algebra&, std::uint32_t root, const model&);

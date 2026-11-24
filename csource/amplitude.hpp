@@ -17,7 +17,6 @@ namespace hepcat {
 struct factorization_options {
     std::size_t workers = 0;
     std::vector<std::string> correction_basis;
-    bool try_grouped_currents = false;
 };
 
 struct factorization_report {
@@ -107,6 +106,12 @@ public:
     amplitude& generate_feynman_diagrams(std::size_t workers = 0);
     amplitude& generate_diagrams(std::size_t workers = 0);
     amplitude& generate_factorization_products(std::size_t workers = 0);
+    // Reconstruct a candidate from the supplied lower-point spinor amplitudes.
+    // A null pair denotes (shifted square leg, shifted angle leg). With no
+    // shift, sum the continuations of the massive cuts, divided by multiplicity.
+    // validate() must independently test residues and any boundary contribution.
+    amp_expression channel_sum_candidate(std::optional<std::pair<int,int>> null_pair,
+                                         unsigned multiplicity = 1) const;
     // Generate the collections for the supplied models in one worker queue.
     amplitude& generate(std::size_t workers = 0);
 
@@ -159,8 +164,6 @@ private:
     bool complete_color_rows(const factorization_options*, const high_energy_options*, const amp_expression* seed);
     validation_report validate_impl(amp_expression candidate, const amp_expression* original,
                                     const validation_options&, const amp_expression* reference = nullptr);
-    struct no_grouped_current {};
-    const amp_expression& complete_factorization_impl(const factorization_options&, bool grouped_only);
     amplitude& generate_rows(bool diagrams, bool products, bool feynman, std::size_t workers,
                              bool search = true);
     void bind_model_parameters(Algebra&, std::uint32_t seed, high_energy_options&, bool include_targets = false) const;
