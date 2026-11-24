@@ -97,3 +97,28 @@ tests/results/reconstruction/hepcat-check-three-pair-photon-sewings models tests
 For three positive helicities use A.+ on all three photon legs, change ++- to +++, and use another output directory. The four charged cuts label each orbit. The files with the .permutations extension record the signed maps from its representative to each distinct sewing.
 
 One fully numbered part of the mixed-helicity expression has four explicit powers of the electron mass, charged poles on 48, 59, 123 and 1237, and photon poles on 23 and 569. Run `python3 tests/benchmarks/publication-qed/check-nine-point-printed-numerator.py tests/results/nine-ppm` to select the unique sewing by these poles and verify both signed numerator monomials and every denominator in the printed fraction.
+
+The cut check uses exact rational coefficients in the basis 1, square root of 2, i, and i times square root of 2. For each physical pole it retains every constructive sewing containing that propagator. At a generic point on the cut, the discarded sewings are regular: their only other denominators are brackets between an external photon and the common reference. The target is the signed spin sum of two complete lower amplitudes. Each draw used for confirmation has a nonvanishing residue.
+
+Some of the shifted seven-point four-fermion representations have reference denominators whose individual summands have different little-group weights. The null-spin sewing routine cannot directly use these representations on a cut photon. Compute the same lower amplitudes from charged sewings with a common reference, then use them in the isolated input table. Each of the following seven-point expressions is checked before it is written.
+
+```sh
+build=tests/results/reconstruction
+data=tests/results/charged-input
+"$build/hepcat-reconstruct-charged" "$data" tests/results/lower-ppp.shared 100000 e E E e A.+ A.+ A.+
+"$build/hepcat-reconstruct-charged" "$data" tests/results/lower-ppm.shared 100000 e E E e A.+ A.+ A.-
+"$build/hepcat-reconstruct-charged" "$data" tests/results/lower-pmm.shared 100000 e E E e A.+ A.- A.-
+python3 tests/checks/reconstruction-block-inputs.py . tests/results/cut-input \
+    --checked-row e,E,E,e,A.+,A.+,A.+ tests/results/lower-ppp.shared \
+    --checked-row e,E,E,e,A.+,A.+,A.- tests/results/lower-ppm.shared \
+    --checked-row e,E,E,e,A.+,A.-,A.- tests/results/lower-pmm.shared
+cmake --build "$build" --target hepcat-check-three-pair-photon-residues
+"$build/hepcat-check-three-pair-photon-residues" tests/results/cut-input ++- 4 1237 1278
+```
+
+For the smaller side of a cut containing three or four external legs, the candidate passed four nonzero exact draws per representative. This covers 11 inequivalent particle and helicity compositions for +++ and 17 for ++-. The following commands reproduce the representatives used. Two-particle cuts require eight-point inputs and are separate obligations.
+
+```sh
+"$build/hepcat-check-three-pair-photon-residues" tests/results/cut-input +++ 4 123 124 127 178 278 1234 1237 1247 1278 1789 2789
+"$build/hepcat-check-three-pair-photon-residues" tests/results/cut-input ++- 4 123 124 127 129 178 179 278 279 1234 1237 1239 1247 1249 1278 1279 1789 2789
+```

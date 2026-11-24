@@ -28,7 +28,7 @@ def emission(helicity):
     return f'e | E | A.{helicity} | -Sqrt[2]*EE | ({" + ".join(terms)})/{bracket(ref,spin("Helicity",angle,3))}'
 
 
-def build(root, working):
+def build(root, working, checked_rows=()):
     source = root / "models"
     rows = (source / "amps4.mdl").read_text().splitlines()
     matches = [row for row in rows if legs(row) == ("e", "E", "E", "e")]
@@ -50,6 +50,20 @@ def build(root, working):
             candidate = fallback.get(legs(row))
             if candidate and "PendingConstructiveDerivation:" not in candidate:
                 rows[i] = candidate
+    # A lower expression with a common photon reference can avoid a sum
+    # whose individual terms have different little-group weights. Keep this
+    # choice inside the isolated validation model.
+    for process, filename in checked_rows:
+        key = tuple(process.split(","))
+        indices = [i for i, row in enumerate(rows) if legs(row) == key]
+        if len(indices) != 1:
+            raise ValueError(f"Expected exactly one lower model row for {process}")
+        expression = Path(filename).read_text().strip()
+        if not expression.startswith("Shared[") or not expression.endswith("]"):
+            raise ValueError(f"Expected the shared output of the charged reconstruction: {filename}")
+        i = indices[0]
+        fields = rows[i].split("|")
+        rows[i] = "|".join(fields[:-2] + [" 1 ", " " + expression])
     (models / "amps4.mdl").write_text("\n".join(rows) + "\n")
     (blocks / "amps3.mdl").write_text("\n".join(rows[:3] +
         [matches[0], emission("+"), emission("-"), rows[-1]]) + "\n")
@@ -62,5 +76,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("root", type=Path)
     parser.add_argument("working", type=Path)
+    parser.add_argument("--checked-row", nargs=2, action="append", default=[],
+                        metavar=("PARTICLES", "EXPRESSION"),
+                        help="Use a separately checked lower expression for comma-separated particles")
     args = parser.parse_args()
-    build(args.root, args.working)
+    build(args.root, args.working, args.checked_row)

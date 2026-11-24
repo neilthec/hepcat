@@ -131,7 +131,7 @@ add_executable(hepcat-reconstruct-charged ../tests/checks/reconstruct-charged-bl
 target_include_directories(hepcat-reconstruct-charged SYSTEM PRIVATE ${GMP_INCLUDE_DIR})
 target_link_libraries(hepcat-reconstruct-charged PRIVATE hepcat_reduce)
 
-foreach(driver three-pair-photon-sewings check-three-pair-photon-sewings)
+foreach(driver three-pair-photon-sewings check-three-pair-photon-sewings check-three-pair-photon-residues)
     add_executable(hepcat-${driver} EXCLUDE_FROM_ALL
         ../tests/benchmarks/publication-qed/${driver}.cpp)
     target_include_directories(hepcat-${driver} SYSTEM PRIVATE ${GMP_INCLUDE_DIR})
