@@ -163,3 +163,37 @@ python3 tests/checks/reconstruction-block-inputs.py . tests/results/two-leg-cut-
 "$build/hepcat-check-three-pair-photon-residues" tests/results/two-leg-cut-input +++ 4 17 27
 "$build/hepcat-check-three-pair-photon-residues" tests/results/two-leg-cut-input ++- 4 19 29
 ```
+
+## Seven- through nine-point helicity formulas in the manuscript
+
+The external-spinor polynomial is multilinear in the angle and square
+endpoints of each photon. The typesetter factors scalar products by
+distributivity, then prints the normalization and both endpoint spinors
+for each helicity multiset and each pole choice. The one-negative-photon
+formulas also have a direct permutation sum in ordinary brackets. Giving
+every positive photon the negative photon's angle spinor as reference makes
+all angle brackets between two photon endpoints vanish. This leaves four
+numerator terms at seven points and five at both eight and nine points.
+
+From the repository root, use the contracted catalog produced by
+`reconstruct-contracted-catalog.py`. In the following commands, `tables`
+points to that output directory and `paper` to the directory with `main.tex`.
+The last two checks use SymPy and the native HEPCAT library, respectively.
+
+```sh
+bench=tests/benchmarks/publication-qed
+python3 "$bench/render-higher-helicities.py" "$tables" "$paper/families"
+python3 "$bench/check-higher-helicity-manuscript.py" "$paper" "$tables" \
+    --expand --export-one-minus "$tables/printed"
+c++ -std=c++17 -O3 -Icsource "$bench/check-higher-helicity-sums.cpp" \
+    "$build/libhepcat_reduce.a" -lgmpxx -lgmp -o "$build/check-helicity-sums"
+"$build/check-helicity-sums" "$tables" "$tables/printed" 512 84905911
+```
+
+Use the include and library paths from the native HEPCAT build if GMP is
+installed outside the compiler's search paths. The symbolic check reads the
+actual LaTeX and compares the spinor polynomials, pole products, external
+permutations, couplings and helicity choices. The numerical check compares
+the three one-negative permutation sums read from the manuscript and
+independent transcriptions of the equal-helicity physical six-photon sum
+and both seven-photon sums with the constructive polynomials.
