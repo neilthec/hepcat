@@ -1,6 +1,6 @@
 """Check the printed nine-point numerator with four explicit mass factors.
 
-Supply the directory of frozen ++- spinor seeds. Select the unique sewing by
+Supply directories of frozen +++ or ++- spinor seeds. Select the unique sewing by
 its four charged propagators, independently of the representative numbering.
 The ordinary chain antisymmetry is sufficient for the printed coefficient.
 """
@@ -37,7 +37,7 @@ def cut(labels):
     return min((labels, other), key=lambda group: (len(group), sorted(group)))
 
 
-def bracket(expression, image):
+def bracket(expression, image, all_positive):
     head, ends = arguments(expression)
     if head != "SpinorChain" or len(ends) != 2:
         raise ValueError("Expected two endpoints at the highest mass power")
@@ -50,13 +50,22 @@ def bracket(expression, image):
         if spin == '"Xi"':
             if leg != "901":
                 raise ValueError("Unexpected reference")
-            label = 9 if chirality == '"Angle"' else 7
+            if all_positive and chirality != '"Angle"':
+                raise ValueError("Unexpected square reference in the all-positive amplitude")
+            label = "reference" if all_positive else (9 if chirality == '"Angle"' else 7)
         else:
             label = image[int(leg) - 1]
         labels.append(label)
     if len(set(chiralities)) != 1:
         raise ValueError("Unexpected mixed-chirality simple bracket")
     a, b = labels
+    if a == b:
+        return "", 0
+    if "reference" in labels:
+        # The printed [9(12)i> is <r i>. An occurrence of <i r>
+        # picks up a minus sign before it is collected in the fraction.
+        endpoint = b if a == "reference" else a
+        return f"[9(12){endpoint}>", 1 if a == "reference" else -1
     h = "<" if chirality == '"Angle"' else "["
     return h + "".join(map(str, sorted(labels))), (a < b) - (b < a)
 
@@ -64,9 +73,11 @@ def bracket(expression, image):
 def check(directory):
     charged = {cut(g) for g in ((4, 8), (5, 9), (1, 2, 3), (1, 2, 3, 7))}
     photons = {cut((2, 3)), cut((5, 6, 9))}
-    wanted_denominator = sorted(("<79", "<89", "[79"))
-    if (directory / "checked-order.txt").read_text().split()[:9] != list("eEeEeE") + ["A.+", "A.+", "A.-"]:
-        raise ValueError("Expected the checked ++- construction")
+    legs = (directory / "checked-order.txt").read_text().split()[:9]
+    if legs[:8] != list("eEeEeE") + ["A.+", "A.+"] or legs[8:] not in (["A.+"], ["A.-"]):
+        raise ValueError("Expected a checked +++ or ++- construction")
+    all_positive = legs[-1] == "A.+"
+    wanted_denominator = ["[9(12)7>", "[9(12)8>", "[9(12)9>"] if all_positive else ["<79", "<89", "[79"]
     matching = []
     with (directory / "orbits.tsv").open() as inventory:
         for row in csv.DictReader(inventory, delimiter="\t"):
@@ -104,14 +115,16 @@ def check(directory):
                 group = cut(image[int(i) - 1] for i in match[1].split(","))
                 (photon_poles if match[2] == "0" else charged_poles).add(group)
             elif f.startswith("SpinorChain["):
-                word, orientation = bracket(f, image)
+                word, orientation = bracket(f, image, all_positive)
                 numerator.append(word)
                 weight *= orientation
             elif f.startswith("Power[SpinorChain["):
                 _, (base, exponent) = arguments(f)
                 if exponent != "-1":
                     raise ValueError(f)
-                word, orientation = bracket(base, image)
+                word, orientation = bracket(base, image, all_positive)
+                if not orientation:
+                    raise ValueError("The chosen reference makes a denominator identically zero")
                 denominator.append(word)
                 weight *= orientation
             elif f not in (mass_four, charge_seven, sqrt_two_cubed):
@@ -120,12 +133,26 @@ def check(directory):
             if charged_poles != charged or sorted(denominator) != wanted_denominator:
                 raise ValueError("Unexpected denominator")
             found[tuple(sorted(numerator))] += weight
-    common = ["<49", "<59", "<69", "[78"]
-    expected = {tuple(sorted(common + term)): -4 for term in (["<13", "[27"], ["<12", "[37"])}
+    if all_positive:
+        common = ["[9(12)5>", "[9(12)6>"]
+        terms = [
+            ["[9(12)4>", "[89", "<13", "[27"],
+            ["[9(12)4>", "[89", "<12", "[37"],
+            ["[48", "[79", "[9(12)2>", "[13"],
+            ["[48", "[79", "[9(12)3>", "[12"],
+        ]
+    else:
+        common = ["<49", "<59", "<69", "[78"]
+        terms = [["<13", "[27"], ["<12", "[37"]]
+    expected = {tuple(sorted(common + term)): -4 for term in terms}
     if {k: v for k, v in found.items() if v} != expected:
-        raise ValueError("The two printed signed coefficients differ from the sewing")
-    print("Both signed monomials and all denominators agree with the unique labeled sewing.")
+        raise ValueError("Printed signed coefficients differ from the sewing")
+    print(f"{'+++' if all_positive else '++-'}: all {len(expected)} signed monomials "
+          "and all denominators agree with the unique labeled sewing.")
 
 
 if __name__ == "__main__":
-    check(Path(sys.argv[1]))
+    if len(sys.argv) < 2:
+        sys.exit("Supply the checked directory for +++, ++-, or both.")
+    for directory in sys.argv[1:]:
+        check(Path(directory))

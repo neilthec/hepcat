@@ -96,7 +96,7 @@ tests/results/reconstruction/hepcat-check-three-pair-photon-sewings models tests
 
 For three positive helicities use A.+ on all three photon legs, change ++- to +++, and use another output directory. The four charged cuts label each orbit. The files with the .permutations extension record the signed maps from its representative to each distinct sewing.
 
-One fully numbered part of the mixed-helicity expression has four explicit powers of the electron mass, charged poles on 48, 59, 123 and 1237, and photon poles on 23 and 569. Run `python3 tests/benchmarks/publication-qed/check-nine-point-printed-numerator.py tests/results/nine-ppm` to select the unique sewing by these poles and verify both signed numerator monomials and every denominator in the printed fraction.
+For both helicity assignments the manuscript prints the terms with four explicit powers of the electron mass, charged poles on 48, 59, 123 and 1237, and photon poles on 23 and 569. Run `python3 tests/benchmarks/publication-qed/check-nine-point-printed-numerator.py tests/results/nine-ppp tests/results/nine-ppm` to select the unique sewing by these poles and check every signed numerator monomial and denominator. There are four monomials for +++ and two for ++-.
 
 The cut check uses exact rational coefficients in the basis 1, square root of 2, i, and i times square root of 2. For each physical pole it retains every constructive sewing containing that propagator. At a generic point on the cut, the discarded sewings are regular: their only other denominators are brackets between an external photon and the common reference. The target is the signed spin sum of two complete lower amplitudes. Each draw used for confirmation has a nonvanishing residue.
 
@@ -116,9 +116,22 @@ cmake --build "$build" --target hepcat-check-three-pair-photon-residues
 "$build/hepcat-check-three-pair-photon-residues" tests/results/cut-input ++- 4 1237 1278
 ```
 
-For the smaller side of a cut containing three or four external legs, the candidate passed four nonzero exact draws per representative. This covers 11 inequivalent particle and helicity compositions for +++ and 17 for ++-. The following commands reproduce the representatives used. Two-particle cuts require eight-point inputs and are separate obligations.
+For the smaller side of a cut containing three or four external legs, the candidate passed four nonzero exact draws per representative. This covers 11 inequivalent particle and helicity compositions for +++ and 17 for ++-. The following commands reproduce the representatives used.
 
 ```sh
 "$build/hepcat-check-three-pair-photon-residues" tests/results/cut-input +++ 4 123 124 127 178 278 1234 1237 1247 1278 1789 2789
 "$build/hepcat-check-three-pair-photon-residues" tests/results/cut-input ++- 4 123 124 127 129 178 179 278 279 1234 1237 1239 1247 1249 1278 1279 1789 2789
+```
+
+The eight-point lower amplitude with three pairs and two positive photons was reconstructed from 504 charged sewings. All 90 physical channel checks, reference independence, spurious cancellation and high-energy behavior passed. The signed Feynman comparison at 10,000 points gave a maximum relative discrepancy of 5.0779e-9. Using this lower input, the additional charged cuts listed below passed four nonzero exact draws each. The neutral two-particle cut 12 remains unchecked for both assignments, as do the charged cuts 17 and 27 for ++-.
+
+```sh
+"$build/hepcat-reconstruct-charged" tests/results/cut-input tests/results/lower-six-fermion-pp.shared 10000 e E e E e E A.+ A.+
+python3 tests/checks/reconstruction-block-inputs.py . tests/results/two-leg-cut-input \
+    --checked-row e,E,E,e,A.+,A.+,A.+ tests/results/lower-ppp.shared \
+    --checked-row e,E,E,e,A.+,A.+,A.- tests/results/lower-ppm.shared \
+    --checked-row e,E,E,e,A.+,A.-,A.- tests/results/lower-pmm.shared \
+    --checked-row e,E,e,E,e,E,A.+,A.+ tests/results/lower-six-fermion-pp.shared
+"$build/hepcat-check-three-pair-photon-residues" tests/results/two-leg-cut-input +++ 4 17 27
+"$build/hepcat-check-three-pair-photon-residues" tests/results/two-leg-cut-input ++- 4 19 29
 ```
