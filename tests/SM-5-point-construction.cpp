@@ -53,7 +53,7 @@ legs sorted(legs v) { std::sort(v.begin(),v.end()); return v; }
 struct settings {
     fs::path root = fs::current_path(), output, spinas;
     std::string family, sector, start, case_id;
-    bool list = false, native_only = false;
+    bool list = false, list_cases = false, native_only = false;
     std::size_t workers = 1;
     external_options external;
 };
@@ -70,13 +70,14 @@ settings options(int argc, char **argv) {
     for (int i=1; i<argc; ++i) {
         std::string arg=argv[i];
         if (arg=="--help") {
-            std::cout << "hepcat-sm-five-point [--list] [--sector NAME] [--family NAME|ID] [--case ID --native-only]\n"
+            std::cout << "hepcat-sm-five-point [--list | --list-cases] [--sector NAME] [--family NAME|ID] [--case ID --native-only]\n"
                          "  [--start-at NAME|ID] [--native-only] [--points N] [--seed N] [--workers N]\n"
                          "  [--root DIR] [--output DIR] [--spinas DIR] [--calchep DIR] [--madgraph DIR]\n"
                          "  [--python EXE] [--cmake EXE]\n";
             std::exit(0);
         }
         if (arg=="--list") { s.list=true; continue; }
+        if (arg=="--list-cases") { s.list_cases=true; continue; }
         if (arg=="--native-only") { s.native_only=true; continue; }
         if (++i==argc) throw std::invalid_argument("Missing value for "+arg);
         std::string value=argv[i];
@@ -96,7 +97,7 @@ settings options(int argc, char **argv) {
         else if (arg=="--cmake") s.external.cmake_executable=value;
         else throw std::invalid_argument("Unknown option "+arg);
     }
-    if (!s.case_id.empty() && !s.native_only && !s.list)
+    if (!s.case_id.empty() && !s.native_only && !s.list && !s.list_cases)
         throw std::invalid_argument("Use --native-only with --case. External comparisons require the full family.");
     s.root=fs::canonical(s.root);
     if (s.external.points<10000) throw std::invalid_argument("Use at least 10,000 points");
@@ -295,6 +296,14 @@ int main(int argc,char **argv) try {
         if (!matching.empty()) selected.push_back(std::move(matching));
     }
     if (selected.empty()) throw std::invalid_argument("No matching five-point family in the selection");
+    if (s.list_cases) {
+        for (const auto &group : selected) {
+            for (const auto *row : group)
+                std::cout << row->sector << '\t' << row->name << '\t' << row->id << '\t'
+                          << row->particles << '\t' << (row->has_tree ? "tree" : "no tree") << '\n';
+        }
+        return 0;
+    }
     if (s.list) {
         for (const auto &group:selected) {
             const auto &f=*group.front();

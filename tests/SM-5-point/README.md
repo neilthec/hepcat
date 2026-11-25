@@ -68,6 +68,16 @@ run or timeout leaves the calculation open for six-point use. To repeat a case i
 isolation use `--case ID --native-only`. To restart a family sweep use
 `--start-at FAMILY`. Each invocation keeps the earlier run directories intact.
 
+Use `--list-cases --sector FourFermionHiggs` on the C++ executable to see the
+all-incoming particle order and case ID for each helicity representative.
+From the repository root, run
+`python3 tests/SM-5-point/native-progress.py` to count the retained results
+by sector. The report separates signed native passes from complete families
+with both external comparisons. It also identifies CalcHEP results that needed
+a binary128 replay. Add `--pending` to list families that still need a complete
+set of reports. This census describes the runs on disk and performs no physics
+calculations.
+
 ## Enumeration and generation relations
 
 A five-leg tree can have three cubic vertices or one cubic and one quartic
