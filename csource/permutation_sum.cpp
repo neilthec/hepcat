@@ -508,7 +508,7 @@ Id simplify_signed_kernel(Algebra& a, Id input, const permutation_sum& sum) {
     }
 }
 
-std::optional<permutation_sum> compact_permutations(Algebra& a, Id input) {
+static std::optional<permutation_sum> symmetric_permutations(Algebra& a, Id input) {
     // Equal external masses permit the relabeling. The terms and their signs
     // must still prove that the expression is invariant under every swap.
     const auto leaves = a.cost(input);
@@ -568,6 +568,74 @@ std::optional<permutation_sum> compact_permutations(Algebra& a, Id input) {
         return {};
     }
     return best;
+}
+
+// Put one monomial from each signed orbit in the displayed summand. Equal
+// masses and spin weights only suggest exchanges. Their signs and all
+// coefficients, including the stabilizer multiplicities, are checked exactly.
+static std::optional<permutation_sum> alternating_pairs(Algebra& a, Id input) {
+    if (!a.shells().empty() || a.cost(input) < 160 || a.cost(input) > 100000)
+        return {};
+    const auto weights = external_spin_weights(a,input);
+    if (!weights) return {};
+    std::vector<std::vector<int>> pairs;
+    for (std::size_t i=0; i<weights->size(); ++i) {
+        if ((*weights)[i]%2 == 0) continue;
+        for (std::size_t j=i+1; j<weights->size(); ++j)
+            if ((*weights)[i]==(*weights)[j] && a.masses()[i]==a.masses()[j])
+                pairs.push_back({int(i+1),int(j+1)});
+    }
+    if (pairs.empty() || pairs.size()>28) return {};
+    std::size_t budget=500000;
+    auto polynomial=[&](Id x){return a.add(expand(a,x,budget,8192));};
+    const auto minus=a.integer(-1);
+    const Id source=polynomial(relabel(a,{},{},true)(input));
+    const auto& p=a.node(source);
+    if (p.head!="Plus" || p.args.size()<4) return {};
+    std::set<Id> terms(p.args.begin(),p.args.end());
+    std::set<int> used;
+    std::vector<std::vector<int>> groups;
+    std::vector<relabel> swaps;
+    for (const auto& pair:pairs) {
+        if (used.count(pair[0]) || used.count(pair[1])) continue;
+        relabel swap(a,pair,{pair[1],pair[0]},true);
+        const auto has_partner=[&](Id term){return terms.count(a.mul({minus,swap(term)}));};
+        if (!std::all_of(terms.begin(),terms.end(),has_partner)) continue;
+        used.insert(pair.begin(),pair.end());
+        groups.push_back(pair);
+        swaps.push_back(std::move(swap));
+        if (swaps.size()==4) break; // At most sixteen images per orbit.
+    }
+    if (swaps.empty()) return {};
+    Terms seeds;
+    while (!terms.empty()) {
+        std::set<Id> orbit{*terms.begin()};
+        for (auto& swap:swaps) {
+            Terms images;
+            for (Id t:orbit) images.push_back(a.mul({minus,swap(t)}));
+            orbit.insert(images.begin(),images.end());
+        }
+        for (Id t:orbit) if (!terms.erase(t)) return {};
+        mpq_class coeff(orbit.size(),std::size_t(1) << swaps.size());
+        coeff.canonicalize();
+        seeds.push_back(a.mul({a.exact(coeff),*orbit.begin()}));
+    }
+    const Id kernel=collect_scalar_factors(a,a.add(std::move(seeds)),3);
+    if (a.cost(kernel)+16>=a.cost(input)) return {};
+    return permutation_sum{{},kernel,{}, {},std::move(groups)};
+}
+
+std::optional<permutation_sum> compact_permutations(Algebra& a, Id input) {
+    if (auto symmetric = symmetric_permutations(a,input)) return symmetric;
+    try {
+        return alternating_pairs(a,input);
+    } catch (const Unsupported&) {
+        return {};
+    } catch (const std::length_error&) {
+        return {};
+    } catch (const std::overflow_error&) {
+        return {};
+    }
 }
 
 } // namespace hepcat

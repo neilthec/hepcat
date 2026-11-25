@@ -60,6 +60,38 @@ void test_massive_scalar_legs() {
             "failed to collect identical massive scalar legs");
 }
 
+void test_fermion_orbits() {
+    Algebra a;
+    Id m=a.atom("m");
+    a.setKinematics({m,m,m,m,a.atom("h")},{});
+    auto chain=[&](int i,int j) {
+        auto spin=[&](int leg) {
+            return a.call("Spinor",{a.atom("\"Spin\""),a.atom("\"Angle\""),a.integer(leg)});
+        };
+        return a.call("SpinorChain",{spin(i),spin(j)});
+    };
+    auto pole=[&](int i,int j){
+        auto legs=a.call("Multiparticle",{a.integer(i),a.integer(j)});
+        return a.pow(a.call("PropDen",{a.call("Mom",{legs}),m}),-1);
+    };
+    // This monomial has four distinct signed images. The second seed has
+    // an odd bracket for each pair and is fixed by both signed exchanges.
+    auto seed=a.mul({chain(1,2),chain(3,4),pole(1,5),pole(2,5)});
+    auto fixed=a.mul({chain(1,3),chain(2,4),pole(1,3),pole(2,4)});
+    auto second=a.mul({seed,pole(1,2)});
+    const std::vector<std::vector<int>> groups{{1,3},{2,4}};
+    auto full=a.add({expand_permutation_groups(a,a.add({seed,second}),groups,true),fixed});
+    auto compact=compact_permutations(a,full);
+    require(compact && compact->alternating_groups==groups,"Missed two independent fermion exchanges");
+    amp_expression original(a,full,{"m","m","m","m","h"});
+    amp_expression unfolded(a,expand_signed_operators(a,*compact),{"m","m","m","m","h"});
+    identity_check_options control;
+    control.samples=50;
+    control.seed=69821;
+    require(original.check_identity(unfolded,control).passed(),"Signed exchange or stabilizer coefficient changed");
+    require(!compact_permutations(a,a.add({full,seed})),"Unequal orbit coefficients were treated as a symmetry");
+}
+
 void test_signed_scalar_kernel() {
     Algebra a;
     a.setKinematics(std::vector<Id>(4,a.integer(0)),{});
@@ -102,6 +134,7 @@ int main(int argc, char** argv) {
     try {
         test_massive_scalar_legs();
         test_signed_scalar_kernel();
+        test_fermion_orbits();
         std::cout << "Permutation kernels reconstruct the signed amplitudes.\n";
     } catch (const std::exception& e) {
         std::cerr << e.what() << '\n';
