@@ -4,8 +4,11 @@
 the elementary interactions in ordinary model 1, and the remaining helicity
 slots needed to export each physical process. It is a work list. Presence in
 this file does not mean an amplitude has been constructed or independently
-validated. Construction and numerical-validation progress belongs to the
-runner's `progress.json`, with captured records in `tests/results/SM-5-point/`.
+validated. For the [C++ calculation](#construct-and-validate-in-c), run
+`python3 tests/SM-5-point/native-progress.py` from the repository root.
+It reads the actual reports in `tests/results/spinas-output/SM-5-point/`.
+The earlier Mathematica runner keeps its own `progress.json` and records in
+`tests/results/SM-5-point/`.
 
 The model uses diagonal generation mixing, massless neutrinos, and the masses
 and elementary vertices declared in `models/`. There are 1,420 multisets with
