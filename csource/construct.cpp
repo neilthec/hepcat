@@ -79,7 +79,26 @@ const amp_expression &amplitude::construct(const construct_options &options) {
     }
     staged.reduce(options.workers);
   });
-  run("Complete factorization", [&] { staged.complete_factorization(factor); });
+  run("Complete factorization", [&] {
+    // With only massless external states, a local polynomial in their spinors
+    // has nonnegative fixed-angle energy degree. If every lower-point product
+    // vanishes, locality and a negative growth bound therefore force zero.
+    // A user-supplied row, a contact vertex, or a different bound retains the
+    // ordinary completion path. The final validation still checks every cut.
+    const auto bound = options.high_energy.energy_bound.value_or(4 - int(masses_.size()));
+    if (vertices_model_ && channels_model_ && staged.channels_generated_ &&
+        staged.products_.empty() && masses_.size() > 4 && bound < 0 &&
+        std::all_of(masses_.begin(), masses_.end(), [](const auto &m) { return m == "0"; }) &&
+        std::all_of(staged.diagrams_.begin(), staged.diagrams_.end(),
+                    [](const auto &d) { return d.generated_ && !d.shells.empty(); }) &&
+        factor.correction_basis.empty() && options.high_energy.correction_basis.empty()) {
+      staged.completed_.emplace("0", masses_);
+      staged.report_ = {};
+      staged.report_.route = "VanishingResiduesAndLocality";
+    } else {
+      staged.complete_factorization(factor);
+    }
+  });
   auto energy = options.high_energy;
   if (!energy.workers)
     energy.workers = options.workers;

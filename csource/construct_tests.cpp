@@ -57,6 +57,21 @@ int main(int argc, char **argv) {
   require(process.last_construction().validation.passed(),
           "cyclic construction failed");
 
+  // Five massless vectors with a single opposite helicity have cubic
+  // diagrams, including unphysical individual poles, but no nonzero cuts.
+  const model sm(argv[1], 1, "SM"), sm_cuts(argv[1], 2, "SM");
+  for (const std::string isolated : {"G.+", "G.-"}) {
+    const auto other = sm.antiparticle(isolated);
+    amplitude gluons({other, other, other, other, isolated}, sm, sm_cuts);
+    construct_options zero_options;
+    zero_options.workers = 1;
+    zero_options.validation.seed = 49117;
+    require(gluons.construct(zero_options).str() == "0" && !gluons.diagrams().empty() &&
+                gluons.last_factorization().route == "VanishingResiduesAndLocality" &&
+                gluons.last_construction().validation.passed(),
+            "massless pole-free amplitude with negative energy dimension");
+  }
+
   process.add_diagram("0");
   options.pole_preference = generation_references::physical;
   process.construct(options);
