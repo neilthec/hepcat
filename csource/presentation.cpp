@@ -292,6 +292,44 @@ struct ProductCollection {
 };
 } // namespace
 
+
+// Resolve equivalent powers of commuting parameters before collecting terms.
+// Spinor chains and poles are opaque. Positive numerical radicands allow
+// exact rational powers without assumptions on any symbolic or complex root.
+Id normalize_parameter_powers(Algebra& a, Id input) {
+    ProductCollection products{a,false,false,false};
+    std::unordered_map<Id,Id> cache;
+    auto visit = [&](auto& self, Id id) -> Id {
+        if (auto it=cache.find(id); it!=cache.end()) return it->second;
+        const auto& n=a.node(id);
+        Id result=id;
+        if (n.head=="Plus" || n.head=="Times") {
+            Terms children;
+            for (Id k:n.args) children.push_back(self(self,k));
+            result=a.call(n.head,std::move(children));
+        } else if (n.head=="Power" && n.args.size()==2) {
+            const long exponent=products.exponent(n.args[1]);
+            if (exponent) {
+                Id base=self(self,n.args[0]);
+                const auto& b=a.node(base);
+                result=a.pow(base,exponent);
+                mpq_class radicand, power;
+                const bool positive_root=b.head=="Power" && b.args.size()==2 &&
+                    a.number(b.args[0],radicand) && radicand>0 && a.number(b.args[1],power);
+                if (positive_root) {
+                    result=a.call("Power",{b.args[0],a.exact(power*exponent)});
+                } else if (b.head=="Times" && leg_independent_scalar(a,base)) {
+                    Terms factors;
+                    for (Id k:b.args) factors.push_back(self(self,a.pow(k,exponent)));
+                    result=a.mul(std::move(factors));
+                }
+            }
+        }
+        return cache.emplace(id,result).first->second;
+    };
+    return visit(visit,input);
+}
+
 // Only call on the completed amplitude. The search uses no shell, mass,
 // model, or helicity information and treats each spinor chain as one factor.
 Id compact_commuting_products(Algebra &a, Id original) {

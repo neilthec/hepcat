@@ -794,6 +794,39 @@ Id collect_simple_fractions(Algebra& a, Id input) {
     }
     return input;
 }
+
+// A fit to independent residues can leave the same coefficient written with
+// several factorizations of masses and couplings. Group equal monomials with
+// exact rational arithmetic. Keep an improvement only if both size measures
+// agree, and bound the size of every trial before distributing products.
+Id collect_parameter_monomials(Algebra& a, Id input) {
+    if (a.cost(input)>50000) return input;
+    try {
+        Id normalized=normalize_parameter_powers(a,input);
+        if (normalized==input) return input;
+        Id best=input;
+        auto consider=[&](Id candidate) {
+            if (a.cost(candidate)<a.cost(best) &&
+                expression_complexity(a,candidate)<=expression_complexity(a,best)) best=candidate;
+        };
+        consider(normalized);
+        Id expanded=Expansion(a,-1,4096,150000).run(normalized);
+        expanded=normalize_parameter_powers(a,expanded);
+        expanded=Expansion(a,-1,4096,150000).run(expanded);
+        std::size_t work=250000;
+        Id candidate=factor(a,expanded,0,&work);
+        candidate=collect_scalar_factors(a,candidate,3);
+        consider(candidate);
+        return best;
+    } catch (const TooLarge&) {
+        return input;
+    } catch (const std::length_error&) {
+        return input;
+    } catch (const std::overflow_error&) {
+        return input;
+    }
+}
+
 std::size_t expression_complexity(const Algebra& source, Id root) {
     Algebra trial(&source);
     try {

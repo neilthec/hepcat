@@ -76,6 +76,24 @@ int main() {
     if (compact_commuting_products(a,unknownRoot)!=unknownRoot)
         throw std::runtime_error("Removed a symbolic square root without a positivity assumption");
 
+
+    // Distinctly factored coupling powers multiply the same spin tensor.
+    // The sign of the symbolic square root is immaterial and stays opaque.
+    Id positiveRoot=a.call("Power",{a.integer(3),a.exact(mpq_class(1,2))});
+    Id gx=a.atom("couplingX"), gy=a.atom("couplingY");
+    Id composite=a.pow(a.mul({gx,gy}),-2);
+    Id separatedPowers=a.mul({a.pow(gx,-2),a.pow(gy,-2)});
+    auto cancellation=a.add({a.mul({a.pow(positiveRoot,2),composite,x}),
+                             a.mul({a.integer(-3),separatedPowers,x}), unknownRoot});
+    if (collect_parameter_monomials(a,cancellation)!=unknownRoot)
+        throw std::runtime_error("Cancellation of exact coupling and radical factors");
+
+    Id rootBlocks=a.add({a.pow(a.mul({gx,positiveRoot}),-1),
+                         a.mul({a.integer(-1),a.pow(gx,-1),
+                                a.call("Power",{a.integer(3),a.exact(mpq_class(-1,2))})})});
+    if (collect_parameter_monomials(a,rootBlocks)!=a.integer(0))
+        throw std::runtime_error("Different ways of writing the same inverse radical");
+
     // Repeated subcurrents can be large on paper and cheap to factor in the
     // shared expression tree. Extract a common factor from only two summands.
     Id current = spectator;

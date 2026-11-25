@@ -268,6 +268,7 @@ const amp_expression& amplitude::complete_high_energy(const amp_expression& expr
     Id compact = masses_.size() == 4 ? compact_commuting_products(trial, initial) : initial;
     compact = collect_scalar_factors(trial, compact, 3);
     compact = collect_simple_fractions(trial, compact);
+    compact = collect_parameter_monomials(trial, compact);
     if (compact != initial) result.set_from(trial, compact);
     high_energy_report_.nodes_after_final_reduction = result.leaf_count();
     return result;

@@ -125,7 +125,9 @@ amp_expression& amp_expression::reduce_with_factor_passes(unsigned passes) {
         if (passes > 1 && kinematics_->shells.empty()) {
             const auto original_size = arena_->size();
             Algebra trial(arena_.get());
-            root_ = retain_borrowed(*arena_, trial, collect_simple_fractions(trial, root_), original_size);
+            Id candidate=collect_simple_fractions(trial, root_);
+            candidate=collect_parameter_monomials(trial,candidate);
+            root_ = retain_borrowed(*arena_, trial, candidate, original_size);
         }
         reduced_=true;
     }
