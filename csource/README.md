@@ -203,6 +203,16 @@ For four massive vectors, the final reduction proposes shorter spinor tensors on
 
 ### Run the five-point Standard Model example in C++
 
+For five massive external vectors and scalars with three or four vector legs, the constructor
+can reconstruct missing single-pole numerators from the lower-point amplitudes. It chooses
+one scalar leg and sews the complete three- and four-point amplitudes in each channel whose
+two-leg side contains that scalar. Such channels cannot appear together in a five-point tree.
+It keeps the remaining elementary constructive diagrams and fits any missing residue with
+local spinor products over that channel's propagator. The fit varies masses and couplings
+through the model and checks the assembled expression on fresh exact cut samples. The
+usual high-energy completion and independent validations follow. The construction report
+calls this route `LocalSinglePoleNumerators`.
+
 The [five-point driver](../tests/SM-5-point-construction.cpp) uses model 1 for elementary interactions and model 2 for complete four-point subamplitudes. It enumerates the external states allowed by the model and checks the notebook inventory before calculating. `hepcat-sm-five-point --family eebarAhh` constructs both photon helicities of electron-positron annihilation into a photon and two Higgs bosons. Each helicity has seven residue checks. The driver checks signed amplitudes against Feynman diagrams and exports both helicities together for CalcHEP and MadGraph comparisons. The [five-point inventory](../tests/SM-5-point/README.md) gives the sector filters and output paths.
 
 ## Generate from HEPCAT model files

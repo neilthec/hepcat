@@ -1,5 +1,6 @@
 #include "amplitude.hpp"
 #include "four_point_numerators.hpp"
+#include "five_point_poles.hpp"
 #include "native_fit.hpp"
 #include "modular_fit.hpp"
 #include "continuations.hpp"
@@ -983,6 +984,13 @@ const amp_expression& amplitude::complete_factorization(const factorization_opti
     append(diagrams);
     append(user);
     if (auto answer = attempt("DiagramDirections", before)) return publish(*answer);
+
+    if (vertices_model_ && options.correction_basis.empty() &&
+        (references_ == generation_references::automatic || references_ == generation_references::physical))
+        if (auto answer = five_point_local_poles(a, *this, *vertices_model_, work.report)) {
+            work.report.route = "LocalSinglePoleNumerators";
+            return publish(*answer);
+        }
 
     // A sewn expression is constrained on its own cut. Carry it into the
     // full system only as a candidate off that cut. Some continuations (e.g.

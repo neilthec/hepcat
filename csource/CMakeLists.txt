@@ -9,7 +9,7 @@ find_library(GMP_LIBRARY gmp REQUIRED)
 
 add_library(hepcat_reduce
     model.cpp model_expression.cpp model_orbit.cpp model_parameters.cpp generation_plan.cpp generation_sew.cpp generation_spin.cpp generation_null.cpp
-    color_basis.cpp color_completion.cpp generation_current.cpp generation_feynman.cpp generation.cpp amplitude.cpp construct.cpp spinas_export.cpp external_export.cpp completion.cpp continuations.cpp null_shift.cpp residue.cpp
+    color_basis.cpp color_completion.cpp generation_current.cpp generation_feynman.cpp generation.cpp amplitude.cpp construct.cpp spinas_export.cpp external_export.cpp completion.cpp five_point_poles.cpp continuations.cpp null_shift.cpp residue.cpp
     high_energy.cpp high_energy_chart.cpp high_energy_contacts.cpp
     validation.cpp validation_checks.cpp validation_numeric.cpp validation_feynman.cpp
     validation_precision_chart.cpp validation_precision_parameters.cpp
@@ -106,6 +106,10 @@ if(BUILD_TESTING)
         add_test(NAME sm_five_point_scalar_radiation COMMAND hepcat-sm-five-point
                  --root "${HEPCAT_MODEL_ROOT}" --output "${CMAKE_CURRENT_BINARY_DIR}/Testing/sm-five-point"
                  --family eebarAhh --native-only --seed 511230)
+        add_test(NAME sm_five_point_vector_poles COMMAND hepcat-sm-five-point
+                 --root "${HEPCAT_MODEL_ROOT}" --output "${CMAKE_CURRENT_BINARY_DIR}/Testing/sm-five-point"
+                 --family WpWmWpWmh --native-only --points 10000 --seed 85891)
+        set_tests_properties(sm_five_point_vector_poles PROPERTIES LABELS integration)
         add_test(NAME sm_five_point_fermion_radiation COMMAND hepcat-sm-five-point
                  --root "${HEPCAT_MODEL_ROOT}" --output "${CMAKE_CURRENT_BINARY_DIR}/Testing/sm-five-point"
                  --family ebarneubardG --native-only --seed 511230)
