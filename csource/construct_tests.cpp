@@ -72,6 +72,20 @@ int main(int argc, char **argv) {
             "massless pole-free amplitude with negative energy dimension");
   }
 
+  // Both chiralities of the nonvanishing five-gluon tree require a
+  // simultaneous solution in the independent SU(3) components.
+  for (unsigned negative : {2u, 3u}) {
+    std::vector<std::string> legs(5, "G.+");
+    std::fill(legs.end() - negative, legs.end(), "G.-");
+    amplitude gluons(legs, sm, sm_cuts);
+    gluons.generate_diagrams(1).generate_factorization_products(1);
+    const auto &answer = gluons.complete_factorization(1);
+    const auto &fit = gluons.last_factorization();
+    require(answer.str() != "0" && answer.complexity() <= 14 &&
+                fit.route == "ColorCoefficients" && fit.rank > 0 && fit.validation_samples > 0,
+            "chiral five-vector completion from the lower-point amplitudes");
+  }
+
   process.add_diagram("0");
   options.pole_preference = generation_references::physical;
   process.construct(options);

@@ -402,6 +402,8 @@ or channel contributions. It can also change a polarization reference or shift
 two distinct massless legs to continue a sewn numerator off its original cut.
 For external states with a massless leg and a massive leg, the solver can also try a deformation transverse to both momenta. It builds the shift direction from the massless spinor and the massive momentum. The massive spinors transform with their little-group indices intact. Each trial includes every moving nonzero residue and is checked on all the original physical cuts, including stationary ones. Of the passing trials the solver prefers the lowest reduced complexity, breaking ties by expression size. High-energy, spurious-pole and signed checks still apply to the completed candidate.
 
+For massless adjoint vectors the solver can test cyclic bracket denominators. A bracket cycle has degree two on each leg. When the little-group weights and tree energy dimension fix a unique chiral numerator, the remaining unknowns are the coefficients of the cyclic orderings. The solver fits these coefficients separately for every independent color tensor using the model's signed lower-point products. Both chiralities of the nonzero five-gluon amplitude exercise this construction.
+
 A separate case occurs when all external states are massless and every sewn residue vanishes. A local contact polynomial has nonnegative energy degree. If the requested energy bound is negative, these conditions fix the amplitude to zero, provided no independent contact input was supplied.
 
 Workers assemble exact rational rows independently on different cuts. One

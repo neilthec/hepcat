@@ -11,6 +11,7 @@
 #include <exception>
 #include <functional>
 #include <map>
+#include <numeric>
 #include <set>
 #include <stdexcept>
 #include <thread>
@@ -468,6 +469,82 @@ struct completion {
     }
 };
 
+// A cyclic product of n brackets has degree two on every external spinor.
+// Little-group scaling fixes the numerator degrees. For a renormalizable
+// massless tree the numerator has mass dimension four. Try the case in
+// which these constraints leave a unique monomial. The coefficients of the
+// different orderings are determined independently for each color component.
+std::optional<Id> cyclic_spinor_fit(completion& work, const model& vertices,
+                                    const std::vector<std::string>& particles) {
+    auto& a = work.a;
+    if (particles.size() <= 4 || particles.size() > 6 || work.cuts.empty()) return {};
+    const auto& species = vertices.particle(particles.front());
+    if (species.mass != "0" || species.color != 8 || species.spin2 != 2) return {};
+    std::vector<int> positive, negative;
+    for (std::size_t i = 0; i < particles.size(); ++i) {
+        const auto& p = particles[i];
+        if ((p != species.name && p != species.antiname) || p.size() < 2 || p[p.size()-2] != '.')
+            return {};
+        if (p.back() == '+') positive.push_back(i + 1);
+        else if (p.back() == '-') negative.push_back(i + 1);
+        else return {};
+    }
+    const bool angle = negative.size() == 2;
+    const auto& weighted = angle ? negative : positive;
+    if (weighted.size() != 2) return {};
+    const auto kind = a.atom(angle ? "\"Angle\"" : "\"Square\"");
+    auto bracket = [&](int i, int j) {
+        auto end = [&](int leg) { return a.call("Spinor", {a.atom("\"Helicity\""), kind, a.integer(leg)}); };
+        return a.call("SpinorChain", {end(i), end(j)});
+    };
+    std::set<Id> couplings;
+    for (const auto& v : vertices.vertices())
+        if (v.legs.size() == 3 && std::all_of(v.legs.begin(), v.legs.end(), [&](const auto& p) {
+                return p == species.name || p == species.antiname;
+            }))
+            couplings.insert(a.parse(vertices.algebra().format(v.factor)));
+    if (couplings.empty()) return {};
+    completion trial(a);
+    trial.seed = trial.zero;
+    trial.cuts = work.cuts;
+    trial.report.workers = work.report.workers;
+    trial.next_sample = work.next_sample;
+    const auto numerator = a.pow(bracket(weighted[0], weighted[1]), 4);
+    const auto imag = a.atom("System`I");
+    std::set<Id> unique;
+    std::vector<int> order(particles.size());
+    std::iota(order.begin(), order.end(), 1);
+    // Fix the endpoints. Partial fractions of a cyclic product span all
+    // other orderings (the spinor Schouten identity). If this space cannot
+    // reproduce the supplied residues, ordinary completion still applies.
+    do {
+        std::vector<Id> factors;
+        for (std::size_t i = 0; i < order.size(); ++i)
+            factors.push_back(a.pow(bracket(order[i], order[(i + 1) % order.size()]), -1));
+        const auto kernel = a.mul({numerator, a.mul(std::move(factors))});
+        for (auto coupling : couplings) {
+            auto term = a.mul({kernel, a.pow(coupling, static_cast<int>(order.size()) - 2)});
+            for (auto column : {term, a.mul({imag, term})})
+                if (unique.insert(column).second) trial.basis.push_back(column);
+        }
+    } while (std::next_permutation(order.begin() + 1, order.end() - 1));
+    std::optional<Id> result;
+    try {
+        result = trial.fit("CyclicSpinorNumerators");
+    } catch (const residue_singular&) {
+    } catch (const residue_unsupported&) {
+    }
+    work.next_sample = trial.next_sample;
+    work.report.training_samples += trial.report.training_samples;
+    work.report.validation_samples += trial.report.validation_samples;
+    if (result) {
+        work.report.route = trial.report.route;
+        work.report.rank = trial.report.rank;
+        work.report.candidates = trial.report.candidates;
+    }
+    return result;
+}
+
 // For a single radiated massless vector, the orbital current contains a
 // two-momentum sandwich with the same massless spinor at both ends. Its spin
 // term contains bare brackets. Try those directions sharing a hard bracket
@@ -820,6 +897,10 @@ const amp_expression& amplitude::complete_factorization(const factorization_opti
         work.report.route = "MassiveShiftedChannelSum";
         return best->import_into(a);
     };
+    auto cyclic_fit = [&]() -> std::optional<Id> {
+        if (!vertices_model_ || !options.correction_basis.empty()) return {};
+        return cyclic_spinor_fit(work, *vertices_model_, particles_);
+    };
     std::exception_ptr singular_seed;
     try {
         if (work.verified(work.seed)) {
@@ -827,15 +908,18 @@ const amp_expression& amplitude::complete_factorization(const factorization_opti
             return publish(work.seed);
         }
     } catch (const residue_singular&) {
+        if (auto answer = cyclic_fit()) return publish(*answer);
         if (auto answer = massive_shift()) return publish(*answer);
         throw;
     } catch (const residue_unsupported&) {
         if (masses_.size() != 4 || !vertices_model_) {
+            if (auto answer = cyclic_fit()) return publish(*answer);
             if (auto answer = massive_shift()) return publish(*answer);
             throw;
         }
         singular_seed = std::current_exception();
     }
+    if (auto answer = cyclic_fit()) return publish(*answer);
     // At four points a reference chosen on one diagram can create a double
     // pole on another diagram's cut. Fit a simple-pole numerator directly
     // against the *own-cut* lower-point products in that situation.
