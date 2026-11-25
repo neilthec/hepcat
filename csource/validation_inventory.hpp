@@ -14,4 +14,7 @@ struct cut_inventory {
     std::vector<Id> other_denominators;
 };
 cut_inventory validation_inventory(Algebra&, const amplitude&, const amp_expression&);
+// Test cancellation of additional kinematic denominators on conserved charts.
+check_outcome locality_status(Algebra&, const cut_inventory&, const validation_parameter_points&,
+                              std::size_t sample_offset);
 } // namespace hepcat::validation_detail

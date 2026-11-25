@@ -56,17 +56,17 @@ Cut prop_key(const Algebra& a, Id id) {
     return key(a, std::move(legs), args[1]);
 }
 
+Id propagator(Algebra& a, const Cut& cut) {
+    std::vector<Id> labels;
+    for (int leg : cut.first) labels.push_back(a.integer(leg));
+    return a.call("PropDen", {a.call("Mom", {a.call("Multiparticle", std::move(labels))}), cut.second});
+}
+
 class expressions {
     Algebra& a;
     std::unordered_map<Id, Id> normal;
     std::unordered_map<Id, bool> kinematic, singular;
 
-    Id propagator(const Cut& cut) {
-        std::vector<Id> labels;
-        for (int leg : cut.first)
-            labels.push_back(a.integer(leg));
-        return a.call("PropDen", {a.call("Mom", {a.call("Multiparticle", std::move(labels))}), cut.second});
-    }
 
     std::vector<int> invariant_legs(Id id) {
         const auto& n = a.node(id);
@@ -130,14 +130,14 @@ class expressions {
                 break;
             }
         }
-        if (!legs.empty()) return propagator(key(a, std::move(legs), mass));
+        if (!legs.empty()) return propagator(a, key(a, std::move(legs), mass));
         if (n.head == "MomProd" && n.args.size() == 2 && a.masses().size() >= 4) {
             int i = a.leg(n.args[0]), j = a.leg(n.args[1]);
             if (i < 1 || j < 1 || i == j || static_cast<std::size_t>(std::max(i, j)) > a.masses().size())
                 return id;
             Id m1 = a.masses()[i - 1], m2 = a.masses()[j - 1];
             if (m1 == mass || m2 == mass)
-                return a.mul({a.exact(Q(1, 2)), propagator(key(a, {i, j}, m1 == mass ? m2 : m1))});
+                return a.mul({a.exact(Q(1, 2)), propagator(a, key(a, {i, j}, m1 == mass ? m2 : m1))});
         }
         return id;
     }
@@ -164,7 +164,7 @@ class expressions {
                 }
             }
             result = a.call(n.head, std::move(args));
-            if (n.head == "PropDen") result = propagator(prop_key(a, result));
+            if (n.head == "PropDen") result = propagator(a, prop_key(a, result));
         }
         normal.emplace(id, result);
         return result;
@@ -309,6 +309,26 @@ void add_poles(const Algebra& a, Id id, std::map<Cut, Id>& targets, Id zero) {
             scan(child);
     };
     scan(id);
+}
+
+std::vector<Id> other_denominators(Algebra& a, expressions& trees, Id root) {
+    std::set<Id> extras;
+    std::function<void(Id)> denominator = [&](Id base) {
+        const auto& factor = a.node(base);
+        if (factor.head == "Times") {
+            for (Id child : factor.args)
+                denominator(child);
+        } else if (factor.head != "PropDen" && trees.has_kinematics(base)) {
+            extras.insert(base);
+        }
+    };
+    contains(a, root, [&](const Node& n) {
+        Q exponent;
+        if (n.head == "Power" && n.args.size() == 2 && a.number(n.args[1], exponent) && exponent < 0)
+            denominator(n.args[0]);
+        return false;
+    });
+    return {extras.begin(), extras.end()};
 }
 
 struct channel {
@@ -723,32 +743,11 @@ validation_detail::cut_inventory validation_detail::validation_inventory(Algebra
     add_poles(a, root, targets, zero);
     cut_inventory out{root, {}, {}};
     for (const auto& [cut, target] : targets) {
-        std::vector<Id> slots;
-        for (int leg : cut.first)
-            slots.push_back(a.integer(leg));
-        auto p = a.call("Mom", {a.call("Multiparticle", std::move(slots))});
-        out.channels.push_back({{cut.first, a.format(cut.second)},
-                                a.call("PropDen", {p, cut.second}),
+        out.channels.push_back({{cut.first, a.format(cut.second)}, propagator(a, cut),
                                 target,
                                 supplied.count(cut) != 0, model_cuts.count(cut) != 0});
     }
-    std::set<Id> extras;
-    std::function<void(Id)> denominator = [&](Id base) {
-        const auto& factor = a.node(base);
-        if (factor.head == "Times") {
-            for (Id child : factor.args)
-                denominator(child);
-        } else if (factor.head != "PropDen" && trees.has_kinematics(base)) {
-            extras.insert(base);
-        }
-    };
-    contains(a, root, [&](const Node& n) {
-        Q exponent;
-        if (n.head == "Power" && n.args.size() == 2 && a.number(n.args[1], exponent) && exponent < 0)
-            denominator(n.args[0]);
-        return false;
-    });
-    out.other_denominators.assign(extras.begin(), extras.end());
+    out.other_denominators = other_denominators(a, trees, root);
     return out;
 }
 
@@ -837,19 +836,35 @@ const amp_expression& amplitude::complete_factorization(const factorization_opti
     work.report.channels = work.cuts.size();
     auto workers = options.workers ? options.workers : std::max(1u, std::thread::hardware_concurrency());
     work.report.workers = std::min(workers, work.cuts.size());
-    auto publish = [&](Id answer) -> const amp_expression& {
-        amp_expression result("0", masses_);
-        result.set_from(a, answer);
-        construction_.reset();
-        completed_ = std::move(result);
-        high_energy_result_.reset();
-        before_final_reduction_.reset();
-        report_ = std::move(work.report);
-        return *completed_;
-    };
     if (products_.empty() && trees.has_pole(work.seed))
         throw residue_unsupported("a pole-bearing amplitude requires physical factorization channels");
-    auto massive_shift = [&]() -> std::optional<Id> {
+    const auto light_count = std::count(a.masses().begin(), a.masses().end(), zero);
+    const bool mixed_kinematics = vertices_model_ && masses_.size() > 4 && light_count > 0 &&
+                                  static_cast<std::size_t>(light_count) < masses_.size();
+    auto locality = [&](Algebra& arena, Id candidate) {
+        expressions normalized(arena);
+        Id root = normalized.canonical(candidate);
+        validation_detail::cut_inventory channels{root, {}, other_denominators(arena, normalized, root)};
+        if (channels.other_denominators.empty()) return check_outcome::pass;
+        // Clear each supplied propagator once, including channels whose net residue is zero.
+        // Locality uses only these denominators and the candidate, without importing the diagrams again.
+        std::set<Cut> supplied;
+        for (const auto& item : products)
+            supplied.insert(key(arena, item.channel.legs, normalized.canonical(arena.parse(item.channel.mass))));
+        for (const auto& cut : supplied)
+            channels.channels.push_back({{cut.first, arena.format(cut.second)}, propagator(arena, cut),
+                                         zero, true, true});
+        try {
+            high_energy_options settings;
+            bind_model_parameters(arena, root, settings, true);
+            return validation_detail::locality_status(arena, channels, settings.parameter_points, 74253);
+        } catch (const std::invalid_argument&) {
+            return check_outcome::unresolved;
+        } catch (const std::runtime_error&) {
+            return check_outcome::unresolved;
+        }
+    };
+    auto massive_shift = [&](bool require_local = false) -> std::optional<Id> {
         if (!vertices_model_ || masses_.size() <= 4) return {};
         std::optional<amp_expression> best;
         std::pair<std::size_t, std::size_t> best_size;
@@ -885,6 +900,7 @@ const amp_expression& amplitude::complete_factorization(const factorization_opti
                     }
                     amp_expression raw(trial, sum, masses_), reduced = raw;
                     reduced.reduce();
+                    if (require_local && locality(trial, reduced.import_into(trial)) != check_outcome::pass) continue;
                     auto score = std::make_pair(reduced.complexity(), reduced.leaf_count());
                     if (!best || score < best_size) {
                         best = std::move(raw);
@@ -894,8 +910,27 @@ const amp_expression& amplitude::complete_factorization(const factorization_opti
             }
         }
         if (!best) return {};
-        work.report.route = "MassiveShiftedChannelSum";
+        work.report.route = require_local ? "LocalShiftedChannelSum" : "MassiveShiftedChannelSum";
         return best->import_into(a);
+    };
+    auto publish = [&](Id answer) -> const amp_expression& {
+        amp_expression result("0", masses_);
+        result.set_from(a, answer);
+        // Physical residues leave open rational boundary terms. If a conserved
+        // chart exhibits a finite spurious pole, try a different continuation
+        // before the high-energy stage and the independent Feynman comparison.
+        if (mixed_kinematics) {
+            Algebra probe(&a);
+            probe.setKinematics(a.masses(), {});
+            if (locality(probe, answer) == check_outcome::fail)
+                if (auto local = massive_shift(true)) result.set_from(a, *local);
+        }
+        construction_.reset();
+        completed_ = std::move(result);
+        high_energy_result_.reset();
+        before_final_reduction_.reset();
+        report_ = std::move(work.report);
+        return *completed_;
     };
     auto cyclic_fit = [&]() -> std::optional<Id> {
         if (!vertices_model_ || !options.correction_basis.empty()) return {};

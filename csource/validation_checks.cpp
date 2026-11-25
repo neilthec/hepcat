@@ -207,6 +207,12 @@ template <class T, class F> builtin_check components(const std::set<T>& versions
 }
 } // namespace
 
+check_outcome validation_detail::locality_status(Algebra& a, const cut_inventory& inventory,
+                                                  const validation_parameter_points& parameters,
+                                                  std::size_t offset) {
+    return spurious(a, inventory, assignments(a, parameters), offset).status;
+}
+
 std::vector<builtin_check> native_builtin_checks(const amplitude& process, const amp_expression& expression,
                                                  int bound,
                                                  const validation_parameter_points& parameter_points,
