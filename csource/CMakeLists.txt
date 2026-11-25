@@ -38,6 +38,19 @@ target_link_libraries(hepcat-qed-helicity-partners PRIVATE hepcat_reduce)
 add_executable(hepcat-sm-four-point ../tests/SM-4-point-construction.cpp)
 target_link_libraries(hepcat-sm-four-point PRIVATE hepcat_reduce)
 
+find_package(Python3 3.8 QUIET COMPONENTS Interpreter)
+if(Python3_Interpreter_FOUND)
+    set(sm5_dir "${CMAKE_CURRENT_SOURCE_DIR}/../tests/SM-5-point")
+    set(sm5_inventory "${CMAKE_CURRENT_BINARY_DIR}/sm-five-point-inventory.inc")
+    add_custom_command(OUTPUT "${sm5_inventory}"
+        COMMAND "${Python3_EXECUTABLE}" "${sm5_dir}/native-inventory.py"
+                "${sm5_dir}/inventory.json" "${sm5_inventory}"
+        DEPENDS "${sm5_dir}/native-inventory.py" "${sm5_dir}/inventory.json" VERBATIM)
+    add_executable(hepcat-sm-five-point ../tests/SM-5-point-construction.cpp "${sm5_inventory}")
+    target_link_libraries(hepcat-sm-five-point PRIVATE hepcat_reduce)
+    target_include_directories(hepcat-sm-five-point PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
+endif()
+
 add_executable(hepcat-derive-example ../tests/Spinor-identity-derivation.cpp)
 target_include_directories(hepcat-derive-example SYSTEM PRIVATE ${GMP_INCLUDE_DIR})
 target_link_libraries(hepcat-derive-example PRIVATE hepcat_reduce)
@@ -84,8 +97,8 @@ if(BUILD_TESTING)
     target_link_libraries(hepcat-check-qed-catalog PRIVATE hepcat_reduce)
     add_test(NAME qed_factorization_catalog COMMAND hepcat-check-qed-catalog "${HEPCAT_MODEL_ROOT}")
     add_test(NAME sm_four_point_inventory COMMAND hepcat-sm-four-point --root "${HEPCAT_MODEL_ROOT}" --list)
-    find_package(Python3 3.8 QUIET COMPONENTS Interpreter)
     if(Python3_Interpreter_FOUND)
+        add_test(NAME sm_five_point_inventory COMMAND hepcat-sm-five-point --root "${HEPCAT_MODEL_ROOT}" --list)
         add_test(NAME sm_four_point_receipts COMMAND "${Python3_EXECUTABLE}" -B
                  "${HEPCAT_MODEL_ROOT}/tests/benchmarks/native-sm-four-point/test-audit-results.py")
     endif()

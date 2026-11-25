@@ -35,6 +35,39 @@ The number of fermions is always explicit. Massive spins and fixed chiral
 neutrinos are retained in the amplitude; only photon/gluon helicities are
 separate construction cases.
 
+## Construct and validate in C++
+
+Build the [five-point example](../SM-5-point-construction.cpp) from the repository root.
+The C++ executable reads model 1 for elementary vertices and model 2 for complete
+lower-point amplitudes. It independently enumerates both five-leg tree topologies
+and checks the notebook inventory before running a family.
+
+```sh
+cmake -S csource -B tests/results/native-reduce-build -DCMAKE_BUILD_TYPE=Release
+cmake --build tests/results/native-reduce-build --target hepcat-sm-five-point
+tests/results/native-reduce-build/hepcat-sm-five-point --list
+tests/results/native-reduce-build/hepcat-sm-five-point --family eebarAhh
+```
+
+Use `--sector TwoFermionHiggs` for a sector, or omit the selection to work through
+the entire list. Each family uses one worker by default. The program constructs and
+reduces every helicity multiset independently, checks the physical residues,
+spurious poles and high-energy behavior, and compares the signed amplitudes to the
+independent Feynman calculation. Each complete family also runs CalcHEP for the
+polarization sum and MadGraph for the labeled photon/gluon helicities and their
+sum. The numerical comparisons default to 100,000 points. Use `--seed N` to
+repeat a draw. The seed also appears in the saved comparisons.
+
+Each invocation prints its directory under `tests/results/spinas-output/SM-5-point`.
+A family's directory contains the validated native expressions in exact C++ input,
+plain text, LaTeX and Mathematica syntax and the numerical reports. `results.tsv`
+records the complexity, expression size and separate external outcomes.
+`NATIVE_PASS` records a case's signed and built-in checks. `EXTERNAL_PASS` records
+both independent programs for the complete family. A missing result, interrupted
+run or timeout leaves the calculation open for six-point use. To repeat a case in
+isolation use `--case ID --native-only`. To restart a family sweep use
+`--start-at FAMILY`. Each invocation keeps the earlier run directories intact.
+
 ## Enumeration and generation relations
 
 A five-leg tree can have three cubic vertices or one cubic and one quartic
