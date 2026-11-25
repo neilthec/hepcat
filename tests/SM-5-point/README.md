@@ -87,6 +87,14 @@ This runs one C++ process at a time and skips families with complete retained
 comparisons at the requested point count. A failed family keeps its diagnostic
 report and the sweep continues. Use `--sector FourFermionGluon` to finish one
 sector first. Running the C++ executable directly always makes a fresh calculation.
+For an exploratory sweep, add `--stage-seconds 180` to move to the next family if
+one construction stage exceeds three minutes. That family stays pending. Signed
+physics checks, precision replays and external validations can run to completion.
+Omitting the option gives every construction stage unlimited time.
+
+For identical external fermions the plain-text and LaTeX outputs can display
+one summand with its antisymmetrizations. The C++ driver prints the summand's
+complexity alongside the complexity of the full amplitude when it finds this form.
 
 For a check that is sensitive to the mass dependence of the constructor, run
 `--family eebarmmbarh`. Some of its ten physical cuts relate the weak couplings

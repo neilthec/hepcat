@@ -4,8 +4,11 @@ import collections
 import csv
 import itertools
 import json
+import queue
 import re
 import subprocess
+import threading
+import time
 from pathlib import Path
 
 
@@ -100,6 +103,51 @@ def collect(results, families, points):
     return native, full
 
 
+def run_family(command, stage_seconds):
+    if stage_seconds is None:
+        return subprocess.run(command).returncode
+    stages = {"Generate and reduce", "Complete factorization", "Complete high energy and reduce"}
+    lines = queue.Queue()
+    with subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                          text=True, bufsize=1) as process:
+        def read_lines():
+            try:
+                for line in process.stdout:
+                    lines.put(line)
+            finally:
+                lines.put(None)
+
+        reader = threading.Thread(target=read_lines, daemon=True)
+        reader.start()
+        deadline = None
+        try:
+            while True:
+                try:
+                    timeout = None if deadline is None else max(0, deadline - time.monotonic())
+                    line = lines.get(timeout=timeout)
+                except queue.Empty:
+                    process.terminate()
+                    print(f"Construction time limit reached during {stage}. Family remains open.", flush=True)
+                    return 124
+                if line is None:
+                    return process.wait()
+                print(line, end="", flush=True)
+                if line.strip() in stages:
+                    stage = line.strip()
+                    deadline = time.monotonic() + stage_seconds
+                elif line.strip() == "Validate":
+                    deadline = None
+        finally:
+            if process.poll() is None:
+                process.terminate()
+            try:
+                process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                process.wait()
+            reader.join()
+
+
 def main():
     here = Path(__file__).resolve().parent
     parser = argparse.ArgumentParser(description=__doc__)
@@ -110,6 +158,8 @@ def main():
     action.add_argument("--run-pending", type=Path, metavar="EXECUTABLE",
                         help="Run the C++ constructor on each outstanding family, one at a time")
     parser.add_argument("--sector", help="Select one notebook sector")
+    parser.add_argument("--stage-seconds", type=int, metavar="SECONDS",
+                        help="Move on if one construction stage exceeds this time. Validation runs to completion.")
     parser.add_argument("--seed", type=int, help="Use a reproducible seed for new calculations")
     parser.add_argument("--cmake", type=Path, help="CMake executable for the external checks")
     parser.add_argument("--calchep", type=Path, help="CalcHEP installation")
@@ -126,6 +176,8 @@ def main():
             parser.error("Unknown sector " + args.sector)
     native, full = collect(args.results, families, args.points)
     pending = [f for n, f in families.items() if n not in full]
+    if args.stage_seconds is not None and (not args.run_pending or args.stage_seconds < 1):
+        parser.error("--stage-seconds requires --run-pending and a positive number of seconds")
     if args.run_pending:
         runner = args.run_pending.resolve(strict=True)
         command = [str(runner), "--root", str(here.parents[1]), "--output", str(args.results.resolve()),
@@ -137,10 +189,10 @@ def main():
         failed = 0
         for index, family in enumerate(pending, 1):
             print(f"\nFamily {index}/{len(pending)}   {family['Sector']}   {family['ExportName']}", flush=True)
-            result = subprocess.run([*command, "--family", family["ID"]])
-            if result.returncode:
+            code = run_family([*command, "--family", family["ID"]], args.stage_seconds)
+            if code:
                 failed += 1
-                print(f"Family remains open (exit {result.returncode}).", flush=True)
+                print(f"Family remains open (exit {code}).", flush=True)
         print(f"{len(pending)} families attempted, {failed} remain open from this sweep.")
         return int(failed != 0)
     if args.pending:

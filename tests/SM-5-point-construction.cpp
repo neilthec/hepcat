@@ -51,7 +51,7 @@ std::string species(const std::string &p) { return p.substr(0,p.find('.')); }
 legs sorted(legs v) { std::sort(v.begin(),v.end()); return v; }
 
 struct settings {
-    fs::path root = fs::current_path(), output, spinas;
+    fs::path root, output, spinas;
     std::string family, sector, start, case_id;
     bool list = false, list_cases = false, native_only = false;
     std::size_t workers = 1;
@@ -99,6 +99,15 @@ settings options(int argc, char **argv) {
     }
     if (!s.case_id.empty() && !s.native_only && !s.list && !s.list_cases)
         throw std::invalid_argument("Use --native-only with --case. External comparisons require the full family.");
+    if (s.root.empty()) {
+        s.root=fs::current_path();
+        while (!fs::is_regular_file(s.root/"models/amps1.mdl")) {
+            const auto parent=s.root.parent_path();
+            if (parent==s.root)
+                throw std::invalid_argument("Specify the HEPCAT checkout with --root DIR");
+            s.root=parent;
+        }
+    }
     s.root=fs::canonical(s.root);
     if (s.external.points<10000) throw std::invalid_argument("Use at least 10,000 points");
     if (!s.external.seed) s.external.seed=std::chrono::system_clock::now().time_since_epoch().count();
@@ -242,6 +251,8 @@ bool run_family(const family &rows,const settings &s,const model &sm,const model
             std::cout<<"    Complexity "<<amp.complexity()<<", "<<amp.leaf_count()<<" leaves, "
                      <<notebook_output::seconds(report.total_seconds)<<" total. Factorization: "
                      <<process.last_factorization().route<<std::endl;
+            if (const auto weight=amp.permutation_summand_complexity())
+                std::cout<<"    Complexity of the displayed permutation summand: "<<*weight<<std::endl;
             ledger<<row->id<<'\t'<<f.name<<"\tNATIVE_PASS\t"<<amp.complexity()<<'\t'<<amp.leaf_count()
                   <<'\t'<<report.total_seconds<<"\t\t"<<std::endl;
             notebook_output::print_validation(report.validation);
