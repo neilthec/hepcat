@@ -22,7 +22,7 @@ struct high_energy_fit {
     Algebra& a;
     Id seed;
     std::optional<Id> expanded_seed;
-    std::vector<point> bindings;
+    std::vector<point> bindings, confirmation;
     high_energy_report report;
     std::size_t index = 0, workers = 1;
     std::vector<Id> basis;
@@ -50,13 +50,14 @@ struct high_energy_fit {
     template <class F> auto charts(std::size_t count, F evaluate, bool validation) {
         using result_type = decltype(evaluate(std::size_t{}, std::declval<const point&>()));
         std::vector<result_type> out(count);
+        const auto& parameters = validation && !confirmation.empty() ? confirmation : bindings;
         auto threads = std::min(count, workers);
         report.workers = std::max(report.workers, threads);
         fit_detail::parallel_indices(count, threads, [&](std::size_t j) {
             auto ordinal = index + j;
             for (std::size_t retry = 0;; ++retry) {
                 try {
-                    out[j] = evaluate(ordinal * 128 + retry, bindings[ordinal % bindings.size()]);
+                    out[j] = evaluate(ordinal * 128 + retry, parameters[ordinal % parameters.size()]);
                     break;
                 } catch (const residue_singular&) {
                     if (retry >= 127) throw;
@@ -70,15 +71,16 @@ struct high_energy_fit {
     bool validate(Id value) {
         // Four different conserved directions at every supplied parameter
         // point. Spin projections vary independently across these directions.
+        auto parameter_count = confirmation.empty() ? bindings.size() : confirmation.size();
         auto tests = charts(
-            std::max<std::size_t>(4, 4 * bindings.size()),
+            std::max<std::size_t>(4, 4 * parameter_count),
             [&](std::size_t i, const point& p) {
                 return high_energy_chart_rows(a, {value}, report.bound, i, p).empty() ? 1 : 0;
             },
             true);
         if (!std::all_of(tests.begin(), tests.end(), [](int v) { return v != 0; })) return false;
         auto spin = charts(
-            std::max<std::size_t>(2, bindings.size()),
+            std::max<std::size_t>(2, parameter_count),
             [&](std::size_t i, const point& p) {
                 return high_energy_validate_chart(a, value, report.bound, i, p);
             },
@@ -186,6 +188,9 @@ const high_energy_report& amplitude::last_high_energy() const {
     return high_energy_report_;
 }
 void amplitude::bind_model_parameters(Algebra& a, Id seed, high_energy_options& settings, bool include_targets) const {
+    bind_model_parameters(a, seed, settings, include_targets, 1);
+}
+void amplitude::bind_model_parameters(Algebra& a, Id seed, high_energy_options& settings, bool include_targets, unsigned first_variant) const {
     std::vector<Id> roots{seed};
     for (Id mass : a.masses())
         roots.push_back(mass);
@@ -215,7 +220,7 @@ void amplitude::bind_model_parameters(Algebra& a, Id seed, high_energy_options& 
     std::set<std::string> scopes, resolved;
     for (const auto* source : {&vertices_model_, &channels_model_}) {
         if (!*source || !scopes.insert((*source)->parameter_scope()).second) continue;
-        auto points = (*source)->high_energy_parameter_points(active);
+        auto points = (*source)->high_energy_parameter_points(active, first_variant);
         if (points.empty()) continue;
         for (const auto& pair : points[0])
             resolved.insert(pair.first);
@@ -312,6 +317,19 @@ const amp_expression& amplitude::complete_energy_components(const amp_expression
     // set to zero in this ordered basis.
     std::stable_sort(work.basis.begin(), work.basis.end(), [&](Id x, Id y) { return a.cost(x) < a.cost(y); });
     if (work.validate(seed)) return publish(seed, "Unchanged");
+    // A local spin tensor may admit many scalar prefactors with the same dimension.
+    // Vary model inputs during fitting and reserve further assignments for testing
+    // so constants fitted at a few masses cannot imitate a symbolic mass ratio.
+    if (vertices_model_ && options.parameter_points.empty() && !settings.parameter_points.empty()) {
+        auto additional_bindings = [&](unsigned first) {
+            high_energy_options extra;
+            bind_model_parameters(a, seed, extra, false, first);
+            return high_energy_fit(a, seed, extra).bindings;
+        };
+        auto extra = additional_bindings(4);
+        work.bindings.insert(work.bindings.end(), extra.begin(), extra.end());
+        work.confirmation = additional_bindings(7);
+    }
     if (!work.basis.empty())
         if (auto x = work.solve("ContactBasis", true)) return publish(*x);
     std::size_t before = work.basis.size();
@@ -381,8 +399,13 @@ const amp_expression& amplitude::complete_energy_components(const amp_expression
     }
     if (work.basis.size() > before)
         if (auto x = work.solve("InputContacts")) return publish(*x);
-    auto contacts = high_energy_contact_catalog(a, seed);
+    std::vector<Id> declared_masses;
+    if (vertices_model_)
+        for (const auto& particle : vertices_model_->particles())
+            declared_masses.push_back(a.parse(particle.mass));
+    auto contacts = high_energy_contact_catalog(a, seed, declared_masses);
     for (auto stage : {std::make_pair("PolarizationContacts", &contacts.polarization),
+                       std::make_pair("ModelWeightedContacts", &contacts.model_weighted),
                        std::make_pair("LocalSpinorContacts", &contacts.minimal),
                        std::make_pair("LocalMassRatios", &contacts.extended)}) {
         before = work.basis.size();

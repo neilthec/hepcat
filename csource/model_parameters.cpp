@@ -85,6 +85,9 @@ class assignments {
 };
 } // namespace
 model::parameter_points model::high_energy_parameter_points(const std::vector<std::string>& keys) const {
+    return high_energy_parameter_points(keys, 1);
+}
+model::parameter_points model::high_energy_parameter_points(const std::vector<std::string>& keys, unsigned first_variant) const {
     if (keys.empty()) return {};
     const auto& arena = algebra();
     std::unordered_map<Id, definition> definitions;
@@ -116,8 +119,8 @@ model::parameter_points model::high_energy_parameter_points(const std::vector<st
     }
     if (active.empty()) return {};
     parameter_points points;
-    for (unsigned k = 1; k <= 3; ++k) {
-        assignments sample(arena, definitions, k);
+    for (unsigned k = 0; k < 3; ++k) {
+        assignments sample(arena, definitions, first_variant + k);
         auto& point = points.emplace_back();
         for (Id id : active) {
             try {

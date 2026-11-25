@@ -714,13 +714,17 @@ auto sample_cut(const Algebra& algebra, const numerator_shell& channel, const st
 } // namespace
 
 std::vector<mpq_class> residue_sample(const Algebra& a, const numerator_shell& cut,
-                                      const std::vector<Id>& expressions, std::size_t sample) {
-    return sample_cut(a, cut, expressions, sample, {}, [](const Chart& chart, const Scalar& s) {
+                                      const std::vector<Id>& expressions, std::size_t sample,
+                                      const std::map<Id, mpq_class>& parameters) {
+    return sample_cut(a, cut, expressions, sample, parameters, [](const Chart& chart, const Scalar& s) {
         Q result = 0;
         for (unsigned j = 0; j < 4; ++j)
             result += chart.projection[j] * s.c[j];
         return result;
     });
+}
+std::vector<mpq_class> residue_sample(const Algebra& a, const numerator_shell& cut, const std::vector<Id>& expressions, std::size_t sample) {
+    return residue_sample(a, cut, expressions, sample, {});
 }
 std::vector<std::array<mpq_class, 4>> residue_components(const Algebra& a, const numerator_shell& cut,
                                                          const std::vector<Id>& expressions,

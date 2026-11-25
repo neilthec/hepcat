@@ -20,8 +20,10 @@ struct residue_unsupported : std::runtime_error {
 // must already be declared in algebra. Independent sample indices vary the
 // external spin states, little-group scales, kinematics and scalar parameters.
 // No contour factor or sewing sign is included here.
+std::vector<mpq_class> residue_sample(const Algebra&, const numerator_shell&, const std::vector<Id>&, std::size_t);
 std::vector<mpq_class> residue_sample(const Algebra& algebra, const numerator_shell& channel,
-                                      const std::vector<Id>& expressions, std::size_t sample);
+                                      const std::vector<Id>& expressions, std::size_t sample,
+                                      const std::map<Id, mpq_class>& parameters);
 
 // Independent verification compares all coefficients in Q(sqrt(2),i).
 std::vector<std::array<mpq_class, 4>> residue_components(const Algebra&, const numerator_shell&,

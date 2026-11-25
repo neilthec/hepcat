@@ -88,6 +88,13 @@ comparisons at the requested point count. A failed family keeps its diagnostic
 report and the sweep continues. Use `--sector FourFermionGluon` to finish one
 sector first. Running the C++ executable directly always makes a fresh calculation.
 
+For a check that is sensitive to the mass dependence of the constructor, run
+`--family eebarmmbarh`. Some of its ten physical cuts relate the weak couplings
+and the masses of the vector bosons. The native solver retains those relations
+when it fits the residues and the high-energy correction. The regression
+`sm_five_point_parameters` reuses the resulting symbolic amplitude at a changed
+weak mixing angle, with both equal and unequal charged-lepton masses.
+
 ## Enumeration and generation relations
 
 A five-leg tree can have three cubic vertices or one cubic and one quartic

@@ -51,6 +51,9 @@ class model {
     // scope belongs to another model and is omitted from the returned points.
     using parameter_points = std::vector<std::vector<std::pair<std::string, std::string>>>;
     parameter_points high_energy_parameter_points(const std::vector<std::string>& active_parameters) const;
+    // The second overload selects three consecutive deterministic model assignments.
+    parameter_points high_energy_parameter_points(const std::vector<std::string>& active_parameters,
+                                                  unsigned first_variant) const;
 
   private:
     struct data;

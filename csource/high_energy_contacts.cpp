@@ -378,7 +378,7 @@ class catalog_builder {
         std::stable_sort(result.begin(), result.end(), [&](Id x, Id y) { return a.cost(x) < a.cost(y); });
         return result;
     }
-    contact_catalog generate(Id seed) {
+    contact_catalog generate(Id seed, const std::vector<Id>& model_masses) {
         contact_catalog result;
         try {
             auto w = signature(seed), left = w;
@@ -398,6 +398,8 @@ class catalog_builder {
             if (endpoints % 2 || endpoints > 16) return result;
             std::set<Id> seen;
             mass_labels(seed, seen);
+            for (Id mass : model_masses)
+                if (mass != zero) masses.insert(mass);
             auto factors = coefficients(seed);
             int degree = 4 - int(w.size()) - endpoints / 2;
             Id scale = zero;
@@ -407,11 +409,12 @@ class catalog_builder {
                     break;
                 }
             if (scale == zero && !masses.empty()) scale = *masses.begin();
-            std::set<Id> simple, extended;
+            std::set<Id> simple, extended, from_source;
             for (Id f : factors) {
                 if (degree == 0 || scale != zero)
                     simple.insert(a.mul({strip_masses(f), degree ? a.pow(scale, degree) : one}));
                 int delta = degree - dimension(f);
+                if (!model_masses.empty() && delta == 0) from_source.insert(f);
                 if (delta == 0 || scale != zero) extended.insert(a.mul({f, delta ? a.pow(scale, delta) : one}));
             }
             auto append = [&](std::vector<Id>& target, const shapes& basis, const std::set<Id>& scalars) {
@@ -428,6 +431,7 @@ class catalog_builder {
             shapes contractions;
             std::vector<edge> edges;
             pairings(w, left, edges, contractions);
+            append(result.model_weighted, contractions, from_source);
             append(result.minimal, contractions, simple);
             append(result.extended, contractions, extended);
         } catch (const unsupported_catalog&) {
@@ -448,7 +452,7 @@ std::optional<std::vector<int>> external_spin_weights(Algebra& a, Id expression)
         return {};
     }
 }
-contact_catalog high_energy_contact_catalog(Algebra& a, Id seed) { return catalog_builder(a).generate(seed); }
+contact_catalog high_energy_contact_catalog(Algebra& a, Id seed, const std::vector<Id>& masses) { return catalog_builder(a).generate(seed, masses); }
 std::vector<Id> four_point_numerators(Algebra& a, Id source, const std::vector<Id>& poles,
                                       const std::vector<Id>& model_masses, unsigned insertions) {
     try {

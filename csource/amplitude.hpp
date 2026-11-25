@@ -167,6 +167,7 @@ private:
     amplitude& generate_rows(bool diagrams, bool products, bool feynman, std::size_t workers,
                              bool search = true);
     void bind_model_parameters(Algebra&, std::uint32_t seed, high_energy_options&, bool include_targets = false) const;
+    void bind_model_parameters(Algebra&, std::uint32_t seed, high_energy_options&, bool include_targets, unsigned first_variant) const;
     std::vector<std::string> masses_, particles_;
     std::optional<model> vertices_model_, channels_model_, feynman_model_;
     generation_references references_ = generation_references::automatic;

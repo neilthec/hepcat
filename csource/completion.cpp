@@ -67,7 +67,6 @@ class expressions {
     std::unordered_map<Id, Id> normal;
     std::unordered_map<Id, bool> kinematic, singular;
 
-
     std::vector<int> invariant_legs(Id id) {
         const auto& n = a.node(id);
         std::vector<Id> labels;
@@ -1011,6 +1010,77 @@ const amp_expression& amplitude::complete_factorization(const factorization_opti
         if (p.full != p.prepared) add_lift(p.full);
     }
     if (auto answer = attempt("ChannelContinuations", before)) return publish(*answer);
+    // Generic independent scalar assignments need not satisfy a model's mass and
+    // coupling identities. Try the same constructive directions with those identities
+    // imposed, before expanding a much larger set of numerator monomials.
+    auto model_fit = [&]() -> std::optional<Id> {
+        if (!vertices_model_ || masses_.size() < 5 || work.basis.empty() ||
+            (vertices_model_->functions().empty() && channels_model_->functions().empty())) return {};
+        using bindings = std::vector<std::map<Id, Q>>;
+        auto parameters = [&](unsigned first) {
+            high_energy_options settings;
+            bind_model_parameters(a, work.seed, settings, true, first);
+            bindings result;
+            for (const auto& point : settings.parameter_points) {
+                auto& bound = result.emplace_back();
+                for (const auto& [name, value] : point) {
+                    Q q;
+                    if (!a.number(a.parse(value), q)) throw residue_unsupported("Nonrational model sample");
+                    bound.emplace(a.parse(name), std::move(q));
+                }
+            }
+            return result;
+        };
+        const auto training = parameters(1), control = parameters(4);
+        if (training.empty() || control.empty()) return {};
+        auto regular_chart = [](std::size_t first, auto evaluate) {
+            for (unsigned retry = 0; ; ++retry) {
+                try { return evaluate(first + 4 * retry); }
+                catch (const residue_singular&) { if (retry == 63) throw; }
+            }
+        };
+        fit_detail::modular_system system(work.basis.size());
+        for (const auto& bound : training) {
+            for (const auto& cut : work.cuts) {
+                std::vector<Id> columns{cut.target, work.seed};
+                columns.insert(columns.end(), work.basis.begin(), work.basis.end());
+                for (unsigned k = 0; k < 4; ++k) {
+                    auto row = regular_chart(74240 + k, [&](auto chart) {
+                        return residue_sample(a, cut.cut, columns, chart, bound);
+                    });
+                    ++work.report.training_samples;
+                    if (!system.add(row, 2, row[0] - row[1])) return {};
+                }
+            }
+        }
+        auto coefficients = system.solution();
+        if (!coefficients) return {};
+        std::vector<Id> terms{work.seed};
+        for (std::size_t i = 0; i < coefficients->size(); ++i)
+            if (coefficients->at(i) != 0) terms.push_back(a.mul({a.exact(coefficients->at(i)), work.basis[i]}));
+        Id candidate = a.add(std::move(terms));
+        for (const auto& bound : control)
+            for (const auto& cut : work.cuts)
+                for (unsigned k = 0; k < 4; ++k) {
+                    const auto signed_parts = regular_chart(91648 + k, [&](auto chart) {
+                        return residue_components(a, cut.cut, {candidate, cut.target}, chart, bound);
+                    });
+                    ++work.report.validation_samples;
+                    if (signed_parts[0] != signed_parts[1]) return {};
+                }
+        work.report.route = "ModelConstrainedChannels";
+        work.report.candidates = work.basis.size();
+        work.report.rank = system.rank();
+        return candidate;
+    };
+    std::optional<Id> model_candidate;
+    try {
+        model_candidate = model_fit();
+    } catch (const residue_singular&) {
+    } catch (const residue_unsupported&) {
+    } catch (const std::invalid_argument&) {
+    }
+    if (model_candidate) return publish(*model_candidate);
     before = work.basis.size();
     std::vector<Id> lifts;
     for (const auto& p : products) {
