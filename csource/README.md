@@ -201,6 +201,10 @@ Run from the repository root or pass `--root DIR`. By default the executable loo
 
 For four massive vectors, the final reduction proposes shorter spinor tensors on each physical pole, then fits the remaining local term to the complete amplitude at generic kinematics. A candidate must also agree on 24 independent exact rational samples away from the poles. Colored amplitudes use an exact SU(3) tensor basis. The constructor completes each independent coefficient, recombines them, and validates the full amplitude including color interference. Once the color terms are back together, the four-point reducer factors common products, recognizes exact binomial squares, and tries collecting over existing propagators. It ranks equivalent candidates first by momentum-weighted complexity and then by expression size. This can shorten a printed formula even when the weighted score is already minimal among the candidates.
 
+### Run the five-point Standard Model example in C++
+
+The [five-point driver](../tests/SM-5-point-construction.cpp) uses model 1 for elementary interactions and model 2 for complete four-point subamplitudes. It enumerates the external states allowed by the model and checks the notebook inventory before calculating. `hepcat-sm-five-point --family eebarAhh` constructs both photon helicities of electron-positron annihilation into a photon and two Higgs bosons. Each helicity has seven residue checks. The driver checks signed amplitudes against Feynman diagrams and exports both helicities together for CalcHEP and MadGraph comparisons. The [five-point inventory](../tests/SM-5-point/README.md) gives the sector filters and output paths.
+
 ## Generate from HEPCAT model files
 
 A native program can start with particle names. Read each model once and reuse it across processes. The QED vertex model is number 3. Use model 4 for physical poles or model 5 for expressions that allow spurious poles. A catalog row marked `PendingConstructiveDerivation` is unavailable for lookup and sewing. See the [reconstruction record](../tests/benchmarks/publication-qed/constructive-reconstruction.md) for the checked rows. Use models 1 and 2 for the corresponding SM pair.
@@ -396,7 +400,9 @@ constrains the same coefficients. The solver starts with the seed and tries a
 common rescaling of its pole terms, retained remainders, and individual diagram
 or channel contributions. It can also change a polarization reference or shift
 two distinct massless legs to continue a sewn numerator off its original cut.
-A shifted sum is a proposal, including when the shift may have a boundary term.
+For external states with a massless leg and a massive leg, the solver can also try a deformation transverse to both momenta. It builds the shift direction from the massless spinor and the massive momentum. The massive spinors transform with their little-group indices intact. Each trial includes every moving nonzero residue and is checked on all the original physical cuts, including stationary ones. Of the passing trials the solver prefers the lowest reduced complexity, breaking ties by expression size. High-energy, spurious-pole and signed checks still apply to the completed candidate.
+
+A separate case occurs when all external states are massless and every sewn residue vanishes. A local contact polynomial has nonnegative energy degree. If the requested energy bound is negative, these conditions fix the amplitude to zero, provided no independent contact input was supplied.
 
 Workers assemble exact rational rows independently on different cuts. One
 sparse elimination determines the shared coefficients, then fresh cut points

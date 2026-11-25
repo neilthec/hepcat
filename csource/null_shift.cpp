@@ -1,6 +1,6 @@
-// Continue the sewn numerator away from one physical cut by shifting two
-// external massless legs onto that cut. No assumption about a boundary term
-// is made. These columns still have to solve the original simultaneous system.
+// Continue a sewn numerator by shifting two external momenta onto its cut.
+// At least one shifted leg is massless. The physical channels constrain any
+// boundary term left by the shift.
 #include "continuations.hpp"
 
 #include <algorithm>
@@ -14,7 +14,7 @@ struct unavailable {};
 
 class null_shift {
     Algebra& a;
-    int square_leg, angle_leg;
+    int square_leg, angle_leg, massive_leg;
     Id zero, one, minus_one, angle, square, left, right, root;
     std::vector<int> selected;
     std::map<Id, Id> memo;
@@ -67,11 +67,12 @@ class null_shift {
         std::vector<Id> terms;
         for (int leg : ls)
             if (leg != square_leg && leg != angle_leg)
-                terms.push_back(a.call("SpinorChain", {left, a.call("Mom", {a.integer(leg)}), right}));
+                terms.push_back(chain({left, a.call("Mom", {a.integer(leg)}), right}));
         return a.add(std::move(terms));
     }
     std::vector<choice> endpoint(Id p) {
         if (is_spinor(p, "\"Xi\"")) {
+            if (massive_leg) throw unavailable{};
             auto& blocked = excluded[p];
             std::vector<int> choices = kind(p) == square ? std::vector<int>{angle_leg, square_leg}
                                                          : std::vector<int>{square_leg, angle_leg};
@@ -85,13 +86,45 @@ class null_shift {
             if (a.node(p).args.size() != 3 || a.leg(a.node(p).args[2]) <= 0) throw unavailable{};
             if (p == h(square, square_leg)) return {{one, p}, {root, right}};
             if (p == h(angle, angle_leg)) return {{one, p}, {a.mul({minus_one, root}), left}};
-        } else if (!is_spinor(p, "\"Spin\""))
+        } else if (is_spinor(p, "\"Spin\"")) {
+            // A rank-one Lorentz transformation on the massive leg
+            // transports its external spinors along with its momentum.
+            // It acts on only one chirality and has unit determinant.
+            const auto& spin = a.node(p);
+            if (massive_leg && spin.args.size() == 3 && a.leg(spin.args[2]) == massive_leg) {
+                const bool angle_moves = massive_leg == angle_leg;
+                if (kind(p) == (angle_moves ? angle : square)) {
+                    Id basis = angle_moves ? left : right;
+                    Id scale = a.mul({angle_moves ? minus_one : one, root, chain({basis, p})});
+                    return {{one, p}, {scale, basis}};
+                }
+            }
+        } else {
             throw unavailable{};
+        }
         return {{one, p}};
     }
     Id chain(const std::vector<Id>& p) {
         if (p.size() == 2 && p.front() == p.back()) return zero;
-        return a.call("SpinorChain", p);
+        if (!massive_leg) return a.call("SpinorChain", p);
+        // q is rank one. Its auxiliary endpoint is p_s acting on the
+        // unshifted spinor of the light leg. Transposition at the right
+        // endpoint contributes the same sign as a momentum reference.
+        const Id auxiliary = massive_leg == square_leg ? left : right;
+        const Id light = massive_leg == square_leg ? right : left;
+        const Id momentum = a.call("Mom", {a.integer(massive_leg)});
+        auto word = p;
+        if (word.front() == auxiliary) {
+            word.front() = light;
+            word.insert(word.begin() + 1, momentum);
+        }
+        const bool reverse = word.back() == auxiliary;
+        if (reverse) {
+            word.back() = momentum;
+            word.push_back(light);
+        }
+        Id value = a.call("SpinorChain", std::move(word));
+        return reverse ? a.mul({minus_one, value}) : value;
     }
     Id shifted_chain(const std::vector<Id>& w) {
         if (w.size() < 2) throw unavailable{};
@@ -194,8 +227,8 @@ class null_shift {
     }
 
   public:
-    null_shift(Algebra& tree, int i, int j)
-        : a(tree), square_leg(i), angle_leg(j), zero(a.integer(0)), one(a.integer(1)), minus_one(a.integer(-1)),
+    null_shift(Algebra& tree, int i, int j, int massive = 0)
+        : a(tree), square_leg(i), angle_leg(j), massive_leg(massive), zero(a.integer(0)), one(a.integer(1)), minus_one(a.integer(-1)),
           angle(a.atom("\"Angle\"")), square(a.atom("\"Square\"")), left(h(angle, i)), right(h(square, j)),
           root(zero) {}
     Id lift(const numerator_shell& channel, Id sewn) {
@@ -238,5 +271,26 @@ std::vector<Id> shifted_channel_continuations(Algebra& a,
         }
     }
     return result;
+}
+
+std::vector<Id> massive_shifted_channel_continuations(Algebra& a,
+        const std::vector<std::pair<numerator_shell, Id>>& sources,
+        int light, int massive, bool shift_square) {
+    if (light < 1 || massive < 1 || unsigned(std::max(light, massive)) > a.masses().size() ||
+        a.masses()[light - 1] != a.integer(0) || a.masses()[massive - 1] == a.integer(0)) return {};
+    null_shift shift(a, shift_square ? light : massive, shift_square ? massive : light, massive);
+    std::vector<Id> pieces;
+    for (const auto& [cut, product] : sources) {
+        auto includes = [&](int l) {
+            return std::find(cut.legs.begin(), cut.legs.end(), l) != cut.legs.end();
+        };
+        if (product == a.integer(0) || includes(light) == includes(massive)) continue;
+        try {
+            pieces.push_back(shift.lift(cut, product));
+        } catch (const unavailable&) {
+            return {}; // All moving, nonzero channels are required for a contour sum.
+        }
+    }
+    return pieces;
 }
 } // namespace hepcat

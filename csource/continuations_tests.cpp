@@ -72,5 +72,44 @@ int main() {
             "a direct shifted sum must count equal state contributions independently");
     require(shifted_channel_continuations(a, {{own, full}}, 4, 5).empty(), "cut independent of shifted pair");
     require(shifted_channel_continuations(a, {{own, full}}, 1, 4).empty(), "massive shift");
+    // On either mixed shift the selected pole is reached with z = 0 on
+    // its own cut. Include both spinors of the massive leg and a momentum
+    // insertion. A missing moving channel invalidates the whole contour sum.
+    Id mixed = a.parse("Times[SpinorChain[Spinor[\"Spin\",\"Angle\",2],Spinor[\"Helicity\",\"Angle\",5]],"
+                       "SpinorChain[Spinor[\"Spin\",\"Square\",2],Mom[3],Spinor[\"Helicity\",\"Angle\",5]]]");
+    Id unshifted = a.mul({mixed, inv(prop)});
+    for (bool square : {false, true}) {
+        auto lifted = massive_shifted_channel_continuations(a, {{own, unshifted}}, 3, 2, square);
+        require(lifted.size() == 1 && lifted.front() != unshifted, "nontrivial massive shift");
+        for (unsigned sample = 23, checked = 0; checked < 8; ++sample) {
+            require(sample < 223, "singular mixed-shift cut samples");
+            try {
+                auto r = residue_sample(a, own, {unshifted, lifted.front()}, sample);
+                require(r[0] == r[1], "mixed shift changed the original residue");
+                ++checked;
+            } catch (const residue_singular&) {}
+        }
+        // Check the transported Dirac equation away from the original pole.
+        // This detects a wrong sign in a spinor shift that vanishes at z = 0.
+        identity_check_options probe;
+        probe.seed = 56113;
+        probe.samples = 32;
+        const std::vector<std::string> masses{"m","m","0","0","0"};
+        for (bool angle : {true, false}) {
+            auto endpoint = [&](std::string source, bool ang, int leg) {
+                return a.call("Spinor", {a.atom(source), a.atom(ang ? "\"Angle\"" : "\"Square\""), a.integer(leg)});
+            };
+            Id spin = endpoint("\"Spin\"", angle, 2), flipped = endpoint("\"Spin\"", !angle, 2);
+            Id end = endpoint("\"Helicity\"", !angle, 5);
+            Id raw = a.mul({inv(prop), chain({spin,a.call("Mom",{a.integer(2)}),end})});
+            Id reduced = a.mul({inv(prop),m,chain({flipped,end})});
+            auto states = massive_shifted_channel_continuations(a, {{own, raw},{own, reduced}}, 3, 2, square);
+            require(states.size() == 2, "incomplete transported Dirac comparison");
+            require(amp_expression(a,states[0],masses).check_identity(amp_expression(a,states[1],masses),probe).passed(),
+                    "massive spin-frame transport violates the Dirac equation");
+        }
+        require(massive_shifted_channel_continuations(a, {{own, unshifted}, {own, mixed}}, 3, 2, square).empty(),
+                "incomplete mixed shift returned a partial sum");
+    }
     std::cout << "Reference and null-pair continuation checks passed.\n";
 }

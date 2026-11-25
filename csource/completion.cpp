@@ -772,15 +772,68 @@ const amp_expression& amplitude::complete_factorization(const factorization_opti
     };
     if (products_.empty() && trees.has_pole(work.seed))
         throw residue_unsupported("a pole-bearing amplitude requires physical factorization channels");
+    auto massive_shift = [&]() -> std::optional<Id> {
+        if (!vertices_model_ || masses_.size() <= 4) return {};
+        std::optional<amp_expression> best;
+        std::pair<std::size_t, std::size_t> best_size;
+        std::vector<std::pair<numerator_shell, Id>> sources;
+        for (const auto& cut : work.cuts)
+            if (cut.target != zero) sources.emplace_back(cut.cut, cut.target);
+        if (sources.empty()) return {};
+        Id contact = trees.split_poles(work.seed).first;
+        for (std::size_t light = 0; light < masses_.size(); ++light) {
+            if (a.masses()[light] != zero) continue;
+            for (std::size_t massive = 0; massive < masses_.size(); ++massive) {
+                if (a.masses()[massive] == zero) continue;
+                for (bool square : {false, true}) {
+                    // Discard the working algebra after each proposal. Only
+                    // the best verified expression survives this search.
+                    Algebra trial(&a);
+                    trial.setKinematics(a.masses(), {});
+                    auto terms = massive_shifted_channel_continuations(trial, sources, light + 1, massive + 1, square);
+                    if (terms.empty()) continue;
+                    terms.push_back(contact);
+                    expressions trial_trees(trial);
+                    Id sum = trial_trees.canonical(trial.add(std::move(terms)));
+                    try {
+                        auto rows = sample(trial, work.cuts, sum, {}, work.next_sample, 4, work.report.workers);
+                        work.next_sample += 4;
+                        work.report.validation_samples += rows.size();
+                        if (!std::all_of(rows.begin(), rows.end(), [](const auto& r) { return r.values[0] == r.values[1]; }))
+                            continue;
+                    } catch (const residue_singular&) {
+                        continue;
+                    } catch (const residue_unsupported&) {
+                        continue;
+                    }
+                    amp_expression raw(trial, sum, masses_), reduced = raw;
+                    reduced.reduce();
+                    auto score = std::make_pair(reduced.complexity(), reduced.leaf_count());
+                    if (!best || score < best_size) {
+                        best = std::move(raw);
+                        best_size = score;
+                    }
+                }
+            }
+        }
+        if (!best) return {};
+        work.report.route = "MassiveShiftedChannelSum";
+        return best->import_into(a);
+    };
     std::exception_ptr singular_seed;
     try {
         if (work.verified(work.seed)) {
             work.report.route = work.cuts.empty() ? "Contact" : "Unchanged";
             return publish(work.seed);
         }
+    } catch (const residue_singular&) {
+        if (auto answer = massive_shift()) return publish(*answer);
+        throw;
     } catch (const residue_unsupported&) {
-        if (masses_.size() != 4 || !vertices_model_)
+        if (masses_.size() != 4 || !vertices_model_) {
+            if (auto answer = massive_shift()) return publish(*answer);
             throw;
+        }
         singular_seed = std::current_exception();
     }
     // At four points a reference chosen on one diagram can create a double
@@ -941,6 +994,7 @@ const amp_expression& amplitude::complete_factorization(const factorization_opti
                         add_lift(x);
                     if (auto answer = attempt("ShiftedChannels", snapshot.size())) return publish(*answer);
                 }
+    if (auto answer = massive_shift()) return publish(*answer);
     throw std::runtime_error("factorization unresolved: no combination of available corrections passed all " +
                              std::to_string(work.cuts.size()) + " physical channels");
 }

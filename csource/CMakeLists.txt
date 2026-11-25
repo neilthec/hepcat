@@ -99,6 +99,10 @@ if(BUILD_TESTING)
     add_test(NAME sm_four_point_inventory COMMAND hepcat-sm-four-point --root "${HEPCAT_MODEL_ROOT}" --list)
     if(Python3_Interpreter_FOUND)
         add_test(NAME sm_five_point_inventory COMMAND hepcat-sm-five-point --root "${HEPCAT_MODEL_ROOT}" --list)
+        add_test(NAME sm_five_point_scalar_radiation COMMAND hepcat-sm-five-point
+                 --root "${HEPCAT_MODEL_ROOT}" --output "${CMAKE_CURRENT_BINARY_DIR}/Testing/sm-five-point"
+                 --family eebarAhh --native-only --seed 511230)
+        set_tests_properties(sm_five_point_scalar_radiation PROPERTIES LABELS integration)
         add_test(NAME sm_four_point_receipts COMMAND "${Python3_EXECUTABLE}" -B
                  "${HEPCAT_MODEL_ROOT}/tests/benchmarks/native-sm-four-point/test-audit-results.py")
     endif()

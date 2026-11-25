@@ -20,4 +20,9 @@ std::vector<Id> channel_continuations(Algebra&, Id sewn_amplitude, const numerat
 std::vector<Id>
 shifted_channel_continuations(Algebra&, const std::vector<std::pair<numerator_shell, Id>>& signed_full_sources,
                               int square_leg, int angle_leg);
+// Shift along a null direction orthogonal to a light and a massive momentum.
+// Transport the massive external spinors with their original spin labels.
+std::vector<Id> massive_shifted_channel_continuations(
+    Algebra&, const std::vector<std::pair<numerator_shell,Id>>&,
+    int light_leg, int massive_leg, bool shift_square);
 } // namespace hepcat
