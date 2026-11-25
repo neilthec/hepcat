@@ -53,9 +53,39 @@ std::vector<Id> contract_deltas(Algebra& a, std::vector<Id> tensors) {
     }
     return tensors;
 }
+// If a tree is a chain of structure constants, a basis with legs 1 and n
+// on opposite ends gives a direct correspondence with cyclic spinor orderings.
+bool has_ordered_ends(const Algebra& a, Id tensor, int last) {
+    const auto& node = a.node(tensor);
+    if (node.head != "Times" || node.args.size() != static_cast<std::size_t>(last - 2)) return false;
+    bool first_end = false, last_end = false;
+    unsigned ends = 0;
+    for (auto factor : node.args) {
+        const auto& t = a.node(factor);
+        if (validation_detail::short_head(t) != "ColorStructure" || t.args.size() != 3) return false;
+        unsigned external = 0;
+        bool has_first = false, has_last = false;
+        for (auto ix : t.args) {
+            const auto& label = a.node(ix);
+            if (validation_detail::short_head(label) != "ColorIndex" || label.args.size() != 1) continue;
+            ++external;
+            const int leg = a.leg(label.args.front());
+            has_first |= leg == 1;
+            has_last |= leg == last;
+        }
+        if (external != 1 && external != 2) return false;
+        if (external == 2) {
+            ++ends;
+            if (has_first && has_last) return false;
+            first_end |= has_first;
+            last_end |= has_last;
+        }
+    }
+    return ends == 2 && first_end && last_end;
+}
 } // namespace
 
-color_decomposition decompose_color(Algebra& a, const std::vector<int>& reps, const std::vector<Id>& roots) {
+color_decomposition decompose_color(Algebra& a, const std::vector<int>& reps, const std::vector<Id>& roots, bool order_vector_ends) {
     validation_detail::color_polynomial split(a);
     std::vector<std::map<Id, Id>> terms;
     std::set<Id> inventory;
@@ -76,6 +106,10 @@ color_decomposition decompose_color(Algebra& a, const std::vector<int>& reps, co
     }
     std::vector<Id> tensors(inventory.begin(), inventory.end());
     std::stable_sort(tensors.begin(), tensors.end(), [&](Id x, Id y) { return a.cost(x) < a.cost(y); });
+    if (order_vector_ends && reps.size() > 4 && std::all_of(reps.begin(), reps.end(), [](int d) { return d == 8; }))
+        std::stable_partition(tensors.begin(), tensors.end(), [&](Id x) {
+            return has_ordered_ends(a, x, static_cast<int>(reps.size()));
+        });
     auto components = validation_detail::fundamental_color_projections(a, reps).project(tensors);
     // Row-reduce exact tensor values. In reduced echelon form every pivot column
     // is a physical basis tensor, and its row gives its coefficient in every input tensor.

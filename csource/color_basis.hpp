@@ -11,6 +11,6 @@ struct color_decomposition {
 };
 
 color_decomposition decompose_color(Algebra&, const std::vector<int>& representations,
-                                    const std::vector<Id>& roots);
+                                    const std::vector<Id>& roots, bool order_vector_ends = false);
 
 } // namespace hepcat

@@ -38,7 +38,12 @@ bool amplitude::complete_color_rows(const factorization_options* factor, const h
     if (std::none_of(roots.begin(), roots.end(), [&](Id x) { return pieces.contains_color(x); }))
         return false;
 
-    auto decomposition = decompose_color(a, colors, roots);
+    const bool order_vector_ends = particles_.size() > 4 &&
+        std::all_of(particles_.begin(), particles_.end(), [&](const std::string& name) {
+            const auto& p = vertices_model_->particle(name);
+            return p.mass == "0" && p.spin2 == 2 && p.color == 8;
+        });
+    auto decomposition = decompose_color(a, colors, roots, order_vector_ends);
     std::vector<Id> answers, originals;
     factorization_report fr;
     high_energy_report hr;

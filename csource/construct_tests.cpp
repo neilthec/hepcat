@@ -81,7 +81,7 @@ int main(int argc, char **argv) {
     gluons.generate_diagrams(1).generate_factorization_products(1);
     const auto &answer = gluons.complete_factorization(1);
     const auto &fit = gluons.last_factorization();
-    require(answer.str() != "0" && answer.complexity() <= 14 &&
+    require(answer.str() != "0" && answer.complexity() <= 6 &&
                 fit.route == "ColorCoefficients" && fit.rank > 0 && fit.validation_samples > 0,
             "chiral five-vector completion from the lower-point amplitudes");
   }
