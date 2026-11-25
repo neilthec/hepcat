@@ -76,7 +76,17 @@ by sector. The report separates signed native passes from complete families
 with both external comparisons. It also identifies CalcHEP results that needed
 a binary128 replay. Add `--pending` to list families that still need a complete
 set of reports. This census describes the runs on disk and performs no physics
-calculations.
+calculations. To continue a calculation after closing the terminal, run this
+from the repository root:
+
+```sh
+python3 tests/SM-5-point/native-progress.py --run-pending tests/results/native-reduce-build/hepcat-sm-five-point
+```
+
+This runs one C++ process at a time and skips families with complete retained
+comparisons at the requested point count. A failed family keeps its diagnostic
+report and the sweep continues. Use `--sector FourFermionGluon` to finish one
+sector first. Running the C++ executable directly always makes a fresh calculation.
 
 ## Enumeration and generation relations
 

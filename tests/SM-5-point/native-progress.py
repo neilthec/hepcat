@@ -5,11 +5,13 @@ import csv
 import itertools
 import json
 import re
+import subprocess
 from pathlib import Path
 
 
 def native_pass(directory, case, points):
-    if not (directory / (case + ".expr")).is_file():
+    expression = directory / (case + ".expr")
+    if not expression.is_file() or not expression.stat().st_size:
         return False
     checks = directory / (case + ".checks.tsv")
     if not checks.is_file():
@@ -32,7 +34,7 @@ def native_pass(directory, case, points):
             return False
         else:
             intrinsic.add(fields[0])
-    return "Feynman" in numeric and {"Reference", "HighEnergy", "Spurious"} <= intrinsic
+    return "Feynman" in numeric and {"Reference", "Physical", "HighEnergy", "Spurious"} <= intrinsic
 
 
 def external_status(directory, family, points):
@@ -79,6 +81,8 @@ def collect(results, families, points):
             if row.get("status") == "NATIVE_PASS":
                 by_name[row["family"]].add(row["id"])
         for name, cases in by_name.items():
+            if name not in families:
+                continue
             family = families[name]
             directory = ledger.parent / family["ID"]
             retained = {c for c in cases if native_pass(directory, c, points)}
@@ -101,17 +105,47 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--results", type=Path, default=here.parent / "results/spinas-output/SM-5-point")
     parser.add_argument("--points", type=int, default=100000)
-    parser.add_argument("--pending", action="store_true", help="List the outstanding export families")
+    action = parser.add_mutually_exclusive_group()
+    action.add_argument("--pending", action="store_true", help="List the outstanding export families")
+    action.add_argument("--run-pending", type=Path, metavar="EXECUTABLE",
+                        help="Run the C++ constructor on each outstanding family, one at a time")
+    parser.add_argument("--sector", help="Select one notebook sector")
+    parser.add_argument("--seed", type=int, help="Use a reproducible seed for new calculations")
+    parser.add_argument("--cmake", type=Path, help="CMake executable for the external checks")
+    parser.add_argument("--calchep", type=Path, help="CalcHEP installation")
+    parser.add_argument("--madgraph", type=Path, help="MadGraph installation")
+    parser.add_argument("--spinas", type=Path, help="SPINAS checkout")
     args = parser.parse_args()
     if args.points < 10000:
         parser.error("Use at least 10,000 points")
     inventory = json.loads((here / "inventory.json").read_text())
     families = {f["ExportName"]: f for f in inventory["Families"]}
+    if args.sector:
+        families = {n: f for n, f in families.items() if f["Sector"] == args.sector}
+        if not families:
+            parser.error("Unknown sector " + args.sector)
     native, full = collect(args.results, families, args.points)
+    pending = [f for n, f in families.items() if n not in full]
+    if args.run_pending:
+        runner = args.run_pending.resolve(strict=True)
+        command = [str(runner), "--root", str(here.parents[1]), "--output", str(args.results.resolve()),
+                   "--workers", "1", "--points", str(args.points)]
+        for key in ("seed", "cmake", "calchep", "madgraph", "spinas"):
+            value = getattr(args, key)
+            if value is not None:
+                command.extend(["--" + key, str(value)])
+        failed = 0
+        for index, family in enumerate(pending, 1):
+            print(f"\nFamily {index}/{len(pending)}   {family['Sector']}   {family['ExportName']}", flush=True)
+            result = subprocess.run([*command, "--family", family["ID"]])
+            if result.returncode:
+                failed += 1
+                print(f"Family remains open (exit {result.returncode}).", flush=True)
+        print(f"{len(pending)} families attempted, {failed} remain open from this sweep.")
+        return int(failed != 0)
     if args.pending:
-        for name, family in families.items():
-            if name not in full:
-                print(family["Sector"], name, family["ID"], sep="\t")
+        for family in pending:
+            print(family["Sector"], family["ExportName"], family["ID"], sep="\t")
         return
     print(f"Retained native SM five-point results with at least {args.points:,} numerical points")
     print(f"{'Sector':26s} {'Signed':>7s} {'All checks':>11s} {'Cases':>6s} {'Families passed/total':>23s}")
@@ -130,4 +164,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
