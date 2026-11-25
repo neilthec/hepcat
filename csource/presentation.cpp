@@ -317,7 +317,9 @@ Id normalize_parameter_powers(Algebra& a, Id input) {
                 const bool positive_root=b.head=="Power" && b.args.size()==2 &&
                     a.number(b.args[0],radicand) && radicand>0 && a.number(b.args[1],power);
                 if (positive_root) {
-                    result=a.call("Power",{b.args[0],a.exact(power*exponent)});
+                    const mpq_class combined=power*exponent;
+                    if (abs(combined)<=4096)
+                        result=a.call("Power",{b.args[0],a.exact(combined)});
                 } else if (b.head=="Times" && leg_independent_scalar(a,base)) {
                     Terms factors;
                     for (Id k:b.args) factors.push_back(self(self,a.pow(k,exponent)));
