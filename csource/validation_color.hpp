@@ -57,6 +57,21 @@ class color_network {
     std::vector<tensor> tensors;
     std::vector<index> indices;
     std::vector<int> sums;
+    // A sparse tensor can force the entire contraction to zero as soon as
+    // its last index is assigned, even with other internal colors still free.
+    std::vector<std::vector<std::size_t>> ready;
+    bool supported(std::size_t depth, const std::vector<int>& values) const {
+        for (auto i : ready[depth]) {
+            const auto& t = tensors[i];
+            auto color = [&](std::size_t j) { return values[t.slots[j]]; };
+            if (t.type == kind::delta && color(0) != color(1)) return false;
+            if (t.type == kind::structure && !color_basis::instance().structure[color(0)][color(1)][color(2)])
+                return false;
+            if (t.type == kind::generator &&
+                color_basis::instance().b[color(2)][color(0)][color(1)] == std::complex<int>{}) return false;
+        }
+        return true;
+    }
 
     color_number contract(const std::vector<int>& v) const {
         const auto& b = color_basis::instance();
@@ -104,6 +119,7 @@ class color_network {
         color_number result{};
         for (int j = 0; j < dim; ++j) {
             values[slot] = j;
+            if (!supported(next + 1, values)) continue;
             auto part = sum(next + 1, values);
             if (dim == 8)
                 part /= mpq_class(color_basis::metric(j));
@@ -177,6 +193,17 @@ class color_network {
             if (idx.leg < 0)
                 sums.push_back(i);
         }
+        if (!sums.empty()) {
+            ready.resize(sums.size() + 1);
+            std::vector<std::size_t> assigned(indices.size(), 0);
+            for (std::size_t j = 0; j < sums.size(); ++j) assigned[sums[j]] = j + 1;
+            for (std::size_t i = 0; i < tensors.size(); ++i) {
+                if (tensors[i].type == kind::trace) continue;
+                std::size_t depth = 0;
+                for (auto slot : tensors[i].slots) depth = std::max(depth, assigned[slot]);
+                ready[depth].push_back(i);
+            }
+        }
     }
     // One factor of 1/sqrt(metric) per free adjoint occurrence restores
     // the conventional normalized Gell-Mann basis.
@@ -192,6 +219,7 @@ class color_network {
         for (size_t i = 0; i < indices.size(); ++i)
             if (indices[i].leg >= 0)
                 values[i] = colors.at(indices[i].leg);
+        if (!sums.empty() && !supported(0, values)) return {};
         return sum(0, values);
     }
 };

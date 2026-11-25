@@ -1,12 +1,40 @@
 // Compare the published constructive four-quark row to independently generated CalcHEP trees.
 #include "amplitude.hpp"
 #include "reduce.hpp"
+#include "validation_color.hpp"
 #include <algorithm>
 #include <iostream>
 #include <stdexcept>
 
 using namespace hepcat;
 namespace {
+// Cross-check every external color assignment across two internal adjoint sums.
+void check_adjoint_contraction() {
+    using namespace validation_detail;
+    Algebra a;
+    auto external = [&](int leg) { return a.call("ColorIndex", {a.integer(leg)}); };
+    auto internal = [&](int tag) { return a.call("colorInternalIndex", {a.integer(tag), a.integer(8)}); };
+    auto structure = [&](Id i, Id j, Id k) { return a.call("ColorStructure", {i,j,k}); };
+    const auto x = internal(6), y = internal(7);
+    std::vector<int> reps(5,8);
+    color_network network(a, reps, {structure(external(1),external(2),x), structure(x,external(3),y),
+                                    structure(y,external(4),external(5))});
+    const auto& basis = color_basis::instance();
+    std::vector<int> c(5);
+    for (unsigned code = 0; code < 32768; ++code) {
+        unsigned value = code;
+        for (auto &color : c) { color = value % 8; value /= 8; }
+        long numerator = 0;
+        for (int i = 0; i < 8; ++i)
+            for (int j = 0; j < 8; ++j)
+                numerator += basis.structure[c[0]][c[1]][i] * basis.structure[i][c[2]][j]
+                           * basis.structure[j][c[3]][c[4]] * (12 / basis.metric(i)) * (12 / basis.metric(j));
+        auto result = network(c);
+        if (result.imag() != 0 || 144 * result.real() != numerator)
+            throw std::runtime_error("Incorrect contraction of two internal adjoint colors");
+    }
+}
+
 bool contains_generator(const Algebra& a, Id id) {
     const auto& node = a.node(id);
     return node.head == "ConstructiveDiagrams`ColorGenerator" ||
@@ -34,6 +62,7 @@ int main(int argc, char** argv) {
     try {
         if (argc != 3)
             throw std::runtime_error("expected constructive and CalcHEP model directories");
+        check_adjoint_contraction();
         const model vertices(argv[1], 1), catalog(argv[1], 2), rules(argv[2], 1);
         const std::vector<std::string> process{"u", "U", "C", "c"};
         amplitude amp(process, vertices, catalog, rules);
